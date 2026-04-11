@@ -448,6 +448,35 @@
   background-color: #0D0D12 !important;
 }
 
+/* Override hover/focus backgrounds that cause white glare in dark mode */
+.discuss-black [class*="hover:bg-neutral-100"]:hover,
+.discuss-black [class*="hover:bg-neutral-50"]:hover,
+.discuss-black [class*="hover:bg-white"]:hover,
+.discuss-black [class*="hover:bg-\[\#E2E8F0\]"]:hover,
+.discuss-black [class*="hover:bg-\[\#F5F5F7\]"]:hover,
+.discuss-black [class*="focus:bg-neutral-100"]:focus,
+.discuss-black [class*="focus:bg-\[\#F5F5F7\]"]:focus,
+.discuss-black [role="menuitem"]:focus,
+.discuss-black [role="menuitem"]:hover {
+  background-color: #1A1A24 !important;
+  color: #F5F5FA !important;
+}
+
+/* Fix for Red danger buttons (Leave Group, Delete Chat) */
+.discuss-black [class*="hover:bg-red-50"]:hover,
+.discuss-black [class*="focus:bg-red-50"]:focus {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #EF4444 !important;
+}
+
+/* Fix Header Feed button stuck in active/focus mode with light background */
+.discuss-black .bg-neutral-100.text-neutral-900,
+.discuss-black [data-testid="header-feed-btn"]:focus,
+.discuss-black [data-testid="header-feed-btn"]:active {
+  background-color: #1A1A24 !important;
+  color: #F5F5FA !important;
+}
+
 /* Borders */
 .discuss-black .border-neutral-200,
 .discuss-black .border-\[\#E2E8F0\],
