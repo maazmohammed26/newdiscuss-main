@@ -457,21 +457,43 @@
   border-color: rgba(255, 0, 127, 0.18) !important;
 }
 
-/* Text colors */
+/* ── TEXT COLORS (comprehensive — covers all components) ── */
+
+/* Bright white: primary body text, headings, post titles */
 .discuss-black .text-neutral-900,
+.discuss-black .text-neutral-800,
+.discuss-black .text-neutral-700,
+.discuss-black .text-neutral-600,
 .discuss-black .text-\[\#0F172A\],
 .discuss-black .text-\[\#F5F5F5\],
-.discuss-black .text-\[\#F1F5F9\] {
-  color: #F5F5FA !important;
+.discuss-black .text-\[\#F1F5F9\],
+.discuss-black .text-\[\#E5E7EB\] {
+  color: #F0F0F8 !important;
 }
 
+/* Near-white: dark mode post body, card content */
+.discuss-black .text-neutral-200,
+.discuss-black .text-neutral-100,
+.discuss-black .text-neutral-50 {
+  color: #E8E8F2 !important;
+}
+
+/* Muted: timestamps, bylines, labels */
 .discuss-black .text-neutral-500,
 .discuss-black .text-neutral-400,
+.discuss-black .text-neutral-300,
 .discuss-black .text-\[\#6275AF\],
 .discuss-black .text-\[\#94A3B8\],
-.discuss-black .text-\[\#9CA3AF\] {
+.discuss-black .text-\[\#9CA3AF\],
+.discuss-black .text-\[\#64748B\] {
   color: #9090A8 !important;
 }
+
+/* Global fallback so any unclassed text inherits bright color */
+.discuss-black {
+  color: #F0F0F8;
+}
+
 
 /* Primary accent → hot pink */
 .discuss-black .text-\[\#2563EB\],
@@ -621,4 +643,39 @@
   transition-duration: 0.2s;
   transition-timing-function: ease;
 }
+
+/* ── HIGH-PRIORITY: Force post/card body text visibility ──
+   The PostCard uses dark: and discuss: Tailwind prefixes which don't
+   activate under discuss-black. We use high-specificity selectors here. */
+
+/* Post card content — all body copy must be near-white */
+.discuss-black [data-testid^="post-content"] *,
+.discuss-black [data-testid^="post-title"] {
+  color: #E8E8F2 !important;
+}
+
+/* Post action bar text (upvote count, comment count) */
+.discuss-black [data-testid^="post-upvote-count"],
+.discuss-black [data-testid^="post-downvote-count"],
+.discuss-black [data-testid^="post-comment-count"] {
+  color: #B0B0C8 !important;
+}
+
+/* Any remaining paragraph or span inside a card that hasn't been caught */
+.discuss-black .bg-white p,
+.discuss-black .bg-white span,
+.discuss-black .bg-white h1,
+.discuss-black .bg-white h2,
+.discuss-black .bg-white h3,
+.discuss-black [class*="rounded"] > p,
+.discuss-black [class*="rounded"] > span {
+  color: inherit;
+}
+
+/* Ensure all text inside discuss-black renders as near-white by default.
+   Only muted classes override down to gray. Everything else floats up. */
+.discuss-black * {
+  color: inherit;
+}
+
 
