@@ -53,8 +53,8 @@ export default function ContactPage() {
             </a>
 
             <a href="https://www.instagram.com/discussit.in" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 group">
-              <div className="w-12 h-12 bg-pink-50 dark:bg-pink-900/20 discuss:bg-pink-900/20 rounded-[12px] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Instagram className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+              <div className="w-12 h-12 bg-pink-50 dark:bg-pink-900/20 discuss:bg-pink-900/20 rounded-[12px] flex items-center justify-center group-hover:scale-105 transition-transform" style={{ backgroundColor: 'rgba(236,72,153,0.12)' }}>
+                <Instagram className="w-6 h-6" style={{ color: '#E1306C' }} />
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">Instagram (Official)</h3>
