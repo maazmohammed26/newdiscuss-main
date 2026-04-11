@@ -1,0 +1,74 @@
+# Robots.txt for Discuss Platform
+# Updated: 2026-07-15
+
+# Allow all major search engines
+User-agent: *
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+Crawl-delay: 1
+
+# Google
+User-agent: Googlebot
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+# Bing
+User-agent: Bingbot
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+User-agent: CCBot
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /post/
+
+# Sitemap
+Sitemap: https://dsscus.netlify.app/sitemap.xml

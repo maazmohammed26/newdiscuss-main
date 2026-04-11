@@ -1,0 +1,28 @@
+{
+  "short_name": "Discuss",
+  "name": "Discuss - Developer Discussion Platform",
+  "description": "A modern discussion platform for developers to share projects and ideas in real time. Developed and founded by Mohammed Maaz A.",
+  "icons": [
+    {
+      "src": "favicon-new.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon-new.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2563EB",
+  "background_color": "#F8FAFC",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["social", "productivity"],
+  "gcm_sender_id": "1039827441866",
+  "permissions": ["notifications", "push"]
+}

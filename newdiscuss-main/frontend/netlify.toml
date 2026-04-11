@@ -1,0 +1,14 @@
+[build]
+  base = "frontend"
+  command = "yarn build"
+  publish = "build"
+
+[build.environment]
+  CI = "false"
+  NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "20.11.0"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
