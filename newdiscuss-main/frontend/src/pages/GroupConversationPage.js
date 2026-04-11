@@ -346,8 +346,16 @@ export default function GroupConversationPage() {
     if (isSystemMessage) {
       return (
         <div key={message.id} className="flex justify-center my-4">
-          <div className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] px-4 py-2 rounded-full max-w-[80%]">
-            <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] text-center">{message.text}</p>
+          <div
+            className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] px-4 py-2 rounded-full max-w-[80%]"
+            style={document.documentElement.classList.contains('discuss-black')
+              ? { backgroundColor: 'rgba(255,0,127,0.1)', borderColor: 'rgba(255,0,127,0.2)' }
+              : {}}
+          >
+            <p
+              className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] text-center"
+              style={document.documentElement.classList.contains('discuss-black') ? { color: '#C8C8E0' } : {}}
+            >{message.text}</p>
           </div>
         </div>
       );
@@ -437,7 +445,12 @@ export default function GroupConversationPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-bold text-base text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">{groupInfo?.name || 'Group'}</h1>
-                <span className="bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] text-[10px] font-bold px-2 py-0.5 rounded-full">Group Chat</span>
+                <span
+                  className="bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={document.documentElement.classList.contains('discuss-black')
+                    ? { backgroundColor: 'rgba(255,0,127,0.15)', color: '#FF007F' }
+                    : {}}
+                >Group Chat</span>
                 {groupInfo?.settings?.autoDelete24h && <span className="bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" title="24h auto-delete enabled"><Clock className="w-3 h-3" />24h</span>}
                 {isAdminOnlyMode && <span className="bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Admin-only messaging">Admin Only</span>}
               </div>
@@ -485,8 +498,16 @@ export default function GroupConversationPage() {
             Object.entries(groupedMessages).map(([date, dateMessages]) => (
               <div key={date}>
                 <div className="flex justify-center my-4">
-                  <div className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] px-3 py-1 rounded-full">
-                    <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] font-medium">{date}</p>
+                  <div
+                    className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] px-3 py-1 rounded-full"
+                    style={document.documentElement.classList.contains('discuss-black')
+                      ? { backgroundColor: 'rgba(255,0,127,0.1)' }
+                      : {}}
+                  >
+                    <p
+                      className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] font-medium"
+                      style={document.documentElement.classList.contains('discuss-black') ? { color: '#C8C8E0' } : {}}
+                    >{date}</p>
                   </div>
                 </div>
                 {dateMessages.map(renderMessage)}

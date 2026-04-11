@@ -509,7 +509,12 @@ export default function ChatPage() {
               <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white discuss:text-white' : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'}`}>
                 {group.groupName}
               </span>
-              <span className="bg-purple-100 dark:bg-purple-900/30 discuss:bg-purple-900/30 text-purple-700 dark:text-purple-300 discuss:text-purple-300 text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-purple-100 dark:bg-purple-900/30 discuss:bg-purple-900/30 text-purple-700 dark:text-purple-300 discuss:text-purple-300"
+                style={document.documentElement.classList.contains('discuss-black')
+                  ? { backgroundColor: 'rgba(112,0,255,0.18)', color: '#C084FC' }
+                  : {}}
+              >
                 Group Chat
               </span>
             </div>

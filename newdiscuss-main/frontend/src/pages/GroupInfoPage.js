@@ -305,7 +305,14 @@ export default function GroupInfoPage() {
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">{groupInfo?.name}</h2>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`text-xs px-2 py-0.5 rounded-full ${groupInfo?.type === 'public' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'}`}>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${groupInfo?.type === 'public' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'}`}
+                  style={document.documentElement.classList.contains('discuss-black')
+                    ? groupInfo?.type === 'public'
+                      ? { backgroundColor: 'rgba(16,185,129,0.15)', color: '#34D399' }
+                      : { backgroundColor: 'rgba(112,0,255,0.18)', color: '#C084FC' }
+                    : {}}
+                >
                   {groupInfo?.type === 'public' ? 'Public' : 'Private'}
                 </span>
                 {isDeleted && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">Deleted</span>}
