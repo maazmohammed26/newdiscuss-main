@@ -1,74 +1,92 @@
-# Robots.txt for Discuss Platform
-# Updated: 2026-07-15
+# robots.txt — discussit.in
+# Updated: 2026-04-12
+# Reference: https://developers.google.com/search/docs/crawling-indexing/robots/intro
 
-# Allow all major search engines
+# ── Default: all crawlers ────────────────────────────────────
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
 Disallow: /feed
 Disallow: /profile
 Disallow: /login
 Disallow: /register
+Disallow: /settings
+Disallow: /notifications
 Disallow: /post/
-Crawl-delay: 1
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
+Crawl-delay: 2
 
-# Google
+# ── Googlebot ────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
 Disallow: /feed
 Disallow: /profile
 Disallow: /login
 Disallow: /register
+Disallow: /settings
+Disallow: /notifications
 Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
 
-# Bing
+# ── Bingbot ──────────────────────────────────────────────────
 User-agent: Bingbot
 Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
 Disallow: /feed
 Disallow: /profile
 Disallow: /login
 Disallow: /register
+Disallow: /settings
+Disallow: /notifications
 Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
+Crawl-delay: 1
 
-# AI Crawlers
+# ── AI crawlers — allow public pages only ────────────────────
 User-agent: GPTBot
 Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
 Disallow: /feed
 Disallow: /profile
-Disallow: /login
-Disallow: /register
 Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /
+Allow: /about
 Disallow: /feed
-Disallow: /profile
-Disallow: /login
-Disallow: /register
 Disallow: /post/
-
-User-agent: CCBot
-Allow: /
-Disallow: /feed
-Disallow: /profile
-Disallow: /login
-Disallow: /register
-Disallow: /post/
+Disallow: /api/
 
 User-agent: anthropic-ai
-Allow: /
-Disallow: /feed
-Disallow: /profile
-Disallow: /login
-Disallow: /register
-Disallow: /post/
+Disallow: /
 
 User-agent: Claude-Web
-Allow: /
-Disallow: /feed
-Disallow: /profile
-Disallow: /login
-Disallow: /register
-Disallow: /post/
+Disallow: /
 
-# Sitemap
-Sitemap: https://dsscus.netlify.app/sitemap.xml
+User-agent: CCBot
+Disallow: /
+
+# ── Sitemap ──────────────────────────────────────────────────
+Sitemap: https://discussit.in/sitemap.xml

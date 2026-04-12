@@ -1,14 +1,135 @@
+# ============================================================
+# netlify.toml — discussit.in
+# Security grade: A+ target (securityheaders.com)
+# Last updated: 2026-04-12
+# ============================================================
+
+# ── Build ────────────────────────────────────────────────────
 [build]
-  base = "newdiscuss-main/frontend"
+  base    = "newdiscuss-main/frontend"
   command = "yarn build"
   publish = "build"
 
 [build.environment]
-  CI = "false"
-  NPM_FLAGS = "--legacy-peer-deps"
+  CI           = "false"
+  NPM_FLAGS    = "--legacy-peer-deps"
   NODE_VERSION = "20.11.0"
 
+# ── SPA catch-all redirect ───────────────────────────────────
+# Must come BEFORE any [[headers]] blocks.
+# React Router needs every path to serve index.html (status 200 = rewrite).
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from   = "/*"
+  to     = "/index.html"
   status = 200
+
+# ── Global security headers (applied to every response) ──────
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+
+    # ── Strict-Transport-Security (HSTS) ─────────────────────
+    # max-age = 2 years; includeSubDomains + preload for HSTS preload list.
+    # Submit to https://hstspreload.org after deploying.
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+    # ── Content-Security-Policy ───────────────────────────────
+    # Allows:
+    #   • self          — same-origin assets / scripts / styles
+    #   • Google Fonts  — fonts.googleapis.com (CSS) + fonts.gstatic.com (font files)
+    #   • API           — api.discussit.in  (XHR/fetch)
+    #   • Firebase      — *.firebaseio.com, *.googleapis.com, *.firebase.google.com
+    #   • WebSockets    — wss://api.discussit.in (real-time)
+    #   • Images        — data: URIs for inline avatars, blob: for object URLs
+    #   • Frames        — blocked (DENY equivalent in CSP)
+    # 'unsafe-inline' is required for CRA / Tailwind runtime styles.
+    # Remove it once you adopt a nonce/hash-based approach.
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src  'self' 'unsafe-inline' 'unsafe-eval'
+                  https://www.gstatic.com
+                  https://apis.google.com
+                  https://www.googleapis.com;
+      style-src   'self' 'unsafe-inline'
+                  https://fonts.googleapis.com;
+      font-src    'self'
+                  https://fonts.gstatic.com;
+      img-src     'self' data: blob:
+                  https://firebasestorage.googleapis.com
+                  https://lh3.googleusercontent.com
+                  https://api.discussit.in;
+      connect-src 'self'
+                  https://api.discussit.in
+                  wss://api.discussit.in
+                  https://*.firebaseio.com
+                  https://*.googleapis.com
+                  https://identitytoolkit.googleapis.com
+                  https://securetoken.googleapis.com
+                  https://firebase.googleapis.com
+                  https://firebasestorage.googleapis.com
+                  https://www.google-analytics.com;
+      frame-src   'none';
+      frame-ancestors 'none';
+      object-src  'none';
+      base-uri    'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    """
+
+    # ── X-Frame-Options ───────────────────────────────────────
+    # Prevents clickjacking. DENY = page cannot be framed at all.
+    X-Frame-Options = "DENY"
+
+    # ── X-Content-Type-Options ────────────────────────────────
+    # Stops browsers from MIME-sniffing response content types.
+    X-Content-Type-Options = "nosniff"
+
+    # ── Referrer-Policy ───────────────────────────────────────
+    # Sends full URL to same-origin; only origin to cross-origin HTTPS.
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # ── Permissions-Policy ────────────────────────────────────
+    # Opt out of browser features the app doesn't use.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+
+    # ── Cross-Origin-Opener-Policy ────────────────────────────
+    # Isolates the browsing context; mitigates Spectre-style attacks.
+    # Use "unsafe-none" only if you need cross-origin popups (e.g. Google OAuth popup).
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+    # ── Cross-Origin-Embedder-Policy ─────────────────────────
+    # Required for SharedArrayBuffer; pair with COOP above.
+    # Comment out if it breaks third-party iframes/scripts.
+    # Cross-Origin-Embedder-Policy = "require-corp"
+
+    # ── Cross-Origin-Resource-Policy ─────────────────────────
+    # Prevents other origins from loading your assets via <img>/<script>.
+    Cross-Origin-Resource-Policy = "same-site"
+
+    # ── X-XSS-Protection ─────────────────────────────────────
+    # Legacy IE/Edge XSS filter. Modern browsers ignore it,
+    # but scanners still check for it. CSP is the real protection.
+    X-XSS-Protection = "1; mode=block"
+
+# ── Cache headers for static assets ──────────────────────────
+# Immutable hashed bundles from CRA (chunk.*.js / chunk.*.css)
+[[headers]]
+  for = "/static/*"
+
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Cache header for service worker (always fresh) ───────────
+[[headers]]
+  for = "/service-worker.js"
+
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ── Cache header for manifest ─────────────────────────────────
+[[headers]]
+  for = "/manifest.json"
+
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
