@@ -55,7 +55,9 @@
                   https://fonts.gstatic.com;
       img-src     'self' data: blob:
                   https://firebasestorage.googleapis.com
-                  https://lh3.googleusercontent.com
+                  https://*.googleusercontent.com
+                  https://*.githubusercontent.com
+                  https://customer-assets.emergentagent.com
                   https://api.discussit.in;
       connect-src 'self'
                   https://api.discussit.in
@@ -63,6 +65,7 @@
                   https://*.firebaseio.com
                   wss://*.firebaseio.com
                   https://*.googleapis.com
+                  wss://*.googleapis.com
                   https://identitytoolkit.googleapis.com
                   https://securetoken.googleapis.com
                   https://firebase.googleapis.com
