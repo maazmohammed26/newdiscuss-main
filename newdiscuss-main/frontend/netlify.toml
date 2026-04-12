@@ -14,6 +14,7 @@
   CI           = "false"
   NPM_FLAGS    = "--legacy-peer-deps"
   NODE_VERSION = "20.11.0"
+  INLINE_RUNTIME_CHUNK = "false"
 
 # ── SPA catch-all redirect ───────────────────────────────────
 # Must come BEFORE any [[headers]] blocks.
@@ -34,7 +35,6 @@
     # Submit to https://hstspreload.org after deploying.
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
 
-    # ── Content-Security-Policy ───────────────────────────────
     # Allows:
     #   • self          — same-origin assets / scripts / styles
     #   • Google Fonts  — fonts.googleapis.com (CSS) + fonts.gstatic.com (font files)
@@ -42,12 +42,10 @@
     #   • Firebase      — *.firebaseio.com, *.googleapis.com, *.firebase.google.com
     #   • WebSockets    — wss://api.discussit.in (real-time)
     #   • Images        — data: URIs for inline avatars, blob: for object URLs
-    #   • Frames        — blocked (DENY equivalent in CSP)
-    # 'unsafe-inline' is required for CRA / Tailwind runtime styles.
-    # Remove it once you adopt a nonce/hash-based approach.
+    #   • Frames        — firebase Auth redirects
     Content-Security-Policy = """
       default-src 'self';
-      script-src  'self' 'unsafe-inline' 'unsafe-eval'
+      script-src  'self'
                   https://www.gstatic.com
                   https://apis.google.com
                   https://www.googleapis.com;
