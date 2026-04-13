@@ -57,29 +57,25 @@ function AuthRedirect({ children }) {
 }
 
 function AuthStateWatcher() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
+  // All routes that require authentication
+  const PUBLIC_PATHS = new Set(['/', '/login', '/register', '/about', '/careers', '/blogs', '/contact']);
+  const isProtected = !PUBLIC_PATHS.has(location.pathname) &&
+    !location.pathname.startsWith('/about') &&
+    !location.pathname.startsWith('/careers') &&
+    !location.pathname.startsWith('/blogs') &&
+    !location.pathname.startsWith('/contact');
+
   useEffect(() => {
-    const protectedPaths = ['/feed', '/profile'];
-    if (!user && protectedPaths.includes(location.pathname)) {
-      navigate('/login', { replace: true });
+    // Only redirect after auth is resolved and user is confirmed absent
+    if (!loading && !user && isProtected) {
+      navigate('/login', { replace: true, state: { from: location } });
     }
-  }, [user, location.pathname, navigate]);
-  
-  useEffect(() => {
-    const handlePopState = () => {
-      const protectedPaths = ['/feed', '/profile'];
-      if (!user && protectedPaths.includes(window.location.pathname)) {
-        navigate('/login', { replace: true });
-      }
-    };
-    
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [user, navigate]);
-  
+  }, [user, loading, isProtected, location, navigate]);
+
   return null;
 }
 

@@ -12,7 +12,9 @@ import {
   onAuthStateChanged,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
-  signInWithEmailLink
+  signInWithEmailLink,
+  browserLocalPersistence,
+  setPersistence,
 } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -29,6 +31,13 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
 const auth = getAuth(app);
+
+// Explicitly set LOCAL persistence so sessions survive PWA cold restarts,
+// browser cache clears, and iOS Safari standalone mode edge cases.
+setPersistence(auth, browserLocalPersistence).catch((e) =>
+  console.warn('[Auth] setPersistence failed:', e?.code)
+);
+
 const googleProvider = new GoogleAuthProvider();
 
 export { 
@@ -55,7 +64,9 @@ export {
   onAuthStateChanged,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
-  signInWithEmailLink
+  signInWithEmailLink,
+  browserLocalPersistence,
+  setPersistence,
 };
 
 export default app;

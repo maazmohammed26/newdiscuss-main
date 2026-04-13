@@ -131,38 +131,41 @@ export function AuthProvider({ children }) {
   }, [syncUser]);
 
   useEffect(() => {
-    let authListenerRegistered = false;
-    let loadingTimeout = null;
+    // ── 0. If Firebase already has a currentUser (from IndexedDB on cold start)
+    //       rehydrate instantly so ProtectedRoute never flashes the login page.
+    if (auth.currentUser) {
+      syncUser(auth.currentUser).finally(() => setLoading(false));
+    }
 
-    // Safety net: if onAuthStateChanged never fires within 6s, unblock the UI
-    loadingTimeout = setTimeout(() => {
-      if (!authListenerRegistered) {
-        console.warn('Auth state timeout — forcing loading=false');
-        setLoading(false);
-      }
-    }, 6000);
+    // ── 1. Only call getRedirectResult in a browser tab (NOT in PWA standalone
+    //       or installed TWA). In standalone mode the function always returns null
+    //       or throws, adding ~1-3s of wasted latency on every cold start.
+    const isStandaloneMode =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true ||  // iOS Safari
+      document.referrer.includes('android-app://');
 
-    // Handle redirect result in a fully isolated block so it NEVER
-    // prevents the onAuthStateChanged listener from being wired up.
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) {
-          // Clear stale pending verification for OAuth providers
-          window.localStorage.removeItem('pendingVerification');
-          setPendingVerification(false);
-          await syncUser(result.user);
-        }
-      })
-      .catch((err) => {
-        console.warn('getRedirectResult error (non-critical):', err?.code || err?.message);
-      });
+    if (!isStandaloneMode) {
+      getRedirectResult(auth)
+        .then(async (result) => {
+          if (result?.user) {
+            window.localStorage.removeItem('pendingVerification');
+            setPendingVerification(false);
+            await syncUser(result.user);
+          }
+        })
+        .catch((err) => {
+          console.warn('getRedirectResult (non-critical):', err?.code || err?.message);
+        });
+    }
 
+    // ── 2. Subscribe to auth state changes.
+    //       No timeout guard — Firebase WILL fire this eventually.
+    //       The currentUser sync above already unblocked the UI for returning users.
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      authListenerRegistered = true;
-      clearTimeout(loadingTimeout);
-
+      // Skip if we already resolved via auth.currentUser above
+      // (onAuthStateChanged will still fire to keep things fresh)
       try {
-        // If there's a pending verification, don't auto-login password users
         const isPending = window.localStorage.getItem('pendingVerification');
         if (isPending && firebaseUser && firebaseUser.providerData[0]?.providerId === 'password') {
           await firebaseSignOut(auth);
@@ -180,14 +183,14 @@ export function AuthProvider({ children }) {
         await syncUser(firebaseUser);
       } catch (err) {
         console.error('onAuthStateChanged handler error:', err);
-        setUser(null);
+        // On error - if we have no user at all, set null so app doesn't hang
+        if (!auth.currentUser) setUser(null);
       } finally {
         setLoading(false);
       }
     });
 
     return () => {
-      clearTimeout(loadingTimeout);
       unsubscribe();
     };
   }, [syncUser]);
