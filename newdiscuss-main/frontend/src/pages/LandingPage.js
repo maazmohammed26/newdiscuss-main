@@ -86,6 +86,45 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="pt-16 pb-20 px-4 md:px-8">
         <div className="max-w-3xl mx-auto text-center">
+
+          {/* ⚡ Signal announcement pill — smooth scrolls to feature section */}
+          <button
+            onClick={() => document.getElementById('signal-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="group inline-flex items-center gap-2.5 mb-5 cursor-pointer"
+            style={{
+              padding: '6px 16px 6px 8px',
+              borderRadius: '100px',
+              background: 'linear-gradient(135deg,rgba(168,85,247,0.12),rgba(236,72,153,0.08))',
+              border: '1px solid rgba(168,85,247,0.28)',
+              transition: 'all 0.25s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background='linear-gradient(135deg,rgba(168,85,247,0.2),rgba(236,72,153,0.14))'; e.currentTarget.style.borderColor='rgba(168,85,247,0.5)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background='linear-gradient(135deg,rgba(168,85,247,0.12),rgba(236,72,153,0.08))'; e.currentTarget.style.borderColor='rgba(168,85,247,0.28)'; e.currentTarget.style.transform='translateY(0)'; }}
+          >
+            {/* Icon badge */}
+            <span
+              className="flex items-center justify-center w-5 h-5 rounded-full text-white"
+              style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)', flexShrink: 0 }}
+            >
+              <Zap style={{ width: '10px', height: '10px', fill: 'white' }} />
+            </span>
+            {/* Label */}
+            <span className="text-[12px] font-semibold" style={{ color: '#a855f7', letterSpacing: '0.01em' }}>
+              Introducing Signal
+            </span>
+            {/* Separator */}
+            <span className="text-[11px]" style={{ color: 'rgba(168,85,247,0.4)' }}>·</span>
+            {/* Tagline */}
+            <span className="text-[12px] text-neutral-600 dark:text-neutral-400" style={{ letterSpacing: '0.01em' }}>
+              ephemeral stories for developers
+            </span>
+            {/* Arrow */}
+            <ArrowRight
+              className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5"
+              style={{ color: '#a855f7', opacity: 0.7 }}
+            />
+          </button>
+
           <div className="inline-flex items-center gap-0 text-xs font-semibold px-4 py-2 rounded-[6px] mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
             <span className="text-[#EF4444]">&lt;</span>
             <span className="text-[#2563EB]">A Developer-First Platform</span>
@@ -177,7 +216,7 @@ export default function LandingPage() {
       {/* ───────────────────────────────────────────────────────
           Signal Feature Spotlight
       ─────────────────────────────────────────────────────── */}
-      <section className="py-16 px-4 md:px-8 overflow-hidden">
+      <section id="signal-section" className="py-16 px-4 md:px-8 overflow-hidden">
         <div className="max-w-5xl mx-auto">
           <div
             className="relative rounded-[20px] overflow-hidden"
