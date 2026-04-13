@@ -19,15 +19,185 @@ import {
   Trash2,
   User,
   Pause,
-  Play,
   Eye,
   Zap,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
+  Globe,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const STORY_DURATION_MS = 8000; // 8 s per story
+const STORY_DURATION_MS = 8000;
+
+// ─── Extract first URL from text ─────────────────────────────
+const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+function extractFirstUrl(text) {
+  if (!text) return null;
+  const match = text.match(URL_REGEX);
+  if (!match) return null;
+  const raw = match[0];
+  return raw.startsWith('www.') ? `https://${raw}` : raw;
+}
+
+// ─── URL Preview Card (Open Graph via microlink.io) ──────────
+function StoryUrlPreview({ url }) {
+  const [meta, setMeta] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!url) return;
+    let cancelled = false;
+    setLoading(true);
+    setFailed(false);
+    setMeta(null);
+
+    const fetchMeta = async () => {
+      try {
+        const res = await fetch(
+          `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
+          { signal: AbortSignal.timeout(6000) }
+        );
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.status === 'success') {
+          setMeta({
+            title: data.data.title || '',
+            description: data.data.description || '',
+            image: data.data.image?.url || null,
+            siteName: data.data.publisher || '',
+            domain: (() => {
+              try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+            })(),
+          });
+        } else {
+          setFailed(true);
+        }
+      } catch {
+        if (!cancelled) setFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchMeta();
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (loading) {
+    return (
+      <div
+        className="mt-4 rounded-[10px] overflow-hidden animate-pulse"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(168,85,247,0.2)',
+          height: '70px',
+        }}
+      />
+    );
+  }
+
+  if (failed || !meta) return null;
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        display: 'block',
+        marginTop: '16px',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid rgba(168,85,247,0.2)',
+        textDecoration: 'none',
+        flexShrink: 0,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        transition: 'background 0.2s',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(168,85,247,0.12)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+    >
+      <div style={{ display: 'flex', gap: 0 }}>
+        {/* Thumbnail */}
+        {meta.image && (
+          <div
+            style={{
+              width: '80px',
+              flexShrink: 0,
+              background: '#1a0a2e',
+              overflow: 'hidden',
+            }}
+          >
+            <img
+              src={meta.image}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+        )}
+        {/* Text meta */}
+        <div style={{ padding: '10px 12px', flex: 1, minWidth: 0 }}>
+          {/* Domain */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+            <Globe style={{ width: '10px', height: '10px', color: 'rgba(168,85,247,0.8)', flexShrink: 0 }} />
+            <span style={{
+              fontSize: '10px',
+              color: 'rgba(168,85,247,0.8)',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}>
+              {meta.siteName || meta.domain}
+            </span>
+          </div>
+          {/* Title */}
+          {meta.title && (
+            <p style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'rgba(255,255,255,0.9)',
+              lineHeight: 1.3,
+              marginBottom: '3px',
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}>
+              {meta.title}
+            </p>
+          )}
+          {/* Description */}
+          {meta.description && (
+            <p style={{
+              fontSize: '11px',
+              color: 'rgba(255,255,255,0.45)',
+              lineHeight: 1.4,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}>
+              {meta.description}
+            </p>
+          )}
+        </div>
+        {/* External icon */}
+        <div style={{ padding: '10px 10px 0 0', flexShrink: 0 }}>
+          <ExternalLink style={{ width: '12px', height: '12px', color: 'rgba(168,85,247,0.6)' }} />
+        </div>
+      </div>
+    </a>
+  );
+}
+
 
 // ─── Relative time helper ────────────────────────────────────
 function relativeTime(ts) {
@@ -401,13 +571,16 @@ function SignalStoryViewer({
         </div>
 
         {/* Story content — text is non-selectable; only links are interactive */}
-        <div className="flex-1 flex items-center justify-center px-6 py-4 pt-24 pb-16">
+        <div className="flex-1 flex flex-col justify-center px-6 py-4 pt-24 pb-16 overflow-y-auto scrollbar-hide">
+          {/* Text with whitespace exactly as typed */}
           <div
-            className="w-full max-h-full overflow-y-auto scrollbar-hide text-white text-[17px] leading-relaxed font-medium break-words"
+            className="w-full text-white text-[17px] leading-relaxed font-medium break-words"
             style={{
               textShadow: '0 1px 8px rgba(0,0,0,0.5)',
               userSelect: 'none',
               WebkitUserSelect: 'none',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -431,6 +604,18 @@ function SignalStoryViewer({
               return <span key={index}>{part.content}</span>;
             })}
           </div>
+
+          {/* URL Preview Card — only if a URL exists in the story */}
+          {(() => {
+            const firstUrl = extractFirstUrl(currentStory.text);
+            if (!firstUrl) return null;
+            return (
+              <StoryUrlPreview
+                key={currentStory.id + firstUrl}
+                url={firstUrl}
+              />
+            );
+          })()}
         </div>
 
         {/* Signal badge */}
