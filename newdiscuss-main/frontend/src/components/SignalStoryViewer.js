@@ -49,6 +49,18 @@ function StoryUrlPreview({ url }) {
   useEffect(() => {
     if (!url) return;
     let cancelled = false;
+
+    // Check sessionStorage cache first — instant on repeat views
+    const CACHE_KEY = `sig_og_${url}`;
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        setMeta(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+    } catch {}
+
     setLoading(true);
     setFailed(false);
     setMeta(null);
@@ -57,12 +69,12 @@ function StoryUrlPreview({ url }) {
       try {
         const res = await fetch(
           `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
-          { signal: AbortSignal.timeout(6000) }
+          { signal: AbortSignal.timeout(4000) }
         );
         const data = await res.json();
         if (cancelled) return;
         if (data.status === 'success') {
-          setMeta({
+          const result = {
             title: data.data.title || '',
             description: data.data.description || '',
             image: data.data.image?.url || null,
@@ -70,7 +82,10 @@ function StoryUrlPreview({ url }) {
             domain: (() => {
               try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
             })(),
-          });
+          };
+          // Cache result for this session
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(result)); } catch {}
+          setMeta(result);
         } else {
           setFailed(true);
         }

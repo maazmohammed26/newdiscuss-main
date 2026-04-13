@@ -174,6 +174,178 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ───────────────────────────────────────────────────────
+          Signal Feature Spotlight
+      ─────────────────────────────────────────────────────── */}
+      <section className="py-16 px-4 md:px-8 overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <div
+            className="relative rounded-[20px] overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 55%,#0a1628 100%)',
+              border: '1px solid rgba(168,85,247,0.25)',
+              boxShadow: '0 24px 60px rgba(168,85,247,0.12)',
+            }}
+          >
+            {/* Decorative glow blobs */}
+            <div style={{
+              position: 'absolute', top: '-60px', right: '-60px',
+              width: '260px', height: '260px', borderRadius: '50%',
+              background: 'radial-gradient(circle,rgba(168,85,247,0.18) 0%,transparent 70%)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: '-40px', left: '-40px',
+              width: '200px', height: '200px', borderRadius: '50%',
+              background: 'radial-gradient(circle,rgba(236,72,153,0.15) 0%,transparent 70%)',
+              pointerEvents: 'none',
+            }} />
+
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-0">
+              {/* Left copy */}
+              <div className="p-8 md:p-12 flex flex-col justify-center">
+                {/* Badge */}
+                <div
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-5 self-start"
+                  style={{
+                    background: 'rgba(168,85,247,0.18)',
+                    border: '1px solid rgba(168,85,247,0.35)',
+                    color: '#c084fc',
+                  }}
+                >
+                  <Zap className="w-3 h-3 fill-current" />
+                  New · Signal
+                </div>
+
+                <h2
+                  className="font-heading text-3xl sm:text-4xl font-bold leading-tight mb-4"
+                  style={{ color: '#f5f3ff' }}
+                >
+                  Share your thoughts,
+                  <br />
+                  <span style={{
+                    background: 'linear-gradient(90deg,#a855f7,#ec4899)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>gone in 24 hours.</span>
+                </h2>
+
+                <p className="text-[14px] leading-relaxed mb-7" style={{ color: 'rgba(245,243,255,0.6)' }}>
+                  Signal is Discuss's ephemeral story layer. Post a thought, a link,
+                  or an update — it lives for 24 hours, then disappears automatically.
+                  No clutter. Pure signal.
+                </p>
+
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Text stories up to 350 characters',
+                    'Auto-detects & previews any URL you share',
+                    'Seen by everyone on the platform',
+                    'Auto-deletes after 24 hours — zero cleanup needed',
+                    'Real-time view counts visible only to you',
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-[13px]" style={{ color: 'rgba(245,243,255,0.75)' }}>
+                      <span
+                        className="mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
+                        style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)', color: '#fff' }}
+                      >
+                        ✓
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link to="/register">
+                  <button
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-[13px] font-bold text-white transition-all"
+                    style={{
+                      background: 'linear-gradient(135deg,#a855f7,#ec4899)',
+                      boxShadow: '0 8px 24px rgba(168,85,247,0.35)',
+                    }}
+                  >
+                    <Zap className="w-4 h-4 fill-white" />
+                    Try Signal Now
+                  </button>
+                </Link>
+              </div>
+
+              {/* Right visual — story mockup */}
+              <div className="p-6 md:p-10 flex items-center justify-center">
+                <div
+                  className="w-full max-w-[260px] rounded-[18px] overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(160deg,#1a1030 0%,#0f1825 100%)',
+                    border: '1px solid rgba(168,85,247,0.2)',
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+                    aspectRatio: '9/16',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Progress bar mock */}
+                  <div className="absolute top-3 left-3 right-3 flex gap-1">
+                    {[100, 40].map((w, i) => (
+                      <div key={i} className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${w}%`, background: 'linear-gradient(90deg,#a855f7,#ec4899)' }} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Author row mock */}
+                  <div className="absolute" style={{ top: '24px', left: '12px', right: '12px' }}>
+                    <div className="flex items-center gap-2 mt-4">
+                      <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)' }} />
+                      <div>
+                        <div className="text-white text-[11px] font-semibold">your_username</div>
+                        <div className="text-white/50 text-[9px]">2m · Signal</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Story text mock */}
+                  <div
+                    className="absolute px-4"
+                    style={{ top: '50%', transform: 'translateY(-50%)', left: 0, right: 0 }}
+                  >
+                    <p className="text-white text-[13px] font-medium leading-relaxed" style={{ whiteSpace: 'pre-wrap' }}>
+                      {"Tried Signal yet? ⚡\n\nShare a thought with the community.\n\nIt's gone in 24h. 🕐"}
+                    </p>
+                    {/* URL preview mock */}
+                    <div
+                      className="mt-3 rounded-[8px] overflow-hidden"
+                      style={{
+                        background: 'rgba(255,255,255,0.07)',
+                        border: '1px solid rgba(168,85,247,0.25)',
+                      }}
+                    >
+                      <div className="flex">
+                        <div className="w-12 h-12 flex-shrink-0" style={{ background: 'linear-gradient(135deg,#7c3aed,#db2777)' }} />
+                        <div className="p-2 min-w-0">
+                          <div className="text-[9px] font-bold uppercase tracking-wider" style={{ color: '#c084fc' }}>discuss.io</div>
+                          <div className="text-white text-[10px] font-semibold mt-0.5 truncate">Discuss Developer Platform</div>
+                          <div className="text-white/40 text-[9px] truncate">A space for developers to connect</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom badge mock */}
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                    <div
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(168,85,247,0.2)', border: '1px solid rgba(168,85,247,0.3)' }}
+                    >
+                      <Zap className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />
+                      <span className="text-purple-300 text-[9px] font-bold uppercase tracking-wider">Signal</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Target Users */}
       <section className="py-16 px-4 md:px-8">
         <div className="max-w-4xl mx-auto">
