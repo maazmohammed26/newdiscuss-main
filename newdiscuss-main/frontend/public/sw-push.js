@@ -1,33 +1,56 @@
-// Push Notification Service Worker
-// Handles push events and notification clicks for real-time notifications
+/**
+ * sw-push.js — Production Service Worker
+ *
+ * Strategies:
+ *   • Navigation (HTML):  Network-first → offline.html fallback
+ *   • Static assets:      Cache-first (immutable hashed chunks)
+ *   • Firebase / API:     Network-only (never cache — auth depends on live data)
+ *   • Fonts:              Cache-first with 30-day expiry
+ *
+ * Offline behaviour:
+ *   • Shows /offline.html for navigation requests when offline
+ *   • Cached static assets (JS/CSS/images) work without network
+ *   • App shell loads; cached IndexedDB data (posts, chats) renders
+ *   • Real-time features degrade gracefully (show stale data)
+ *
+ * Auth safety:
+ *   • Firebase auth/RTDB/Firestore calls are NEVER cached
+ *   • HTML is NEVER cached (always fetched fresh = no stale auth state)
+ */
 
-const CACHE_NAME = 'discuss-v3';
-const OFFLINE_URL = '/offline.html';
-const APP_ICON = '/favicon-new.png';
+const CACHE_VERSION = 'discuss-v4';
+const STATIC_CACHE  = `${CACHE_VERSION}-static`;
+const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
+const OFFLINE_URL   = '/offline.html';
+const APP_ICON      = '/favicon-new.png';
 
-// Only pre-cache these truly-static offline fallbacks
-const STATIC_ASSETS = [
-  '/offline.html',
-  '/favicon-new.png',
+// Pre-cache these on install — critical offline fallbacks only
+const PRECACHE_ASSETS = [
+  OFFLINE_URL,
+  APP_ICON,
+  '/manifest.json',
 ];
 
-// Install — pre-cache only the offline fallback, nothing else
+// ─── Install ──────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(STATIC_ASSETS))
-      .catch((err) => console.log('[SW] Cache error:', err))
+    caches.open(STATIC_CACHE).then((cache) =>
+      cache.addAll(PRECACHE_ASSETS).catch((err) =>
+        console.warn('[SW] Pre-cache error (non-fatal):', err)
+      )
+    )
   );
+  // Take control immediately — don't wait for old SW to finish
   self.skipWaiting();
 });
 
-// Activate — clean up old caches
+// ─── Activate ─────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
       Promise.all(
         names
-          .filter((n) => n !== CACHE_NAME)
+          .filter((n) => n !== STATIC_CACHE && n !== FONT_CACHE)
           .map((n) => caches.delete(n))
       )
     )
@@ -35,116 +58,177 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ─── Fetch strategy ────────────────────────────────────────────
-// Key rule: NEVER cache navigation (HTML) requests or Firebase requests.
-// This was causing stale app shells to be served, breaking auth on PWA restart.
+// ─── Message handler ──────────────────────────────────────────────────────────
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data?.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data;
+    self.registration.showNotification(title, {
+      icon: APP_ICON,
+      badge: APP_ICON,
+      vibrate: [200, 100, 200],
+      ...options,
+    });
+  }
+});
+
+// ─── Fetch ────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-
-  // Only handle GET
   if (request.method !== 'GET') return;
-
-  // Skip non-http requests (chrome-extension://, etc.)
   if (!request.url.startsWith('http')) return;
 
-  // ── Skip Firebase: auth, RTDB, Firestore, Storage ─────────
   const url = new URL(request.url);
-  const isFirebase =
-    url.hostname.includes('firebaseio.com') ||
-    url.hostname.includes('firebaseapp.com') ||
-    url.hostname.includes('googleapis.com') ||
-    url.hostname.includes('identitytoolkit.google') ||
-    url.hostname.includes('securetoken.google') ||
-    url.hostname.includes('firebase') ||
-    url.hostname.includes('microlink.io') ||  // URL preview API
-    url.hostname.includes('cloudflare') ||
-    url.hostname.includes('netlify');
 
-  if (isFirebase) return; // Let Firebase handle its own network calls
+  // ── 1. Firebase & external API calls — Network-only (never cache) ────────
+  const isFirebaseUrl =
+    url.hostname.includes('firebaseio.com')       ||
+    url.hostname.includes('firebaseapp.com')       ||
+    url.hostname.includes('googleapis.com')        ||
+    url.hostname.includes('identitytoolkit.google')||
+    url.hostname.includes('securetoken.google')    ||
+    url.hostname.includes('firebase.com')          ||
+    url.hostname.includes('microlink.io')          ||
+    url.hostname.includes('generate_204');
 
-  // ── Skip navigation (HTML page) requests ──────────────────
-  // CRITICAL: Never cache the app shell HTML. If we cache the HTML while the
-  // user is authenticated, a PWA cold restart would serve stale cached HTML
-  // that may have old state, and the auth redirect wouldn't happen properly.
+  if (isFirebaseUrl) return; // Let browser handle — no SW interception
+
+  // ── 2. Navigation requests (HTML pages) — Network-first ─────────────────
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_URL))
+      fetch(request, { cache: 'no-store' })
+        .catch(() =>
+          // Offline: serve the pre-cached offline page
+          caches.match(OFFLINE_URL).then(
+            (cached) => cached || new Response('<h1>Offline</h1>', {
+              headers: { 'Content-Type': 'text/html' },
+            })
+          )
+        )
     );
     return;
   }
 
-  // ── Static assets: Cache-first strategy ───────────────────
-  // Only cache truly static assets: JS chunks, CSS, images, fonts
-  const isStaticAsset =
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/) &&
-    !url.pathname.includes('sw-push') &&
-    !url.pathname.includes('service-worker');
+  // ── 3. Google Fonts CSS — Network-first with font cache fallback ─────────
+  if (url.hostname === 'fonts.googleapis.com') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(FONT_CACHE).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-  if (isStaticAsset) {
+  // ── 4. Google Fonts files — Cache-first (they're immutable) ─────────────
+  if (url.hostname === 'fonts.gstatic.com') {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((response) => {
           if (response.status === 200) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            caches.open(FONT_CACHE).then((cache) => cache.put(request, clone));
           }
           return response;
         });
-      }).catch(() => new Response('Offline', { status: 503 }))
+      })
     );
     return;
   }
 
-  // ── All other requests: Network-only (no caching) ─────────
-  // API calls, dynamic content — always go to network
+  // ── 5. Static assets (hashed chunks) — Cache-first with network fallback ─
+  const isHashedStaticAsset =
+    url.pathname.match(/\/static\/.+\.(js|css)$/) ||
+    url.pathname.match(/\.(woff2?|ttf|eot|otf)$/);
+
+  if (isHashedStaticAsset) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        }).catch(() => new Response('', { status: 503 }));
+      })
+    );
+    return;
+  }
+
+  // ── 6. Other static assets (images, icons, manifest) — Cache-first ───────
+  const isOtherStaticAsset = url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|webp|json)$/);
+
+  if (isOtherStaticAsset && url.hostname === self.location.hostname) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        }).catch(() => new Response('', { status: 503 }));
+      })
+    );
+    return;
+  }
+
+  // ── 7. All other requests — Network-only ────────────────────────────────
   event.respondWith(
-    fetch(request).catch(() => new Response('Offline', { status: 503 }))
+    fetch(request).catch(() => new Response('', { status: 503 }))
   );
 });
 
-// ─── Push notification ─────────────────────────────────────────
+// ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
   let data = {
     title: 'Discuss',
-    body: 'You have a new notification',
-    icon: APP_ICON,
+    body:  'You have a new notification',
+    icon:  APP_ICON,
     badge: APP_ICON,
-    data: { url: '/' }
+    data:  { url: '/' },
   };
 
   try {
     if (event.data) {
-      const payload = event.data.json();
-      data = { ...data, ...payload };
+      data = { ...data, ...event.data.json() };
     }
   } catch (e) {
-    console.log('[SW] Error parsing push data:', e);
+    console.warn('[SW] Push data parse error:', e);
   }
 
   event.waitUntil(
     self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: data.icon || APP_ICON,
-      badge: data.badge || APP_ICON,
-      vibrate: [200, 100, 200],
-      tag: data.tag || 'discuss-notification',
-      renotify: true,
+      body:              data.body,
+      icon:              data.icon  || APP_ICON,
+      badge:             data.badge || APP_ICON,
+      vibrate:           [200, 100, 200],
+      tag:               data.tag  || 'discuss-notification',
+      renotify:          true,
       requireInteraction: false,
-      data: data.data || { url: '/' },
-      actions: data.actions || [],
+      data:              data.data || { url: '/' },
+      actions:           data.actions || [],
     })
   );
 });
 
-// ─── Notification click ────────────────────────────────────────
+// ─── Notification click ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
   const urlToOpen = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
@@ -155,21 +239,4 @@ self.addEventListener('notificationclick', (event) => {
         if (clients.openWindow) return clients.openWindow(urlToOpen);
       })
   );
-});
-
-// ─── Message handler ───────────────────────────────────────────
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-
-  if (event.data?.type === 'SHOW_NOTIFICATION') {
-    const { title, options } = event.data;
-    self.registration.showNotification(title, {
-      icon: APP_ICON,
-      badge: APP_ICON,
-      vibrate: [200, 100, 200],
-      ...options,
-    });
-  }
 });

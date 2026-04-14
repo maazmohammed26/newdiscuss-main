@@ -1,14 +1,26 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, get, set, push, update, remove, onValue, off, query, orderByChild } from 'firebase/database';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithRedirect, 
-  getRedirectResult, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+  push,
+  update,
+  remove,
+  onValue,
+  off,
+  query,
+  orderByChild,
+} from 'firebase/database';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
@@ -25,38 +37,42 @@ const firebaseConfig = {
   storageBucket: "discuss-13fbc.firebasestorage.app",
   messagingSenderId: "922676469024",
   appId: "1:922676469024:web:1c81d8dfc6a914d9d2cb45",
-  measurementId: "G-Y5S2G2EXDP"
+  measurementId: "G-Y5S2G2EXDP",
 };
 
+// ── Initialize app (singleton) ─────────────────────────────────────────────
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
 const auth = getAuth(app);
-
-// Explicitly set LOCAL persistence so sessions survive PWA cold restarts,
-// browser cache clears, and iOS Safari standalone mode edge cases.
-setPersistence(auth, browserLocalPersistence).catch((e) =>
-  console.warn('[Auth] setPersistence failed:', e?.code)
-);
-
 const googleProvider = new GoogleAuthProvider();
 
-export { 
+// ── authReady: resolves once persistence is set ────────────────────────────
+// Any code that reads auth state should await this first so that the
+// persistence layer (IndexedDB) is wired up before onAuthStateChanged fires.
+export const authReady = setPersistence(auth, browserLocalPersistence)
+  .then(() => auth)
+  .catch((e) => {
+    console.warn('[Auth] setPersistence failed (non-critical):', e?.code);
+    return auth; // Continue with default persistence on error
+  });
+
+export {
   app,
-  database, 
-  auth, 
+  database,
+  auth,
   googleProvider,
-  ref, 
+  ref,
   get,
   set,
   push,
   update,
   remove,
-  onValue, 
+  onValue,
   off,
   query,
   orderByChild,
-  signInWithPopup, 
-  signInWithRedirect, 
+  signInWithPopup,
+  signInWithRedirect,
   getRedirectResult,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

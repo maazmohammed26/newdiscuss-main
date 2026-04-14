@@ -1,129 +1,110 @@
 # ============================================================
-# netlify.toml — discussit.in
-# Security grade: A+ target (securityheaders.com)
-# Last updated: 2026-04-12
+# netlify.toml — Discuss PWA (Production)
+# Security target: A+ (securityheaders.com)
+# Last updated: 2026-04-14
 # ============================================================
 
-# ── Build ────────────────────────────────────────────────────
+# ── Build ─────────────────────────────────────────────────────
 [build]
   base    = "newdiscuss-main/frontend"
   command = "yarn build"
   publish = "build"
 
 [build.environment]
-  CI           = "false"
-  NPM_FLAGS    = "--legacy-peer-deps"
-  NODE_VERSION = "20.11.0"
+  CI                   = "false"
+  NPM_FLAGS            = "--legacy-peer-deps"
+  NODE_VERSION         = "20.11.0"
   INLINE_RUNTIME_CHUNK = "false"
 
-# ── SPA catch-all redirect ───────────────────────────────────
-# Must come BEFORE any [[headers]] blocks.
-# React Router needs every path to serve index.html (status 200 = rewrite).
+# ── SPA catch-all redirect ────────────────────────────────────
+# React Router: every path must serve index.html (status 200 = rewrite)
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
   status = 200
 
-# ── Global security headers (applied to every response) ──────
+# ── Global security headers ───────────────────────────────────
 [[headers]]
   for = "/*"
 
   [headers.values]
 
-    # ── Strict-Transport-Security (HSTS) ─────────────────────
-    # max-age = 2 years; includeSubDomains + preload for HSTS preload list.
-    # Submit to https://hstspreload.org after deploying.
+    # HSTS — 2 years, include subdomains, preload list eligible
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
 
-    # Allows:
-    #   • self          — same-origin assets / scripts / styles
-    #   • Google Fonts  — fonts.googleapis.com (CSS) + fonts.gstatic.com (font files)
-    #   • API           — api.discussit.in  (XHR/fetch)
-    #   • Firebase      — *.firebaseio.com, *.googleapis.com, *.firebase.google.com
-    #   • WebSockets    — wss://api.discussit.in (real-time)
-    #   • Images        — data: URIs for inline avatars, blob: for object URLs
-    #   • Frames        — firebase Auth redirects
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src  'self' 'unsafe-inline' 'unsafe-eval'
-                  https://*.google.com
-                  https://*.gstatic.com
-                  https://*.firebaseapp.com
-                  https://*.googleapis.com;
-      style-src   'self' 'unsafe-inline'
-                  https://fonts.googleapis.com;
-      font-src    'self'
-                  https://fonts.gstatic.com;
-      img-src     * data: blob:;
-      connect-src * wss://* data: blob:;
-      frame-src   *;
-      frame-ancestors 'none';
-      object-src  'none';
-      base-uri    'self';
-      form-action 'self';
-      upgrade-insecure-requests;
-    """
+    # CSP — explicitly allow only what the app needs:
+    #   • self           — same-origin assets / scripts / styles
+    #   • Firebase       — auth, RTDB, Firestore, Functions
+    #   • Google Fonts   — font CSS + font files
+    #   • Identitytoolkit — Firebase Auth REST API
+    #   • data:/blob:    — inline SVG, object URLs
+    #   • wss:           — Firebase RTDB WebSocket
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.gstatic.com https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src * data: blob:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseapp.com https://*.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com https://www.google.com data: blob:; frame-src https://*.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
 
-    # ── X-Frame-Options ───────────────────────────────────────
-    # Prevents clickjacking. DENY = page cannot be framed at all.
+    # Clickjacking protection
     X-Frame-Options = "DENY"
 
-    # ── X-Content-Type-Options ────────────────────────────────
-    # Stops browsers from MIME-sniffing response content types.
+    # MIME-sniffing protection
     X-Content-Type-Options = "nosniff"
 
-    # ── Referrer-Policy ───────────────────────────────────────
-    # Sends full URL to same-origin; only origin to cross-origin HTTPS.
+    # Referrer info — full URL same-origin, only origin cross-origin HTTPS
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-    # ── Permissions-Policy ────────────────────────────────────
-    # Opt out of browser features the app doesn't use.
+    # Disable unused device APIs
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
 
-    # ── Cross-Origin-Opener-Policy ────────────────────────────
-    # Isolates the browsing context; mitigates Spectre-style attacks.
-    # Required to be unsafe-none or absent for Firebase Google Auth popups to work.
-    # Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    # Required for Google Auth popup to work across browser contexts.
+    # "same-origin-allow-popups" allows Firebase signInWithPopup() while
+    # still preventing Spectre-style cross-origin attacks.
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
 
-    # ── Cross-Origin-Embedder-Policy ─────────────────────────
-    # Required for SharedArrayBuffer; pair with COOP above.
-    # Comment out if it breaks third-party iframes/scripts.
-    # Cross-Origin-Embedder-Policy = "require-corp"
+    # Prevent other origins from hot-linking same-origin assets
+    Cross-Origin-Resource-Policy = "cross-origin"
 
-    # ── Cross-Origin-Resource-Policy ─────────────────────────
-    # Prevents other origins from loading your assets via <img>/<script>.
-    # Cross-Origin-Resource-Policy = "same-site"
-
-    # ── X-XSS-Protection ─────────────────────────────────────
-    # Legacy IE/Edge XSS filter. Modern browsers ignore it,
-    # but scanners still check for it. CSP is the real protection.
+    # Legacy XSS filter (modern browsers ignore it but scanners check)
     X-XSS-Protection = "1; mode=block"
 
-# ── Cache headers for static assets ──────────────────────────
-# Immutable hashed bundles from CRA (chunk.*.js / chunk.*.css)
+    # Prevent DNS prefetch info leakage
+    X-DNS-Prefetch-Control = "off"
+
+# ── Cache: immutable hashed static bundles ────────────────────
 [[headers]]
   for = "/static/*"
 
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# ── Cache header for service worker (always fresh) ───────────
+# ── Cache: HTML — never cache to prevent stale auth state ─────
 [[headers]]
-  for = "/service-worker.js"
+  for = "/index.html"
 
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma        = "no-cache"
 
-# ── Cache header for sw-push.js (always fresh, never stale) ──
+# ── Cache: service worker — always fresh ──────────────────────
 [[headers]]
   for = "/sw-push.js"
 
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-# ── Cache header for manifest ─────────────────────────────────
+[[headers]]
+  for = "/service-worker.js"
+
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ── Cache: manifest — 1 day ───────────────────────────────────
 [[headers]]
   for = "/manifest.json"
+
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# ── Cache: offline page — always available ────────────────────
+[[headers]]
+  for = "/offline.html"
 
   [headers.values]
     Cache-Control = "public, max-age=86400"
