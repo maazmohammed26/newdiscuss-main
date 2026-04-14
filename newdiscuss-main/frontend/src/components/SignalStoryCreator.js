@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createStory } from '@/lib/storiesDb';
@@ -96,10 +97,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         {/* Author row */}
         <div className="flex items-center gap-2.5 px-5 pb-3">
           {user?.photo_url ? (
-            <img referrerPolicy="no-referrer" src={user.photo_url}
-              alt={user.username}
-              className="w-8 h-8 rounded-full object-cover ring-2 ring-purple-400/40"
-            />
+            <UserAvatar src={user.photo_url} username={user.username} className="w-8 h-8 rounded-full object-cover ring-2 ring-purple-400/40" />
           ) : (
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"

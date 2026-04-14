@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import {
   useState,
   useEffect,
@@ -458,10 +459,7 @@ function SignalStoryViewer({
           <div className="flex items-center gap-2.5">
             {/* Author avatar */}
             {currentGroup.authorPhotoUrl ? (
-              <img referrerPolicy="no-referrer" src={currentGroup.authorPhotoUrl}
-                alt={currentGroup.authorUsername}
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-400/60"
-              />
+              <UserAvatar src={currentGroup.authorPhotoUrl} username={currentGroup.authorUsername} className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-400/60" />
             ) : (
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold ring-2 ring-purple-400/60"

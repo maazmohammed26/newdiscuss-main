@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -423,10 +424,7 @@ export default function ChatPage() {
       >
         <div className="relative shrink-0">
           {otherUser.photo_url ? (
-            <img referrerPolicy="no-referrer" src={otherUser.photo_url}
-              alt={otherUser.username}
-              className="w-12 h-12 rounded-full object-cover"
-            />
+            <UserAvatar src={otherUser.photo_url} username={otherUser.username} className="w-12 h-12 rounded-full object-cover" />
           ) : (
             <div className="w-12 h-12 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
               <span className="text-white font-bold">{initials}</span>
@@ -541,10 +539,7 @@ export default function ChatPage() {
         className="w-full flex items-center gap-3 p-3 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] hover:shadow-card-hover dark:hover:shadow-none transition-all border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card"
       >
         {friend.photo_url ? (
-          <img referrerPolicy="no-referrer" src={friend.photo_url}
-            alt={friend.username}
-            className="w-12 h-12 rounded-full object-cover shrink-0"
-          />
+          <UserAvatar src={friend.photo_url} username={friend.username} className="w-12 h-12 rounded-full object-cover shrink-0" />
         ) : (
           <div className="w-12 h-12 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center shrink-0">
             <span className="text-white font-bold">{initials}</span>

@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -417,7 +418,7 @@ export default function GroupInfoPage() {
                   return (
                     <div key={member.userId} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
                       <button onClick={() => handleUserClick(member.userId)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                        {details?.photo_url ? <img referrerPolicy="no-referrer" src={details.photo_url} alt="" className="w-10 h-10 rounded-full shrink-0" /> : (
+                        {details?.photo_url ? <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full shrink-0" /> : (
                           <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center shrink-0">
                             <span className="text-white font-bold text-sm">{details?.username?.slice(0, 2).toUpperCase()}</span>
                           </div>
@@ -455,7 +456,7 @@ export default function GroupInfoPage() {
                   return (
                     <div key={member.userId} className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
                       <button onClick={() => handleUserClick(member.userId)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                        {details?.photo_url ? <img referrerPolicy="no-referrer" src={details.photo_url} alt="" className="w-10 h-10 rounded-full shrink-0" /> : (
+                        {details?.photo_url ? <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full shrink-0" /> : (
                           <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center shrink-0">
                             <span className="text-white font-bold text-sm">{details?.username?.slice(0, 2).toUpperCase()}</span>
                           </div>
@@ -539,7 +540,7 @@ export default function GroupInfoPage() {
                 filteredUsers.map(u => (
                   <div key={u.id} className="flex items-center justify-between p-2 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
                     <div className="flex items-center gap-3">
-                      {u.photo_url ? <img referrerPolicy="no-referrer" src={u.photo_url} alt="" className="w-10 h-10 rounded-full" /> : (
+                      {u.photo_url ? <UserAvatar src={u.photo_url} username={u.username} className="w-10 h-10 rounded-full" /> : (
                         <div className="w-10 h-10 rounded-full bg-[#2563EB] flex items-center justify-center">
                           <span className="text-white font-bold text-sm">{u.username?.slice(0, 2).toUpperCase()}</span>
                         </div>

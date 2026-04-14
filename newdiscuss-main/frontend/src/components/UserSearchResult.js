@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FriendRequestButton from './FriendRequestButton';
@@ -25,10 +26,7 @@ export default function UserSearchResult({
         className="flex items-center gap-3 flex-1 min-w-0 text-left"
       >
         {user.photo_url ? (
-          <img referrerPolicy="no-referrer" src={user.photo_url}
-            alt={user.username}
-            className="w-10 h-10 rounded-full object-cover shrink-0"
-          />
+          <UserAvatar src={user.photo_url} username={user.username} className="w-10 h-10 rounded-full object-cover shrink-0" />
         ) : (
           <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center shrink-0">
             <span className="text-white text-sm font-bold">{initials}</span>

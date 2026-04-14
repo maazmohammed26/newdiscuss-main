@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -570,7 +571,7 @@ export default function ProfilePage() {
               onClick={() => setShowImagePreview(true)}
               className="relative group mx-auto mb-5 block"
             >
-              <img referrerPolicy="no-referrer" src={user.photo_url} alt={user.username} className="w-24 h-24 mx-auto shadow-lg discuss:shadow-none object-cover discuss:border discuss:border-[#333333] rounded-full group-hover:opacity-90 transition-opacity" />
+              <UserAvatar src={user.photo_url} username={user.username} className="w-24 h-24 mx-auto shadow-lg discuss:shadow-none object-cover discuss:border discuss:border-[#333333] rounded-full group-hover:opacity-90 transition-opacity" />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="bg-black/50 rounded-full p-2">
                   <ImageIcon className="w-5 h-5 text-white" />
@@ -916,7 +917,7 @@ export default function ProfilePage() {
                             className="flex items-center gap-3 flex-1 min-w-0"
                           >
                             {reqUser?.photo_url ? (
-                              <img referrerPolicy="no-referrer" src={reqUser.photo_url} alt={reqUser.username} className="w-10 h-10 rounded-full object-cover" />
+                              <UserAvatar src={reqUser.photo_url} username={reqUser.username} className="w-10 h-10 rounded-full object-cover" />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                                 <span className="text-white text-sm font-bold">{initials}</span>
@@ -976,7 +977,7 @@ export default function ProfilePage() {
                             className="flex items-center gap-3 flex-1 min-w-0"
                           >
                             {reqUser?.photo_url ? (
-                              <img referrerPolicy="no-referrer" src={reqUser.photo_url} alt={reqUser.username} className="w-10 h-10 rounded-full object-cover" />
+                              <UserAvatar src={reqUser.photo_url} username={reqUser.username} className="w-10 h-10 rounded-full object-cover" />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                                 <span className="text-white text-sm font-bold">{initials}</span>
@@ -1083,7 +1084,7 @@ export default function ProfilePage() {
                                   className="flex items-center gap-3 flex-1 min-w-0"
                                 >
                                   {suggested.photo_url ? (
-                                    <img referrerPolicy="no-referrer" src={suggested.photo_url} alt={suggested.username} className="w-10 h-10 rounded-full object-cover" />
+                                    <UserAvatar src={suggested.photo_url} username={suggested.username} className="w-10 h-10 rounded-full object-cover" />
                                   ) : (
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] discuss:from-[#EF4444] discuss:to-[#F59E0B] flex items-center justify-center">
                                       <span className="text-white text-sm font-bold">{initials}</span>
@@ -1134,7 +1135,7 @@ export default function ProfilePage() {
                             className="flex items-center gap-3 flex-1 min-w-0"
                           >
                             {friend.photo_url ? (
-                              <img referrerPolicy="no-referrer" src={friend.photo_url} alt={friend.username} className="w-10 h-10 rounded-full object-cover" />
+                              <UserAvatar src={friend.photo_url} username={friend.username} className="w-10 h-10 rounded-full object-cover" />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                                 <span className="text-white text-sm font-bold">{initials}</span>
@@ -1186,7 +1187,7 @@ export default function ProfilePage() {
                                   className="flex items-center gap-3 flex-1 min-w-0"
                                 >
                                   {suggested.photo_url ? (
-                                    <img referrerPolicy="no-referrer" src={suggested.photo_url} alt={suggested.username} className="w-10 h-10 rounded-full object-cover" />
+                                    <UserAvatar src={suggested.photo_url} username={suggested.username} className="w-10 h-10 rounded-full object-cover" />
                                   ) : (
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] discuss:from-[#EF4444] discuss:to-[#F59E0B] flex items-center justify-center">
                                       <span className="text-white text-sm font-bold">{initials}</span>

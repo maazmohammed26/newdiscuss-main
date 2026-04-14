@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -216,7 +217,7 @@ export default function JoinRequestsPage() {
                               <div key={request.userId} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700 discuss:bg-[#262626] rounded-lg">
                                 <div className="flex items-center gap-3">
                                   {details?.photo_url ? (
-                                    <img referrerPolicy="no-referrer" src={details.photo_url} alt="" className="w-10 h-10 rounded-full" />
+                                    <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full" />
                                   ) : (
                                     <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                                       <span className="text-white font-bold text-sm">

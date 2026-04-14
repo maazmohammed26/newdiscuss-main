@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { database, ref, onValue } from '@/lib/firebase';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -632,10 +633,7 @@ export default function ChatConversationPage() {
               className="flex items-center gap-3"
             >
               {otherUser.photo_url ? (
-                <img referrerPolicy="no-referrer" src={otherUser.photo_url}
-                  alt={otherUser.username}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                <UserAvatar src={otherUser.photo_url} username={otherUser.username} className="w-10 h-10 rounded-full object-cover" />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                   <span className="text-white font-bold text-sm">{initials}</span>
@@ -812,10 +810,7 @@ export default function ChatConversationPage() {
 
                     {!isOwn && showAvatar && (
                       otherUser.photo_url ? (
-                        <img referrerPolicy="no-referrer" src={otherUser.photo_url}
-                          alt={otherUser.username}
-                          className="w-6 h-6 rounded-full object-cover shrink-0"
-                        />
+                        <UserAvatar src={otherUser.photo_url} username={otherUser.username} className="w-6 h-6 rounded-full object-cover shrink-0" />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center shrink-0">
                           <span className="text-white text-[10px] font-bold">{initials}</span>

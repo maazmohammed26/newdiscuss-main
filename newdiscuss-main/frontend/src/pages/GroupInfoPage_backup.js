@@ -1,3 +1,4 @@
+import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -308,7 +309,7 @@ export default function GroupInfoPage() {
                     <div key={member.userId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
                       <div className="flex items-center gap-3">
                         {details?.photo_url ? (
-                          <img referrerPolicy="no-referrer" src={details.photo_url} alt="" className="w-10 h-10 rounded-full" />
+                          <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                             <span className="text-white font-bold text-sm">{details?.username?.slice(0, 2).toUpperCase()}</span>
@@ -355,7 +356,7 @@ export default function GroupInfoPage() {
                     <div key={member.userId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
                       <div className="flex items-center gap-3">
                         {details?.photo_url ? (
-                          <img referrerPolicy="no-referrer" src={details.photo_url} alt="" className="w-10 h-10 rounded-full" />
+                          <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
                             <span className="text-white font-bold text-sm">{details?.username?.slice(0, 2).toUpperCase()}</span>
