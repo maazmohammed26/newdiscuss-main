@@ -172,6 +172,21 @@
         <script src="%PUBLIC_URL%/error-handler.js"></script>
     </head>
     <body>
+        <script>
+            (function() {
+                try {
+                    var theme = localStorage.getItem('discuss_theme') || 'light';
+                    var html = document.documentElement;
+                    if (theme === 'dark') html.classList.add('dark');
+                    else if (theme === 'discuss-light') html.classList.add('discuss', 'discuss-light');
+                    else if (theme === 'discuss-black') html.classList.add('discuss-black');
+                    
+                    if (theme === 'dark') html.style.setProperty('--splash-bg', '#0F172A');
+                    else if (theme === 'discuss-black') html.style.setProperty('--splash-bg', '#0D0D12');
+                    else html.style.setProperty('--splash-bg', '#F5F5F7');
+                } catch(e) {}
+            })();
+        </script>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root">
             <style>
@@ -181,13 +196,8 @@
                     align-items: center;
                     justify-content: center;
                     height: 100vh;
-                    background-color: #F5F5F7;
+                    background-color: var(--splash-bg, #F5F5F7);
                     font-family: system-ui, -apple-system, sans-serif;
-                }
-                @media (prefers-color-scheme: dark) {
-                    .splash-screen {
-                        background-color: #0F172A;
-                    }
                 }
                 .splash-spinner {
                     width: 40px;
@@ -207,9 +217,12 @@
                     font-style: italic;
                     letter-spacing: -0.5px;
                 }
+                html.discuss-black .splash-logo span:nth-child(2) { color: #FFF; }
                 .splash-logo span:nth-child(1) { color: #2563EB; }
                 .splash-logo span:nth-child(2) { color: #BC4800; }
                 .splash-logo span:nth-child(3) { color: #2563EB; }
+                html.discuss-black .splash-logo span:nth-child(1),
+                html.discuss-black .splash-logo span:nth-child(3) { color: #FF007F; }
             </style>
             <div class="splash-screen">
                 <div class="splash-logo">

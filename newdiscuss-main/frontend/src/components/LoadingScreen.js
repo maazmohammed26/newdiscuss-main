@@ -46,7 +46,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#F5F5F7] dark:bg-[#0F172A] z-50 flex flex-col items-center justify-center">
+    <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center">
       {/* Logo — with subtle fade when stuck */}
       <div
         className="relative transition-opacity duration-500"
@@ -58,7 +58,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
       {/* Spinner + message */}
       <div
         key={displayMessage}
-        className="flex items-center gap-2 mt-6 text-[#64748B] dark:text-[#94A3B8]"
+        className="flex items-center gap-2 mt-6 text-muted-foreground"
         style={{ fontSize: '13px' }}
       >
         {!showRetry && (
@@ -81,7 +81,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
       {/* Slow network hint */}
       {showSlowWarning && !showRetry && (
         <p
-          className="text-[#64748B] dark:text-[#94A3B8] mt-2 text-center px-8"
+          className="text-muted-foreground mt-2 text-center px-8"
           style={{ fontSize: '11px', opacity: 0.7, maxWidth: 260 }}
         >
           Your network may be slow or restricted. Please wait…
@@ -133,7 +133,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
       {/* Elapsed counter (subtle debug hint) */}
       {elapsed >= 5 && !showRetry && (
         <p
-          className="text-[#64748B] dark:text-[#94A3B8] mt-4"
+          className="text-muted-foreground mt-4"
           style={{ fontSize: '10px', opacity: 0.35 }}
         >
           {elapsed}s
