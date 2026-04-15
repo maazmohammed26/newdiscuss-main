@@ -38,9 +38,8 @@ export default function UserAvatar({
   const altText = alt || username || 'User';
 
   // Derive initials: up to 2 alphanumeric characters from the username
-  const initials = username
-    ? username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || '?'
-    : '?';
+  const raw = username ? username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() : '';
+  const initials = raw.length > 0 ? raw : '?';
 
   // Show initials fallback if: no src provided, or the image failed to load
   if (!src || failed) {
