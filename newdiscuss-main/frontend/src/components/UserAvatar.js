@@ -9,22 +9,21 @@
  *  browser sends none by default for file://) so it works. On production, the
  *  Netlify domain is sent as Referer and Google rejects it.
  *
- *  Fix: Set + on every
- *  profile image. This tells the browser to suppress the Referer and send a
- *  CORS pre-flight, which Google's CDN accepts.
+ *  Fix: referrerPolicy="no-referrer" on every profile image suppresses the
+ *  Referer header so Google's CDN accepts the request.
  *
- *  Additional: Shows a graceful letter-avatar fallback if the image fails.
+ *  Fallback: Shows initials (first 1–2 letters of username) when no image is
+ *  available or the image fails to load, instead of a generic icon.
  */
 
 import { useState } from 'react';
-import { User } from 'lucide-react';
 
 /**
  * @param {string}  src          — image URL (photo_url / photoURL)
- * @param {string}  username     — used to generate the letter fallback
+ * @param {string}  username     — used to generate the initials fallback
  * @param {string}  [className]  — additional CSS classes (e.g. "w-9 h-9")
  * @param {string}  [alt]        — alt text (defaults to username)
- * @param {string}  [fallbackBg] — CSS background for the letter avatar
+ * @param {string}  [fallbackBg] — CSS background for the initials avatar
  */
 export default function UserAvatar({
   src,
@@ -38,16 +37,23 @@ export default function UserAvatar({
 
   const altText = alt || username || 'User';
 
-  // Show letter fallback if: no src, or the image failed to load
+  // Derive initials: up to 2 alphanumeric characters from the username
+  const initials = username
+    ? username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || '?'
+    : '?';
+
+  // Show initials fallback if: no src provided, or the image failed to load
   if (!src || failed) {
     return (
       <div
-        className={`${className} rounded-full flex items-center justify-center text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] bg-[#F1F5F9] dark:bg-[#1E293B] discuss:bg-[#262626] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] flex-shrink-0`}
-        style={style}
+        className={`${className} rounded-full flex items-center justify-center text-white font-semibold select-none flex-shrink-0`}
+        style={{ background: fallbackBg, ...style }}
         aria-label={altText}
         role="img"
       >
-        <User className="w-1/2 h-1/2" />
+        <span style={{ fontSize: 'clamp(10px, 40%, 18px)', lineHeight: 1 }}>
+          {initials}
+        </span>
       </div>
     );
   }

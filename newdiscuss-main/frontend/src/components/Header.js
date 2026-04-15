@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
-import { User, MessageCircle, Bell, Megaphone } from 'lucide-react';
+import { MessageCircle, Bell, Megaphone } from 'lucide-react';
 import { useHighlights } from '@/contexts/HighlightsContext';
 
 export default function Header() {
@@ -135,16 +135,12 @@ export default function Header() {
                   data-testid="header-profile-btn" 
                   className="w-9 h-9 p-0 rounded-[6px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] overflow-hidden"
                 >
-                  {user.photo_url ? (
-                    <UserAvatar
-                      src={user.photo_url}
-                      username={user.username}
-                      className="w-full h-full rounded-none"
-                      alt={user.username}
-                    />
-                  ) : (
-                    <User className="w-4 h-4 text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF]" />
-                  )}
+                  <UserAvatar
+                    src={user.photo_url || null}
+                    username={user.username}
+                    className="w-full h-full rounded-none"
+                    alt={user.username}
+                  />
                 </Button>
                 {(pendingFriendRequests > 0 || commentBadgeCount > 0) && (
                   <span className="absolute -top-1 -right-1 bg-[#F59E0B] text-white text-[10px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1">

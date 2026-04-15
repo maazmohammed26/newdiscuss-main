@@ -42,7 +42,7 @@ export default function FriendRequestButton({
     } else {
       setLoading(false);
     }
-  }, [user?.id, targetUserId]);
+  }, [user?.id, targetUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadStatus = async () => {
     try {

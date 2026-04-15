@@ -49,12 +49,25 @@ const googleProvider = new GoogleAuthProvider();
 // ── authReady: resolves once persistence is set ────────────────────────────
 // Any code that reads auth state should await this first so that the
 // persistence layer (IndexedDB) is wired up before onAuthStateChanged fires.
-export const authReady = setPersistence(auth, browserLocalPersistence)
+//
+// A 3-second timeout races against setPersistence so that restricted networks
+// (corporate firewalls, ISP filtering, etc.) that block IndexedDB or Firebase
+// cannot hang the app indefinitely — we fall back to default persistence and
+// let the auth flow proceed.
+const _setPersistencePromise = setPersistence(auth, browserLocalPersistence)
   .then(() => auth)
   .catch((e) => {
     console.warn('[Auth] setPersistence failed (non-critical):', e?.code);
     return auth; // Continue with default persistence on error
   });
+
+export const authReady = Promise.race([
+  _setPersistencePromise,
+  new Promise((resolve) => setTimeout(() => {
+    console.warn('[Auth] setPersistence timed out — proceeding with default persistence.');
+    resolve(auth);
+  }, 3000)),
+]);
 
 export {
   app,

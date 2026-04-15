@@ -299,7 +299,7 @@ export default function GroupConversationPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
       }, 100);
     }
-  }, [loading, liveMessagesSynced]);
+  }, [loading, liveMessagesSynced]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openDeleteDialog = (message, forEveryone = false) => {
     setMessageToDelete(message);

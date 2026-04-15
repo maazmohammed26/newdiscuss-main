@@ -293,6 +293,9 @@ export function AuthProvider({ children }) {
   // ── Core auth subscriber ────────────────────────────────────────────────
   useEffect(() => {
     let unsubscribe = null;
+    // Guard against authReady resolving after this effect has been cleaned up
+    // (e.g. in React StrictMode double-invoke or fast navigation away).
+    let mounted = true;
 
     // Reset resolution guard for this mount
     hasResolved.current = false;
@@ -307,8 +310,13 @@ export function AuthProvider({ children }) {
       }
     }, AUTH_TIMEOUT_MS);
 
-    // Wait for persistence to be configured before subscribing
+    // Wait for persistence to be configured before subscribing.
+    // authReady itself has a 3-second timeout (see firebase.js) so this
+    // .then() always runs promptly even on restricted networks.
     authReady.then(() => {
+      // If the component unmounted while we were waiting, bail out.
+      if (!mounted) return;
+
       // Handle sign-in redirect (only in browser tab mode)
       const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
@@ -318,7 +326,7 @@ export function AuthProvider({ children }) {
       if (!isStandalone) {
         getRedirectResult(auth)
           .then(async (result) => {
-            if (result?.user) {
+            if (result?.user && mounted) {
               window.localStorage.removeItem('pendingVerification');
               setPendingVerification(false);
               await syncUser(result.user);
@@ -333,6 +341,7 @@ export function AuthProvider({ children }) {
 
       // Subscribe to auth state
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (!mounted) return;
         try {
           // ── Pending email verification: sign out password providers ──
           const isPending = window.localStorage.getItem('pendingVerification');
@@ -342,6 +351,7 @@ export function AuthProvider({ children }) {
             firebaseUser.providerData[0]?.providerId === 'password'
           ) {
             await firebaseSignOut(auth);
+            if (!mounted) return;
             setUser(null);
             setPendingVerification(true);
             resolve();
@@ -351,25 +361,28 @@ export function AuthProvider({ children }) {
           // Clear stale pending flag for non-password providers
           if (firebaseUser && firebaseUser.providerData[0]?.providerId !== 'password') {
             window.localStorage.removeItem('pendingVerification');
-            setPendingVerification(false);
+            if (mounted) setPendingVerification(false);
           }
 
           await syncUser(firebaseUser);
         } catch (err) {
           console.error('[Auth] onAuthStateChanged handler error:', err);
           // Fail safe: if we errored and there's a firebase user, use basic data
-          if (firebaseUser) {
-            setUser(buildBasicUser(firebaseUser));
-          } else {
-            setUser(null);
+          if (mounted) {
+            if (firebaseUser) {
+              setUser(buildBasicUser(firebaseUser));
+            } else {
+              setUser(null);
+            }
           }
         } finally {
-          resolve();
+          if (mounted) resolve();
         }
       });
     });
 
     return () => {
+      mounted = false;
       clearTimeout(hardTimeoutRef.current);
       hasResolved.current = false;
       if (unsubscribe) unsubscribe();
