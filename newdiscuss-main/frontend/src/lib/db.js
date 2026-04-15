@@ -199,7 +199,8 @@ export const getUserByEmail = async (email) => {
     const users = snapshot.val();
     for (const [id, user] of Object.entries(users)) {
       if (user.email?.toLowerCase() === normalizedEmail) {
-        // Backfill the index so subsequent lookups are fast
+        // Backfill the index so subsequent lookups are fast.
+        // Non-critical: a failure here just means the next call will scan again.
         await set(indexRef, id).catch(() => {});
         return { 
           id, 
