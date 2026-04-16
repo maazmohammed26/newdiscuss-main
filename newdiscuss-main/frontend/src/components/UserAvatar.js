@@ -43,9 +43,12 @@ export default function UserAvatar({
 
   // Show initials fallback if: no src provided, or the image failed to load
   if (!src || failed) {
+    const initial = (username && username !== '?')
+      ? username.trim()[0].toUpperCase()
+      : '?';
     return (
       <div
-        className={`${className} rounded-full flex items-center justify-center text-white font-semibold select-none flex-shrink-0`}
+        className={`${className} rounded-full flex items-center justify-center flex-shrink-0 select-none font-semibold text-white`}
         style={{ background: fallbackBg, ...style }}
         aria-label={altText}
         role="img"

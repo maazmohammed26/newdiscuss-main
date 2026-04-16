@@ -683,6 +683,46 @@
   color: #E8E8F2 !important;
 }
 
+/* Ensure links inside post content stay visually distinct (hot pink + underline)
+   This rule must be more specific than the wildcard above */
+.discuss-black [data-testid^="post-content"] a,
+.discuss-black [data-testid^="post-content"] a:visited {
+  color: #FF007F !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+
+.discuss-black [data-testid^="post-content"] a:hover,
+.discuss-black [data-testid^="post-content"] a:focus {
+  color: #FF6AC1 !important;
+}
+
+/* URL preview card overrides for discuss-black */
+.discuss-black .url-preview-card {
+  background-color: #1A1A24 !important;
+  border-color: rgba(255, 0, 127, 0.18) !important;
+}
+
+.discuss-black .url-preview-card:hover {
+  background-color: #21212E !important;
+}
+
+.discuss-black .url-preview-card .url-preview-domain {
+  color: #FF007F !important;
+}
+
+.discuss-black .url-preview-card .url-preview-title {
+  color: #F0F0F8 !important;
+}
+
+.discuss-black .url-preview-card .url-preview-desc {
+  color: #9090A8 !important;
+}
+
+.discuss-black .url-preview-card .url-preview-icon {
+  color: rgba(255, 0, 127, 0.6) !important;
+}
+
 /* Post action bar text (upvote count, comment count) */
 .discuss-black [data-testid^="post-upvote-count"],
 .discuss-black [data-testid^="post-downvote-count"],

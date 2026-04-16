@@ -63,7 +63,6 @@ if (!fourthApiKey) {
       initializeApp(fourthFirebaseConfig, 'groupChatDb');
 
     fourthDatabase = getDatabase(fourthApp);
-    console.log('Fourth Firebase (Group Chats) initialized successfully');
   } catch (error) {
     console.warn('Failed to initialize fourth Firebase:', error.message);
     initError = error;

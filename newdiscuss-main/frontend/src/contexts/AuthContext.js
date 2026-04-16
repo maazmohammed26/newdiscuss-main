@@ -51,11 +51,21 @@ import {
 import { syncUserVerificationInCommentsFirestore } from '@/lib/commentsDb';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const AUTH_TIMEOUT_MS = 8_000;    // Max wait for onAuthStateChanged to fire
-const RTDB_TIMEOUT_MS = 5_000;    // Max wait for RTDB user fetch
+const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fire
+const RTDB_TIMEOUT_MS        = 5_000;   // Max wait for RTDB user fetch
+const USERNAME_CHECK_MS      = 3_000;   // Max wait for a single checkUsernameAvailable call
+const REDIRECT_RESULT_MS     = 4_000;   // Max wait for getRedirectResult
 const EMAIL_LINK_REDIRECT_URL = 'https://dsscus.netlify.app/';
 
 const AuthContext = createContext(null);
+
+// ─── Helper: resolve to `fallback` after `ms` instead of hanging ─────────────
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
 
 // ─── Helper: fetch user from RTDB with timeout ───────────────────────────────
 async function fetchUserWithTimeout(uid) {
@@ -197,11 +207,17 @@ export function AuthProvider({ children }) {
           'user';
 
         try {
-          let isAvailable = await checkUsernameAvailable(username);
+          // Each availability check gets its own timeout — resolves `true`
+          // (assume available) on timeout so we never block auth forever.
+          let isAvailable = await withTimeout(
+            checkUsernameAvailable(username), USERNAME_CHECK_MS, true
+          );
           let counter = 1;
           while (!isAvailable && counter < 20) {
             username = `${username.slice(0, 12)}${counter}`;
-            isAvailable = await checkUsernameAvailable(username);
+            isAvailable = await withTimeout(
+              checkUsernameAvailable(username), USERNAME_CHECK_MS, true
+            );
             counter++;
           }
           dbUser = await createUser(firebaseUser.uid, {
@@ -324,7 +340,7 @@ export function AuthProvider({ children }) {
         document.referrer.includes('android-app://');
 
       if (!isStandalone) {
-        getRedirectResult(auth)
+        withTimeout(getRedirectResult(auth), REDIRECT_RESULT_MS, null)
           .then(async (result) => {
             if (result?.user && mounted) {
               window.localStorage.removeItem('pendingVerification');

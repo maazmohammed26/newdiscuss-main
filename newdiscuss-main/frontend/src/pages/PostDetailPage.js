@@ -7,6 +7,7 @@ import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
 import LinkifiedText from '@/components/LinkifiedText';
 import ExpandableText from '@/components/ExpandableText';
+import UrlPreviewCard, { extractFirstUrl } from '@/components/UrlPreviewCard';
 import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
 import { Button } from '@/components/ui/button';
@@ -217,6 +218,13 @@ export default function PostDetailPage() {
                     <span className="whitespace-pre-wrap"><LinkifiedText text={post.content} /></span>
                   </ExpandableText>
                 </div>
+
+                {/* URL Preview Card */}
+                {extractFirstUrl(post.content) && (
+                  <div className="mt-3">
+                    <UrlPreviewCard url={extractFirstUrl(post.content)} />
+                  </div>
+                )}
 
                 {hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-4">
