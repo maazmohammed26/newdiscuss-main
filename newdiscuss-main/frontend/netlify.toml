@@ -13,7 +13,7 @@
 [build.environment]
   CI                    = "false"
   NPM_FLAGS             = "--legacy-peer-deps"
-  NODE_VERSION          = "20.11.0"
+  NODE_VERSION          = "22"
   INLINE_RUNTIME_CHUNK  = "false"
   GENERATE_SOURCEMAP    = "false"
   DISABLE_ESLINT_PLUGIN = "true"
