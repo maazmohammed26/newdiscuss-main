@@ -7,14 +7,16 @@
 # ── Build ─────────────────────────────────────────────────────
 [build]
   base    = "newdiscuss-main/frontend"
-  command = "yarn build"
+  command = "npm run build"
   publish = "build"
 
 [build.environment]
-  CI                   = "false"
-  NPM_FLAGS            = "--legacy-peer-deps"
-  NODE_VERSION         = "20.11.0"
-  INLINE_RUNTIME_CHUNK = "false"
+  CI                    = "false"
+  NPM_FLAGS             = "--legacy-peer-deps"
+  NODE_VERSION          = "20.11.0"
+  INLINE_RUNTIME_CHUNK  = "false"
+  GENERATE_SOURCEMAP    = "false"
+  DISABLE_ESLINT_PLUGIN = "true"
 
 # ── SPA catch-all redirect ────────────────────────────────────
 # React Router: every path must serve index.html (status 200 = rewrite)
