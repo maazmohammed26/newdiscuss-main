@@ -299,6 +299,7 @@ export default function GroupConversationPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
       }, 100);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, liveMessagesSynced]);
 
   const openDeleteDialog = (message, forEveryone = false) => {
