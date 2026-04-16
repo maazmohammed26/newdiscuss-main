@@ -97,9 +97,6 @@ export const initAdminSettings = async () => {
   }
 };
 
-// Initialize admin settings on first load
-initAdminSettings().catch(console.error);
-
 // ==================== USER OPERATIONS ====================
 
 // ── In-memory user cache (avoids repeated Firebase reads in the same session) ──
@@ -122,13 +119,21 @@ export const invalidateUserCache = (userId) => {
 
 export const createUser = async (userId, userData) => {
   const userRef = ref(database, `users/${userId}`);
-  await set(userRef, {
+  const userRecord = {
     ...userData,
     verified: false, // Default verified status
     admin_message: '', // Default admin message (empty means no message)
     created_at: new Date().toISOString()
-  });
-  return { id: userId, ...userData, verified: false, admin_message: '' };
+  };
+  await set(userRef, userRecord);
+
+  // Write to the userEmails index for O(1) lookup by email
+  if (userData.email) {
+    const emailKey = userData.email.toLowerCase().replace(/\./g, ',');
+    await set(ref(database, `userEmails/${emailKey}`), userId);
+  }
+
+  return { id: userId, ...userRecord };
 };
 
 export const getUser = async (userId) => {
@@ -176,16 +181,31 @@ export const getAllUsers = async () => {
 
 
 export const getUserByEmail = async (email) => {
+  const normalizedEmail = email.toLowerCase();
+  const emailKey = normalizedEmail.replace(/\./g, ',');
+
+  // Fast path: look up the userEmails index (O(1) read instead of full scan)
+  const indexRef = ref(database, `userEmails/${emailKey}`);
+  const indexSnap = await get(indexRef);
+  if (indexSnap.exists()) {
+    const uid = indexSnap.val();
+    return getUser(uid);
+  }
+
+  // Fallback: full scan for users created before the index was introduced
   const usersRef = ref(database, 'users');
   const snapshot = await get(usersRef);
   if (snapshot.exists()) {
     const users = snapshot.val();
     for (const [id, user] of Object.entries(users)) {
-      if (user.email?.toLowerCase() === email.toLowerCase()) {
+      if (user.email?.toLowerCase() === normalizedEmail) {
+        // Backfill the index so subsequent lookups are fast.
+        // Non-critical: a failure here just means the next call will scan again.
+        await set(indexRef, id).catch(() => {});
         return { 
           id, 
           ...user,
-          verified: user.verified || false // Ensure verified field exists
+          verified: user.verified || false
         };
       }
     }

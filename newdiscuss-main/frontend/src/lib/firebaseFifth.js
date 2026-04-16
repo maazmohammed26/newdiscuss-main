@@ -56,7 +56,6 @@ try {
     getApps().find((app) => app.name === 'signalDb') ||
     initializeApp(fifthFirebaseConfig, 'signalDb');
   fifthDatabase = getDatabase(fifthApp);
-  console.log('Fifth Firebase (Signal Stories) initialized successfully');
 } catch (error) {
   console.warn('Failed to initialize fifth Firebase (Signal):', error.message);
   initError = error;

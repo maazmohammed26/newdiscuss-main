@@ -36,11 +36,13 @@ export function useOnlineStatus() {
     // where navigator.onLine lies (shows true but no real connectivity)
     const probe = async () => {
       try {
-        // Lightweight no-cache HEAD request to a highly-available endpoint.
-        // We use Google's generate_204 which returns a tiny 204 response.
+        // Lightweight no-cache HEAD request to the app's own origin.
+        // Using a relative URL avoids false negatives on networks that block
+        // google.com (corporate proxies, some countries) while still catching
+        // captive portals that intercept external URLs.
         const controller = new AbortController();
         const timerId = setTimeout(() => controller.abort(), 4000);
-        await fetch('https://www.google.com/generate_204', {
+        await fetch('/favicon.ico', {
           method: 'HEAD',
           mode: 'no-cors',
           cache: 'no-store',

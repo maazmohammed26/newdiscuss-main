@@ -41,7 +41,6 @@ try {
   
   // Get Realtime Database instance from secondary app
   secondaryDatabase = getDatabase(secondaryApp);
-  console.log('Secondary Firebase initialized successfully');
 } catch (error) {
   console.warn('Failed to initialize secondary Firebase:', error.message);
   initError = error;

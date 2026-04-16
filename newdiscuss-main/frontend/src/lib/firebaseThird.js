@@ -43,7 +43,6 @@ try {
   
   // Get Realtime Database instance from third app
   thirdDatabase = getDatabase(thirdApp);
-  console.log('Third Firebase (Chats) initialized successfully');
 } catch (error) {
   console.warn('Failed to initialize third Firebase:', error.message);
   initError = error;
