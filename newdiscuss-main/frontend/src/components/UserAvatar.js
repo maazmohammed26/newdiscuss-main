@@ -9,21 +9,21 @@
  *  browser sends none by default for file://) so it works. On production, the
  *  Netlify domain is sent as Referer and Google rejects it.
  *
- *  Fix: Set + on every
- *  profile image. This tells the browser to suppress the Referer and send a
- *  CORS pre-flight, which Google's CDN accepts.
+ *  Fix: referrerPolicy="no-referrer" on every profile image suppresses the
+ *  Referer header so Google's CDN accepts the request.
  *
- *  Additional: Shows a graceful letter-avatar fallback if the image fails.
+ *  Fallback: Shows initials (first 1–2 letters of username) when no image is
+ *  available or the image fails to load, instead of a generic icon.
  */
 
 import { useState } from 'react';
 
 /**
  * @param {string}  src          — image URL (photo_url / photoURL)
- * @param {string}  username     — used to generate the letter fallback
+ * @param {string}  username     — used to generate the initials fallback
  * @param {string}  [className]  — additional CSS classes (e.g. "w-9 h-9")
  * @param {string}  [alt]        — alt text (defaults to username)
- * @param {string}  [fallbackBg] — CSS background for the letter avatar
+ * @param {string}  [fallbackBg] — CSS background for the initials avatar
  */
 export default function UserAvatar({
   src,
@@ -37,7 +37,11 @@ export default function UserAvatar({
 
   const altText = alt || username || 'User';
 
-  // Show letter fallback if: no src, or the image failed to load
+  // Derive initials: up to 2 alphanumeric characters from the username
+  const raw = username ? username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() : '';
+  const initials = raw.length > 0 ? raw : '?';
+
+  // Show initials fallback if: no src provided, or the image failed to load
   if (!src || failed) {
     const initial = (username && username !== '?')
       ? username.trim()[0].toUpperCase()
@@ -49,7 +53,9 @@ export default function UserAvatar({
         aria-label={altText}
         role="img"
       >
-        <span style={{ fontSize: 'calc(100% * 0.45)', lineHeight: 1 }}>{initial}</span>
+        <span style={{ fontSize: 'clamp(10px, 40%, 18px)', lineHeight: 1 }}>
+          {initials}
+        </span>
       </div>
     );
   }
