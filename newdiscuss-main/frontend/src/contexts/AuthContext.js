@@ -80,6 +80,31 @@ async function fetchUserWithTimeout(uid) {
   ]);
 }
 
+// ─── Helper: test whether sessionStorage is accessible ───────────────────────
+// Firebase signInWithRedirect stores its "initial state" in sessionStorage.
+// In storage-partitioned WebViews (e.g. Median.co APK wrapper) this storage
+// is blocked, causing the "missing initial state" error.
+function canUseSessionStorage() {
+  try {
+    const k = '__ss_test__';
+    window.sessionStorage.setItem(k, '1');
+    window.sessionStorage.removeItem(k);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Helper: detect Android WebView / Median APK wrapper ─────────────────────
+// These environments are storage-partitioned and break Firebase redirect auth.
+function isWebViewEnv() {
+  const ua = navigator.userAgent || '';
+  return (
+    /\bwv\b/i.test(ua) ||                           // explicit Android WebView flag (modern)
+    (ua.includes('Android') && !/Chrome\//.test(ua)) // Android without Chrome = legacy WebView
+  );
+}
+
 // ─── Helper: build a minimal "basic" user from Firebase Auth data ─────────────
 function buildBasicUser(firebaseUser) {
   return {
@@ -333,13 +358,17 @@ export function AuthProvider({ children }) {
       // If the component unmounted while we were waiting, bail out.
       if (!mounted) return;
 
-      // Handle sign-in redirect (only in browser tab mode)
+      // Skip getRedirectResult in environments where Firebase redirect auth
+      // is unreliable: PWA standalone mode, or WebView / storage-partitioned
+      // APK wrappers (e.g. Median.co) where sessionStorage may be blocked.
       const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true ||
         document.referrer.includes('android-app://');
 
-      if (!isStandalone) {
+      const skipRedirectResult = isStandalone || isWebViewEnv() || !canUseSessionStorage();
+
+      if (!skipRedirectResult) {
         withTimeout(getRedirectResult(auth), REDIRECT_RESULT_MS, null)
           .then(async (result) => {
             if (result?.user && mounted) {
@@ -549,6 +578,16 @@ export function AuthProvider({ children }) {
           };
         }
         if (code === 'auth/popup-blocked') {
+          // In WebView / storage-partitioned environments (e.g. Median APK),
+          // signInWithRedirect will fail with "missing initial state" because
+          // sessionStorage is inaccessible. Surface a clear fallback instead.
+          if (isWebViewEnv() || !canUseSessionStorage()) {
+            return {
+              success: false,
+              error:
+                'Google sign-in could not open in this app. Please open https://discussit.in in your browser to sign in with Google.',
+            };
+          }
           await signInWithRedirect(auth, googleProvider);
           return { success: false, error: '' };
         }
