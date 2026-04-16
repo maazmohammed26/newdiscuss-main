@@ -7,6 +7,7 @@ import ShareModal from '@/components/ShareModal';
 import EditPostModal from '@/components/EditPostModal';
 import LinkifiedText from '@/components/LinkifiedText';
 import ExpandableText from '@/components/ExpandableText';
+import UrlPreviewCard, { extractFirstUrl } from '@/components/UrlPreviewCard';
 import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
@@ -187,6 +188,12 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             </ExpandableText>
           </div>
 
+          {/* URL Preview Card — stop propagation so click opens the link, not the post */}
+          {extractFirstUrl(post.content) && (
+            <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+              <UrlPreviewCard url={extractFirstUrl(post.content)} />
+            </div>
+          )}
           {hashtags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-3" onClick={(e) => e.stopPropagation()}>
               {hashtags.map((tag) => (
