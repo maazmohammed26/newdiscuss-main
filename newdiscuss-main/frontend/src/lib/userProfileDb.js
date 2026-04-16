@@ -51,6 +51,10 @@ export const saveUserProfile = async (userId, profileData) => {
   try {
     const profileRef = ref(secondaryDatabase, `userProfiles/${userId}`);
 
+    // Preserve createdAt for new profiles: include it in the payload only when
+    // the caller explicitly supplies it (e.g. first-ever save); on subsequent
+    // updates the caller won't pass createdAt, so the existing DB value is kept
+    // intact because update() never removes fields that are absent from the patch.
     const dataToSave = {
       ...profileData,
       updatedAt: new Date().toISOString()

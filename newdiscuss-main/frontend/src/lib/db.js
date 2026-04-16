@@ -21,6 +21,11 @@ import {
 } from './firebaseSecondary';
 import { openDB } from 'idb';
 
+// How long to wait before coalescing rapid listener fires into a single getPosts() call.
+// Multiple onValue listeners (posts, votes, comments) often fire within milliseconds of
+// each other on first connect; debouncing prevents N concurrent full-table reads.
+const POSTS_UPDATE_DEBOUNCE_MS = 300;
+
 // IndexedDB for offline caching
 const DB_NAME = 'discuss_offline';
 const DB_VERSION = 1;
@@ -705,7 +710,7 @@ export const subscribeToPostsRealtime = (callback) => {
       } catch (e) {
         console.warn('Error updating posts:', e);
       }
-    }, 300);
+    }, POSTS_UPDATE_DEBOUNCE_MS);
   };
 
   onValue(postsRef, updatePosts);
