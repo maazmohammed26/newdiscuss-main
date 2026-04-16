@@ -133,6 +133,12 @@ export const createUser = async (userId, userData) => {
     await set(ref(database, `userEmails/${emailKey}`), userId);
   }
 
+  // Write to the userUsernames index for O(1) lookup by username
+  if (userData.username) {
+    const usernameKey = userData.username.toLowerCase();
+    await set(ref(database, `userUsernames/${usernameKey}`), userId).catch(() => {});
+  }
+
   return { id: userId, ...userRecord };
 };
 
@@ -214,12 +220,22 @@ export const getUserByEmail = async (email) => {
 };
 
 export const checkUsernameAvailable = async (username) => {
+  const normalizedUsername = username.toLowerCase();
+
+  // Fast path: check the userUsernames index (O(1) read)
+  const indexRef = ref(database, `userUsernames/${normalizedUsername}`);
+  const indexSnap = await get(indexRef);
+  if (indexSnap.exists()) return false;
+
+  // Fallback: full scan for users created before the index was introduced
   const usersRef = ref(database, 'users');
   const snapshot = await get(usersRef);
   if (snapshot.exists()) {
     const users = snapshot.val();
-    for (const user of Object.values(users)) {
-      if (user.username?.toLowerCase() === username.toLowerCase()) {
+    for (const [id, user] of Object.entries(users)) {
+      if (user.username?.toLowerCase() === normalizedUsername) {
+        // Backfill the index so subsequent lookups are fast
+        await set(indexRef, id).catch(() => {});
         return false;
       }
     }
@@ -228,12 +244,23 @@ export const checkUsernameAvailable = async (username) => {
 };
 
 export const checkEmailAvailable = async (email) => {
+  const normalizedEmail = email.toLowerCase();
+  const emailKey = normalizedEmail.replace(/\./g, ',');
+
+  // Fast path: check the userEmails index (O(1) read)
+  const indexRef = ref(database, `userEmails/${emailKey}`);
+  const indexSnap = await get(indexRef);
+  if (indexSnap.exists()) return false;
+
+  // Fallback: full scan for users created before the index was introduced
   const usersRef = ref(database, 'users');
   const snapshot = await get(usersRef);
   if (snapshot.exists()) {
     const users = snapshot.val();
-    for (const user of Object.values(users)) {
-      if (user.email?.toLowerCase() === email.toLowerCase()) {
+    for (const [id, user] of Object.entries(users)) {
+      if (user.email?.toLowerCase() === normalizedEmail) {
+        // Backfill the index
+        await set(indexRef, id).catch(() => {});
         return false;
       }
     }
@@ -663,23 +690,28 @@ export const subscribeToPostsRealtime = (callback) => {
   const postsRef = ref(database, 'posts');
   const votesRef = ref(database, 'votes');
   const commentsRef = ref(database, 'comments');
-  
+
   let secondCommentsRef = null;
   let secondaryListenerActive = false;
-  
-  const updatePosts = async () => {
-    try {
-      const posts = await getPosts();
-      callback(posts);
-    } catch (e) {
-      console.warn('Error updating posts:', e);
-    }
+
+  // Debounce: coalesce rapid simultaneous listener fires into one getPosts() call
+  let debounceTimer = null;
+  const updatePosts = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      try {
+        const posts = await getPosts();
+        callback(posts);
+      } catch (e) {
+        console.warn('Error updating posts:', e);
+      }
+    }, 300);
   };
-  
+
   onValue(postsRef, updatePosts);
   onValue(votesRef, updatePosts);
   onValue(commentsRef, updatePosts);
-  
+
   // Try to listen to secondary database comments (optional - don't block if fails)
   try {
     secondCommentsRef = secondaryRef(secondaryDatabase, 'comments');
@@ -690,9 +722,10 @@ export const subscribeToPostsRealtime = (callback) => {
   } catch (e) {
     console.warn('Failed to setup secondary database listener (non-blocking):', e.message);
   }
-  
+
   // Return unsubscribe function
   return () => {
+    clearTimeout(debounceTimer);
     off(postsRef);
     off(votesRef);
     off(commentsRef);

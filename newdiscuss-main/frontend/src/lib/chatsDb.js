@@ -99,7 +99,7 @@ const updateUserChatList = async (userId, chatId, otherUserId, lastMessage) => {
  * @param {string} senderId - Sender's user ID
  * @param {string} text - Message text
  */
-export const sendMessage = async (chatId, senderId, text) => {
+export const sendMessage = async (chatId, senderId, text, otherUserId = null) => {
   try {
     if (!thirdDatabase) {
       console.error('Third database not initialized');
@@ -130,15 +130,22 @@ export const sendMessage = async (chatId, senderId, text) => {
       }
     });
     
-    // Get chat to find other participant
-    const chatSnap = await get(chatRef);
-    if (chatSnap.exists()) {
-      const chat = chatSnap.val();
-      const otherUserId = chat.participants.find(p => p !== senderId);
-      
-      // Update both users' chat lists
-      await updateUserChatListAfterMessage(senderId, chatId, otherUserId, message);
-      await updateUserChatListAfterMessage(otherUserId, chatId, senderId, message, true);
+    // Resolve the other participant — use the provided value when available to
+    // avoid an extra network read; fall back to reading the chat document.
+    let resolvedOtherUserId = otherUserId;
+    if (!resolvedOtherUserId) {
+      const chatSnap = await get(chatRef);
+      if (chatSnap.exists()) {
+        const chat = chatSnap.val();
+        resolvedOtherUserId = chat.participants.find(p => p !== senderId);
+      }
+    }
+
+    if (resolvedOtherUserId) {
+      await Promise.all([
+        updateUserChatListAfterMessage(senderId, chatId, resolvedOtherUserId, message, false),
+        updateUserChatListAfterMessage(resolvedOtherUserId, chatId, senderId, message, true),
+      ]);
     }
     
     return { id: newMessageRef.key, ...message };
@@ -154,15 +161,20 @@ export const sendMessage = async (chatId, senderId, text) => {
 const updateUserChatListAfterMessage = async (userId, chatId, otherUserId, message, incrementUnread = false) => {
   try {
     const userChatRef = ref(thirdDatabase, `userChats/${userId}/${chatId}`);
-    const snapshot = await get(userChatRef);
-    
-    const currentData = snapshot.exists() ? snapshot.val() : { unreadCount: 0 };
-    
+
+    let unreadCount = 0;
+    if (incrementUnread) {
+      // Only read current count when we need to increment it
+      const snapshot = await get(userChatRef);
+      const currentData = snapshot.exists() ? snapshot.val() : {};
+      unreadCount = (currentData.unreadCount || 0) + 1;
+    }
+
     await update(userChatRef, {
       otherUser: otherUserId,
       lastMessage: message.text,
       lastMessageTime: message.timestamp,
-      unreadCount: incrementUnread ? (currentData.unreadCount || 0) + 1 : 0,
+      unreadCount,
       status: CHAT_STATUS.ACTIVE
     });
   } catch (error) {
@@ -516,8 +528,9 @@ export const searchChats = async (userId, searchQuery) => {
  * Toggle auto-delete setting for a chat
  * @param {string} chatId - Chat ID
  * @param {boolean} enabled - Enable or disable auto-delete
+ * @param {string[]} [participantIds] - Both participant IDs (avoids an extra DB read when provided)
  */
-export const toggleAutoDelete = async (chatId, enabled) => {
+export const toggleAutoDelete = async (chatId, enabled, participantIds = null) => {
   try {
     if (!thirdDatabase) {
       throw new Error('Database not available');
@@ -529,6 +542,21 @@ export const toggleAutoDelete = async (chatId, enabled) => {
       autoDeleteHours: 24,
       autoDeleteEnabledAt: enabled ? new Date().toISOString() : null
     });
+
+    // Propagate the autoDelete flag into both users' userChats entries so the
+    // chat list can read it without an extra getChatSettings() call per chat.
+    let ids = participantIds;
+    if (!ids) {
+      const snap = await get(chatRef);
+      if (snap.exists()) ids = snap.val().participants;
+    }
+    if (Array.isArray(ids)) {
+      await Promise.all(
+        ids.map((uid) =>
+          update(ref(thirdDatabase, `userChats/${uid}/${chatId}`), { autoDelete: enabled })
+        )
+      );
+    }
     
     return { success: true };
   } catch (error) {
@@ -793,7 +821,7 @@ export const getDeletedMessages = async (userId, chatId) => {
  * @param {string} text - Message text
  * @param {Object} replyTo - The message being replied to
  */
-export const sendReplyMessage = async (chatId, senderId, text, replyTo) => {
+export const sendReplyMessage = async (chatId, senderId, text, replyTo, otherUserId = null) => {
   try {
     if (!thirdDatabase) throw new Error('Database not available');
     
@@ -826,15 +854,22 @@ export const sendReplyMessage = async (chatId, senderId, text, replyTo) => {
       }
     });
     
-    // Get chat to find other participant
-    const chatSnap = await get(chatRef);
-    if (chatSnap.exists()) {
-      const chat = chatSnap.val();
-      const otherUserId = chat.participants.find(p => p !== senderId);
-      
-      // Update both users' chat lists
-      await updateUserChatListAfterMessageInternal(senderId, chatId, otherUserId, message);
-      await updateUserChatListAfterMessageInternal(otherUserId, chatId, senderId, message, true);
+    // Resolve the other participant — use the provided value when available to
+    // avoid an extra network read; fall back to reading the chat document.
+    let resolvedOtherUserId = otherUserId;
+    if (!resolvedOtherUserId) {
+      const chatSnap = await get(chatRef);
+      if (chatSnap.exists()) {
+        const chat = chatSnap.val();
+        resolvedOtherUserId = chat.participants.find(p => p !== senderId);
+      }
+    }
+
+    if (resolvedOtherUserId) {
+      await Promise.all([
+        updateUserChatListAfterMessageInternal(senderId, chatId, resolvedOtherUserId, message, false),
+        updateUserChatListAfterMessageInternal(resolvedOtherUserId, chatId, senderId, message, true),
+      ]);
     }
     
     return { id: newMessageRef.key, ...message };
@@ -848,15 +883,19 @@ export const sendReplyMessage = async (chatId, senderId, text, replyTo) => {
 const updateUserChatListAfterMessageInternal = async (userId, chatId, otherUserId, message, incrementUnread = false) => {
   try {
     const userChatRef = ref(thirdDatabase, `userChats/${userId}/${chatId}`);
-    const snapshot = await get(userChatRef);
-    
-    const currentData = snapshot.exists() ? snapshot.val() : { unreadCount: 0 };
-    
+
+    let unreadCount = 0;
+    if (incrementUnread) {
+      const snapshot = await get(userChatRef);
+      const currentData = snapshot.exists() ? snapshot.val() : {};
+      unreadCount = (currentData.unreadCount || 0) + 1;
+    }
+
     await update(userChatRef, {
       otherUser: otherUserId,
       lastMessage: message.text,
       lastMessageTime: message.timestamp,
-      unreadCount: incrementUnread ? (currentData.unreadCount || 0) + 1 : 0,
+      unreadCount,
       status: CHAT_STATUS.ACTIVE
     });
   } catch (error) {

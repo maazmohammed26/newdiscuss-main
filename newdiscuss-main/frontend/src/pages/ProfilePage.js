@@ -2,7 +2,9 @@ import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPosts, getUser } from '@/lib/db';
+import { 
+  getUser, getPostsByUser
+} from '@/lib/db';
 import { 
   getUserProfile, 
   updateFullName, 
@@ -129,12 +131,12 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user?.id) {
       setLoadingPosts(true);
-      getPosts()
-        .then(posts => setUserPosts(posts.filter(p => p.author_id === user.id)))
+      getPostsByUser(user.id)
+        .then(posts => setUserPosts(posts))
         .catch(() => {})
         .finally(() => setLoadingPosts(false));
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Fetch profile data from secondary Firebase
   useEffect(() => {

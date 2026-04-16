@@ -50,22 +50,16 @@ export const getUserProfile = async (userId) => {
 export const saveUserProfile = async (userId, profileData) => {
   try {
     const profileRef = ref(secondaryDatabase, `userProfiles/${userId}`);
-    const snapshot = await get(profileRef);
-    
+
     const dataToSave = {
       ...profileData,
       updatedAt: new Date().toISOString()
     };
-    
-    if (snapshot.exists()) {
-      await update(profileRef, dataToSave);
-    } else {
-      await set(profileRef, {
-        ...dataToSave,
-        createdAt: new Date().toISOString()
-      });
-    }
-    
+
+    // update() merges fields without overwriting siblings, and creates the
+    // node if it doesn't exist — no pre-read needed.
+    await update(profileRef, dataToSave);
+
     return { id: userId, ...profileData };
   } catch (error) {
     console.error('Error saving user profile:', error);

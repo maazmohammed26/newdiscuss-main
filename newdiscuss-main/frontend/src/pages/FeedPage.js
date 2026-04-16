@@ -11,7 +11,6 @@ import {
 import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
-import LoadingScreen from '@/components/LoadingScreen';
 import UserSearchResult from '@/components/UserSearchResult';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ export default function FeedPage() {
   const { user } = useAuth();
   const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pageLoading, setPageLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,7 +32,6 @@ export default function FeedPage() {
   const [searchType, setSearchType] = useState('posts'); // 'posts' or 'users'
   const [userSearchResults, setUserSearchResults] = useState([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
-  const [loadedFromCache, setLoadedFromCache] = useState(false);
 
   // Load cached posts first for instant display, then fetch fresh data
   useEffect(() => {
@@ -45,7 +42,6 @@ export default function FeedPage() {
         if (cachedData && cachedData.length > 0) {
           setAllPosts(cachedData);
           setLoading(false);
-          setLoadedFromCache(true);
         }
         
         // Check if cache is still valid
@@ -56,7 +52,6 @@ export default function FeedPage() {
           const freshData = await getPosts();
           setAllPosts(freshData);
           await cachePosts(freshData);
-          setLoadedFromCache(false);
         }
       } catch (err) {
         console.error('Cache/fetch error:', err);
@@ -76,12 +71,6 @@ export default function FeedPage() {
     loadWithCache();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setPageLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 250);
     return () => clearTimeout(timer);
@@ -130,16 +119,14 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
-    fetchPosts();
     fetchTrendingTags();
-  }, [fetchPosts, fetchTrendingTags]);
+  }, [fetchTrendingTags]);
 
   // Firebase real-time listener
   useEffect(() => {
     const unsubscribe = subscribeToPostsRealtime(async (updatedPosts) => {
       setAllPosts(updatedPosts);
       setLoading(false);
-      setLoadedFromCache(false);
       // Update cache with fresh data
       await cachePosts(updatedPosts);
       fetchTrendingTags();
@@ -203,10 +190,6 @@ export default function FeedPage() {
       )
     );
   }, []);
-
-  if (pageLoading) {
-    return <LoadingScreen message="Loading your feed..." />;
-  }
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
