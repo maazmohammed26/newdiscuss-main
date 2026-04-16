@@ -59,9 +59,9 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
-  const typewriterRef  = useRef(null);
-  const checklistRef   = useRef(null);
-  const signalCardRef  = useRef(null);
+  const typewriterRef = useRef(null);
+  const checklistRef = useRef(null);
+  const signalCardRef = useRef(null);
   const signalCardDone = useRef(false);
 
   useEffect(() => {
@@ -355,7 +355,8 @@ export default function LandingPage() {
                       <span className="mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center" style={{ background:'linear-gradient(135deg,#a855f7,#ec4899)', color:'#fff' }}>
                         <Check style={{ width:8, height:8, strokeWidth:3 }} />
                       </span>
-                      {item.includes('24 hours') ? (
+                      {/* Index 3: "Auto-deletes after 24 hours" — pulse the time phrase */}
+                      {i === 3 ? (
                         <span>Auto-deletes after <span className="lp-pulse-text font-semibold text-purple-300">24 hours</span> — zero cleanup needed</span>
                       ) : item}
                     </li>
