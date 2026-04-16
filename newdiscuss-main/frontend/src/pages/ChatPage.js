@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { getUser } from '@/lib/db';
 import { database, ref, onValue } from '@/lib/firebase';
-import { getChatsWithUserDetails, subscribeToUserChats, getUserChats } from '@/lib/chatsDb';
+import { getChatsWithUserDetails, subscribeToUserChats, getUserChats, getChatSettings } from '@/lib/chatsDb';
 import { getFriendsWithDetails, searchFriends } from '@/lib/relationshipsDb';
 import { 
   getUserGroups, 
@@ -105,9 +105,7 @@ export default function ChatPage() {
         // Get raw chats first
         const rawChats = await getUserChats(user.id);
         
-        // Fetch user details for each chat. The autoDelete flag is now stored
-        // directly on the userChats entry (written by toggleAutoDelete), so no
-        // separate getChatSettings() call is needed per chat.
+        // Fetch user details for each chat
         const chatsWithDetails = await Promise.all(
           rawChats.map(async (chat) => {
             try {
@@ -119,10 +117,11 @@ export default function ChatPage() {
                 console.warn('Skipping chat with invalid user:', chat.otherUser);
                 return null;
               }
-
-              // Populate chatSettings state from the userChats metadata field
-              if (chat.autoDelete) {
-                setChatSettings(prev => ({ ...prev, [chat.chatId]: { autoDelete: true } }));
+              
+              // Get chat settings for auto-delete indicator
+              const settings = await getChatSettings(chat.chatId);
+              if (settings?.autoDelete) {
+                setChatSettings(prev => ({ ...prev, [chat.chatId]: settings }));
               }
               
               return {

@@ -50,20 +50,22 @@ export const getUserProfile = async (userId) => {
 export const saveUserProfile = async (userId, profileData) => {
   try {
     const profileRef = ref(secondaryDatabase, `userProfiles/${userId}`);
-
-    // Preserve createdAt for new profiles: include it in the payload only when
-    // the caller explicitly supplies it (e.g. first-ever save); on subsequent
-    // updates the caller won't pass createdAt, so the existing DB value is kept
-    // intact because update() never removes fields that are absent from the patch.
+    const snapshot = await get(profileRef);
+    
     const dataToSave = {
       ...profileData,
       updatedAt: new Date().toISOString()
     };
-
-    // update() merges fields without overwriting siblings, and creates the
-    // node if it doesn't exist — no pre-read needed.
-    await update(profileRef, dataToSave);
-
+    
+    if (snapshot.exists()) {
+      await update(profileRef, dataToSave);
+    } else {
+      await set(profileRef, {
+        ...dataToSave,
+        createdAt: new Date().toISOString()
+      });
+    }
+    
     return { id: userId, ...profileData };
   } catch (error) {
     console.error('Error saving user profile:', error);

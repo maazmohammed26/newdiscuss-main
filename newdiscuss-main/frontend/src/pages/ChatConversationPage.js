@@ -311,10 +311,10 @@ export default function ChatConversationPage() {
       }
 
       if (replyTo) {
-        await sendReplyMessage(chatId, user.id, messageText, replyTo, otherUserId);
+        await sendReplyMessage(chatId, user.id, messageText, replyTo);
         setReplyTo(null);
       } else {
-        await sendMessage(chatId, user.id, messageText, otherUserId);
+        await sendMessage(chatId, user.id, messageText);
       }
       inputRef.current?.focus();
     } catch (error) {
@@ -347,7 +347,7 @@ export default function ChatConversationPage() {
     if (!chatId) return;
     
     try {
-      await toggleAutoDelete(chatId, !autoDeleteEnabled, [user.id, otherUserId]);
+      await toggleAutoDelete(chatId, !autoDeleteEnabled);
       setAutoDeleteEnabled(!autoDeleteEnabled);
       setShowAutoDeleteConfirm(false);
       
