@@ -18,6 +18,7 @@ const FEATURES = [
   { icon: FolderGit2, title: 'Project Showcase', desc: 'Share your work with GitHub links and live previews. Get real feedback from developers who understand your craft.' },
   { icon: Lock, title: 'Private & Secure Chats', desc: 'End-to-end encrypted personal messaging. Chat only with approved friends. No ads, no tracking.', isNew: true },
   { icon: Zap, title: 'Real-time Everything', desc: 'Votes, comments, posts, and messages update instantly. Stay connected without hitting refresh.' },
+  { icon: Globe, title: 'Translate Posts', desc: 'Instantly translate any post into Kannada, Tamil, Hindi, Telugu, or English with one click. Set a preferred language and posts translate automatically.', isNew: true },
   { icon: Code, title: 'Developer Profiles', desc: 'Showcase your skills, projects, and contributions. Let your work speak for itself.' },
   { icon: UserCheck, title: 'Recruiter Discovery', desc: 'Companies can explore talent through skills and projects. Privacy-first approach — you control who connects.' },
 ];

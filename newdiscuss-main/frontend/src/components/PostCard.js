@@ -20,18 +20,31 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
 import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TRANSLATE_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'Hindi' },
   { code: 'kn', label: 'Kannada' },
   { code: 'ta', label: 'Tamil' },
+  { code: 'hi', label: 'Hindi' },
   { code: 'te', label: 'Telugu' },
+  { code: 'en', label: 'English' },
 ];
 
+const LS_PREF_LANG = 'discuss_translate_pref_lang';
+
 const LANG_LABELS = Object.fromEntries(TRANSLATE_LANGUAGES.map(l => [l.code, l.label]));
+
+function getPreferredLang() {
+  try { return localStorage.getItem(LS_PREF_LANG) || null; } catch (e) { console.warn('Could not read translation preference:', e); return null; }
+}
+
+function setPreferredLang(code) {
+  try { if (code) localStorage.setItem(LS_PREF_LANG, code); } catch (e) { console.warn('Could not save translation preference:', e); }
+}
 
 const POST_URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
@@ -94,6 +107,8 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translatedLang, setTranslatedLang] = useState(null);
   const [translating, setTranslating] = useState(false);
+  const [preferredLang, setPreferredLangState] = useState(() => getPreferredLang());
+  const [showLangPrompt, setShowLangPrompt] = useState(false);
 
   const isAuthor = currentUser?.id === post.author_id;
   const isProject = post.type === 'project';
@@ -196,6 +211,29 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     setTranslatedLang(null);
   };
 
+  const handleTranslateClick = (e) => {
+    if (e) e.stopPropagation();
+    if (translating) return;
+    if (translatedContent) { handleResetTranslation(); return; }
+    const pref = preferredLang || getPreferredLang();
+    if (pref) {
+      handleTranslate(pref);
+    } else {
+      setShowLangPrompt(true);
+    }
+  };
+
+  const handleLangPromptSelect = (code) => {
+    setPreferredLang(code);
+    setPreferredLangState(code);
+    setShowLangPrompt(false);
+    handleTranslate(code);
+  };
+
+  const handleLangPromptSkip = () => {
+    setShowLangPrompt(false);
+  };
+
   return (
     <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden">
       {/* Content area */}
@@ -228,20 +266,19 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
-                {!translatedContent ? (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                      <Globe className="w-3.5 h-3.5" /> Translate
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
-                      {TRANSLATE_LANGUAGES.map((lang) => (
-                        <DropdownMenuItem key={lang.code} onClick={(e) => { e.stopPropagation(); handleTranslate(lang.code); }} className="cursor-pointer text-xs text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
-                          {lang.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                ) : (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
+                    <Globe className="w-3.5 h-3.5" /> Translate
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+                    {TRANSLATE_LANGUAGES.map((lang) => (
+                      <DropdownMenuItem key={lang.code} onClick={(e) => { e.stopPropagation(); handleTranslate(lang.code); }} className="cursor-pointer text-xs text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
+                        {lang.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                {translatedContent && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
                     <RotateCcw className="w-3.5 h-3.5" /> Back to Original
                   </DropdownMenuItem>
@@ -372,6 +409,31 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           <Share2 className="w-4 h-4" />
           <span className="hidden sm:inline">Share</span>
         </button>
+
+        <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-1" />
+
+        {/* Always-visible Translate button */}
+        <button
+          data-testid={`post-translate-btn-${post.id}`}
+          onClick={handleTranslateClick}
+          disabled={translating}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[12px] font-semibold transition-all border ${
+            translatedContent
+              ? 'bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] border-neutral-300 dark:border-neutral-600 discuss:border-[#444444] hover:bg-neutral-200 dark:hover:bg-neutral-600 discuss:hover:bg-[#333333]'
+              : 'bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] border-[#2563EB]/30 discuss:border-[#EF4444]/30 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20'
+          }`}
+          title={translatedContent ? 'Back to Original' : preferredLang ? `Translate to ${LANG_LABELS[preferredLang]}` : 'Translate'}
+        >
+          {translating
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : translatedContent
+              ? <RotateCcw className="w-3.5 h-3.5" />
+              : <Globe className="w-3.5 h-3.5" />
+          }
+          <span className="hidden sm:inline">
+            {translatedContent ? 'Original' : 'Translate'}
+          </span>
+        </button>
       </div>
 
       {showComments && <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} />}
@@ -398,6 +460,38 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Language preference prompt — shown on first Translate click */}
+      <Dialog open={showLangPrompt} onOpenChange={setShowLangPrompt}>
+        <DialogContent className="max-w-xs rounded-[14px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[15px] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+              <Globe className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              Choose your language
+            </DialogTitle>
+            <DialogDescription className="text-[13px] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">
+              Set a preferred translation language. You can change it anytime from the post menu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-2 mt-2">
+            {TRANSLATE_LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleLangPromptSelect(lang.code)}
+                className="w-full text-left px-4 py-2.5 rounded-[8px] text-[13px] font-medium border border-neutral-200 dark:border-neutral-600 discuss:border-[#333333] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 hover:text-[#2563EB] discuss:hover:text-[#EF4444] hover:border-[#2563EB]/40 discuss:hover:border-[#EF4444]/40 transition-colors"
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleLangPromptSkip}
+            className="w-full mt-2 text-center text-[12px] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-600 discuss:hover:text-[#F5F5F5] transition-colors py-1"
+          >
+            Skip — choose manually each time
+          </button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
