@@ -35,24 +35,31 @@ const LANG_LABELS = Object.fromEntries(TRANSLATE_LANGUAGES.map(l => [l.code, l.l
 
 const POST_URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
+const TRANSLATE_API_BASE = 'https://translate.googleapis.com/translate_a/single';
+
 async function translatePostContent(text, targetLang) {
   const urls = [];
-  const textWithPlaceholders = text.replace(new RegExp(POST_URL_REGEX.source, POST_URL_REGEX.flags), (match) => {
+  // Replace URLs with numbered placeholders so they are not translated
+  const textWithPlaceholders = text.replace(POST_URL_REGEX, (match) => {
     const idx = urls.length;
     urls.push(match);
     return `[LINK_${idx}]`;
   });
+  // Reset lastIndex on the shared global regex after use
+  POST_URL_REGEX.lastIndex = 0;
 
   const res = await fetch(
-    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(textWithPlaceholders)}`
+    `${TRANSLATE_API_BASE}?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(textWithPlaceholders)}`
   );
-  if (!res.ok) throw new Error('Translation failed');
+  if (!res.ok) throw new Error(`Translation failed (HTTP ${res.status})`);
 
   const data = await res.json();
+  // Google Translate gtx response: data[0] is an array of [translatedSegment, originalSegment, ...] tuples
   let translated = data[0].map(s => s[0]).join('');
 
+  // Restore original URLs using string replacement to avoid regex construction in a loop
   urls.forEach((url, i) => {
-    translated = translated.replace(new RegExp(`\\[LINK_${i}\\]`, 'g'), url);
+    translated = translated.split(`[LINK_${i}]`).join(url);
   });
 
   return translated;
@@ -216,7 +223,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           <div className="flex items-center shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
+                <button onClick={(e) => e.stopPropagation()} aria-label={translating ? 'Translating…' : 'Post options'} className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
                   {translating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
                 </button>
               </DropdownMenuTrigger>
