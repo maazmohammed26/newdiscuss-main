@@ -13,14 +13,50 @@ import UserPreviewModal from '@/components/UserPreviewModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+
+const TRANSLATE_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+];
+
+const LANG_LABELS = Object.fromEntries(TRANSLATE_LANGUAGES.map(l => [l.code, l.label]));
+
+const POST_URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+
+async function translatePostContent(text, targetLang) {
+  const urls = [];
+  const textWithPlaceholders = text.replace(new RegExp(POST_URL_REGEX.source, POST_URL_REGEX.flags), (match) => {
+    const idx = urls.length;
+    urls.push(match);
+    return `[LINK_${idx}]`;
+  });
+
+  const res = await fetch(
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(textWithPlaceholders)}`
+  );
+  if (!res.ok) throw new Error('Translation failed');
+
+  const data = await res.json();
+  let translated = data[0].map(s => s[0]).join('');
+
+  urls.forEach((url, i) => {
+    translated = translated.replace(new RegExp(`\\[LINK_${i}\\]`, 'g'), url);
+  });
+
+  return translated;
+}
 
 function timeAgo(iso) {
   if (!iso) return '';
@@ -48,6 +84,9 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [externalLink, setExternalLink] = useState(null);
   const [previewUser, setPreviewUser] = useState(null);
   const [hasNewCommentBadge, setHasNewCommentBadge] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState(null);
+  const [translatedLang, setTranslatedLang] = useState(null);
+  const [translating, setTranslating] = useState(false);
 
   const isAuthor = currentUser?.id === post.author_id;
   const isProject = post.type === 'project';
@@ -128,6 +167,28 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     }
   };
 
+  const handleTranslate = async (targetLang) => {
+    if (translating) return;
+    const contentToTranslate = post.content;
+    if (!contentToTranslate) return;
+    setTranslating(true);
+    try {
+      const result = await translatePostContent(contentToTranslate, targetLang);
+      setTranslatedContent(result);
+      setTranslatedLang(targetLang);
+      toast.success(`Translated to ${LANG_LABELS[targetLang]}`);
+    } catch (err) {
+      toast.error('Translation failed. Please try again.');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  const handleResetTranslation = () => {
+    setTranslatedContent(null);
+    setTranslatedLang(null);
+  };
+
   return (
     <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden">
       {/* Content area */}
@@ -152,25 +213,46 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             </button>
             <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0">{timeAgo(post.timestamp)}</span>
           </div>
-          {isAuthor && (
-            <div className="flex items-center shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-36 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                    <Pencil className="w-3.5 h-3.5" /> Edit
+          <div className="flex items-center shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
+                  {translating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+                {!translatedContent ? (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
+                      <Globe className="w-3.5 h-3.5" /> Translate
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+                      {TRANSLATE_LANGUAGES.map((lang) => (
+                        <DropdownMenuItem key={lang.code} onClick={(e) => { e.stopPropagation(); handleTranslate(lang.code); }} className="cursor-pointer text-xs text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
+                          {lang.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                ) : (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
+                    <RotateCcw className="w-3.5 h-3.5" /> Back to Original
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
+                )}
+                {isAuthor && (
+                  <>
+                    <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
+                      <Pencil className="w-3.5 h-3.5" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Body - clickable to open post detail */}
@@ -183,9 +265,21 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             <h3 data-testid={`post-title-${post.id}`} className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-[15px] md:text-[17px] mb-1.5 leading-snug hover:text-[#2563EB] dark:hover:text-[#60A5FA] discuss:hover:text-[#EF4444] transition-colors">{post.title}</h3>
           )}
           <div data-testid={`post-content-${post.id}`} className="text-neutral-700 dark:text-neutral-200 discuss:text-[#E5E7EB] text-[13px] md:text-[15px] leading-relaxed">
-            <ExpandableText text={post.content} maxLines={5}>
-              <span className="whitespace-pre-wrap"><LinkifiedText text={post.content} /></span>
+            <ExpandableText text={translatedContent || post.content} maxLines={5}>
+              <span className="whitespace-pre-wrap"><LinkifiedText text={translatedContent || post.content} /></span>
             </ExpandableText>
+            {translatedContent && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Globe className="w-3 h-3 text-neutral-400 discuss:text-[#9CA3AF] shrink-0" />
+                <span className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]">Translated to {LANG_LABELS[translatedLang]}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }}
+                  className="text-[11px] text-[#2563EB] discuss:text-[#60A5FA] hover:underline ml-1"
+                >
+                  Back to Original
+                </button>
+              </div>
+            )}
           </div>
 
           {/* URL Preview Card — stop propagation so click opens the link, not the post */}
