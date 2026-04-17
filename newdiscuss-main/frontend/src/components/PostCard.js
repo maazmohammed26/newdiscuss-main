@@ -39,11 +39,11 @@ const LS_PREF_LANG = 'discuss_translate_pref_lang';
 const LANG_LABELS = Object.fromEntries(TRANSLATE_LANGUAGES.map(l => [l.code, l.label]));
 
 function getPreferredLang() {
-  try { return localStorage.getItem(LS_PREF_LANG) || null; } catch { return null; }
+  try { return localStorage.getItem(LS_PREF_LANG) || null; } catch (e) { console.warn('Could not read translation preference:', e); return null; }
 }
 
 function setPreferredLang(code) {
-  try { if (code) localStorage.setItem(LS_PREF_LANG, code); } catch { /* ignore */ }
+  try { if (code) localStorage.setItem(LS_PREF_LANG, code); } catch (e) { console.warn('Could not save translation preference:', e); }
 }
 
 const POST_URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
@@ -463,7 +463,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
 
       {/* Language preference prompt — shown on first Translate click */}
       <Dialog open={showLangPrompt} onOpenChange={setShowLangPrompt}>
-        <DialogContent hideClose className="max-w-xs rounded-[14px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6">
+        <DialogContent className="max-w-xs rounded-[14px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[15px] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
               <Globe className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
