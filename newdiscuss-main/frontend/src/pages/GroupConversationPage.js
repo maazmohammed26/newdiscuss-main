@@ -27,6 +27,7 @@ import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, C
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { notifyTelegramGroupMessage } from '@/lib/telegramService';
 
 export default function GroupConversationPage() {
   const { groupId } = useParams();
@@ -237,6 +238,12 @@ export default function GroupConversationPage() {
       await sendGroupMessage(groupId, user.id, messageText, replyTo);
       setMessageText('');
       setReplyTo(null);
+      // Notify all other group members via Telegram (fires in background)
+      const groupName = groupInfo?.name || 'Group';
+      const senderName = user?.username || 'Someone';
+      members
+        .filter(m => m.userId !== user.id)
+        .forEach(m => notifyTelegramGroupMessage(m.userId, groupName, senderName).catch(() => {}));
       inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);

@@ -55,6 +55,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
+import { notifyTelegramDM } from '@/lib/telegramService';
 
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
@@ -316,6 +317,8 @@ export default function ChatConversationPage() {
       } else {
         await sendMessage(chatId, user.id, messageText);
       }
+      // Send Telegram notification to the recipient (fires in background, non-blocking)
+      notifyTelegramDM(otherUserId, user?.username).catch(() => {});
       inputRef.current?.focus();
     } catch (error) {
       console.error('Send message error:', error);

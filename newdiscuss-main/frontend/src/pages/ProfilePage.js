@@ -64,6 +64,14 @@ import {
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
 import { notifyFriendRequest, isNotificationsEnabled } from '@/lib/pushNotificationService';
+import {
+  saveTelegramChatId,
+  getTelegramChatId,
+  removeTelegramChatId,
+  notifyTelegramFriendRequest,
+  BOT_USERNAME,
+  APP_URL,
+} from '@/lib/telegramService';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -80,6 +88,13 @@ export default function ProfilePage() {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Telegram notification states
+  const [telegramChatIdInput, setTelegramChatIdInput] = useState('');
+  const [telegramConnected, setTelegramConnected] = useState(false);
+  const [savingTelegram, setSavingTelegram] = useState(false);
+  const [loadingTelegram, setLoadingTelegram] = useState(true);
+  const [showTelegramInstructions, setShowTelegramInstructions] = useState(false);
 
   // Profile data from secondary Firebase
   const [profileData, setProfileData] = useState(null);
@@ -149,6 +164,21 @@ export default function ProfilePage() {
     }
   }, [user?.id]);
 
+  // Load existing Telegram Chat ID
+  useEffect(() => {
+    if (!user?.id) return;
+    setLoadingTelegram(true);
+    getTelegramChatId(user.id)
+      .then(chatId => {
+        if (chatId) {
+          setTelegramConnected(true);
+          setTelegramChatIdInput(chatId);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingTelegram(false));
+  }, [user?.id]);
+
   // Fetch friends and requests
   useEffect(() => {
     if (!user?.id) return;
@@ -203,6 +233,8 @@ export default function ProfilePage() {
               const userData = currentDetails[req.fromUserId];
               const username = userData?.username || 'Someone';
               notifyFriendRequest(req.fromUserId, username);
+              // Also send Telegram notification (fires independently)
+              notifyTelegramFriendRequest(user.id, username);
             }
             return currentDetails;
           });
@@ -501,6 +533,40 @@ export default function ProfilePage() {
       toast.error('Failed to remove link');
     } finally {
       setSavingLink(false);
+    }
+  };
+
+  // Telegram handlers
+  const handleSaveTelegram = async () => {
+    const trimmed = telegramChatIdInput.trim();
+    if (!trimmed) return;
+    if (!/^\-?\d+$/.test(trimmed)) {
+      toast.error('Invalid Chat ID — must be a number (e.g. 123456789)');
+      return;
+    }
+    setSavingTelegram(true);
+    try {
+      await saveTelegramChatId(user.id, trimmed);
+      setTelegramConnected(true);
+      toast.success('Telegram connected! You will now receive notifications.');
+    } catch {
+      toast.error('Failed to save Telegram Chat ID');
+    } finally {
+      setSavingTelegram(false);
+    }
+  };
+
+  const handleDisconnectTelegram = async () => {
+    setSavingTelegram(true);
+    try {
+      await removeTelegramChatId(user.id);
+      setTelegramConnected(false);
+      setTelegramChatIdInput('');
+      toast.success('Telegram disconnected');
+    } catch {
+      toast.error('Failed to disconnect Telegram');
+    } finally {
+      setSavingTelegram(false);
     }
   };
 
@@ -867,6 +933,141 @@ export default function ProfilePage() {
             </div>
             <NotificationToggle />
           </div>
+
+          {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
+          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {/* Telegram logo SVG */}
+                <svg className="w-4 h-4 text-[#229ED9]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.941z"/>
+                </svg>
+                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium">Telegram Notifications</span>
+                {telegramConnected && (
+                  <span className="inline-flex items-center gap-1 bg-[#10B981]/10 text-[#10B981] text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                    <Check className="w-3 h-3" /> Connected
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setShowTelegramInstructions(v => !v)}
+                className="text-[#6275AF] dark:text-[#94A3B8] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors"
+                title="How to connect"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Instructions panel */}
+            {showTelegramInstructions && (
+              <div className="mb-3 bg-[#229ED9]/5 border border-[#229ED9]/20 rounded-lg p-4 text-xs text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] space-y-3">
+                <p className="font-semibold text-[#229ED9] text-sm">How to connect Telegram</p>
+
+                <div className="space-y-2">
+                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Step 1 — Open the bot</p>
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                    Open Telegram and search for <span className="font-mono font-semibold text-[#229ED9]">@{BOT_USERNAME}</span> or tap the link below.
+                  </p>
+                  <a
+                    href={`https://t.me/${BOT_USERNAME}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[#229ED9] hover:underline font-medium"
+                  >
+                    t.me/{BOT_USERNAME} <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Step 2 — Start the bot</p>
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                    Tap <span className="font-semibold">Start</span> or send <span className="font-mono font-semibold">/start</span>. The bot will reply with your <span className="font-semibold">Chat ID</span> — a number like <span className="font-mono">123456789</span>.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Step 3 — Paste your Chat ID below</p>
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                    Copy the Chat ID from the bot message and paste it in the field below, then tap <span className="font-semibold">Save</span>.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-[#229ED9]/20">
+                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-1">What you will receive:</p>
+                  <ul className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] space-y-0.5">
+                    <li>💬 New direct messages</li>
+                    <li>👥 Friend requests &amp; acceptances</li>
+                    <li>💬 Group chat messages</li>
+                    <li>✅ Group join approvals</li>
+                  </ul>
+                </div>
+
+                <div className="pt-2 border-t border-[#229ED9]/20 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                  <p>Each notification includes a direct link back to the Discuss app. Notifications arrive even when the app is closed.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Chat ID input + action */}
+            {loadingTelegram ? (
+              <div className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] py-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-xs">Loading...</span>
+              </div>
+            ) : telegramConnected ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 bg-[#10B981]/5 border border-[#10B981]/20 rounded-lg px-3 py-2">
+                  <Check className="w-4 h-4 text-[#10B981] shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-[#10B981]">Telegram connected</p>
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-mono truncate">Chat ID: {telegramChatIdInput}</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleDisconnectTelegram}
+                  disabled={savingTelegram}
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-[#EF4444]/40 text-[#EF4444] hover:bg-[#EF4444]/10 text-xs"
+                >
+                  {savingTelegram ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <X className="w-3.5 h-3.5 mr-2" />}
+                  Disconnect Telegram
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                  Paste your Telegram Chat ID to receive notifications (tap ℹ️ for instructions).
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    value={telegramChatIdInput}
+                    onChange={e => setTelegramChatIdInput(e.target.value.replace(/[^0-9\-]/g, ''))}
+                    placeholder="e.g. 123456789"
+                    className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-mono"
+                  />
+                  <Button
+                    onClick={handleSaveTelegram}
+                    disabled={savingTelegram || !telegramChatIdInput.trim()}
+                    size="sm"
+                    className="bg-[#229ED9] hover:bg-[#1a8bbf] text-white shrink-0"
+                  >
+                    {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                  </Button>
+                </div>
+                <a
+                  href={`https://t.me/${BOT_USERNAME}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[#229ED9] hover:underline text-xs font-medium"
+                >
+                  Open @{BOT_USERNAME} on Telegram <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+          </div>
+          {/* ==================== END TELEGRAM NOTIFICATIONS ==================== */}
 
           <Button data-testid="profile-logout-btn" onClick={handleLogout} disabled={loggingOut}
             className="w-full bg-[#2563EB]/10 hover:bg-[#2563EB]/20 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444]/20 discuss:text-[#EF4444] font-semibold py-3 h-12 mt-5 transition-all">
