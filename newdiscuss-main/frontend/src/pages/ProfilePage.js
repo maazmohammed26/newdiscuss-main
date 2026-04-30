@@ -1043,7 +1043,13 @@ export default function ProfilePage() {
                 <div className="flex gap-2">
                   <Input
                     value={telegramChatIdInput}
-                    onChange={e => setTelegramChatIdInput(e.target.value.replace(/[^0-9\-]/g, ''))}
+                    onChange={e => {
+                      const v = e.target.value;
+                      // Allow optional leading minus followed by digits only
+                      if (v === '' || v === '-' || /^-?\d+$/.test(v)) {
+                        setTelegramChatIdInput(v);
+                      }
+                    }}
                     placeholder="e.g. 123456789"
                     className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-mono"
                   />

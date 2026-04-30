@@ -49,7 +49,7 @@ async function sendReply(token, chatId, text, extra = {}) {
     chat_id: chatId,
     text,
     parse_mode: 'HTML',
-    disable_web_page_preview: false,
+    disable_web_page_preview: true,
     ...extra,
   });
 
@@ -130,7 +130,6 @@ exports.telegramWebhook = onRequest(
     const msg    = update.message;
     const chatId = msg.chat?.id;
     const text   = (msg.text || '').trim();
-    const userId = msg.from?.id;
 
     if (!chatId) {
       res.status(200).send('ok');
