@@ -6,7 +6,7 @@
 // Setup (one-time, owner/admin):
 //   1. Create a bot via @BotFather on Telegram → get BOT_TOKEN
 //   2. Set REACT_APP_TELEGRAM_BOT_TOKEN in your .env / Netlify env vars
-//   3. Set REACT_APP_TELEGRAM_BOT_USERNAME  (e.g. DiscussNotifyBot)
+//   3. Set REACT_APP_TELEGRAM_BOT_USERNAME  (e.g. DiscussNotifications_bot)
 //
 // User setup (each user):
 //   1. Open Telegram, search for the bot, click Start

@@ -69,6 +69,7 @@ import {
   getTelegramChatId,
   removeTelegramChatId,
   notifyTelegramFriendRequest,
+  notifyTelegramFriendAccepted,
   BOT_USERNAME,
   APP_URL,
 } from '@/lib/telegramService';
@@ -385,6 +386,8 @@ export default function ProfilePage() {
       const friendsData = await getFriendsWithDetails(user.id);
       setFriends(friendsData);
       toast.success('Friend request accepted!');
+      // Notify the original requester via Telegram
+      notifyTelegramFriendAccepted(fromUserId, user?.username).catch(() => {});
     } catch (error) {
       toast.error('Failed to accept request');
     } finally {

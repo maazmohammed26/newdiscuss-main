@@ -10,6 +10,7 @@ import {
   RELATIONSHIP_STATUS 
 } from '@/lib/relationshipsDb';
 import { getOrCreateChat, generateChatId, blockChatWithInfo, unblockChat, isUserReported } from '@/lib/chatsDb';
+import { notifyTelegramFriendAccepted } from '@/lib/telegramService';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -108,6 +109,8 @@ export default function FriendRequestButton({
       setStatus(RELATIONSHIP_STATUS.FRIENDS);
       toast.success(`You and ${targetUsername} are now friends!`);
       onStatusChange?.(RELATIONSHIP_STATUS.FRIENDS);
+      // Notify the requester via Telegram
+      notifyTelegramFriendAccepted(targetUserId, user?.username).catch(() => {});
     } catch (error) {
       toast.error('Failed to accept request');
     } finally {
