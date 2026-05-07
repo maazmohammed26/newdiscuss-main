@@ -48,8 +48,9 @@ Frontend (React) ──► Firebase Auth (Authentication)
 1. Go to [vercel.com/new](https://vercel.com/new) → Import repo
 2. **Root Directory**: Click "Edit" → type `frontend`
 3. **Framework Preset**: `Create React App`
-4. Add all environment variables (same as Netlify above)
-5. Click **Deploy**
+4. This repo now includes **`frontend/vercel.json`** (SPA rewrite + security/cache headers + build/output commands)
+5. Add all environment variables (same as Netlify above)
+6. Click **Deploy**
 
 ### After Deployment
 
