@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Send, Trash2, Loader2, MessageSquare, ChevronDown, ChevronUp, Reply, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
+import { notifyTelegramComment } from '@/lib/telegramService';
 
 const COMMENT_CHAR_LIMIT = 500;
 
@@ -362,6 +363,10 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
     try {
       await createCommentFirestore(postId, newComment.trim(), currentUser, postAuthorId);
       setNewComment('');
+      // Notify post author via Telegram (skip if commenter is the author)
+      if (postAuthorId && currentUser?.id !== postAuthorId) {
+        notifyTelegramComment(postAuthorId, currentUser?.username).catch(() => {});
+      }
     } catch (err) {
       toast.error(err.message || 'Failed to add comment');
     } finally { 
