@@ -80,48 +80,83 @@ export default function UrlPreviewCard({ url }) {
       }
     } catch {}
 
-    // Slow path: fetch from microlink.io with timeout
+    // Slow path: fetch from microlink.io with timeout and retry
     setLoading(true);
 
-    const fetchMeta = async () => {
+    // Build a minimal fallback from the URL itself (hostname + pathname)
+    const buildFallback = (rawUrl) => {
       try {
-        const res = await fetch(
-          `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
-          { signal: AbortSignal.timeout(5000) }
-        );
-        const data = await res.json();
-
-        if (data.status === 'success') {
-          const result = {
-            title: data.data.title || '',
-            description: data.data.description || '',
-            image: data.data.image?.url || null,
-            siteName: data.data.publisher || '',
-            domain: (() => {
-              try {
-                return new URL(url).hostname.replace(/^www\./, '');
-              } catch {
-                return url;
-              }
-            })(),
-          };
-          _previewCache.set(url, result);
-          try {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(result));
-          } catch {}
-          setMeta(result);
-        } else {
-          _previewCache.set(url, null);
-          setFailed(true);
-        }
+        const parsed = new URL(rawUrl);
+        return {
+          title: parsed.hostname.replace(/^www\./, ''),
+          description: '',
+          image: null,
+          siteName: '',
+          domain: parsed.hostname.replace(/^www\./, ''),
+        };
       } catch {
-        setFailed(true);
-      } finally {
-        setLoading(false);
+        return null;
       }
     };
 
-    fetchMeta();
+    const fetchMeta = async () => {
+      const MAX_RETRIES = 3;
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const res = await fetch(
+            `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
+            { signal: AbortSignal.timeout(8000) }
+          );
+          const data = await res.json();
+
+          if (data.status === 'success') {
+            const result = {
+              title: data.data.title || '',
+              description: data.data.description || '',
+              image: data.data.image?.url || null,
+              siteName: data.data.publisher || '',
+              domain: (() => {
+                try {
+                  return new URL(url).hostname.replace(/^www\./, '');
+                } catch {
+                  return url;
+                }
+              })(),
+            };
+            _previewCache.set(url, result);
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify(result));
+            } catch {}
+            setMeta(result);
+            return;
+          } else {
+            console.warn(`[UrlPreview] microlink returned status="${data.status}" for ${url}`);
+            break; // non-success status — no point retrying
+          }
+        } catch (err) {
+          console.warn(`[UrlPreview] Attempt ${attempt}/${MAX_RETRIES} failed for ${url}:`, err.message);
+          if (attempt < MAX_RETRIES) {
+            // Exponential backoff before the next attempt: 500ms after attempt 1, 1000ms after attempt 2
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+          }
+        }
+      }
+
+      // All retries exhausted — try native URL fallback
+      const fallback = buildFallback(url);
+      if (fallback) {
+        _previewCache.set(url, fallback);
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(fallback));
+        } catch {}
+        setMeta(fallback);
+      } else {
+        _previewCache.set(url, null);
+        setFailed(true);
+      }
+    };
+
+    fetchMeta().finally(() => setLoading(false));
   }, [url]); // Only re-runs when the URL itself changes
 
   if (!url || failed) return null;

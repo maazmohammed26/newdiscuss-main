@@ -52,7 +52,7 @@ function StoryUrlPreview({ url }) {
     let cancelled = false;
 
     // Check sessionStorage cache first — instant on repeat views
-    const CACHE_KEY = `sig_og_${url}`;
+    const CACHE_KEY = `sig_og_${encodeURIComponent(url).slice(0, 120)}`;
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
@@ -66,38 +66,72 @@ function StoryUrlPreview({ url }) {
     setFailed(false);
     setMeta(null);
 
-    const fetchMeta = async () => {
+    // Build a minimal fallback from the URL itself (hostname)
+    const buildFallback = (rawUrl) => {
       try {
-        const res = await fetch(
-          `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
-          { signal: AbortSignal.timeout(4000) }
-        );
-        const data = await res.json();
-        if (cancelled) return;
-        if (data.status === 'success') {
-          const result = {
-            title: data.data.title || '',
-            description: data.data.description || '',
-            image: data.data.image?.url || null,
-            siteName: data.data.publisher || '',
-            domain: (() => {
-              try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
-            })(),
-          };
-          // Cache result for this session
-          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(result)); } catch {}
-          setMeta(result);
-        } else {
-          setFailed(true);
-        }
+        const parsed = new URL(rawUrl);
+        return {
+          title: parsed.hostname.replace(/^www\./, ''),
+          description: '',
+          image: null,
+          siteName: '',
+          domain: parsed.hostname.replace(/^www\./, ''),
+        };
       } catch {
-        if (!cancelled) setFailed(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+        return null;
       }
     };
 
-    fetchMeta();
+    const fetchMeta = async () => {
+      const MAX_RETRIES = 3;
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const res = await fetch(
+            `https://api.microlink.io/?url=${encodeURIComponent(url)}`,
+            { signal: AbortSignal.timeout(8000) }
+          );
+          const data = await res.json();
+          if (cancelled) return;
+          if (data.status === 'success') {
+            const result = {
+              title: data.data.title || '',
+              description: data.data.description || '',
+              image: data.data.image?.url || null,
+              siteName: data.data.publisher || '',
+              domain: (() => {
+                try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+              })(),
+            };
+            // Cache result for this session
+            try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(result)); } catch {}
+            if (!cancelled) setMeta(result);
+            return;
+          } else {
+            console.warn(`[StoryUrlPreview] microlink returned status="${data.status}" for ${url}`);
+            break; // non-success — no point retrying
+          }
+        } catch (err) {
+          if (cancelled) return;
+          console.warn(`[StoryUrlPreview] Attempt ${attempt}/${MAX_RETRIES} failed for ${url}:`, err.message);
+          if (attempt < MAX_RETRIES) {
+            // Exponential backoff before the next attempt: 500ms after attempt 1, 1000ms after attempt 2
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+          }
+        }
+      }
+
+      if (cancelled) return;
+      // All retries exhausted — try native URL fallback
+      const fallback = buildFallback(url);
+      if (fallback) {
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(fallback)); } catch {}
+        setMeta(fallback);
+      } else {
+        setFailed(true);
+      }
+    };
+
+    fetchMeta().finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [url]);
 

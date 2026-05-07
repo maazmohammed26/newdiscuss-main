@@ -59,11 +59,23 @@ async function sendReply(token, chatId, text, extra = {}) {
     ...extra,
   });
 
-  await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    const data = await response.json();
+    if (!data.ok) {
+      console.error('[TelegramBot] sendMessage failed:', JSON.stringify(data));
+    } else {
+      console.log(`[TelegramBot] Message sent to chatId=${chatId}`);
+    }
+    return data.ok === true;
+  } catch (err) {
+    console.error('[TelegramBot] Network error in sendReply:', err.message);
+    return false;
+  }
 }
 
 function appButton(label = '🔗 Open Discuss App') {
@@ -130,7 +142,14 @@ exports.telegramWebhook = onRequest(
     }
 
     const token = TELEGRAM_TOKEN.value();
+    if (!token) {
+      console.error('[TelegramBot] TELEGRAM_BOT_TOKEN secret is not set.');
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+
     const update = req.body;
+    console.log('[TelegramBot] Received update:', JSON.stringify(update));
 
     // Only handle regular messages (not edited, channel posts, etc.)
     if (!update || !update.message) {
@@ -142,6 +161,8 @@ exports.telegramWebhook = onRequest(
     const chatId = msg.chat?.id;
     const text   = (msg.text || '').trim();
 
+    console.log(`[TelegramBot] Message from chatId=${chatId}, text="${text}"`);
+
     if (!chatId) {
       res.status(200).send('ok');
       return;
@@ -152,6 +173,7 @@ exports.telegramWebhook = onRequest(
 
     // ── Command routing ──
     if (text === '/start' || text.startsWith('/start ')) {
+      console.log(`[TelegramBot] Handling /start for chatId=${chatId}`);
       await sendReply(
         token,
         chatId,
@@ -159,6 +181,7 @@ exports.telegramWebhook = onRequest(
         { reply_markup: appButton('📲 Open Discuss App') }
       );
     } else if (text === '/help' || text.startsWith('/help ')) {
+      console.log(`[TelegramBot] Handling /help for chatId=${chatId}`);
       await sendReply(
         token,
         chatId,
