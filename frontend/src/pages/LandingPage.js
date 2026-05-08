@@ -30,7 +30,7 @@ const PILLS = [
   { icon: Globe, label: 'Open Community' },
 ];
 
-const SIGNAL_CHECKLIST = [
+const PULSE_CHECKLIST = [
   'Text stories up to 350 characters',
   'Auto-detects & previews any URL you share',
   'Seen by everyone on the platform',
@@ -52,7 +52,7 @@ const THEME_DOTS = [
   { id: 'discuss-black', label: 'Black', bg: '#0D0D12', border: '#6B7280' },
 ];
 
-const SIGNAL_H2 = 'Share your thoughts, gone in 24 hours.';
+const PULSE_H2 = 'Share your thoughts, gone in 24 hours.';
 
 export default function LandingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -62,8 +62,8 @@ export default function LandingPage() {
 
   const typewriterRef = useRef(null);
   const checklistRef = useRef(null);
-  const signalCardRef = useRef(null);
-  const signalCardDone = useRef(false);
+  const pulseCardRef = useRef(null);
+  const pulseCardDone = useRef(false);
 
   useEffect(() => {
     if (!authLoading && user) navigate('/feed', { replace: true });
@@ -98,7 +98,7 @@ export default function LandingPage() {
     const el = typewriterRef.current;
     if (!el) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.textContent = SIGNAL_H2;
+      el.textContent = PULSE_H2;
       return;
     }
     el.textContent = '';
@@ -108,8 +108,8 @@ export default function LandingPage() {
       let i = 0;
       el.classList.add('lp-typewriter-cursor');
       const iv = setInterval(() => {
-        el.textContent = SIGNAL_H2.slice(0, ++i);
-        if (i >= SIGNAL_H2.length) {
+        el.textContent = PULSE_H2.slice(0, ++i);
+        if (i >= PULSE_H2.length) {
           clearInterval(iv);
           setTimeout(() => el.classList.remove('lp-typewriter-cursor'), 2200);
         }
@@ -146,13 +146,13 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (isLoading) return;
-    const el = signalCardRef.current;
+    const el = pulseCardRef.current;
     if (!el) return;
     const obs = new IntersectionObserver((entries) => {
-      if (!entries[0].isIntersecting || signalCardDone.current) return;
-      signalCardDone.current = true;
+      if (!entries[0].isIntersecting || pulseCardDone.current) return;
+      pulseCardDone.current = true;
       obs.disconnect();
-      setTimeout(() => el.classList.add('lp-signal-card-enter'), 400);
+      setTimeout(() => el.classList.add('lp-pulse-card-enter'), 400);
     }, { threshold: 0.25 });
     obs.observe(el);
     return () => obs.disconnect();
@@ -228,7 +228,7 @@ export default function LandingPage() {
               style={{ background: 'linear-gradient(135deg,rgba(168,85,247,0.12),rgba(236,72,153,0.08))', border: '1px solid rgba(168,85,247,0.3)', color: '#a855f7' }}
             >
               <Zap style={{ width: 10, height: 10, fill: '#a855f7', color: '#a855f7' }} />
-              Introducing Signal · ephemeral stories for developers
+              Introducing Pulse · ephemeral stories for developers
             </span>
           </div>
 
@@ -338,7 +338,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="signal-section" className="py-20 px-4 sm:px-6 overflow-hidden">
+      <section id="pulse-section" className="py-20 px-4 sm:px-6 overflow-hidden">
         <div className="max-w-5xl mx-auto">
           <div className="relative rounded-[22px] overflow-hidden" style={{ background: 'linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 55%,#0a1628 100%)', border: '1px solid rgba(168,85,247,0.22)', boxShadow: '0 24px 60px rgba(168,85,247,0.12)' }}>
             <div style={{ position:'absolute',top:'-70px',right:'-70px',width:'280px',height:'280px',borderRadius:'50%',background:'radial-gradient(circle,rgba(168,85,247,0.18) 0%,transparent 70%)',pointerEvents:'none' }} />
@@ -347,11 +347,11 @@ export default function LandingPage() {
               <div className="p-8 sm:p-12 flex flex-col justify-center" data-animate="left">
                 <div className="lp-mono inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-5" style={{ background:'rgba(168,85,247,0.18)', border:'1px solid rgba(168,85,247,0.35)', color:'#c084fc' }}>
                   <Zap className="w-3 h-3 fill-current" />
-                  NEW · SIGNAL
+                  NEW · PULSE
                 </div>
-                <h2 ref={typewriterRef} className="text-[1.8rem] sm:text-[2.2rem] font-bold leading-tight mb-4" style={{ color: '#f5f3ff', minHeight: '3.5em' }} aria-label={SIGNAL_H2} />
+                <h2 ref={typewriterRef} className="text-[1.8rem] sm:text-[2.2rem] font-bold leading-tight mb-4" style={{ color: '#f5f3ff', minHeight: '3.5em' }} aria-label={PULSE_H2} />
                 <ul ref={checklistRef} className="space-y-3 mb-8">
-                  {SIGNAL_CHECKLIST.map((item, i) => (
+                  {PULSE_CHECKLIST.map((item, i) => (
                     <li key={i} className="lp-check-item flex items-start gap-2.5 text-[13px]" style={{ color:'rgba(245,243,255,0.78)' }}>
                       <span className="mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center" style={{ background:'linear-gradient(135deg,#a855f7,#ec4899)', color:'#fff' }}>
                         <Check style={{ width:8, height:8, strokeWidth:3 }} />
@@ -366,12 +366,12 @@ export default function LandingPage() {
                 <Link to="/register">
                   <button className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-95" style={{ background:'linear-gradient(135deg,#a855f7,#ec4899)', boxShadow:'0 8px 24px rgba(168,85,247,0.35)' }}>
                     <Zap className="w-4 h-4 fill-white" />
-                    Try Signal Now
+                    Try Pulse Now
                   </button>
                 </Link>
               </div>
               <div className="p-6 sm:p-10 flex items-center justify-center" data-animate="right">
-                <div ref={signalCardRef} className="w-full max-w-[260px]" style={{ opacity:0 }}>
+                <div ref={pulseCardRef} className="w-full max-w-[260px]" style={{ opacity:0 }}>
                   <div className="rounded-[18px] overflow-hidden" style={{ background:'linear-gradient(160deg,#1a1030 0%,#0f1825 100%)', border:'1px solid rgba(168,85,247,0.2)', boxShadow:'0 16px 40px rgba(0,0,0,0.4)', aspectRatio:'9/16', position:'relative' }}>
                     <div className="absolute top-3 left-3 right-3 flex gap-1">
                       {[100,40].map((w,j) => (
@@ -385,13 +385,13 @@ export default function LandingPage() {
                         <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background:'linear-gradient(135deg,#a855f7,#ec4899)' }} />
                         <div>
                           <div className="lp-mono text-white text-[11px] font-semibold">your_username</div>
-                          <div className="text-white/50 text-[9px]">2m · Signal</div>
+                          <div className="text-white/50 text-[9px]">2m · Pulse</div>
                         </div>
                       </div>
                     </div>
                     <div className="absolute px-4" style={{ top:'50%',transform:'translateY(-50%)',left:0,right:0 }}>
                       <p className="text-white text-[13px] font-medium leading-relaxed">
-                        Tried Signal yet? ⚡<br /><br />Share a thought with the community.<br /><br />
+                        Tried Pulse yet? ⚡<br /><br />Share a thought with the community.<br /><br />
                         {"It's "}<span className="lp-pulse-text">gone in 24h</span>{". 🕐"}
                       </p>
                       <div className="mt-3 rounded-[8px] overflow-hidden" style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(168,85,247,0.25)' }}>
@@ -408,7 +408,7 @@ export default function LandingPage() {
                     <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                       <div className="flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background:'rgba(168,85,247,0.2)', border:'1px solid rgba(168,85,247,0.3)' }}>
                         <Zap className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />
-                        <span className="lp-mono text-purple-300 text-[9px] font-bold uppercase tracking-wider">Signal</span>
+                        <span className="lp-mono text-purple-300 text-[9px] font-bold uppercase tracking-wider">Pulse</span>
                       </div>
                     </div>
                   </div>
@@ -425,7 +425,7 @@ export default function LandingPage() {
             <DiscussLogo size="lg" />
             <p className="lp-mono text-muted-foreground text-[12px] uppercase tracking-widest mt-2 mb-4">Discuss Developer Platform</p>
             <h2 className="text-[1.9rem] sm:text-[2.3rem] font-bold text-foreground mb-2">A space for developers to connect</h2>
-            <p className="lp-mono text-muted-foreground text-[12px] uppercase tracking-widest">SIGNAL · Built for everyone who builds</p>
+            <p className="lp-mono text-muted-foreground text-[12px] uppercase tracking-widest">PULSE · Built for everyone who builds</p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {AUDIENCE.map((a, i) => (
