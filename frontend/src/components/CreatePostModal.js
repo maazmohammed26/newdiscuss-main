@@ -97,7 +97,7 @@ export default function CreatePostModal({ open, onClose, onCreated }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); reset(); } }}>
-      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-lg bg-white dark:bg-[#1E293B] dark:border-[#334155]">
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-lg bg-white dark:bg-[#1E293B] dark:border-[#334155] max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
         <DialogHeader>
           <DialogTitle className="font-heading text-xl font-bold text-[#0F172A] dark:text-[#F1F5F9]">Create a post</DialogTitle>
         </DialogHeader>
