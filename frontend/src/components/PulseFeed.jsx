@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IoHeart, IoHeartOutline, IoChatbubbleOutline, IoShareSocialOutline, IoVolumeHigh, IoVolumeMute } from 'react-icons/io5';
-import { MoreVertical, X, Maximize2, Minimize2 } from 'lucide-react';
+import { MoreVertical, X, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getOptimizedVideoUrl } from '@/lib/imagekit';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
   const [likesCount, setLikesCount] = useState(pulse.likesCount || 0);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
 
   // Follow State
   const [followStatus, setFollowStatus] = useState(RELATIONSHIP_STATUS.NONE);
@@ -192,7 +193,18 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
         loop
         muted={muted}
         playsInline
+        onWaiting={() => setIsVideoLoading(true)}
+        onPlaying={() => setIsVideoLoading(false)}
+        onCanPlay={() => setIsVideoLoading(false)}
+        onLoadStart={() => setIsVideoLoading(true)}
+        onLoadedData={() => setIsVideoLoading(false)}
       />
+      
+      {isVideoLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-[5] pointer-events-none bg-black/10">
+          <Loader2 className="w-8 h-8 animate-spin text-white drop-shadow-md opacity-80" />
+        </div>
+      )}
       
       {!playing && !pureMode && (
         <div className="play-overlay">
