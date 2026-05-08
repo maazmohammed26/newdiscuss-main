@@ -201,6 +201,23 @@ export const notifyTelegramComment = async (recipientUserId, commenterName) => {
   );
 };
 
+/**
+ * Notify a user of a new like on their post or pulse.
+ * @param {string} recipientUserId - Firebase UID of the author
+ * @param {string} likerName       - Username of the person who liked it
+ * @param {string} type            - 'post' or 'pulse'
+ */
+export const notifyTelegramLike = async (recipientUserId, likerName, type = 'post') => {
+  const chatId = await getTelegramChatId(recipientUserId);
+  if (!chatId) return;
+  const isPulse = type === 'pulse';
+  await sendTelegramMessage(
+    chatId,
+    `❤️ <b>New Like on Discuss</b>\n\n<b>@${likerName || 'Someone'}</b> liked your ${isPulse ? 'pulse' : 'post'}.`,
+    { reply_markup: appKeyboard(`❤️ View ${isPulse ? 'Pulse' : 'Post'}`) }
+  );
+};
+
 export default {
   saveTelegramChatId,
   getTelegramChatId,
@@ -211,4 +228,5 @@ export default {
   notifyTelegramGroupMessage,
   notifyTelegramGroupJoinAccepted,
   notifyTelegramComment,
+  notifyTelegramLike,
 };

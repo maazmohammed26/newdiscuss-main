@@ -17,6 +17,8 @@ import {
   query,
   orderByChild,
 } from './firebaseFifth';
+import { database, ref as primaryRef, get as primaryGet } from './firebase';
+import { notifyTelegramLike } from './telegramService';
 
 const pulseRef = () => ref(fifthDatabase, 'pulse');
 const pulseItemRef = (id) => ref(fifthDatabase, `pulse/${id}`);
@@ -111,8 +113,20 @@ export const togglePulseLike = async (pulseId, userId) => {
     await set(likeRef, true);
     const pulseSnap = await get(pulseItem);
     if (pulseSnap.exists()) {
-      const currentCount = pulseSnap.val().likesCount || 0;
+      const pulseData = pulseSnap.val();
+      const currentCount = pulseData.likesCount || 0;
       await update(pulseItem, { likesCount: currentCount + 1 });
+      
+      // Notify via Telegram on new Like
+      try {
+        if (pulseData.authorId && pulseData.authorId !== userId) {
+          const userSnap = await primaryGet(primaryRef(database, `users/${userId}`));
+          const likerUsername = userSnap.exists() ? (userSnap.val().username || 'Someone') : 'Someone';
+          notifyTelegramLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Telegram]', e));
+        }
+      } catch (e) {
+        console.error('Error sending pulse like notification:', e);
+      }
     }
   }
   

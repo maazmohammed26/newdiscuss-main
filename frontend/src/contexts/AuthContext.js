@@ -459,6 +459,11 @@ export function AuthProvider({ children }) {
       if (existingUser)
         return { success: false, error: 'This email is already registered' };
 
+      // Fix for Username Race Condition: Set pending flags BEFORE Firebase Auth triggers onAuthStateChanged
+      window.localStorage.setItem('pendingVerification', 'true');
+      window.localStorage.setItem('verifyUsername_' + email.toLowerCase().trim(), username.trim());
+      window.localStorage.setItem('emailForSignIn', email);
+
       const credential = await createUserWithEmailAndPassword(auth, email, password);
 
       await createUser(credential.user.uid, {
@@ -468,15 +473,10 @@ export function AuthProvider({ children }) {
         auth_provider: 'email',
       });
 
-      window.localStorage.setItem('verifyUsername_' + email.toLowerCase().trim(), username.trim());
-
       await sendSignInLinkToEmail(auth, email, {
         url: EMAIL_LINK_REDIRECT_URL,
         handleCodeInApp: true,
       });
-
-      window.localStorage.setItem('emailForSignIn', email);
-      window.localStorage.setItem('pendingVerification', 'true');
 
       await firebaseSignOut(auth);
       setUser(null);
@@ -484,6 +484,7 @@ export function AuthProvider({ children }) {
 
       return { success: true, needsVerification: true };
     } catch (error) {
+      window.localStorage.removeItem('pendingVerification'); // Cleanup on failure
       console.error('[Auth] Registration error:', error);
       if (error.code === 'auth/email-already-in-use')
         return { success: false, error: 'This email is already registered' };

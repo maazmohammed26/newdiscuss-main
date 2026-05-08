@@ -16,6 +16,7 @@ import {
   orderByChild,
   limitToLast
 } from './firebaseThird';
+import { notifyTelegramDM } from './telegramService';
 
 // Chat statuses
 export const CHAT_STATUS = {
@@ -141,6 +142,9 @@ export const sendMessage = async (chatId, senderId, text, media = []) => {
       // Update both users' chat lists
       await updateUserChatListAfterMessage(senderId, chatId, otherUserId, message);
       await updateUserChatListAfterMessage(otherUserId, chatId, senderId, message, true);
+      
+      // Notify via Telegram (fire-and-forget)
+      notifyTelegramDM(otherUserId, 'Someone').catch(e => console.error('[Telegram]', e));
     }
     
     return { id: newMessageRef.key, ...message };
@@ -839,6 +843,9 @@ export const sendReplyMessage = async (chatId, senderId, text, replyTo, media = 
       // Update both users' chat lists
       await updateUserChatListAfterMessageInternal(senderId, chatId, otherUserId, message);
       await updateUserChatListAfterMessageInternal(otherUserId, chatId, senderId, message, true);
+      
+      // Notify via Telegram (fire-and-forget)
+      notifyTelegramDM(otherUserId, 'Someone').catch(e => console.error('[Telegram]', e));
     }
     
     return { id: newMessageRef.key, ...message };

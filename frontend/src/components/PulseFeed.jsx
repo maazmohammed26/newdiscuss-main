@@ -249,7 +249,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
             <div className="author-info flex items-center justify-between w-full pr-4">
               <div className="flex items-center gap-2 cursor-pointer z-10" onClick={handleProfileClick}>
                 <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-white/20">
-                  <UserAvatar user={{ photoURL: pulse.authorPhotoUrl, displayName: pulse.authorUsername }} className="w-full h-full" />
+                  <UserAvatar src={pulse.authorPhotoUrl} username={pulse.authorUsername} className="w-full h-full" />
                 </div>
                 <span className="author-username font-semibold text-white drop-shadow-md">@{pulse.authorUsername}</span>
                 

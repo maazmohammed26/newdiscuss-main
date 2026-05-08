@@ -20,6 +20,7 @@ import {
   off as secondaryOff
 } from './firebaseSecondary';
 import { openDB } from 'idb';
+import { notifyTelegramLike } from './telegramService';
 
 // IndexedDB for offline caching
 const DB_NAME = 'discuss_offline';
@@ -527,6 +528,23 @@ export const toggleVote = async (postId, voteType, userId) => {
   } else {
     // Set new vote (or switch from like to dislike / dislike to like)
     await set(voteRef, voteType);
+    
+    // Notify via Telegram on new Upvote
+    if (voteType === 'up') {
+      try {
+        const [userSnap, postSnap] = await Promise.all([
+          get(ref(database, `users/${userId}`)),
+          get(ref(database, `posts/${postId}`))
+        ]);
+        const authorId = postSnap.val()?.author_id;
+        if (authorId && authorId !== userId) {
+          const likerUsername = userSnap.val()?.username || 'Someone';
+          notifyTelegramLike(authorId, likerUsername, 'post').catch(e => console.error('[Telegram]', e));
+        }
+      } catch (e) {
+        console.error('Error sending like notification:', e);
+      }
+    }
   }
   
   // Get updated vote counts
