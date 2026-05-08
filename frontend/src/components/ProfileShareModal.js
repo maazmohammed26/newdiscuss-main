@@ -23,7 +23,7 @@ export default function ProfileShareModal({ open, onClose, username }) {
   const [copiedMessage, setCopiedMessage] = useState(false);
 
   const shareMessage = `I'm using Discuss. My username is ${username}. Search for me and send a request to connect.`;
-  const profileUrl = `https://dsscus.netlify.app/user/${username}`;
+  const profileUrl = `https://discussit.in/user/${username}`;
 
   const handleCopyUsername = async () => {
     try {

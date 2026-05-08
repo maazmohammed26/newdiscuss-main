@@ -21,7 +21,7 @@ const BOT_TOKEN    = process.env.REACT_APP_TELEGRAM_BOT_TOKEN    || '';
 export const BOT_USERNAME = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'DiscussNotifications_bot';
 
 // URL users are directed to when they tap a link in a Telegram notification
-export const APP_URL = 'https://dsscus.netlify.app/';
+export const APP_URL = 'https://discussit.in/';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 

@@ -6,7 +6,7 @@ This document contains instructions for verifying and optimizing your site with 
 
 ### Method 1: HTML File Verification
 1. Go to [Google Search Console](https://search.google.com/search-console)
-2. Add your property: `https://dsscus.netlify.app`
+2. Add your property: `https://discussit.in`
 3. Download the HTML verification file provided by Google
 4. Upload it to `/app/frontend/public/` directory
 5. Deploy the changes
@@ -29,7 +29,7 @@ The `index.html` file already contains a placeholder meta tag:
 
 Once verified, submit your sitemap to Google:
 ```
-https://dsscus.netlify.app/sitemap.xml
+https://discussit.in/sitemap.xml
 ```
 
 **Steps:**

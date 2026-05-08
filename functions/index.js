@@ -45,7 +45,7 @@ const { defineSecret } = require('firebase-functions/params');
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_BOT_TOKEN');
 
 // App URL shown in all bot messages so users can open Discuss
-const APP_URL = 'https://dsscus.netlify.app/';
+const APP_URL = 'https://discussit.in/';
 
 // ─── Telegram API helper ──────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ This is the <b>official Discuss notifications bot</b>. It sends real-time alerts
 Copy this number — you will need it in the next step.
 
 <b>How to connect your account:</b>
-1. Open the Discuss app (tap the button below or visit dsscus.netlify.app)
+1. Open the Discuss app (tap the button below or visit discussit.in)
 2. Tap your <b>Profile</b>
 3. Scroll down to <b>Notifications → Telegram Notifications</b>
 4. Paste your Chat ID (<code>YOUR_ID_HERE</code>) in the field

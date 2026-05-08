@@ -55,7 +55,7 @@ const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fi
 const RTDB_TIMEOUT_MS        = 5_000;   // Max wait for RTDB user fetch
 const USERNAME_CHECK_MS      = 3_000;   // Max wait for a single checkUsernameAvailable call
 const REDIRECT_RESULT_MS     = 4_000;   // Max wait for getRedirectResult
-const EMAIL_LINK_REDIRECT_URL = 'https://dsscus.netlify.app/';
+const EMAIL_LINK_REDIRECT_URL = 'https://discussit.in/';
 
 const AuthContext = createContext(null);
 

@@ -50,4 +50,4 @@
 - Database: https://discuss-13fbc-default-rtdb.firebaseio.com
 
 ## Backlog
-- P0: Firebase Email Link Verification (passwordless auth flow, redirect to https://dsscus.netlify.app/)
+- P0: Firebase Email Link Verification (passwordless auth flow, redirect to https://discussit.in/)

@@ -64,6 +64,6 @@ The APK requests the following Android permissions:
 
 ## Notes
 
-- The APK runs the exact same UI and features as the web app at [https://dsscus.netlify.app](https://dsscus.netlify.app)
+- The APK runs the exact same UI and features as the web app at [https://discussit.in](https://discussit.in)
 - Firebase authentication, real-time updates, and all features work identically
 - The web app itself (`frontend/src/`) is unchanged
