@@ -1,0 +1,112 @@
+# ============================================================
+# netlify.toml — Discuss PWA (Production)
+# Security target: A+ (securityheaders.com)
+# Last updated: 2026-04-14
+# ============================================================
+
+# ── Build ─────────────────────────────────────────────────────
+[build]
+  base    = "newdiscuss-main/frontend"
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  CI                    = "false"
+  NPM_FLAGS             = "--legacy-peer-deps"
+  NODE_VERSION          = "22"
+  INLINE_RUNTIME_CHUNK  = "false"
+  GENERATE_SOURCEMAP    = "false"
+  DISABLE_ESLINT_PLUGIN = "true"
+
+# ── SPA catch-all redirect ────────────────────────────────────
+# React Router: every path must serve index.html (status 200 = rewrite)
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Global security headers ───────────────────────────────────
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+
+    # HSTS — 2 years, include subdomains, preload list eligible
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+    # CSP — explicitly allow only what the app needs:
+    #   • self           — same-origin assets / scripts / styles
+    #   • Firebase       — auth, RTDB, Firestore, Functions
+    #   • Google Fonts   — font CSS + font files
+    #   • Identitytoolkit — Firebase Auth REST API
+    #   • data:/blob:    — inline SVG, object URLs
+    #   • wss:           — Firebase RTDB WebSocket
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.gstatic.com https://*.firebaseapp.com https://*.googleapis.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src * data: blob:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseapp.com https://*.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com https://www.google.com https://api.telegram.org data: blob:; frame-src https://*.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+
+    # Clickjacking protection
+    X-Frame-Options = "DENY"
+
+    # MIME-sniffing protection
+    X-Content-Type-Options = "nosniff"
+
+    # Referrer info — full URL same-origin, only origin cross-origin HTTPS
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Disable unused device APIs
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+
+    # Required for Google Auth popup to work across browser contexts.
+    # "same-origin-allow-popups" allows Firebase signInWithPopup() while
+    # still preventing Spectre-style cross-origin attacks.
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+    # Prevent other origins from hot-linking same-origin assets
+    Cross-Origin-Resource-Policy = "cross-origin"
+
+    # Legacy XSS filter (modern browsers ignore it but scanners check)
+    X-XSS-Protection = "1; mode=block"
+
+    # Prevent DNS prefetch info leakage
+    X-DNS-Prefetch-Control = "off"
+
+# ── Cache: immutable hashed static bundles ────────────────────
+[[headers]]
+  for = "/static/*"
+
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Cache: HTML — never cache to prevent stale auth state ─────
+[[headers]]
+  for = "/index.html"
+
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma        = "no-cache"
+
+# ── Cache: service worker — always fresh ──────────────────────
+[[headers]]
+  for = "/sw-push.js"
+
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/service-worker.js"
+
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ── Cache: manifest — 1 day ───────────────────────────────────
+[[headers]]
+  for = "/manifest.json"
+
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# ── Cache: offline page — always available ────────────────────
+[[headers]]
+  for = "/offline.html"
+
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

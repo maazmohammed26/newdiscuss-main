@@ -1,0 +1,209 @@
+.pulse-page {
+  height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pulse-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+  z-index: 100;
+  color: white;
+}
+
+.pulse-title {
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.pulse-feed-container {
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none; /* Firefox */
+}
+
+.pulse-feed-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.pulse-item {
+  height: 100vh;
+  width: 100%;
+  scroll-snap-align: start;
+  position: relative;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.play-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 10;
+  color: white;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.action-item span {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.action-item .liked {
+  color: #ff3b30;
+}
+
+.pulse-info {
+  position: absolute;
+  left: 16px;
+  bottom: 30px;
+  right: 80px;
+  color: white;
+  z-index: 10;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.author-username {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.follow-btn-pulse {
+  border: 1px solid white;
+  background: transparent;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.pulse-caption {
+  font-size: 15px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.pulse-hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.hashtag {
+  font-weight: bold;
+  color: #a5d8ff;
+}
+
+.public-badge {
+  font-size: 12px;
+  opacity: 0.8;
+  background: rgba(255,255,255,0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.mute-control {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  background: rgba(0,0,0,0.4);
+  padding: 8px;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+}
+
+.pulse-empty, .end-message {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.refresh-btn {
+  margin-top: 20px;
+  background: #339af0;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.end-content h3 {
+  margin-bottom: 10px;
+}

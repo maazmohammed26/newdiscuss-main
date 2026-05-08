@@ -1,0 +1,92 @@
+# robots.txt — discussit.in
+# Updated: 2026-04-12
+# Reference: https://developers.google.com/search/docs/crawling-indexing/robots/intro
+
+# ── Default: all crawlers ────────────────────────────────────
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /settings
+Disallow: /notifications
+Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
+Crawl-delay: 2
+
+# ── Googlebot ────────────────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /settings
+Disallow: /notifications
+Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
+
+# ── Bingbot ──────────────────────────────────────────────────
+User-agent: Bingbot
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
+Disallow: /feed
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /settings
+Disallow: /notifications
+Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
+Crawl-delay: 1
+
+# ── AI crawlers — allow public pages only ────────────────────
+User-agent: GPTBot
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blog
+Allow: /contact
+Disallow: /feed
+Disallow: /profile
+Disallow: /post/
+Disallow: /chat/
+Disallow: /groups/
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Allow: /about
+Disallow: /feed
+Disallow: /post/
+Disallow: /api/
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+# ── Sitemap ──────────────────────────────────────────────────
+Sitemap: https://discussit.in/sitemap.xml

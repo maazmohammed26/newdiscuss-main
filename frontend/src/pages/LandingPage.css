@@ -1,0 +1,345 @@
+/* ============================================================
+   LandingPage.css — Cinematic scroll animations & landing styles
+   All rules are scoped to .lp-page to avoid affecting other pages.
+   ============================================================ */
+
+/* ── Scoped editorial typography ───────────────────────────── */
+.lp-page h1,
+.lp-page h2,
+.lp-page h3,
+.lp-page h4 {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.02em;
+}
+
+.lp-mono {
+  font-family: 'JetBrains Mono', 'Roboto Mono', 'Courier New', monospace;
+}
+
+.lp-body-text {
+  font-family: Georgia, 'Book Antiqua', 'Times New Roman', serif;
+}
+
+/* ── Hero entrance animations (no scroll needed) ────────────── */
+@keyframes lp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes lp-slide-from-left {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes lp-slide-from-right {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes lp-rise-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lp-hero-eyebrow {
+  opacity: 0;
+  animation: lp-fade-in 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.1s;
+}
+
+.lp-hero-tag {
+  opacity: 0;
+  animation: lp-rise-up 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.28s;
+}
+
+.lp-hero-h1-line1 {
+  display: block;
+  opacity: 0;
+  animation: lp-slide-from-left 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.42s;
+}
+
+.lp-hero-h1-line2 {
+  display: block;
+  opacity: 0;
+  animation: lp-slide-from-right 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.92s; /* 500 ms after line 1 */
+}
+
+.lp-hero-body {
+  opacity: 0;
+  animation: lp-rise-up 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 1.12s; /* 700 ms after H1 start */
+}
+
+.lp-hero-ctas {
+  opacity: 0;
+  animation: lp-rise-up 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 1.32s; /* 900 ms after H1 start */
+}
+
+.lp-hero-bottom {
+  opacity: 0;
+  animation: lp-fade-in 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 1.55s;
+}
+
+/* ── Scroll-trigger data-animate pattern ────────────────────── */
+[data-animate] {
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-duration: 0.65s;
+}
+
+[data-animate="up"] {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+[data-animate="left"] {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+[data-animate="right"] {
+  opacity: 0;
+  transform: translateX(60px);
+}
+
+[data-animate="flip"] {
+  opacity: 0;
+  transform: perspective(700px) rotateY(90deg);
+  transform-style: preserve-3d;
+}
+
+[data-animate="fade"] {
+  opacity: 0;
+}
+
+[data-animate].lp-animated {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ── Film perforation strip ─────────────────────────────────── */
+.lp-film-perfs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lp-film-perf {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: hsl(var(--primary) / 0.3);
+}
+
+.lp-feature-card {
+  position: relative;
+  padding-left: 32px;
+  transition: transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.28s ease;
+}
+
+.lp-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: hsl(var(--primary) / 0.4) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14) !important;
+}
+
+/* ── Typewriter cursor ──────────────────────────────────────── */
+@keyframes lp-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.lp-typewriter-cursor::after {
+  content: '|';
+  animation: lp-blink 0.75s step-end infinite;
+  margin-left: 2px;
+  color: inherit;
+}
+
+/* ── 24-hours / "gone" opacity pulse ────────────────────────── */
+@keyframes lp-opacity-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.lp-pulse-text {
+  animation: lp-opacity-pulse 2.8s ease-in-out infinite;
+}
+
+/* ── Signal mock card float-up ──────────────────────────────── */
+@keyframes lp-float-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lp-signal-card-enter {
+  opacity: 0;
+  animation: lp-float-up 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ── CTA breathing glow ─────────────────────────────────────── */
+@keyframes lp-breathe-glow {
+  0%, 100% { box-shadow: 0 4px 18px hsl(var(--primary) / 0.35); }
+  50%       { box-shadow: 0 6px 40px hsl(var(--primary) / 0.6); }
+}
+
+.lp-cta-btn-glow {
+  animation: lp-breathe-glow 2.6s ease-in-out infinite;
+}
+
+/* ── CTA background radial gradient drift ───────────────────── */
+@keyframes lp-gradient-drift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.lp-cta-bg {
+  background-size: 300% 300%;
+  animation: lp-gradient-drift 9s ease-in-out infinite;
+}
+
+/* ── NEW badge pulse glow ───────────────────────────────────── */
+@keyframes lp-badge-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50%       { box-shadow: 0 0 12px 5px rgba(16, 185, 129, 0.15); }
+}
+
+.lp-new-badge {
+  animation: lp-badge-glow 2.2s ease-in-out infinite;
+}
+
+/* ── Mini pills horizontal scroll row ──────────────────────── */
+.lp-pills-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.lp-pills-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Audience tile perspective wrapper ──────────────────────── */
+.lp-tile-wrap {
+  perspective: 900px;
+}
+
+/* ── Landing page sticky navbar ─────────────────────────────── */
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid hsl(var(--border));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: hsl(var(--background) / 0.88);
+}
+
+/* ── Theme dot active ring ──────────────────────────────────── */
+.lp-theme-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  outline: 2.5px solid transparent;
+  outline-offset: 3px;
+  transition: outline-color 0.18s ease, transform 0.15s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.lp-theme-dot:hover {
+  transform: scale(1.2);
+}
+
+.lp-theme-dot.lp-dot-active {
+  outline-color: hsl(var(--primary));
+}
+
+/* Tooltip ─────── */
+.lp-theme-dot-wrap {
+  position: relative;
+}
+
+.lp-theme-dot-wrap .lp-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  z-index: 60;
+}
+
+.lp-theme-dot-wrap:hover .lp-tooltip {
+  opacity: 1;
+}
+
+/* ── Checklist items (initial hidden, JS reveals) ─────────── */
+.lp-check-item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* ── Scroll-smooth ──────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Reduced motion: disable ALL transitions & animations ──── */
+@media (prefers-reduced-motion: reduce) {
+  [data-animate],
+  [data-animate].lp-animated,
+  .lp-hero-eyebrow,
+  .lp-hero-tag,
+  .lp-hero-h1-line1,
+  .lp-hero-h1-line2,
+  .lp-hero-body,
+  .lp-hero-ctas,
+  .lp-hero-bottom,
+  .lp-signal-card-enter,
+  .lp-check-item,
+  .lp-cta-btn-glow,
+  .lp-cta-bg,
+  .lp-new-badge,
+  .lp-pulse-text,
+  .lp-feature-card {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
