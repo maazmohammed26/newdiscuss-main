@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Send, Trash2, Loader2, MessageSquare, ChevronDown, ChevronUp, Reply, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
-import { notifyTelegramComment } from '@/lib/telegramService';
+import { notifyTelegramComment, notifyTelegramReply } from '@/lib/telegramService';
 
 const COMMENT_CHAR_LIMIT = 500;
 
@@ -134,14 +134,18 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
   
   const handleSubmitReply = async (e) => {
     e.preventDefault();
-    if (!replyText.trim()) return;
-    
+    const text = replyText.trim();
     setSubmittingReply(true);
     try {
-      await createReply(postId, comment.id, replyText, currentUser, comment.author_id);
+      await createReply(postId, comment.id, text, currentUser, comment.author_id);
       setReplyText('');
       setShowReplyInput(false);
       if (!showReplies) setShowReplies(true);
+      
+      // Notify comment author via Telegram
+      if (comment.author_id && currentUser?.id !== comment.author_id) {
+        notifyTelegramReply(comment.author_id, currentUser?.username, text).catch(() => {});
+      }
     } catch (err) {
       toast.error('Failed to add reply');
     } finally {
@@ -361,11 +365,12 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
     if (!newComment.trim() || isOverLimit) return;
     setSubmitting(true);
     try {
-      await createCommentFirestore(postId, newComment.trim(), currentUser, postAuthorId);
+      const text = newComment.trim();
+      await createCommentFirestore(postId, text, currentUser, postAuthorId);
       setNewComment('');
       // Notify post author via Telegram (skip if commenter is the author)
       if (postAuthorId && currentUser?.id !== postAuthorId) {
-        notifyTelegramComment(postAuthorId, currentUser?.username).catch(() => {});
+        notifyTelegramComment(postAuthorId, currentUser?.username, text).catch(() => {});
       }
     } catch (err) {
       toast.error(err.message || 'Failed to add comment');

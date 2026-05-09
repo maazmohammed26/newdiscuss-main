@@ -2,16 +2,6 @@
 // Sends notifications via the Telegram Bot API directly from the browser.
 // The user's Telegram Chat ID is stored in Firebase RTDB (users/{uid}/telegramChatId).
 // Notification message content is NEVER stored in Firebase.
-//
-// Setup (one-time, owner/admin):
-//   1. Create a bot via @BotFather on Telegram → get BOT_TOKEN
-//   2. Set REACT_APP_TELEGRAM_BOT_TOKEN in your .env / Netlify env vars
-//   3. Set REACT_APP_TELEGRAM_BOT_USERNAME  (e.g. DiscussNotifications_bot)
-//
-// User setup (each user):
-//   1. Open Telegram, search for the bot, click Start
-//   2. Follow the bot's instructions to get their Chat ID
-//   3. Paste the Chat ID in Profile → Telegram Notifications
 
 import { database, ref, update, remove, get } from './firebase';
 import { invalidateUserCache } from './db';
@@ -25,11 +15,10 @@ export const APP_URL = 'https://discussit.in/';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-// ─── Firebase helpers (store only Chat ID, never message content) ─────────────
+// ─── Firebase helpers ─────────────────────────────────────────────────────────
 
 /**
  * Save a user's Telegram Chat ID to Firebase.
- * Stored at: users/{userId}/telegramChatId
  */
 export const saveTelegramChatId = async (userId, chatId) => {
   const trimmed = String(chatId).trim();
@@ -39,16 +28,11 @@ export const saveTelegramChatId = async (userId, chatId) => {
 
 /**
  * Read a user's Telegram Chat ID from Firebase.
- * Returns the chat ID string, or null if not set.
  */
 export const getTelegramChatId = async (userId) => {
   try {
     const snapshot = await get(ref(database, `users/${userId}/telegramChatId`));
-    if (snapshot.exists()) {
-      const val = snapshot.val();
-      return val ? String(val) : null;
-    }
-    return null;
+    return snapshot.exists() ? String(snapshot.val()) : null;
   } catch {
     return null;
   }
@@ -62,21 +46,53 @@ export const removeTelegramChatId = async (userId) => {
   invalidateUserCache(userId);
 };
 
+/**
+ * Save a user's Telegram Privacy setting.
+ * true = Privacy ON (don't show content)
+ * false = Privacy OFF (show content)
+ */
+export const saveTelegramPrivacy = async (userId, isPrivate) => {
+  await update(ref(database, `users/${userId}`), { telegramPrivacy: !!isPrivate });
+  invalidateUserCache(userId);
+};
+
+/**
+ * Get a user's Telegram Privacy setting.
+ * Defaults to true (Privacy ON) for safety.
+ */
+export const getTelegramPrivacy = async (userId) => {
+  try {
+    const snapshot = await get(ref(database, `users/${userId}/telegramPrivacy`));
+    return snapshot.exists() ? !!snapshot.val() : true;
+  } catch {
+    return true;
+  }
+};
+
+/**
+ * Get both Chat ID and Privacy setting in one call.
+ */
+export const getTelegramSettings = async (userId) => {
+  try {
+    const snapshot = await get(ref(database, `users/${userId}`));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return {
+        chatId: data.telegramChatId ? String(data.telegramChatId) : null,
+        isPrivate: data.telegramPrivacy !== undefined ? !!data.telegramPrivacy : true,
+      };
+    }
+  } catch {}
+  return { chatId: null, isPrivate: true };
+};
+
 // ─── Internal send helper ─────────────────────────────────────────────────────
 
 /**
  * Send a Telegram message to a specific chat ID.
- * @param {string} chatId   - Telegram chat ID of the recipient
- * @param {string} text     - Message text (HTML formatted)
- * @param {object} [extra]  - Extra Telegram API params (e.g. reply_markup)
- * @returns {Promise<boolean>} true if sent successfully
  */
 const sendTelegramMessage = async (chatId, text, extra = {}) => {
-  if (!BOT_TOKEN) {
-    console.warn('[Telegram] Bot token not configured. Set REACT_APP_TELEGRAM_BOT_TOKEN.');
-    return false;
-  }
-  if (!chatId) return false;
+  if (!BOT_TOKEN || !chatId) return false;
 
   try {
     const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
@@ -91,9 +107,6 @@ const sendTelegramMessage = async (chatId, text, extra = {}) => {
       }),
     });
     const data = await res.json();
-    if (!data.ok) {
-      console.warn('[Telegram] API error:', data.description);
-    }
     return data.ok === true;
   } catch (err) {
     console.warn('[Telegram] Failed to send message:', err.message);
@@ -101,132 +114,183 @@ const sendTelegramMessage = async (chatId, text, extra = {}) => {
   }
 };
 
-// ─── Inline keyboard with app deep-link ──────────────────────────────────────
+// ─── Premium UI Helpers ───────────────────────────────────────────────────────
 
-const appKeyboard = (label = '🔗 Open Discuss') => ({
+const appKeyboard = (label = '✦ Open Discuss') => ({
   inline_keyboard: [[{ text: label, url: APP_URL }]],
 });
+
+// Premium symbols
+const SYM = {
+  HEADER: '✦',
+  ITEM: '◈',
+  ACTION: '❯',
+  DIVIDER: '──────────────────',
+};
 
 // ─── Public notification senders ─────────────────────────────────────────────
 
 /**
  * Notify a user of a new direct message.
- * Called on the SENDER's device right after the message is stored.
- * @param {string} recipientUserId - Firebase UID of the message recipient
- * @param {string} senderName      - Username of the sender
  */
-export const notifyTelegramDM = async (recipientUserId, senderName) => {
-  const chatId = await getTelegramChatId(recipientUserId);
+export const notifyTelegramDM = async (recipientUserId, senderName, content = '', isImage = false) => {
+  const { chatId, isPrivate } = await getTelegramSettings(recipientUserId);
   if (!chatId) return;
-  await sendTelegramMessage(
-    chatId,
-    `💬 <b>New Message on Discuss</b>\n\n<b>@${senderName || 'Someone'}</b> sent you a message.\n\nTap below to open the app and reply.`,
-    { reply_markup: appKeyboard('💬 Open Messages') }
-  );
-};
 
-/**
- * Notify a user of a new friend request.
- * @param {string} recipientUserId - Firebase UID of the user receiving the request
- * @param {string} senderName      - Username of the requester
- */
-export const notifyTelegramFriendRequest = async (recipientUserId, senderName) => {
-  const chatId = await getTelegramChatId(recipientUserId);
-  if (!chatId) return;
-  await sendTelegramMessage(
-    chatId,
-    `👥 <b>New Friend Request on Discuss</b>\n\n<b>@${senderName || 'Someone'}</b> wants to connect with you.`,
-    { reply_markup: appKeyboard('👥 View Friend Requests') }
-  );
-};
+  const title = `<b>${SYM.HEADER} NEW DIRECT MESSAGE</b>`;
+  const sender = `<b>@${senderName || 'Someone'}</b>`;
+  
+  let body = '';
+  if (isPrivate) {
+    body = `${SYM.ITEM} <i>Sent you a ${isImage ? 'photo' : 'message'}</i>`;
+  } else {
+    body = isImage 
+      ? `${SYM.ITEM} 🖼️ <i>Sent a photo</i>` 
+      : `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+  }
 
-/**
- * Notify a user that their friend request was accepted.
- * @param {string} recipientUserId - Firebase UID of the user who sent the original request
- * @param {string} accepterName    - Username of the user who accepted
- */
-export const notifyTelegramFriendAccepted = async (recipientUserId, accepterName) => {
-  const chatId = await getTelegramChatId(recipientUserId);
-  if (!chatId) return;
-  await sendTelegramMessage(
-    chatId,
-    `🎉 <b>Friend Request Accepted on Discuss</b>\n\n<b>@${accepterName || 'Someone'}</b> accepted your friend request. You are now connected!`,
-    { reply_markup: appKeyboard('🎉 View Profile') }
-  );
+  const text = `${title}\n\n${sender}\n${body}\n\n${SYM.ACTION} Tap below to reply`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('💬 Open Messages') });
 };
 
 /**
  * Notify a user of a new message in a group chat.
- * @param {string} recipientUserId - Firebase UID of the recipient
- * @param {string} groupName       - Name of the group
- * @param {string} senderName      - Username of the message sender
  */
-export const notifyTelegramGroupMessage = async (recipientUserId, groupName, senderName) => {
-  const chatId = await getTelegramChatId(recipientUserId);
+export const notifyTelegramGroupMessage = async (recipientUserId, groupName, senderName, content = '', isImage = false) => {
+  const { chatId, isPrivate } = await getTelegramSettings(recipientUserId);
   if (!chatId) return;
-  await sendTelegramMessage(
-    chatId,
-    `💬 <b>New Group Message on Discuss</b>\n\n<b>@${senderName || 'Someone'}</b> posted in <b>${groupName || 'a group'}</b>.`,
-    { reply_markup: appKeyboard('💬 Open Group Chat') }
-  );
-};
 
-/**
- * Notify a user that their group join request was approved.
- * @param {string} recipientUserId - Firebase UID of the user whose request was approved
- * @param {string} groupName       - Name of the group
- */
-export const notifyTelegramGroupJoinAccepted = async (recipientUserId, groupName) => {
-  const chatId = await getTelegramChatId(recipientUserId);
-  if (!chatId) return;
-  await sendTelegramMessage(
-    chatId,
-    `✅ <b>Group Request Approved on Discuss</b>\n\nYour request to join <b>${groupName || 'the group'}</b> has been approved. Welcome!`,
-    { reply_markup: appKeyboard('✅ Open Group') }
-  );
+  const title = `<b>${SYM.HEADER} GROUP MESSAGE</b>`;
+  const meta = `<b>@${senderName || 'Someone'}</b> in <b>${groupName || 'a group'}</b>`;
+  
+  let body = '';
+  if (isPrivate) {
+    body = `${SYM.ITEM} <i>Posted a new ${isImage ? 'photo' : 'message'}</i>`;
+  } else {
+    body = isImage 
+      ? `${SYM.ITEM} 🖼️ <i>Posted a photo</i>` 
+      : `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+  }
+
+  const text = `${title}\n\n${meta}\n${body}\n\n${SYM.ACTION} Open group to join conversation`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('💬 Open Group Chat') });
 };
 
 /**
  * Notify a user of a new comment on their post.
- * @param {string} recipientUserId - Firebase UID of the post owner
- * @param {string} commenterName   - Username of the commenter
  */
-export const notifyTelegramComment = async (recipientUserId, commenterName) => {
-  const chatId = await getTelegramChatId(recipientUserId);
+export const notifyTelegramComment = async (recipientUserId, commenterName, content = '') => {
+  const { chatId, isPrivate } = await getTelegramSettings(recipientUserId);
   if (!chatId) return;
-  await sendTelegramMessage(
-    chatId,
-    `💬 <b>New Comment on Discuss</b>\n\n<b>@${commenterName || 'Someone'}</b> commented on your post.`,
-    { reply_markup: appKeyboard('💬 View Comment') }
-  );
+
+  const title = `<b>${SYM.HEADER} NEW COMMENT</b>`;
+  const meta = `<b>@${commenterName || 'Someone'}</b> on your post`;
+  
+  let body = '';
+  if (isPrivate) {
+    body = `${SYM.ITEM} <i>Left a new comment</i>`;
+  } else {
+    body = `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+  }
+
+  const text = `${title}\n\n${meta}\n${body}\n\n${SYM.ACTION} View interaction in app`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('💬 View Comment') });
+};
+
+/**
+ * Notify a user of a new reply to their comment.
+ */
+export const notifyTelegramReply = async (recipientUserId, replierName, content = '') => {
+  const { chatId, isPrivate } = await getTelegramSettings(recipientUserId);
+  if (!chatId) return;
+
+  const title = `<b>${SYM.HEADER} NEW REPLY</b>`;
+  const meta = `<b>@${replierName || 'Someone'}</b> replied to your comment`;
+  
+  let body = '';
+  if (isPrivate) {
+    body = `${SYM.ITEM} <i>Left a new reply</i>`;
+  } else {
+    body = `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+  }
+
+  const text = `${title}\n\n${meta}\n${body}\n\n${SYM.ACTION} View reply in app`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('💬 View Reply') });
 };
 
 /**
  * Notify a user of a new like on their post or pulse.
- * @param {string} recipientUserId - Firebase UID of the author
- * @param {string} likerName       - Username of the person who liked it
- * @param {string} type            - 'post' or 'pulse'
  */
 export const notifyTelegramLike = async (recipientUserId, likerName, type = 'post') => {
+  const { chatId } = await getTelegramSettings(recipientUserId);
+  if (!chatId) return;
+
+  const title = `<b>${SYM.HEADER} NEW LIKE</b>`;
+  const isPulse = type === 'pulse';
+  const meta = `<b>@${likerName || 'Someone'}</b> liked your ${isPulse ? 'pulse' : 'post'}`;
+  
+  const text = `${title}\n\n❤️ ${meta}\n\n${SYM.ACTION} Tap to view your ${isPulse ? 'pulse' : 'post'}`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard(`❤️ View ${isPulse ? 'Pulse' : 'Post'}`) });
+};
+
+/**
+ * Notify a user of a new friend request.
+ */
+export const notifyTelegramFriendRequest = async (recipientUserId, senderName) => {
   const chatId = await getTelegramChatId(recipientUserId);
   if (!chatId) return;
-  const isPulse = type === 'pulse';
-  await sendTelegramMessage(
-    chatId,
-    `❤️ <b>New Like on Discuss</b>\n\n<b>@${likerName || 'Someone'}</b> liked your ${isPulse ? 'pulse' : 'post'}.`,
-    { reply_markup: appKeyboard(`❤️ View ${isPulse ? 'Pulse' : 'Post'}`) }
-  );
+
+  const title = `<b>${SYM.HEADER} FRIEND REQUEST</b>`;
+  const text = `${title}\n\n🤝 <b>@${senderName || 'Someone'}</b> wants to connect.\n\n${SYM.ACTION} View request in Profile`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('👥 View Requests') });
+};
+
+/**
+ * Notify a user that their friend request was accepted.
+ */
+export const notifyTelegramFriendAccepted = async (recipientUserId, accepterName) => {
+  const chatId = await getTelegramChatId(recipientUserId);
+  if (!chatId) return;
+
+  const title = `<b>${SYM.HEADER} REQUEST ACCEPTED</b>`;
+  const text = `${title}\n\n🎉 <b>@${accepterName || 'Someone'}</b> accepted your request.\n\n${SYM.ACTION} You are now connected!`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('🎉 View Profile') });
+};
+
+/**
+ * Notify a user that their group join request was approved.
+ */
+export const notifyTelegramGroupJoinAccepted = async (recipientUserId, groupName) => {
+  const chatId = await getTelegramChatId(recipientUserId);
+  if (!chatId) return;
+
+  const title = `<b>${SYM.HEADER} ACCESS GRANTED</b>`;
+  const text = `${title}\n\n✅ Your request to join <b>${groupName || 'the group'}</b> was approved.\n\n${SYM.ACTION} Welcome to the group!`;
+  
+  await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('✅ Open Group') });
 };
 
 export default {
   saveTelegramChatId,
   getTelegramChatId,
   removeTelegramChatId,
+  saveTelegramPrivacy,
+  getTelegramPrivacy,
+  getTelegramSettings,
   notifyTelegramDM,
   notifyTelegramFriendRequest,
   notifyTelegramFriendAccepted,
   notifyTelegramGroupMessage,
   notifyTelegramGroupJoinAccepted,
   notifyTelegramComment,
+  notifyTelegramReply,
   notifyTelegramLike,
 };
+

@@ -326,7 +326,8 @@ export default function ChatConversationPage() {
         await sendMessage(chatId, user.id, messageText, mediaFiles);
       }
       // Send Telegram notification to the recipient (fires in background, non-blocking)
-      notifyTelegramDM(otherUserId, user?.username).catch(() => {});
+      const isImage = !!(mediaFiles && mediaFiles.length > 0);
+      notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
       inputRef.current?.focus();
     } catch (error) {
       console.error('Send message error:', error);

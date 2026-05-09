@@ -237,8 +237,10 @@ export default function GroupConversationPage() {
     if (!messageText.trim() && pendingMedia.length === 0) return;
     setSending(true);
     setShowMediaUpload(false);
+    const text = messageText.trim();
+    const hasMedia = pendingMedia.length > 0;
     try {
-      await sendGroupMessage(groupId, user.id, messageText, replyTo, pendingMedia);
+      await sendGroupMessage(groupId, user.id, text, replyTo, pendingMedia);
       setMessageText('');
       setReplyTo(null);
       setPendingMedia([]);
@@ -247,7 +249,7 @@ export default function GroupConversationPage() {
       const senderName = user?.username || 'Someone';
       members
         .filter(m => m.userId !== user.id)
-        .forEach(m => notifyTelegramGroupMessage(m.userId, groupName, senderName).catch(() => {}));
+        .forEach(m => notifyTelegramGroupMessage(m.userId, groupName, senderName, text, hasMedia).catch(() => {}));
       inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);

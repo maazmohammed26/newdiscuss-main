@@ -70,11 +70,14 @@ import {
   saveTelegramChatId,
   getTelegramChatId,
   removeTelegramChatId,
+  saveTelegramPrivacy,
+  getTelegramPrivacy,
   notifyTelegramFriendRequest,
   notifyTelegramFriendAccepted,
   BOT_USERNAME,
   APP_URL,
 } from '@/lib/telegramService';
+import { Eye, EyeOff, MessageSquare } from 'lucide-react';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -98,6 +101,7 @@ export default function ProfilePage() {
   // Telegram notification states
   const [telegramChatIdInput, setTelegramChatIdInput] = useState('');
   const [telegramConnected, setTelegramConnected] = useState(false);
+  const [telegramPrivacy, setTelegramPrivacy] = useState(true);
   const [savingTelegram, setSavingTelegram] = useState(false);
   const [loadingTelegram, setLoadingTelegram] = useState(true);
   const [showTelegramInstructions, setShowTelegramInstructions] = useState(false);
@@ -178,16 +182,20 @@ export default function ProfilePage() {
     }
   }, [user?.id]);
 
-  // Load existing Telegram Chat ID
+  // Load existing Telegram Chat ID and Privacy
   useEffect(() => {
     if (!user?.id) return;
     setLoadingTelegram(true);
-    getTelegramChatId(user.id)
-      .then(chatId => {
+    Promise.all([
+      getTelegramChatId(user.id),
+      getTelegramPrivacy(user.id)
+    ])
+      .then(([chatId, privacy]) => {
         if (chatId) {
           setTelegramConnected(true);
           setTelegramChatIdInput(chatId);
         }
+        setTelegramPrivacy(privacy);
       })
       .catch(() => {})
       .finally(() => setLoadingTelegram(false));
@@ -581,6 +589,20 @@ export default function ProfilePage() {
       toast.success('Telegram disconnected');
     } catch {
       toast.error('Failed to disconnect Telegram');
+    } finally {
+      setSavingTelegram(false);
+    }
+  };
+
+  const handleToggleTelegramPrivacy = async () => {
+    const newValue = !telegramPrivacy;
+    setSavingTelegram(true);
+    try {
+      await saveTelegramPrivacy(user.id, newValue);
+      setTelegramPrivacy(newValue);
+      toast.success(newValue ? 'Privacy enabled: Message content hidden' : 'Privacy disabled: Full message previews enabled');
+    } catch {
+      toast.error('Failed to update privacy setting');
     } finally {
       setSavingTelegram(false);
     }
@@ -1110,6 +1132,42 @@ export default function ProfilePage() {
                     <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-mono truncate">Chat ID: {telegramChatIdInput}</p>
                   </div>
                 </div>
+
+                {/* Privacy Toggle */}
+                <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {telegramPrivacy ? (
+                        <EyeOff className="w-4 h-4 text-[#6275AF]" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                      )}
+                      <span className="text-xs font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Message Preview</span>
+                    </div>
+                    <button
+                      onClick={handleToggleTelegramPrivacy}
+                      disabled={savingTelegram}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${telegramPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-[#2563EB] discuss:bg-[#EF4444]'}`}
+                    >
+                      <span
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-1' : 'translate-x-4.5'}`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    {telegramPrivacy ? (
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#10B981] mt-0.5 shrink-0" />
+                    ) : (
+                      <MessageSquare className="w-3.5 h-3.5 text-[#2563EB] discuss:text-[#EF4444] mt-0.5 shrink-0" />
+                    )}
+                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] leading-relaxed">
+                      {telegramPrivacy 
+                        ? 'Privacy Active: Notifications show only sender and message type. Content is hidden.' 
+                        : 'Full Previews: Notifications show the complete message content for a better experience.'}
+                    </p>
+                  </div>
+                </div>
+
                 <Button
                   onClick={handleDisconnectTelegram}
                   disabled={savingTelegram}
