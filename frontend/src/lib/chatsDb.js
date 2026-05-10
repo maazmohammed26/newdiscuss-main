@@ -138,7 +138,7 @@ export const sendMessage = async (chatId, senderId, text, media = []) => {
     const chatSnap = await get(chatRef);
     if (chatSnap.exists()) {
       const chat = chatSnap.val();
-      const otherUserId = chat.participants.find(p => p !== senderId);
+      const participants = chat.participants || chatId.split('_'); const otherUserId = participants.find(p => p !== senderId);
       
       // Update both users' chat lists
       await updateUserChatListAfterMessage(senderId, chatId, otherUserId, message);
@@ -855,7 +855,8 @@ export const sendReplyMessage = async (chatId, senderId, text, replyTo, media = 
     const chatSnap = await get(chatRef);
     if (chatSnap.exists()) {
       const chat = chatSnap.val();
-      const otherUserId = chat.participants.find(p => p !== senderId);
+      const participants = chat.participants || chatId.split('_');
+      const otherUserId = participants.find(p => p !== senderId);
       
       // Update both users' chat lists
       await updateUserChatListAfterMessageInternal(senderId, chatId, otherUserId, message);
