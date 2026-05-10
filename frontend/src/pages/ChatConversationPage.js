@@ -312,7 +312,6 @@ export default function ChatConversationPage() {
     const messageText = newMessage.trim();
     setNewMessage('');
     setShowMediaUpload(false);
-    const effectiveMedia = mediaFiles || pendingMedia;
     setPendingMedia([]);
     setSending(true);
     
