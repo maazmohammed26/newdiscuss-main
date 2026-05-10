@@ -133,14 +133,79 @@ export default function ProfilePage() {
   const [deleteLinkConfirm, setDeleteLinkConfirm] = useState(null);
   
   // Security settings
-  const { localSettings, updateSettings } = useSecurity();
+  const { localSettings, updatePin, setSecurityEnabled, setSecurityType, verifyPin } = useSecurity();
   const [showPinModal, setShowPinModal] = useState(false);
   const [showChangePinModal, setShowChangePinModal] = useState(false);
+  const [showVerifyPinModal, setShowVerifyPinModal] = useState(false);
   const [oldPin, setOldPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [testingBiometric, setTestingBiometric] = useState(false);
+  const [pendingSecurityAction, setPendingSecurityAction] = useState(null);
+
+  useEffect(() => {
+    if (typeof isBiometricSupported === 'function') {
+      isBiometricSupported().then(setBiometricAvailable);
+    }
+  }, []);
+
+  const handleToggleSecurity = () => {
+    if (!localSettings?.enabled) {
+      setShowPinModal(true);
+    } else {
+      setSecurityEnabled(false);
+      toast.success('App lock disabled');
+    }
+  };
+
+  const handleSavePinAndEnable = async () => {
+    if (newPin.length !== 6) { toast.error('PIN must be 6 digits'); return; }
+    if (newPin !== confirmPin) { toast.error('PINs do not match'); return; }
+    await updatePin(newPin);
+    setSecurityEnabled(true);
+    setSecurityType('pin');
+    setShowPinModal(false);
+    setNewPin('');
+    setConfirmPin('');
+    toast.success('App lock enabled — synced across devices');
+  };
+
+  const handleUpdatePin = async () => {
+    if (!verifyPin(oldPin)) { toast.error('Incorrect old PIN'); return; }
+    if (newPin.length !== 6) { toast.error('New PIN must be 6 digits'); return; }
+    if (newPin !== confirmPin) { toast.error('PINs do not match'); return; }
+    await updatePin(newPin);
+    setShowChangePinModal(false);
+    setOldPin(''); setNewPin(''); setConfirmPin('');
+    toast.success('PIN updated successfully');
+  };
+
+  const handleBiometricToggle = () => {
+    if (localSettings?.type === 'biometric') {
+      setSecurityType('pin');
+      toast.success('Switched to PIN-only lock');
+    } else {
+      setPendingSecurityAction('biometric');
+      setShowVerifyPinModal(true);
+    }
+  };
+
+  const handleVerifyAndEnableBiometric = async () => {
+    if (!verifyPin(oldPin)) { toast.error('Incorrect PIN'); return; }
+    setTestingBiometric(true);
+    const success = await registerBiometric(user?.username || 'User');
+    if (success) {
+      setSecurityType('biometric');
+      toast.success('Biometric lock enabled');
+    } else {
+      toast.error('Biometric registration failed');
+    }
+    setTestingBiometric(false);
+    setShowVerifyPinModal(false);
+    setOldPin('');
+    setPendingSecurityAction(null);
+  };
 
   // Check if max links reached
   const maxLinksReached = (profileData?.socialLinks?.length || 0) >= MAX_SOCIAL_LINKS;
