@@ -89,6 +89,17 @@ export const getTelegramSettings = async (userId) => {
 // ─── Internal send helper ─────────────────────────────────────────────────────
 
 /**
+ * Escapes special HTML characters for Telegram.
+ */
+const escapeHTML = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+};
+
+/**
  * Send a Telegram message to a specific chat ID.
  */
 const sendTelegramMessage = async (chatId, text, extra = {}) => {
@@ -142,7 +153,7 @@ export const notifyTelegramDM = async (recipientUserId, senderName, content = ''
   }
 
   const title = `<b>${SYM.HEADER} NEW DIRECT MESSAGE</b>`;
-  const sender = `<b>@${senderName || 'Someone'}</b>`;
+  const sender = `<b>@${escapeHTML(senderName) || 'Someone'}</b>`;
   
   let body = '';
   if (isPrivate) {
@@ -150,7 +161,7 @@ export const notifyTelegramDM = async (recipientUserId, senderName, content = ''
   } else {
     body = isImage 
       ? `${SYM.ITEM} 🖼️ <i>Sent a photo</i>` 
-      : `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+      : `${SYM.ITEM} ${escapeHTML(content) || '<i>(No content)</i>'}`;
   }
 
   const text = `${title}\n\n${sender}\n${body}\n\n${SYM.ACTION} Tap below to reply`;
@@ -167,7 +178,7 @@ export const notifyTelegramGroupMessage = async (recipientUserId, groupName, sen
   if (!chatId) return;
 
   const title = `<b>${SYM.HEADER} GROUP MESSAGE</b>`;
-  const meta = `<b>@${senderName || 'Someone'}</b> in <b>${groupName || 'a group'}</b>`;
+  const meta = `<b>@${escapeHTML(senderName) || 'Someone'}</b> in <b>${escapeHTML(groupName) || 'a group'}</b>`;
   
   let body = '';
   if (isPrivate) {
@@ -175,7 +186,7 @@ export const notifyTelegramGroupMessage = async (recipientUserId, groupName, sen
   } else {
     body = isImage 
       ? `${SYM.ITEM} 🖼️ <i>Posted a photo</i>` 
-      : `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+      : `${SYM.ITEM} ${escapeHTML(content) || '<i>(No content)</i>'}`;
   }
 
   const text = `${title}\n\n${meta}\n${body}\n\n${SYM.ACTION} Open group to join conversation`;
@@ -191,13 +202,13 @@ export const notifyTelegramComment = async (recipientUserId, commenterName, cont
   if (!chatId) return;
 
   const title = `<b>${SYM.HEADER} NEW COMMENT</b>`;
-  const meta = `<b>@${commenterName || 'Someone'}</b> on your post`;
+  const meta = `<b>@${escapeHTML(commenterName) || 'Someone'}</b> on your post`;
   
   let body = '';
   if (isPrivate) {
     body = `${SYM.ITEM} <i>Left a new comment</i>`;
   } else {
-    body = `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+    body = `${SYM.ITEM} ${escapeHTML(content) || '<i>(No content)</i>'}`;
   }
 
   const text = `${title}\n\n${meta}\n${body}\n\n${SYM.ACTION} View interaction in app`;
@@ -213,13 +224,13 @@ export const notifyTelegramReply = async (recipientUserId, replierName, content 
   if (!chatId) return;
 
   const title = `<b>${SYM.HEADER} NEW REPLY</b>`;
-  const meta = `<b>@${replierName || 'Someone'}</b> replied to your comment`;
+  const meta = `<b>@${escapeHTML(replierName) || 'Someone'}</b> replied to your comment`;
   
   let body = '';
   if (isPrivate) {
     body = `${SYM.ITEM} <i>Left a new reply</i>`;
   } else {
-    body = `${SYM.ITEM} ${content || '<i>(No content)</i>'}`;
+    body = `${SYM.ITEM} ${escapeHTML(content) || '<i>(No content)</i>'}`;
   }
 
   const text = `${title}\n\n${meta}\n${body}\n\n${SYM.ACTION} View reply in app`;
@@ -236,7 +247,7 @@ export const notifyTelegramLike = async (recipientUserId, likerName, type = 'pos
 
   const title = `<b>${SYM.HEADER} NEW LIKE</b>`;
   const isPulse = type === 'pulse';
-  const meta = `<b>@${likerName || 'Someone'}</b> liked your ${isPulse ? 'pulse' : 'post'}`;
+  const meta = `<b>@${escapeHTML(likerName) || 'Someone'}</b> liked your ${isPulse ? 'pulse' : 'post'}`;
   
   const text = `${title}\n\n❤️ ${meta}\n\n${SYM.ACTION} Tap to view your ${isPulse ? 'pulse' : 'post'}`;
   
@@ -246,12 +257,14 @@ export const notifyTelegramLike = async (recipientUserId, likerName, type = 'pos
 /**
  * Notify a user of a new friend request.
  */
-export const notifyTelegramFriendRequest = async (recipientUserId, senderName) => {
+export const notifyTelegramFriendRequest = async (recipientUserId, requesterName) => {
   const chatId = await getTelegramChatId(recipientUserId);
   if (!chatId) return;
 
   const title = `<b>${SYM.HEADER} FRIEND REQUEST</b>`;
-  const text = `${title}\n\n🤝 <b>@${senderName || 'Someone'}</b> wants to connect.\n\n${SYM.ACTION} View request in Profile`;
+  const meta = `<b>@${escapeHTML(requesterName) || 'Someone'}</b> wants to be your friend`;
+  
+  const text = `${title}\n\n${meta}\n\n${SYM.ACTION} Open app to accept or decline`;
   
   await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('👥 View Requests') });
 };
@@ -259,12 +272,14 @@ export const notifyTelegramFriendRequest = async (recipientUserId, senderName) =
 /**
  * Notify a user that their friend request was accepted.
  */
-export const notifyTelegramFriendAccepted = async (recipientUserId, accepterName) => {
+export const notifyTelegramFriendAccepted = async (recipientUserId, friendName) => {
   const chatId = await getTelegramChatId(recipientUserId);
   if (!chatId) return;
 
   const title = `<b>${SYM.HEADER} REQUEST ACCEPTED</b>`;
-  const text = `${title}\n\n🎉 <b>@${accepterName || 'Someone'}</b> accepted your request.\n\n${SYM.ACTION} You are now connected!`;
+  const meta = `<b>@${escapeHTML(friendName) || 'Someone'}</b> is now your friend`;
+  
+  const text = `${title}\n\n${meta}\n\n${SYM.ACTION} Start a conversation now!`;
   
   await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('🎉 View Profile') });
 };
