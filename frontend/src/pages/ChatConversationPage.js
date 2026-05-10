@@ -305,7 +305,8 @@ export default function ChatConversationPage() {
 
   const handleSendMessage = async (e, mediaFiles = null) => {
     if (e) e.preventDefault();
-    if (!newMessage.trim() && !mediaFiles && !chatId) return;
+    const effectiveMedia = mediaFiles || pendingMedia;
+    if (!newMessage.trim() && (!effectiveMedia || effectiveMedia.length === 0) && !chatId) return;
     if (!chatEnabled) return;
 
     const messageText = newMessage.trim();

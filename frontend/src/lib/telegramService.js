@@ -134,8 +134,12 @@ const SYM = {
  * Notify a user of a new direct message.
  */
 export const notifyTelegramDM = async (recipientUserId, senderName, content = '', isImage = false) => {
+  console.log('[Telegram] Attempting notifyTelegramDM:', { recipientUserId, senderName, isImage });
   const { chatId, isPrivate } = await getTelegramSettings(recipientUserId);
-  if (!chatId) return;
+  if (!chatId) {
+    console.log('[Telegram] No chatId found for user:', recipientUserId);
+    return;
+  }
 
   const title = `<b>${SYM.HEADER} NEW DIRECT MESSAGE</b>`;
   const sender = `<b>@${senderName || 'Someone'}</b>`;
@@ -158,6 +162,7 @@ export const notifyTelegramDM = async (recipientUserId, senderName, content = ''
  * Notify a user of a new message in a group chat.
  */
 export const notifyTelegramGroupMessage = async (recipientUserId, groupName, senderName, content = '', isImage = false) => {
+  console.log('[Telegram] Attempting notifyTelegramGroupMessage:', { recipientUserId, groupName, senderName, isImage });
   const { chatId, isPrivate } = await getTelegramSettings(recipientUserId);
   if (!chatId) return;
 
