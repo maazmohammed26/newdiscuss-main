@@ -108,16 +108,18 @@ function App() {
     <AppErrorBoundary>
       <BrowserRouter>
         <ThemeProvider>
-          <AuthProvider><SecurityProvider><SecurityProvider>
-            <HighlightsProvider>
-              <SecurityWrapper>
-                {/* Global offline indicator — always rendered */}
-                <OfflineBanner />
-                <AppRoutes />
-                <Toaster position="top-right" />
-              </SecurityWrapper>
-            </HighlightsProvider>
-          </SecurityProvider></SecurityProvider></AuthProvider>
+          <AuthProvider>
+            <SecurityProvider>
+              <HighlightsProvider>
+                <SecurityWrapper>
+                  {/* Global offline indicator — always rendered */}
+                  <OfflineBanner />
+                  <AppRoutes />
+                  <Toaster position="top-right" />
+                </SecurityWrapper>
+              </HighlightsProvider>
+            </SecurityProvider>
+          </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>
     </AppErrorBoundary>
