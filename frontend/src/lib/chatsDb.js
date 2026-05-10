@@ -17,6 +17,7 @@ import {
   limitToLast
 } from './firebaseThird';
 import { notifyTelegramDM } from './telegramService';
+import { encryptData, decryptData } from './securityUtils';
 
 // Chat statuses
 export const CHAT_STATUS = {
@@ -115,7 +116,7 @@ export const sendMessage = async (chatId, senderId, text, media = []) => {
     const newMessageRef = push(messagesRef);
     const message = {
       text: (text || '').trim(),
-      media: media || [], // Array of {url, type}
+      media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })), // Array of {url, type}
       sender: senderId,
       timestamp,
       read: false,
@@ -143,8 +144,8 @@ export const sendMessage = async (chatId, senderId, text, media = []) => {
       await updateUserChatListAfterMessage(senderId, chatId, otherUserId, message);
       await updateUserChatListAfterMessage(otherUserId, chatId, senderId, message, true);
       
-      // Notify via Telegram (fire-and-forget)
-      notifyTelegramDM(otherUserId, 'Someone').catch(e => console.error('[Telegram]', e));
+      // Note: notifyTelegramDM was removed from here to prevent duplicates.
+      // Notifications are now handled by the UI layer which has better context.
     }
     
     return { id: newMessageRef.key, ...message };
@@ -191,7 +192,15 @@ export const getMessages = async (chatId, limit = 100) => {
     
     const messages = snapshot.val();
     return Object.entries(messages)
-      .map(([id, msg]) => ({ id, ...msg }))
+      .map(([id, msg]) => ({ 
+        id, 
+        ...msg,
+        media: (msg.media || []).map(m => ({ 
+          ...m, 
+          url: decryptData(m.url), 
+          thumbnail: decryptData(m.thumbnail) 
+        }))
+      }))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   } catch (error) {
     console.error('Error getting messages:', error);
@@ -216,7 +225,15 @@ export const subscribeToMessages = (chatId, callback) => {
     
     const messages = snapshot.val();
     const messagesList = Object.entries(messages)
-      .map(([id, msg]) => ({ id, ...msg }))
+      .map(([id, msg]) => ({ 
+        id, 
+        ...msg,
+        media: (msg.media || []).map(m => ({ 
+          ...m, 
+          url: decryptData(m.url), 
+          thumbnail: decryptData(m.thumbnail) 
+        }))
+      }))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     
     callback(messagesList);
@@ -811,7 +828,7 @@ export const sendReplyMessage = async (chatId, senderId, text, replyTo, media = 
     const newMessageRef = push(messagesRef);
     const message = {
       text: (text || '').trim(),
-      media: media || [],
+      media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })),
       sender: senderId,
       timestamp,
       read: false,
@@ -844,8 +861,7 @@ export const sendReplyMessage = async (chatId, senderId, text, replyTo, media = 
       await updateUserChatListAfterMessageInternal(senderId, chatId, otherUserId, message);
       await updateUserChatListAfterMessageInternal(otherUserId, chatId, senderId, message, true);
       
-      // Notify via Telegram (fire-and-forget)
-      notifyTelegramDM(otherUserId, 'Someone').catch(e => console.error('[Telegram]', e));
+      // Note: notifyTelegramDM was removed from here to prevent duplicates.
     }
     
     return { id: newMessageRef.key, ...message };

@@ -113,6 +113,7 @@ export default function ChatConversationPage() {
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [pendingMedia, setPendingMedia] = useState([]);
 
   useEffect(() => {
     deletedIdsRef.current = deletedMessageIds;
@@ -310,6 +311,8 @@ export default function ChatConversationPage() {
     const messageText = newMessage.trim();
     setNewMessage('');
     setShowMediaUpload(false);
+    const mediaFiles = pendingMedia;
+    setPendingMedia([]);
     setSending(true);
     
     try {
@@ -982,7 +985,57 @@ export default function ChatConversationPage() {
                 </div>
               </div>
             )}
+            {showMediaUpload && (
+              <div className="mb-2">
+                <MediaUpload 
+                  multiple 
+                  maxFiles={5}
+                  folder="dm_chats" 
+                  onUploadComplete={(result) => {
+                    const newMedia = Array.isArray(result) ? result : [result];
+                    setPendingMedia(prev => {
+                      const combined = [...prev, ...newMedia];
+                      if (combined.length > 5) {
+                        toast.error('You can only attach up to 5 files per message.');
+                        return combined.slice(0, 5);
+                      }
+                      return combined;
+                    });
+                    setShowMediaUpload(false);
+                  }} 
+                />
+              </div>
+            )}
+
+            {pendingMedia.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2 p-2 bg-neutral-50 dark:bg-neutral-800 discuss:bg-[#262626] rounded-lg">
+                {pendingMedia.map((m, idx) => (
+                  <div key={idx} className="relative w-16 h-16 rounded-md overflow-hidden group border border-neutral-200 dark:border-neutral-700">
+                    {m.format === 'mp4' || m.url?.includes('video') ? (
+                      <video src={m.url} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={m.thumbnail || m.url} alt="media" className="w-full h-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPendingMedia(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowMediaUpload(!showMediaUpload)}
+                className={`p-2 rounded-full transition-colors ${showMediaUpload ? 'bg-[#2563EB] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
+              >
+                <IoImage size={22} />
+              </button>
               <Input
                 ref={inputRef}
                 value={newMessage}
@@ -993,7 +1046,7 @@ export default function ChatConversationPage() {
               />
               <Button
                 type="submit"
-                disabled={!newMessage.trim() || sending}
+                disabled={(!newMessage.trim() && pendingMedia.length === 0 && !showMediaUpload) || sending}
                 className="rounded-full w-10 h-10 p-0 bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white shadow-button"
               >
                 {sending ? (
@@ -1179,6 +1232,13 @@ export default function ChatConversationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showFullscreen && (
+        <FullscreenMedia 
+          media={fullscreenMedia} 
+          onClose={() => setShowFullscreen(false)} 
+        />
+      )}
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

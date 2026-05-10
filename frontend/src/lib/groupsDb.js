@@ -17,6 +17,7 @@ import {
   limitToLast
 } from './firebaseFourth';
 import { getUser } from './db';
+import { encryptData, decryptData } from './securityUtils';
 
 // Group types
 export const GROUP_TYPE = {
@@ -324,7 +325,7 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
     const newMessageRef = push(messagesRef);
     const message = { 
       text: (text || '').trim(), 
-      media: media || [],
+      media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })),
       sender: senderId, 
       timestamp, 
       type: 'message' 
@@ -386,7 +387,15 @@ export const getGroupMessages = async (groupId, userId) => {
     
     const messages = snapshot.val();
     return Object.entries(messages)
-      .map(([id, msg]) => ({ id, ...msg }))
+      .map(([id, msg]) => ({ 
+        id, 
+        ...msg,
+        media: (msg.media || []).map(m => ({ 
+          ...m, 
+          url: decryptData(m.url), 
+          thumbnail: decryptData(m.thumbnail) 
+        }))
+      }))
       .filter(msg => !joinTime || new Date(msg.timestamp) >= new Date(joinTime))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   } catch (error) {
@@ -406,7 +415,15 @@ export const subscribeToGroupMessages = (groupId, callback) => {
     if (!snapshot.exists()) { callback([]); return; }
     const messages = snapshot.val();
     const messagesList = Object.entries(messages)
-      .map(([id, msg]) => ({ id, ...msg }))
+      .map(([id, msg]) => ({ 
+        id, 
+        ...msg,
+        media: (msg.media || []).map(m => ({ 
+          ...m, 
+          url: decryptData(m.url), 
+          thumbnail: decryptData(m.thumbnail) 
+        }))
+      }))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     callback(messagesList);
   };
