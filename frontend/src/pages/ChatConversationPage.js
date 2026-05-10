@@ -311,7 +311,7 @@ export default function ChatConversationPage() {
     const messageText = newMessage.trim();
     setNewMessage('');
     setShowMediaUpload(false);
-    const mediaFiles = pendingMedia;
+    const effectiveMedia = mediaFiles || pendingMedia;
     setPendingMedia([]);
     setSending(true);
     
@@ -323,13 +323,13 @@ export default function ChatConversationPage() {
       }
 
       if (replyTo) {
-        await sendReplyMessage(chatId, user.id, messageText, replyTo, mediaFiles);
+        await sendReplyMessage(chatId, user.id, messageText, replyTo, effectiveMedia);
         setReplyTo(null);
       } else {
-        await sendMessage(chatId, user.id, messageText, mediaFiles);
+        await sendMessage(chatId, user.id, messageText, effectiveMedia);
       }
       // Send Telegram notification to the recipient (fires in background, non-blocking)
-      const isImage = !!(mediaFiles && mediaFiles.length > 0);
+      const isImage = !!(effectiveMedia && effectiveMedia.length > 0);
       notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
       inputRef.current?.focus();
     } catch (error) {
