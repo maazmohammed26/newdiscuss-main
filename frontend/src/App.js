@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { HighlightsProvider } from '@/contexts/HighlightsContext';
+import { SecurityProvider, useSecurity } from '@/contexts/SecurityContext';
+import SecurityLockScreen from '@/components/SecurityLockScreen';
 import { Toaster } from '@/components/ui/sonner';
 import LoadingScreen from '@/components/LoadingScreen';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
@@ -106,17 +108,29 @@ function App() {
     <AppErrorBoundary>
       <BrowserRouter>
         <ThemeProvider>
-          <AuthProvider>
+          <AuthProvider><SecurityProvider><SecurityProvider>
             <HighlightsProvider>
-              {/* Global offline indicator — always rendered */}
-              <OfflineBanner />
-              <AppRoutes />
-              <Toaster position="top-right" />
+              <SecurityWrapper>
+                {/* Global offline indicator — always rendered */}
+                <OfflineBanner />
+                <AppRoutes />
+                <Toaster position="top-right" />
+              </SecurityWrapper>
             </HighlightsProvider>
-          </AuthProvider>
+          </SecurityProvider></SecurityProvider></AuthProvider>
         </ThemeProvider>
       </BrowserRouter>
     </AppErrorBoundary>
+  );
+}
+
+function SecurityWrapper({ children }) {
+  const { isLocked } = useSecurity();
+  return (
+    <>
+      {isLocked && <SecurityLockScreen />}
+      {children}
+    </>
   );
 }
 

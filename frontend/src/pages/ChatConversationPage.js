@@ -212,7 +212,10 @@ export default function ChatConversationPage() {
 
   // Subscribe to chat settings
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId || !user?.id) return;
+    
+    // Mark messages as read immediately when opening the chat
+    markMessagesAsRead(chatId, user.id);
     
     const unsubscribe = subscribeToChatSettings(chatId, (settings) => {
       if (settings) {
