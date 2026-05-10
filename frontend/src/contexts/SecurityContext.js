@@ -4,7 +4,6 @@ import {
   setLastUnlocked, 
   getLocalSecuritySettings, 
   saveLocalSecuritySettings,
-  getRemoteSecurityData,
   registerFailedAttempt,
   resetFailedAttempts,
   saveRemotePin
@@ -13,12 +12,16 @@ import { secondaryDatabase, ref, onValue } from '@/lib/firebaseSecondary';
 import { useAuth } from './AuthContext';
 import { toast } from 'sonner';
 
-const SecurityContext = createContext();
+const SecurityContext = createContext({
+  localSettings: { enabled: false, type: 'none' },
+  isLocked: false,
+  lockoutUntil: null
+});
 
 export function SecurityProvider({ children }) {
   const { user, logout } = useAuth();
   const [isLocked, setIsLocked] = useState(false);
-  const [localSettings, setLocalSettings] = useState(getLocalSecuritySettings());
+  const [localSettings, setLocalSettings] = useState(() => getLocalSecuritySettings());
   const [remoteSettings, setRemoteSettings] = useState(null);
   const [lockoutUntil, setLockoutUntil] = useState(null);
   const loadingRemote = useRef(true);
@@ -82,10 +85,10 @@ export function SecurityProvider({ children }) {
       if (verifyPin(value)) {
         setIsLocked(false);
         setLastUnlocked();
-        await resetFailedAttempts(user.id);
+        await resetFailedAttempts(user?.id);
         return true;
       } else {
-        const lockedUntil = await registerFailedAttempt(user.id);
+        const lockedUntil = await registerFailedAttempt(user?.id);
         if (lockedUntil) {
           setLockoutUntil(lockedUntil);
           toast.error('Too many attempts. System locked for 5 minutes.');
@@ -93,18 +96,18 @@ export function SecurityProvider({ children }) {
         return false;
       }
     } else if (method === 'biometric') {
-      // Biometric assumed verified by hardware
       setIsLocked(false);
       setLastUnlocked();
-      await resetFailedAttempts(user.id);
+      await resetFailedAttempts(user?.id);
       return true;
     }
     return false;
   };
 
   const updatePin = async (newPin) => {
+    if (!user?.id) return;
     await saveRemotePin(user.id, newPin);
-    if (!localSettings.enabled) {
+    if (!localSettings?.enabled) {
       const updated = { ...localSettings, enabled: true, type: 'pin' };
       setLocalSettings(updated);
       saveLocalSecuritySettings(updated);
@@ -128,7 +131,7 @@ export function SecurityProvider({ children }) {
     isLocked,
     setIsLocked,
     unlock,
-    localSettings,
+    localSettings: localSettings || { enabled: false, type: 'none' },
     remoteSettings,
     lockoutUntil,
     updatePin,
@@ -146,5 +149,12 @@ export function SecurityProvider({ children }) {
 }
 
 export function useSecurity() {
-  return useContext(SecurityContext);
+  const context = useContext(SecurityContext);
+  if (!context) {
+    return {
+      localSettings: { enabled: false, type: 'none' },
+      isLocked: false
+    };
+  }
+  return context;
 }

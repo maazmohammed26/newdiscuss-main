@@ -45,7 +45,7 @@ export default function SecurityLockScreen() {
   }, []);
 
   useEffect(() => {
-    if (localSettings.enabled && localSettings.type === 'biometric' && !lockoutUntil) {
+    if (localSettings?.enabled && localSettings?.type === 'biometric' && !lockoutUntil) {
       handleBiometricUnlock();
     }
   }, [lockoutUntil]);
@@ -161,7 +161,7 @@ export default function SecurityLockScreen() {
             </button>
           ))}
           <div className="flex items-center justify-center">
-            {localSettings.type === 'biometric' && (
+            {localSettings?.type === 'biometric' && (
               <button 
                 onClick={handleBiometricUnlock}
                 className="w-16 h-16 rounded-full flex items-center justify-center text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#F0F7FF] discuss:hover:bg-[#EF4444]/10 transition-all active:scale-90"
