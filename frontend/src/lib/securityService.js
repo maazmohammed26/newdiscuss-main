@@ -2,7 +2,7 @@
  * Security Service for App Lock and Biometrics
  * Synchronized via Firebase Secondary Database
  */
-import { secondaryDatabase, ref, get, set, update } from './firebaseSecondary';
+import { secondaryDatabase, ref, get, set, update, remove } from './firebaseSecondary';
 
 const LOCK_SETTINGS_KEY = 'discuss_security_settings';
 const LAST_UNLOCKED_KEY = 'discuss_last_unlocked';
@@ -14,8 +14,12 @@ const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
  * Get local settings (Biometrics remain local to device)
  */
 export const getLocalSecuritySettings = () => {
-  const saved = localStorage.getItem(LOCK_SETTINGS_KEY);
-  return saved ? JSON.parse(saved) : { enabled: false, type: 'none' };
+  try {
+    const saved = localStorage.getItem(LOCK_SETTINGS_KEY);
+    return saved ? JSON.parse(saved) : { enabled: false, type: 'none' };
+  } catch {
+    return { enabled: false, type: 'none' };
+  }
 };
 
 /**
@@ -41,15 +45,30 @@ export const getRemoteSecurityData = async (userId) => {
 };
 
 /**
- * Save PIN to DB
+ * Save PIN to DB — uses update() so we don't wipe failedAttempts/lockoutUntil
  */
 export const saveRemotePin = async (userId, pin) => {
-  if (!userId) return;
+  if (!userId) throw new Error('userId is required');
+  if (!secondaryDatabase) throw new Error('Secondary database not available');
   const securityRef = ref(secondaryDatabase, `userSecurity/${userId}`);
-  await update(securityRef, { 
-    pin, 
-    updatedAt: new Date().toISOString() 
+  await update(securityRef, {
+    pin,
+    updatedAt: new Date().toISOString()
   });
+};
+
+/**
+ * Remove PIN from DB (when user disables app lock)
+ */
+export const removeRemotePin = async (userId) => {
+  if (!userId) return;
+  if (!secondaryDatabase) return;
+  try {
+    const securityRef = ref(secondaryDatabase, `userSecurity/${userId}`);
+    await remove(securityRef);
+  } catch (error) {
+    console.error('Error removing remote PIN:', error);
+  }
 };
 
 /**
@@ -60,14 +79,14 @@ export const registerFailedAttempt = async (userId) => {
   const securityRef = ref(secondaryDatabase, `userSecurity/${userId}`);
   const data = await getRemoteSecurityData(userId);
   const attempts = (data?.failedAttempts || 0) + 1;
-  
+
   const updates = { failedAttempts: attempts };
-  
+
   if (attempts >= MAX_ATTEMPTS) {
     updates.lockoutUntil = Date.now() + LOCKOUT_DURATION;
-    updates.failedAttempts = 0; // Reset after lockout triggered
+    updates.failedAttempts = 0;
   }
-  
+
   await update(securityRef, updates);
   return updates.lockoutUntil || null;
 };
@@ -86,7 +105,7 @@ export const setLastUnlocked = () => {
 };
 
 /**
- * Smart Lock Logic: Only lock if timeout exceeded
+ * Smart Lock Logic: Only lock if timeout exceeded (5 minutes)
  */
 export const shouldLock = () => {
   const local = getLocalSecuritySettings();

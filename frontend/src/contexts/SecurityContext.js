@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { 
-  shouldLock, 
-  setLastUnlocked, 
-  getLocalSecuritySettings, 
+import {
+  shouldLock,
+  setLastUnlocked,
+  getLocalSecuritySettings,
   saveLocalSecuritySettings,
   registerFailedAttempt,
   resetFailedAttempts,
-  saveRemotePin
+  saveRemotePin,
+  removeRemotePin
 } from '@/lib/securityService';
 import { secondaryDatabase, ref, onValue } from '@/lib/firebaseSecondary';
 import { useAuth } from './AuthContext';
@@ -19,18 +20,26 @@ const SecurityContext = createContext({
 });
 
 export function SecurityProvider({ children }) {
-  const { user, logout } = useAuth();
+  const { user, logout: authLogout } = useAuth();
   const [isLocked, setIsLocked] = useState(false);
   const [localSettings, setLocalSettings] = useState(() => getLocalSecuritySettings());
   const [remoteSettings, setRemoteSettings] = useState(null);
   const [lockoutUntil, setLockoutUntil] = useState(null);
   const loadingRemote = useRef(true);
+  // Always-fresh ref — avoids stale closures in async callbacks
+  const localSettingsRef = useRef(localSettings);
+  useEffect(() => { localSettingsRef.current = localSettings; }, [localSettings]);
 
-  // Sync with Remote DB
+  /**
+   * KEY FIX: Sync with Remote DB.
+   * When a PIN exists in Firebase, automatically enable localSettings on this device.
+   * This solves the cross-device "no PIN set" problem.
+   */
   useEffect(() => {
     if (!user?.id) {
       setRemoteSettings(null);
       setIsLocked(false);
+      loadingRemote.current = true;
       return;
     }
 
@@ -39,26 +48,62 @@ export function SecurityProvider({ children }) {
       if (snapshot.exists()) {
         const data = snapshot.val();
         setRemoteSettings(data);
-        
-        // Handle global lockout
+
+        // ── Cross-device sync ──────────────────────────────────────────────
+        // If a PIN exists in DB but this device doesn't have lock enabled yet,
+        // auto-enable it. This is the fix for "logs in on new device, no PIN".
+        if (data.pin) {
+          const currentLocal = localSettingsRef.current;
+          if (!currentLocal.enabled) {
+            const updated = { ...currentLocal, enabled: true, type: 'pin' };
+            setLocalSettings(updated);
+            saveLocalSecuritySettings(updated);
+            localSettingsRef.current = updated; // Keep ref in sync immediately
+          }
+        }
+        // ──────────────────────────────────────────────────────────────────
+
         if (data.lockoutUntil && data.lockoutUntil > Date.now()) {
           setLockoutUntil(data.lockoutUntil);
           setIsLocked(true);
         } else {
           setLockoutUntil(null);
-          // Check local lock logic after remote data is loaded
           if (loadingRemote.current) {
-            if (shouldLock()) setIsLocked(true);
             loadingRemote.current = false;
+            // If PIN exists but no recent unlock, lock the screen
+            if (data.pin) {
+              const lastUnlocked = localStorage.getItem('discuss_last_unlocked');
+              if (!lastUnlocked) {
+                // Brand-new session — always lock if PIN is set
+                setIsLocked(true);
+              } else {
+                const elapsed = Date.now() - parseInt(lastUnlocked);
+                if (elapsed > 5 * 60 * 1000) setIsLocked(true);
+              }
+            }
           }
         }
       } else {
-        loadingRemote.current = false;
-        if (shouldLock()) setIsLocked(true);
+        // No remote record — disable local lock if it was auto-enabled
+        setRemoteSettings(null);
+        if (loadingRemote.current) {
+          loadingRemote.current = false;
+        }
+        // If no DB record, ensure local is cleared too
+        const currentLocal = localSettingsRef.current;
+        if (currentLocal.enabled) {
+          const updated = { enabled: false, type: 'none' };
+          setLocalSettings(updated);
+          saveLocalSecuritySettings(updated);
+          localSettingsRef.current = updated;
+        }
       }
     });
 
-    return () => unsub();
+    return () => {
+      unsub();
+      loadingRemote.current = true;
+    };
   }, [user?.id]);
 
   // Handle focus lock check
@@ -71,7 +116,7 @@ export function SecurityProvider({ children }) {
   }, []);
 
   const verifyPin = (inputPin) => {
-    if (!remoteSettings?.pin) return true; // No PIN set yet
+    if (!remoteSettings?.pin) return false; // No PIN set — reject (don't silently allow)
     return inputPin === remoteSettings.pin;
   };
 
@@ -104,37 +149,89 @@ export function SecurityProvider({ children }) {
     return false;
   };
 
+  /**
+   * lockNow — manually triggers the lock screen without logging out.
+   */
+  const lockNow = () => {
+    setIsLocked(true);
+  };
+
+  /**
+   * updatePin — saves PIN to Firebase, updates local state optimistically,
+   * enables lock, and marks the session as unlocked (5-min timer starts now).
+   */
   const updatePin = async (newPin) => {
-    if (!user?.id) return;
+    if (!user?.id) throw new Error('Not authenticated');
+
     await saveRemotePin(user.id, newPin);
-    if (!localSettings?.enabled) {
-      const updated = { ...localSettings, enabled: true, type: 'pin' };
-      setLocalSettings(updated);
-      saveLocalSecuritySettings(updated);
+
+    setRemoteSettings(prev => ({
+      ...(prev || {}),
+      pin: newPin,
+      updatedAt: new Date().toISOString()
+    }));
+
+    const currentLocal = localSettingsRef.current;
+    const updated = { ...currentLocal, enabled: true, type: 'pin' };
+    setLocalSettings(updated);
+    saveLocalSecuritySettings(updated);
+    localSettingsRef.current = updated;
+
+    // Mark session as just-unlocked so it won't lock immediately after setting
+    setLastUnlocked();
+  };
+
+  /**
+   * disableAppLock — verifies PIN, removes from DB, clears local settings.
+   */
+  const disableAppLock = async (currentPin) => {
+    if (!verifyPin(currentPin)) {
+      throw new Error('Incorrect PIN');
     }
+    await removeRemotePin(user?.id);
+    setRemoteSettings(null);
+    const updated = { enabled: false, type: 'none' };
+    setLocalSettings(updated);
+    saveLocalSecuritySettings(updated);
+    localSettingsRef.current = updated;
+    localStorage.removeItem('discuss_last_unlocked');
+  };
+
+  /**
+   * logout — fully logs out from the account (goes to login page).
+   */
+  const logout = async () => {
+    localStorage.removeItem('discuss_last_unlocked');
+    await authLogout();
   };
 
   const setSecurityEnabled = (enabled) => {
-    const updated = { ...localSettings, enabled };
+    const current = localSettingsRef.current;
+    const updated = { ...current, enabled };
     if (!enabled) updated.type = 'none';
     setLocalSettings(updated);
     saveLocalSecuritySettings(updated);
+    localSettingsRef.current = updated;
   };
 
   const setSecurityType = (type) => {
-    const updated = { ...localSettings, type };
+    const current = localSettingsRef.current;
+    const updated = { ...current, type };
     setLocalSettings(updated);
     saveLocalSecuritySettings(updated);
+    localSettingsRef.current = updated;
   };
 
   const value = {
     isLocked,
     setIsLocked,
     unlock,
+    lockNow,
     localSettings: localSettings || { enabled: false, type: 'none' },
     remoteSettings,
     lockoutUntil,
     updatePin,
+    disableAppLock,
     setSecurityEnabled,
     setSecurityType,
     verifyPin,
@@ -153,7 +250,8 @@ export function useSecurity() {
   if (!context) {
     return {
       localSettings: { enabled: false, type: 'none' },
-      isLocked: false
+      isLocked: false,
+      lockNow: () => {}
     };
   }
   return context;

@@ -66,7 +66,7 @@ export const authReady = Promise.race([
   new Promise((resolve) => setTimeout(() => {
     console.warn('[Auth] setPersistence timed out — proceeding with default persistence.');
     resolve(auth);
-  }, 3000)),
+  }, 10000)),
 ]);
 
 export {

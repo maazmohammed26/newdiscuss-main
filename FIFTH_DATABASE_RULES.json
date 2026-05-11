@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "stories": {
+      ".indexOn": ["expiresAt"]
+    },
+    "storyViews": {
+      "$storyId": {
+        ".indexOn": [".value"]
+      }
+    }
+  }
+}

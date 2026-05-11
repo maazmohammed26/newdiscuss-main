@@ -10,13 +10,14 @@ import {
   set, 
   push, 
   update, 
-  remove, 
+  remove,
   onValue, 
   off,
   query,
   orderByChild,
   equalTo
 } from 'firebase/database';
+
 
 // Secondary Firebase configuration (discussit-5879b) - NEW
 const secondaryFirebaseConfig = {
@@ -66,5 +67,6 @@ export {
   orderByChild,
   equalTo
 };
+
 
 export default secondaryApp;

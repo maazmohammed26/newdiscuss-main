@@ -60,8 +60,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
-  Calendar, Filter, ShieldCheck, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink,
-  Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle
+  Calendar, Filter, ShieldCheck, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
+  Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
@@ -133,16 +133,25 @@ export default function ProfilePage() {
   const [deleteLinkConfirm, setDeleteLinkConfirm] = useState(null);
   
   // Security settings
-  const { localSettings, updatePin, setSecurityEnabled, setSecurityType, verifyPin } = useSecurity();
+  const { localSettings, updatePin, setSecurityEnabled, setSecurityType, verifyPin, disableAppLock, lockNow } = useSecurity();
   const [showPinModal, setShowPinModal] = useState(false);
   const [showChangePinModal, setShowChangePinModal] = useState(false);
   const [showVerifyPinModal, setShowVerifyPinModal] = useState(false);
   const [oldPin, setOldPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [showOldPin, setShowOldPin] = useState(false);
+  const [showNewPin, setShowNewPin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [testingBiometric, setTestingBiometric] = useState(false);
   const [pendingSecurityAction, setPendingSecurityAction] = useState(null);
+  const [savingPin, setSavingPin] = useState(false);
+  const [showDisableLockModal, setShowDisableLockModal] = useState(false);
+  const [disablePinInput, setDisablePinInput] = useState('');
+  const [showDisablePin, setShowDisablePin] = useState(false);
+  const [disablingLock, setDisablingLock] = useState(false);
+  const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
   useEffect(() => {
     if (typeof isBiometricSupported === 'function') {
@@ -150,61 +159,117 @@ export default function ProfilePage() {
     }
   }, []);
 
+  // Reset PINs when modals close
+  useEffect(() => {
+    if (!showPinModal && !showChangePinModal && !showVerifyPinModal) {
+      setOldPin('');
+      setNewPin('');
+      setConfirmPin('');
+      setShowOldPin(false);
+      setShowNewPin(false);
+      setShowConfirmPin(false);
+    }
+  }, [showPinModal, showChangePinModal, showVerifyPinModal]);
+
   const handleToggleSecurity = () => {
     if (!localSettings?.enabled) {
       setShowPinModal(true);
     } else {
-      setSecurityEnabled(false);
-      toast.success('App lock disabled');
+      // Ask for PIN before disabling
+      setDisablePinInput('');
+      setShowDisableLockModal(true);
     }
   };
 
   const handleSavePinAndEnable = async () => {
     if (newPin.length !== 6) { toast.error('PIN must be 6 digits'); return; }
     if (newPin !== confirmPin) { toast.error('PINs do not match'); return; }
-    await updatePin(newPin);
-    setSecurityEnabled(true);
-    setSecurityType('pin');
-    setShowPinModal(false);
-    setNewPin('');
-    setConfirmPin('');
-    toast.success('App lock enabled — synced across devices');
+    setSavingPin(true);
+    try {
+      // updatePin writes to DB, updates remoteSettings optimistically, enables lock
+      await updatePin(newPin);
+      setShowPinModal(false);
+      toast.success('PIN saved! App Lock is now enabled.');
+    } catch (err) {
+      console.error('[PIN] Save failed:', err);
+      toast.error('Failed to save PIN. Check your connection.');
+    } finally {
+      setSavingPin(false);
+    }
   };
 
   const handleUpdatePin = async () => {
     if (!verifyPin(oldPin)) { toast.error('Incorrect old PIN'); return; }
     if (newPin.length !== 6) { toast.error('New PIN must be 6 digits'); return; }
     if (newPin !== confirmPin) { toast.error('PINs do not match'); return; }
-    await updatePin(newPin);
-    setShowChangePinModal(false);
-    setOldPin(''); setNewPin(''); setConfirmPin('');
-    toast.success('PIN updated successfully');
+    setSavingPin(true);
+    try {
+      // updatePin writes to DB and updates remoteSettings optimistically
+      await updatePin(newPin);
+      setShowChangePinModal(false);
+      toast.success('PIN updated successfully!');
+    } catch (err) {
+      console.error('[PIN] Update failed:', err);
+      toast.error('Failed to update PIN. Check your connection.');
+    } finally {
+      setSavingPin(false);
+    }
   };
 
   const handleBiometricToggle = () => {
     if (localSettings?.type === 'biometric') {
-      setSecurityType('pin');
-      toast.success('Switched to PIN-only lock');
+      // Ask PIN to confirm before disabling biometric
+      setPendingSecurityAction('disable_biometric');
+      setShowVerifyPinModal(true);
     } else {
       setPendingSecurityAction('biometric');
       setShowVerifyPinModal(true);
     }
   };
 
+  const handleDisableLock = async () => {
+    if (disablePinInput.length !== 6) { toast.error('Enter your 6-digit PIN'); return; }
+    setDisablingLock(true);
+    try {
+      await disableAppLock(disablePinInput);
+      setShowDisableLockModal(false);
+      toast.success('App Lock disabled');
+    } catch (err) {
+      toast.error(err.message === 'Incorrect PIN' ? 'Incorrect PIN' : 'Failed to disable. Check connection.');
+    } finally {
+      setDisablingLock(false);
+    }
+  };
+
   const handleVerifyAndEnableBiometric = async () => {
     if (!verifyPin(oldPin)) { toast.error('Incorrect PIN'); return; }
     setTestingBiometric(true);
-    const success = await registerBiometric(user?.username || 'User');
-    if (success) {
-      setSecurityType('biometric');
-      toast.success('Biometric lock enabled');
-    } else {
-      toast.error('Biometric registration failed');
+    setSavingPin(true);
+    try {
+      if (pendingSecurityAction === 'disable_biometric') {
+        // Disable biometric - revert to PIN only
+        setSecurityType('pin');
+        toast.success('Biometrics disabled. PIN-only lock active.');
+        setShowVerifyPinModal(false);
+      } else {
+        // Enable biometric
+        const success = await registerBiometric(user?.username || 'User');
+        if (success) {
+          setSecurityType('biometric');
+          toast.success('Biometric lock enabled!');
+          setShowVerifyPinModal(false);
+        } else {
+          toast.error('Biometric registration failed. Try again.');
+        }
+      }
+    } catch (err) {
+      toast.error('Security verification failed');
+    } finally {
+      setTestingBiometric(false);
+      setSavingPin(false);
+      setOldPin('');
+      setPendingSecurityAction(null);
     }
-    setTestingBiometric(false);
-    setShowVerifyPinModal(false);
-    setOldPin('');
-    setPendingSecurityAction(null);
   };
 
   // Check if max links reached
@@ -1105,14 +1170,55 @@ export default function ProfilePage() {
             </div>
           </div>
           {/* ==================== END PROFILE FIELDS ==================== */}
-
           {/* ==================== APP SECURITY ==================== */}
           <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium">App Security</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">App Security</span>
+                <button
+                  onClick={() => setShowSecurityInfo(prev => !prev)}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#2563EB] text-white' : 'bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20'}`}
+                  aria-label="Security info"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {localSettings?.enabled && (
+                <button
+                  onClick={lockNow}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] px-2.5 py-1.5 rounded-lg hover:bg-[#2563EB]/5 discuss:hover:bg-[#EF4444]/5 transition-colors"
+                  title="Lock the app now"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  Lock Now
+                </button>
+              )}
             </div>
-            <div className="space-y-4">
+            {/* Info Dropdown */}
+            {showSecurityInfo && (
+              <div className="mb-4 p-4 bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl border border-blue-500/15 animate-in slide-in-from-top-2 duration-300">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-blue-500" />
+                    <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Security Rules</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowSecurityInfo(false)}
+                    className="text-[10px] font-bold text-blue-500 hover:underline"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="text-[11px] text-blue-600 dark:text-blue-300 space-y-2 pl-6">
+                  <p>• App auto-locks after <strong>5 minutes</strong> of inactivity</p>
+                  <p>• Your PIN is <strong>synced across all devices</strong></p>
+                  <p>• Biometrics (Face/Fingerprint) are <strong>device-specific</strong></p>
+                  <p>• <strong>5 wrong attempts</strong> will trigger a 5-minute lockout</p>
+                  <p>• Disabling the lock will remove your PIN from <strong>all devices</strong></p>
+                </div>
+              </div>
+            )}
+            <div className="space-y-3">
               <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] discuss:border discuss:border-[#333333] rounded-xl p-4">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${localSettings?.enabled ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
@@ -1120,13 +1226,18 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">App Lock</p>
-                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">PIN or Biometrics on launch</p>
+                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                      {localSettings?.enabled
+                        ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
+                        : 'Protect with PIN or Biometrics'}
+                    </p>
                   </div>
                 </div>
                 <button
                   onClick={handleToggleSecurity}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.enabled ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
                 >
+
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
@@ -1140,8 +1251,10 @@ export default function ProfilePage() {
                           <BiometricIcon className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Biometrics</p>
-                          <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">Use FaceID / Fingerprint</p>
+                          <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">FaceID / Fingerprint</p>
+                          <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                            {localSettings?.type === 'biometric' ? 'Active - PIN as fallback' : 'Tap to enable biometric unlock'}
+                          </p>
                         </div>
                       </div>
                       <button
@@ -1153,20 +1266,26 @@ export default function ProfilePage() {
                       </button>
                     </div>
                   )}
-                  <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-[#6275AF]">
+                  <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-[#6275AF] flex items-center gap-2">
+                    <Key className="w-3.5 h-3.5" />
                     Change Security PIN
                   </Button>
                 </div>
               )}
 
-              <div className="flex items-center gap-2 p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
-                <Info className="w-3.5 h-3.5 text-blue-500" />
-                <p className="text-[10px] text-blue-600 dark:text-blue-400">
-                  PIN synced across devices. Biometrics are device-specific.
-                </p>
+              <div className="flex items-start gap-2 p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
+                <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                <div className="text-[10px] text-blue-600 dark:text-blue-400 space-y-0.5">
+                  <p className="font-semibold">How App Lock works</p>
+                  <p>• Locks after 5 minutes of inactivity</p>
+                  <p>• PIN synced across all your devices</p>
+                  <p>• Biometrics are device-specific (not synced)</p>
+                  <p>• 5 wrong attempts triggers a 5-minute lockout</p>
+                </div>
               </div>
             </div>
           </div>
+
 
           <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
             <div className="flex items-center justify-between mb-2">
@@ -1968,16 +2087,53 @@ export default function ProfilePage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-[11px] font-medium text-[#6275AF]">New PIN</label>
-              <Input type="password" maxLength={6} value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="••••••" className="text-center text-xl tracking-[1em] font-mono" />
+              <div className="relative">
+                <Input 
+                  type={showNewPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={newPin} 
+                  onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPin(!showNewPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-[11px] font-medium text-[#6275AF]">Confirm PIN</label>
-              <Input type="password" maxLength={6} value={confirmPin} onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))} placeholder="••••••" className="text-center text-xl tracking-[1em] font-mono" />
+              <div className="relative">
+                <Input 
+                  type={showConfirmPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={confirmPin} 
+                  onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPin(!showConfirmPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
-            <Button onClick={handleSavePinAndEnable} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">Save & Enable</Button>
-            <Button variant="ghost" onClick={() => setShowPinModal(false)} className="w-full">Cancel</Button>
+            <Button onClick={handleSavePinAndEnable} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Save & Enable
+            </Button>
+            <Button variant="ghost" onClick={() => setShowPinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1986,24 +2142,81 @@ export default function ProfilePage() {
         <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Change PIN</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px]">
+              Enter your old PIN and set a new 6-digit PIN.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-[11px] font-medium text-[#6275AF]">Old PIN</label>
-              <Input type="password" maxLength={6} value={oldPin} onChange={e => setOldPin(e.target.value.replace(/\D/g, ''))} placeholder="••••••" className="text-center text-xl tracking-[1em] font-mono" />
+              <div className="relative">
+                <Input 
+                  type={showOldPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={oldPin} 
+                  onChange={e => setOldPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPin(!showOldPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showOldPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-[11px] font-medium text-[#6275AF]">New PIN</label>
-              <Input type="password" maxLength={6} value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="••••••" className="text-center text-xl tracking-[1em] font-mono" />
+              <div className="relative">
+                <Input 
+                  type={showNewPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={newPin} 
+                  onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPin(!showNewPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-[11px] font-medium text-[#6275AF]">Confirm New PIN</label>
-              <Input type="password" maxLength={6} value={confirmPin} onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))} placeholder="••••••" className="text-center text-xl tracking-[1em] font-mono" />
+              <div className="relative">
+                <Input 
+                  type={showConfirmPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={confirmPin} 
+                  onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPin(!showConfirmPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
-            <Button onClick={handleUpdatePin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">Update PIN</Button>
-            <Button variant="ghost" onClick={() => setShowChangePinModal(false)} className="w-full">Cancel</Button>
+            <Button onClick={handleUpdatePin} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Update PIN
+            </Button>
+            <Button variant="ghost" onClick={() => setShowChangePinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -2017,11 +2230,70 @@ export default function ProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
-            <Input type="password" maxLength={6} value={oldPin} onChange={e => setOldPin(e.target.value.replace(/\D/g, ''))} placeholder="••••••" className="text-center text-xl tracking-[1em] font-mono" />
+            <div className="relative">
+              <Input 
+                type={showOldPin ? "text" : "password"} 
+                maxLength={6} 
+                value={oldPin} 
+                onChange={e => setOldPin(e.target.value.replace(/\D/g, ''))} 
+                placeholder="••••••" 
+                className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOldPin(!showOldPin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+              >
+                {showOldPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
-            <Button onClick={handleVerifyAndEnableBiometric} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">Verify PIN</Button>
-            <Button variant="ghost" onClick={() => setShowVerifyPinModal(false)} className="w-full">Cancel</Button>
+            <Button onClick={handleVerifyAndEnableBiometric} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Verify PIN
+            </Button>
+            <Button variant="ghost" onClick={() => setShowVerifyPinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Disable App Lock Modal */}
+      <AlertDialog open={showDisableLockModal} onOpenChange={setShowDisableLockModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-red-600">Disable App Lock</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px]">
+              Enter your current PIN to confirm. This will remove your PIN from all devices.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="relative">
+              <Input
+                type={showDisablePin ? 'text' : 'password'}
+                maxLength={6}
+                value={disablePinInput}
+                onChange={e => setDisablePinInput(e.target.value.replace(/\D/g, ''))}
+                placeholder="Enter current PIN"
+                className="text-center text-xl tracking-[1em] font-mono pr-10"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowDisablePin(!showDisablePin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+              >
+                {showDisablePin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex flex-col gap-2">
+            <Button onClick={handleDisableLock} disabled={disablingLock} className="w-full bg-red-500 hover:bg-red-600 text-white">
+              {disablingLock ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Disable App Lock
+            </Button>
+            <Button variant="ghost" onClick={() => setShowDisableLockModal(false)} disabled={disablingLock} className="w-full">Cancel</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
