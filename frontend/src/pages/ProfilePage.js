@@ -1273,16 +1273,6 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <div className="flex items-start gap-2 p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
-                <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-[10px] text-blue-600 dark:text-blue-400 space-y-0.5">
-                  <p className="font-semibold">How App Lock works</p>
-                  <p>• Locks after 5 minutes of inactivity</p>
-                  <p>• PIN synced across all your devices</p>
-                  <p>• Biometrics are device-specific (not synced)</p>
-                  <p>• 5 wrong attempts triggers a 5-minute lockout</p>
-                </div>
-              </div>
             </div>
           </div>
 
