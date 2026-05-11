@@ -144,12 +144,12 @@ export default function SecurityLockScreen() {
 
           {/* PIN dots / Lockout / Biometric */}
           {lockoutUntil ? (
-            <div className="w-full bg-red-50 dark:bg-red-900/40 rounded-2xl p-8 mb-6 border border-red-200 dark:border-red-800/30 flex flex-col items-center gap-4 shadow-sm">
-              <span className="text-4xl font-mono font-bold text-red-700 dark:text-red-400">
+            <div className="w-full bg-red-50 rounded-2xl p-8 mb-6 border border-red-200 flex flex-col items-center gap-4 shadow-sm">
+              <span className="text-4xl font-mono font-bold" style={{ color: '#991b1b' }}>
                 {formatTime(timeLeft)}
               </span>
-              <p className="text-xs text-red-600 dark:text-red-400 text-center font-bold uppercase tracking-wider">
-                Security Lockout Active
+              <p className="text-xs text-center font-black uppercase tracking-widest" style={{ color: '#b91c1c' }}>
+                SECURITY LOCKOUT ACTIVE
               </p>
             </div>
           ) : isBiometricLoading ? (
@@ -249,14 +249,14 @@ export default function SecurityLockScreen() {
                 Logout from Account
               </Button>
             ) : (
-              <div className="flex flex-col items-center gap-2 w-full bg-red-50 dark:bg-red-900/40 rounded-xl p-4 border border-red-200 dark:border-red-800/30 shadow-sm">
-                <p className="text-sm text-red-800 dark:text-red-200 font-bold text-center">
+              <div className="flex flex-col items-center gap-2 w-full bg-red-50 rounded-xl p-4 border border-red-200 shadow-sm">
+                <p className="text-sm font-black text-center" style={{ color: '#991b1b' }}>
                   This will fully sign you out.
                 </p>
                 <div className="flex gap-3 w-full">
                   <Button
                     onClick={handleFullLogout}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black py-2.5 rounded-xl shadow-md transition-all active:scale-95"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black py-2.5 rounded-xl shadow-md transition-all active:scale-95 border-none"
                   >
                     <LogOut className="w-3.5 h-3.5 mr-1.5" />
                     YES, LOGOUT
@@ -264,7 +264,8 @@ export default function SecurityLockScreen() {
                   <Button
                     onClick={() => setShowLogoutConfirm(false)}
                     variant="outline"
-                    className="flex-1 text-[10px] font-black py-2.5 rounded-xl border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all"
+                    className="flex-1 text-[10px] font-black py-2.5 rounded-xl border border-red-200 transition-all"
+                    style={{ color: '#b91c1c', backgroundColor: '#fff' }}
                   >
                     CANCEL
                   </Button>
@@ -286,9 +287,9 @@ export default function SecurityLockScreen() {
               </div>
               <h2 className="text-lg font-bold text-red-600 mb-2">PIN Recovery</h2>
               
-              <div className="bg-red-50 dark:bg-red-900/40 p-4 rounded-xl border border-red-200 dark:border-red-800/30 mb-4 text-[11px]">
-                <p className="font-bold text-red-800 dark:text-red-300 mb-1 uppercase tracking-wider">Important Notice</p>
-                <p className="text-red-700 dark:text-red-400 leading-relaxed font-medium">
+              <div className="bg-red-50 p-4 rounded-xl border border-red-200 mb-4 text-[11px] shadow-inner">
+                <p className="font-black mb-1 uppercase tracking-wider" style={{ color: '#991b1b' }}>IMPORTANT NOTICE</p>
+                <p className="leading-relaxed font-bold" style={{ color: '#b91c1c' }}>
                   Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
                 </p>
               </div>

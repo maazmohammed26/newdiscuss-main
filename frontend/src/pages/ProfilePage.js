@@ -2234,9 +2234,9 @@ export default function ProfilePage() {
               PIN Recovery
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px] space-y-3 leading-relaxed">
-              <div className="bg-red-50 dark:bg-red-900/40 p-4 rounded-xl border border-red-200 dark:border-red-800/30 mb-2">
-                <p className="font-bold text-red-800 dark:text-red-300 mb-1 uppercase tracking-wider">IMPORTANT NOTICE</p>
-                <p className="text-red-700 dark:text-red-400 leading-relaxed font-medium">
+              <div className="bg-red-50 p-4 rounded-xl border border-red-200 mb-2 shadow-inner">
+                <p className="font-black mb-1 uppercase tracking-wider" style={{ color: '#991b1b' }}>IMPORTANT NOTICE</p>
+                <p className="leading-relaxed font-bold" style={{ color: '#b91c1c' }}>
                   Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
                 </p>
               </div>
