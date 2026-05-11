@@ -41,8 +41,14 @@ export function SecurityProvider({ children }) {
       setRemoteSettings(null);
       setIsLocked(false);
       loadingRemote.current = true;
+      setResolving(false);
       return;
     }
+
+    // Safety timeout — don't stay stuck in resolving for more than 3 seconds
+    const timeout = setTimeout(() => {
+      setResolving(false);
+    }, 3000);
 
     const securityRef = ref(secondaryDatabase, `userSecurity/${user.id}`);
     const unsub = onValue(securityRef, (snapshot) => {
@@ -108,6 +114,7 @@ export function SecurityProvider({ children }) {
 
     return () => {
       unsub();
+      clearTimeout(timeout);
       loadingRemote.current = true;
     };
   }, [user?.id]);
