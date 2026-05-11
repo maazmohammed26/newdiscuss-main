@@ -1183,10 +1183,10 @@ export default function ProfilePage() {
                   <Info className="w-3.5 h-3.5" />
                 </button>
               </div>
-              {localSettings?.enabled && (
+              {remoteSettings?.pin && (
                 <button
                   onClick={lockNow}
-                  className="flex items-center gap-1.5 text-[11px] font-medium text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] px-2.5 py-1.5 rounded-lg hover:bg-[#2563EB]/5 discuss:hover:bg-[#EF4444]/5 transition-colors"
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-[#2563EB] discuss:text-[#EF4444] px-3 py-1.5 rounded-lg bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20 transition-all shadow-sm"
                   title="Lock the app now"
                 >
                   <Lock className="w-3.5 h-3.5" />
