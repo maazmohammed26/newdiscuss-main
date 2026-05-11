@@ -143,6 +143,7 @@ export default function ProfilePage() {
   const [showOldPin, setShowOldPin] = useState(false);
   const [showNewPin, setShowNewPin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
+  const [showForgotPinModal, setShowForgotPinModal] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [testingBiometric, setTestingBiometric] = useState(false);
   const [pendingSecurityAction, setPendingSecurityAction] = useState(null);
@@ -2200,6 +2201,18 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
+            <div className="flex justify-center -mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChangePinModal(false);
+                  setShowForgotPinModal(true);
+                }}
+                className="text-[10px] font-bold text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors"
+              >
+                Forgot your PIN?
+              </button>
+            </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
             <Button onClick={handleUpdatePin} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
@@ -2207,6 +2220,55 @@ export default function ProfilePage() {
               Update PIN
             </Button>
             <Button variant="ghost" onClick={() => setShowChangePinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Forgot PIN Recovery Modal */}
+      <AlertDialog open={showForgotPinModal} onOpenChange={setShowForgotPinModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-red-600 flex items-center justify-center gap-2">
+              <ShieldAlert className="w-5 h-5" />
+              PIN Recovery
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px] space-y-3 leading-relaxed">
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800/30 mb-2">
+                <p className="font-bold text-red-700 dark:text-red-400 mb-1">IMPORTANT NOTICE</p>
+                <p className="text-red-600 dark:text-red-500">
+                  Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
+                </p>
+              </div>
+              <p className="text-[#6275AF] dark:text-[#94A3B8]">
+                Unauthorized attempts will result in the <strong>PERMANENT DISABLING</strong> of this account.
+              </p>
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] p-2 rounded-lg italic text-[#0F172A] dark:text-white border border-[#E2E8F0] dark:border-[#334155]">
+                &quot;I declare and accept the account recovery terms and confirm I am the rightful owner.&quot;
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col gap-2 mt-4">
+            <Button
+              onClick={() => {
+                const subject = encodeURIComponent(`PIN Recovery Request - ${user?.email}`);
+                const body = encodeURIComponent(
+                  `Hello Discuss Support,\n\n` +
+                  `I am writing to request recovery for my App Lock PIN.\n\n` +
+                  `I declare and accept that account recovery is only possible for the ethical owner of the account. I understand that any unauthorized attempt may result in the permanent disabling of my account.\n\n` +
+                  `I declare and accept the account recovery terms and confirm I am the rightful owner.\n\n` +
+                  `User Email: ${user?.email}\n` +
+                  `Device: ${navigator.userAgent}\n\n` +
+                  `Thank you.`
+                );
+                window.location.href = `mailto:support@discussit.in?subject=${subject}&body=${body}`;
+              }}
+              className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white text-xs font-bold py-2.5 rounded-xl shadow-md hover:scale-[1.02] transition-transform"
+            >
+              SEND RECOVERY EMAIL
+            </Button>
+            <Button variant="ghost" onClick={() => setShowForgotPinModal(false)} className="w-full text-xs font-bold py-2.5 rounded-xl">
+              CANCEL
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

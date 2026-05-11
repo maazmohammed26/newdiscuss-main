@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSecurity } from '@/contexts/SecurityContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { verifyBiometric } from '@/lib/securityService';
 import { ShieldCheck, ShieldAlert, Delete, LogOut, Lock, Info, Clock, Fingerprint } from 'lucide-react';
 import { Button } from './ui/button';
@@ -23,6 +24,8 @@ export default function SecurityLockScreen() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isBiometricLoading, setIsBiometricLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showForgotPinModal, setShowForgotPinModal] = useState(false);
+  const { user } = useAuth();
 
   // Lockout countdown
   useEffect(() => {
@@ -227,6 +230,14 @@ export default function SecurityLockScreen() {
               </p>
             </div>
 
+            {/* Forgot PIN link */}
+            <button
+              onClick={() => setShowForgotPinModal(true)}
+              className="text-[11px] font-bold text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors mb-2"
+            >
+              Forgot your PIN?
+            </button>
+
             {/* Logout button — shows confirm */}
             {!showLogoutConfirm ? (
               <Button
@@ -264,6 +275,63 @@ export default function SecurityLockScreen() {
 
         </div>
       </div>
+
+      {/* Forgot PIN Recovery Modal */}
+      {showForgotPinModal && (
+        <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="max-w-xs w-full bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+                <ShieldAlert className="w-6 h-6 text-red-600" />
+              </div>
+              <h2 className="text-lg font-bold text-red-600 mb-2">PIN Recovery</h2>
+              
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800/30 mb-4 text-[11px]">
+                <p className="font-bold text-red-700 dark:text-red-400 mb-1 uppercase tracking-wider">Important Notice</p>
+                <p className="text-red-600 dark:text-red-500 leading-relaxed">
+                  Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
+                </p>
+              </div>
+
+              <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed mb-4">
+                Unauthorized attempts will result in the <strong>PERMANENT DISABLING</strong> of this account.
+              </p>
+
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] p-3 rounded-xl italic text-[10px] text-[#0F172A] dark:text-white border border-[#E2E8F0] dark:border-[#334155] mb-6">
+                &quot;I declare and accept the account recovery terms and confirm I am the rightful owner.&quot;
+              </div>
+
+              <div className="flex flex-col gap-2 w-full">
+                <Button
+                  onClick={() => {
+                    const subject = encodeURIComponent(`PIN Recovery Request - ${user?.email}`);
+                    const body = encodeURIComponent(
+                      `Hello Discuss Support,\n\n` +
+                      `I am writing to request recovery for my App Lock PIN.\n\n` +
+                      `I declare and accept that account recovery is only possible for the ethical owner of the account. I understand that any unauthorized attempt may result in the permanent disabling of my account.\n\n` +
+                      `I declare and accept the account recovery terms and confirm I am the rightful owner.\n\n` +
+                      `User Email: ${user?.email}\n` +
+                      `Device: ${navigator.userAgent}\n\n` +
+                      `Thank you.`
+                    );
+                    window.location.href = `mailto:support@discussit.in?subject=${subject}&body=${body}`;
+                  }}
+                  className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white text-xs font-bold py-3 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform"
+                >
+                  SEND RECOVERY EMAIL
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowForgotPinModal(false)} 
+                  className="w-full text-xs font-bold py-3 rounded-2xl"
+                >
+                  CANCEL
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
