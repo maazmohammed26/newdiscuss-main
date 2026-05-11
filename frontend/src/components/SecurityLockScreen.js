@@ -282,8 +282,12 @@ export default function SecurityLockScreen() {
         <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
           <div className="max-w-xs w-full bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-                <ShieldAlert className="w-6 h-6 text-red-600" />
+              <div className="mb-4 flex flex-col items-center">
+                <img
+                  src="/favicon-new.png"
+                  alt="Discuss"
+                  className="w-16 h-16 rounded-2xl shadow-lg object-cover border-2 border-red-50"
+                />
               </div>
               <h2 className="text-lg font-bold text-red-600 mb-2">PIN Recovery</h2>
               
