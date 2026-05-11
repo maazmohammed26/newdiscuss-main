@@ -249,22 +249,22 @@ export default function SecurityLockScreen() {
                 Logout from Account
               </Button>
             ) : (
-              <div className="flex flex-col items-center gap-2 w-full bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800/30">
-                <p className="text-sm text-red-700 dark:text-red-400 font-medium text-center">
+              <div className="flex flex-col items-center gap-2 w-full bg-red-50 dark:bg-red-900/40 rounded-xl p-4 border border-red-200 dark:border-red-800/30 shadow-sm">
+                <p className="text-sm text-red-800 dark:text-red-200 font-bold text-center">
                   This will fully sign you out.
                 </p>
                 <div className="flex gap-3 w-full">
                   <Button
                     onClick={handleFullLogout}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-md transition-all active:scale-95"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black py-2.5 rounded-xl shadow-md transition-all active:scale-95"
                   >
-                    <LogOut className="w-3.5 h-3.5 mr-2" />
+                    <LogOut className="w-3.5 h-3.5 mr-1.5" />
                     YES, LOGOUT
                   </Button>
                   <Button
                     onClick={() => setShowLogoutConfirm(false)}
                     variant="outline"
-                    className="flex-1 text-xs font-bold py-2.5 rounded-xl border-[#E2E8F0] dark:border-[#334155] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] transition-all"
+                    className="flex-1 text-[10px] font-black py-2.5 rounded-xl border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all"
                   >
                     CANCEL
                   </Button>
