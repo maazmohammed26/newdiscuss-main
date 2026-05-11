@@ -133,7 +133,7 @@ export default function ProfilePage() {
   const [deleteLinkConfirm, setDeleteLinkConfirm] = useState(null);
   
   // Security settings
-  const { localSettings, updatePin, setSecurityEnabled, setSecurityType, verifyPin, disableAppLock, lockNow } = useSecurity();
+  const { localSettings, remoteSettings, updatePin, setSecurityEnabled, setSecurityType, verifyPin, disableAppLock, lockNow } = useSecurity();
   const [showPinModal, setShowPinModal] = useState(false);
   const [showChangePinModal, setShowChangePinModal] = useState(false);
   const [showVerifyPinModal, setShowVerifyPinModal] = useState(false);
