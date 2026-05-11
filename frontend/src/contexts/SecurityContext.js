@@ -70,11 +70,13 @@ export function SecurityProvider({ children }) {
           setLockoutUntil(null);
           if (loadingRemote.current) {
             loadingRemote.current = false;
-            // If PIN exists but no recent unlock, lock the screen
+            // ── Persistence Check ──────────────────────────────────────────
+            // If manual lock is set or no recent unlock, lock the screen
             if (data.pin) {
               const lastUnlocked = localStorage.getItem('discuss_last_unlocked');
-              if (!lastUnlocked) {
-                // Brand-new session — always lock if PIN is set
+              const manualLock = localStorage.getItem('discuss_manual_lock') === 'true';
+              
+              if (manualLock || !lastUnlocked) {
                 setIsLocked(true);
               } else {
                 const elapsed = Date.now() - parseInt(lastUnlocked);
@@ -130,6 +132,7 @@ export function SecurityProvider({ children }) {
       if (verifyPin(value)) {
         setIsLocked(false);
         setLastUnlocked();
+        localStorage.removeItem('discuss_manual_lock');
         await resetFailedAttempts(user?.id);
         return true;
       } else {
@@ -143,6 +146,7 @@ export function SecurityProvider({ children }) {
     } else if (method === 'biometric') {
       setIsLocked(false);
       setLastUnlocked();
+      localStorage.removeItem('discuss_manual_lock');
       await resetFailedAttempts(user?.id);
       return true;
     }
@@ -153,6 +157,8 @@ export function SecurityProvider({ children }) {
    * lockNow — manually triggers the lock screen without logging out.
    */
   const lockNow = () => {
+    localStorage.removeItem('discuss_last_unlocked');
+    localStorage.setItem('discuss_manual_lock', 'true');
     setIsLocked(true);
   };
 
@@ -202,6 +208,14 @@ export function SecurityProvider({ children }) {
    */
   const logout = async () => {
     localStorage.removeItem('discuss_last_unlocked');
+    // On logout, disable biometrics on this device (revert to PIN only)
+    const currentLocal = localSettingsRef.current;
+    if (currentLocal.enabled) {
+      const updated = { ...currentLocal, type: 'pin' };
+      setLocalSettings(updated);
+      saveLocalSecuritySettings(updated);
+      localSettingsRef.current = updated;
+    }
     await authLogout();
   };
 

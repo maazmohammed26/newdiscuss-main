@@ -245,17 +245,17 @@ export default function SecurityLockScreen() {
                 <div className="flex gap-3 w-full">
                   <Button
                     onClick={handleFullLogout}
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-md transition-all active:scale-95"
                   >
-                    <LogOut className="w-3.5 h-3.5 mr-1.5" />
-                    Yes, Logout
+                    <LogOut className="w-3.5 h-3.5 mr-2" />
+                    YES, LOGOUT
                   </Button>
                   <Button
                     onClick={() => setShowLogoutConfirm(false)}
                     variant="outline"
-                    className="flex-1 text-sm"
+                    className="flex-1 text-xs font-bold py-2.5 rounded-xl border-[#E2E8F0] dark:border-[#334155] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] transition-all"
                   >
-                    Cancel
+                    CANCEL
                   </Button>
                 </div>
               </div>
