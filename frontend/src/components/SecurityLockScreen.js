@@ -144,12 +144,12 @@ export default function SecurityLockScreen() {
 
           {/* PIN dots / Lockout / Biometric */}
           {lockoutUntil ? (
-            <div className="w-full bg-red-50 dark:bg-red-900/20 rounded-2xl p-8 mb-6 border border-red-200 dark:border-red-800/30 flex flex-col items-center gap-4">
-              <span className="text-4xl font-mono font-bold text-red-600 dark:text-red-400">
+            <div className="w-full bg-red-50 dark:bg-red-900/40 rounded-2xl p-8 mb-6 border border-red-200 dark:border-red-800/30 flex flex-col items-center gap-4 shadow-sm">
+              <span className="text-4xl font-mono font-bold text-red-700 dark:text-red-400">
                 {formatTime(timeLeft)}
               </span>
-              <p className="text-xs text-red-500 text-center font-medium">
-                Too many failed attempts. Try again in {formatTime(timeLeft)}.
+              <p className="text-xs text-red-600 dark:text-red-400 text-center font-bold uppercase tracking-wider">
+                Security Lockout Active
               </p>
             </div>
           ) : isBiometricLoading ? (
@@ -286,9 +286,9 @@ export default function SecurityLockScreen() {
               </div>
               <h2 className="text-lg font-bold text-red-600 mb-2">PIN Recovery</h2>
               
-              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-200 dark:border-red-800/30 mb-4 text-[11px]">
-                <p className="font-bold text-red-700 dark:text-red-400 mb-1 uppercase tracking-wider">Important Notice</p>
-                <p className="text-red-600 dark:text-red-500 leading-relaxed">
+              <div className="bg-red-50 dark:bg-red-900/40 p-4 rounded-xl border border-red-200 dark:border-red-800/30 mb-4 text-[11px]">
+                <p className="font-bold text-red-800 dark:text-red-300 mb-1 uppercase tracking-wider">Important Notice</p>
+                <p className="text-red-700 dark:text-red-400 leading-relaxed font-medium">
                   Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
                 </p>
               </div>
