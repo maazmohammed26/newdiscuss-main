@@ -25,6 +25,7 @@ export function SecurityProvider({ children }) {
   const [localSettings, setLocalSettings] = useState(() => getLocalSecuritySettings());
   const [remoteSettings, setRemoteSettings] = useState(null);
   const [lockoutUntil, setLockoutUntil] = useState(null);
+  const [resolving, setResolving] = useState(true);
   const loadingRemote = useRef(true);
   // Always-fresh ref — avoids stale closures in async callbacks
   const localSettingsRef = useRef(localSettings);
@@ -66,6 +67,7 @@ export function SecurityProvider({ children }) {
         if (data.lockoutUntil && data.lockoutUntil > Date.now()) {
           setLockoutUntil(data.lockoutUntil);
           setIsLocked(true);
+          setResolving(false);
         } else {
           setLockoutUntil(null);
           if (loadingRemote.current) {
@@ -83,6 +85,7 @@ export function SecurityProvider({ children }) {
                 if (elapsed > 5 * 60 * 1000) setIsLocked(true);
               }
             }
+            setResolving(false);
           }
         }
       } else {
@@ -90,6 +93,7 @@ export function SecurityProvider({ children }) {
         setRemoteSettings(null);
         if (loadingRemote.current) {
           loadingRemote.current = false;
+          setResolving(false);
         }
         // If no DB record, ensure local is cleared too
         const currentLocal = localSettingsRef.current;
@@ -244,6 +248,7 @@ export function SecurityProvider({ children }) {
     localSettings: localSettings || { enabled: false, type: 'none' },
     remoteSettings,
     lockoutUntil,
+    resolving,
     updatePin,
     disableAppLock,
     setSecurityEnabled,

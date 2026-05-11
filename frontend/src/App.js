@@ -127,13 +127,17 @@ function App() {
 }
 
 function SecurityWrapper({ children }) {
-  const { isLocked } = useSecurity();
-  return (
-    <>
-      {isLocked && <SecurityLockScreen />}
-      {children}
-    </>
-  );
+  const { isLocked, resolving } = useSecurity();
+
+  if (resolving) {
+    return <LoadingScreen message="Securing your session..." />;
+  }
+
+  if (isLocked) {
+    return <SecurityLockScreen />;
+  }
+
+  return children;
 }
 
 export default App;
