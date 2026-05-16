@@ -21,8 +21,10 @@ export default function ChatLinkText({ text, className = '' }) {
   const [showHttpWarning, setShowHttpWarning] = useState(false);
   const [pendingUrl, setPendingUrl] = useState('');
 
-  // Regex to match URLs
+  // Regex to match URLs and Emails
   const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
+  const combinedRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
 
   const handleLinkClick = (url, e) => {
     e.preventDefault();
@@ -32,6 +34,12 @@ export default function ChatLinkText({ text, className = '' }) {
     let normalizedUrl = url;
     if (url.startsWith('www.')) {
       normalizedUrl = 'https://' + url;
+    }
+
+    // Handle mailto links
+    if (normalizedUrl.startsWith('mailto:')) {
+      window.location.href = normalizedUrl;
+      return;
     }
 
     // Check if it's an http:// link (not https://)
@@ -69,25 +77,40 @@ export default function ChatLinkText({ text, className = '' }) {
         );
       }
 
-      const url = match[0];
-      const isHttp = url.startsWith('http://') || (!url.startsWith('https://') && !url.startsWith('www.') && url.includes('http://'));
-      const normalizedUrl = url.startsWith('www.') ? 'https://' + url : url;
-      const isInsecure = normalizedUrl.startsWith('http://');
+      const matchedText = match[0];
+      const isEmail = matchedText.includes('@') && !matchedText.startsWith('http') && !matchedText.startsWith('www.');
+      
+      if (isEmail) {
+        parts.push(
+          <a
+            key={`email-${match.index}`}
+            href={`mailto:${matchedText}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-[#60A5FA] hover:text-[#93C5FD] underline underline-offset-2 decoration-1 hover:decoration-2 transition-all"
+          >
+            {matchedText}
+          </a>
+        );
+      } else {
+        const url = matchedText;
+        const normalizedUrl = url.startsWith('www.') ? 'https://' + url : url;
+        const isInsecure = normalizedUrl.startsWith('http://');
 
-      // Add the link
-      parts.push(
-        <button
-          key={`link-${match.index}`}
-          onClick={(e) => handleLinkClick(url, e)}
-          className={`inline-flex items-center gap-0.5 text-[#60A5FA] hover:text-[#93C5FD] underline underline-offset-2 decoration-1 hover:decoration-2 transition-all break-all ${
-            isInsecure ? 'text-[#FBBF24] hover:text-[#FCD34D]' : ''
-          }`}
-        >
-          {url}
-          <ExternalLink className="w-3 h-3 inline-flex shrink-0 ml-0.5" />
-          {isInsecure && <AlertTriangle className="w-3 h-3 inline-flex shrink-0 text-[#FBBF24]" />}
-        </button>
-      );
+        // Add the link
+        parts.push(
+          <button
+            key={`link-${match.index}`}
+            onClick={(e) => handleLinkClick(url, e)}
+            className={`inline-flex items-center gap-0.5 text-[#60A5FA] hover:text-[#93C5FD] underline underline-offset-2 decoration-1 hover:decoration-2 transition-all break-all ${
+              isInsecure ? 'text-[#FBBF24] hover:text-[#FCD34D]' : ''
+            }`}
+          >
+            {url}
+            <ExternalLink className="w-3 h-3 inline-flex shrink-0 ml-0.5" />
+            {isInsecure && <AlertTriangle className="w-3 h-3 inline-flex shrink-0 text-[#FBBF24]" />}
+          </button>
+        );
+      }
 
       lastIndex = match.index + match[0].length;
     }

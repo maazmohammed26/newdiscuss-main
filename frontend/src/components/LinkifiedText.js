@@ -5,8 +5,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ExternalLink, AlertTriangle } from 'lucide-react';
 
-// URL regex pattern
+// URL and Email regex patterns
 const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
+const COMBINED_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
 
 /**
  * Truncate a URL to show abbreviated version
@@ -54,7 +56,7 @@ export const parseTextWithLinks = (text) => {
   let lastIndex = 0;
   let match;
   
-  const regex = new RegExp(URL_REGEX);
+  const regex = new RegExp(COMBINED_REGEX);
   
   while ((match = regex.exec(text)) !== null) {
     // Add text before the match
@@ -62,17 +64,26 @@ export const parseTextWithLinks = (text) => {
       parts.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     }
     
-    // Add the URL
-    let url = match[0];
-    // Add https:// if it starts with www.
-    const href = url.startsWith('www.') ? `https://${url}` : url;
-    // Store both full URL and truncated display version
-    parts.push({ 
-      type: 'link', 
-      content: url, // Original URL for dialog
-      displayContent: truncateUrl(url), // Abbreviated for display
-      href 
-    });
+    const matchedText = match[0];
+    const isEmail = matchedText.includes('@') && !matchedText.startsWith('http') && !matchedText.startsWith('www.');
+
+    if (isEmail) {
+      parts.push({
+        type: 'email',
+        content: matchedText,
+        href: `mailto:${matchedText}`
+      });
+    } else {
+      // It's a URL
+      const url = matchedText;
+      const href = url.startsWith('www.') ? `https://${url}` : url;
+      parts.push({ 
+        type: 'link', 
+        content: url,
+        displayContent: truncateUrl(url),
+        href 
+      });
+    }
     
     lastIndex = regex.lastIndex;
   }
@@ -125,6 +136,18 @@ export default function LinkifiedText({ text, className = '' }) {
               >
                 {part.displayContent}
                 <ExternalLink className="w-3 h-3 shrink-0" />
+              </a>
+            );
+          }
+          if (part.type === 'email') {
+            return (
+              <a
+                key={index}
+                href={part.href}
+                className="text-[#2563EB] discuss:text-[#60A5FA] hover:underline"
+                onClick={(e) => e.stopPropagation()} // Just allow default mailto behavior
+              >
+                {part.content}
               </a>
             );
           }

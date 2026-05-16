@@ -669,6 +669,19 @@ function SignalStoryViewer({
                   </a>
                 );
               }
+              if (part.type === 'email') {
+                return (
+                  <a
+                    key={index}
+                    href={part.href}
+                    onClick={(e) => e.stopPropagation()}
+                    className="underline decoration-purple-400/60 hover:decoration-purple-300 text-purple-300 hover:text-purple-200 transition-colors"
+                    style={{ userSelect: 'auto', WebkitUserSelect: 'auto' }}
+                  >
+                    {part.content}
+                  </a>
+                );
+              }
               return <span key={index}>{part.content}</span>;
             })}
           </div>

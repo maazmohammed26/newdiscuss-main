@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { toast } from 'sonner';
+import LinkifiedText from './LinkifiedText';
 import './PulseFeed.css';
 
 const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
@@ -167,11 +168,11 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
       const truncated = text.slice(0, 50).split('\n')[0];
       return (
         <span>
-          {truncated}... <button onClick={(e) => { e.stopPropagation(); setShowFullCaption(true); }} className="text-white/70 font-bold ml-1">more</button>
+          <LinkifiedText text={truncated} />... <button onClick={(e) => { e.stopPropagation(); setShowFullCaption(true); }} className="text-white/70 font-bold ml-1">more</button>
         </span>
       );
     }
-    return text;
+    return <LinkifiedText text={text} />;
   };
 
   const handleProfileClick = (e) => {
@@ -356,7 +357,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
               <X size={20} />
             </button>
             <h3 className="text-lg font-semibold text-white mb-4">Caption</h3>
-            <p className="text-neutral-200 whitespace-pre-wrap">{pulse.caption}</p>
+            <p className="text-neutral-200 whitespace-pre-wrap"><LinkifiedText text={pulse.caption} /></p>
           </div>
         </div>
       )}
