@@ -250,17 +250,17 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                 ? 'bg-[#6275AF]/10 text-[#6275AF] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] border border-[#6275AF]/20 discuss:border-[#EF4444]/20 px-2.5 py-0.5 text-xs font-semibold rounded-[6px] shrink-0'
                 : 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] dark:text-[#60A5FA] border border-[#2563EB]/20 discuss:border-[#EF4444]/20 px-2.5 py-0.5 text-xs font-semibold rounded-[6px] shrink-0'
               }>
-              {isProject ? 'Project' : 'Discussion'}
+              <span>{isProject ? 'Project' : 'Discussion'}</span>
             </span>
             <span
               data-testid={`post-author-${post.id}`}
               onClick={handleUsernameClick}
               className="font-semibold text-[#2563EB] discuss:text-[#F5F5F5] discuss:hover:text-[#EF4444] hover:underline text-[13px] md:text-[15px] cursor-pointer transition-colors flex items-center gap-1"
             >
-              {post.author_username}
+              <span>{post.author_username}</span>
               {post.author_verified && <VerifiedBadge size="xs" />}
             </span>
-            <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0">{timeAgo(post.timestamp)}</span>
+            <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0"><span>{timeAgo(post.timestamp)}</span></span>
           </div>
           <div className="flex items-center shrink-0">
             <DropdownMenu>
@@ -272,29 +272,29 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               <DropdownMenuContent align="end" className="w-44 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                    <Globe className="w-3.5 h-3.5" /> Translate
+                    <Globe className="w-3.5 h-3.5" /> <span>Translate</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
                     {TRANSLATE_LANGUAGES.map((lang) => (
                       <DropdownMenuItem key={lang.code} onClick={(e) => { e.stopPropagation(); handleTranslate(lang.code); }} className="cursor-pointer text-xs text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
-                        {lang.label}
+                        <span>{lang.label}</span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 {translatedContent && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                    <RotateCcw className="w-3.5 h-3.5" /> Back to Original
+                    <RotateCcw className="w-3.5 h-3.5" /> <span>Back to Original</span>
                   </DropdownMenuItem>
                 )}
                 {isAuthor && (
                   <>
                     <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                      <Pencil className="w-3.5 h-3.5" /> Edit
+                      <Pencil className="w-3.5 h-3.5" /> <span>Edit</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                      <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -310,7 +310,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           className="cursor-pointer"
         >
           {isProject && post.title && (
-            <h3 data-testid={`post-title-${post.id}`} className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-[15px] md:text-[17px] mb-1.5 leading-snug hover:text-[#2563EB] dark:hover:text-[#60A5FA] discuss:hover:text-[#EF4444] transition-colors">{post.title}</h3>
+            <h3 data-testid={`post-title-${post.id}`} className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-[15px] md:text-[17px] mb-1.5 leading-snug hover:text-[#2563EB] dark:hover:text-[#60A5FA] discuss:hover:text-[#EF4444] transition-colors"><span>{post.title}</span></h3>
           )}
           <div data-testid={`post-content-${post.id}`} className="text-neutral-700 dark:text-neutral-200 discuss:text-[#E5E7EB] text-[13px] md:text-[15px] leading-relaxed">
             <ExpandableText text={translatedContent || post.content} maxLines={5}>
@@ -319,12 +319,12 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             {translatedContent && (
               <div className="flex items-center gap-1.5 mt-1.5">
                 <Globe className="w-3 h-3 text-neutral-400 discuss:text-[#9CA3AF] shrink-0" />
-                <span className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]">Translated to {LANG_LABELS[translatedLang]}</span>
+                <span className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]"><span>Translated to {LANG_LABELS[translatedLang]}</span></span>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }}
                   className="text-[11px] text-[#2563EB] discuss:text-[#60A5FA] hover:underline ml-1"
                 >
-                  Back to Original
+                  <span>Back to Original</span>
                 </button>
               </div>
             )}
@@ -354,7 +354,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               {hashtags.map((tag) => (
                 <button key={tag} data-testid={`post-hashtag-${tag}`} onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
                   className="inline-flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] hover:bg-[#2563EB]/10 discuss:hover:bg-[#333333] px-2.5 py-1 rounded-[6px] text-xs font-medium text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#F5F5F5] transition-colors">
-                  <Hash className="w-3 h-3" />{tag}
+                  <Hash className="w-3 h-3" /><span>{tag}</span>
                 </button>
               ))}
             </div>
@@ -365,14 +365,14 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               {post.github_link && (
                 <button onClick={(e) => handleExternalLink(post.github_link, e)} data-testid={`post-github-link-${post.id}`}
                   className="inline-flex items-center gap-1.5 bg-neutral-900 dark:bg-neutral-100 discuss:bg-[#262626] text-white dark:text-neutral-900 discuss:text-[#F5F5F5] px-3 py-1.5 rounded-[6px] text-xs font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 discuss:hover:bg-[#333333] transition-colors">
-                  <Github className="w-3.5 h-3.5" /> GitHub
+                  <Github className="w-3.5 h-3.5" /> <span>GitHub</span>
                 </button>
               )}
               {post.preview_link && (
                 <button onClick={(e) => handleExternalLink(post.preview_link, e)} data-testid={`post-preview-link-${post.id}`}
                   data-primary="true"
                   className="inline-flex items-center gap-1.5 bg-[#2563EB] discuss:bg-[#EF4444] text-white discuss:text-white px-3 py-1.5 rounded-[6px] text-xs font-medium hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] shadow-button transition-colors">
-                  <ExternalLink className="w-3.5 h-3.5" /> Live Preview
+                  <ExternalLink className="w-3.5 h-3.5" /> <span>Live Preview</span>
                 </button>
               )}
             </div>
@@ -393,7 +393,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           }`}
         >
           <ThumbsUp className="w-4 h-4" fill={userVote === 'up' ? 'currentColor' : 'none'} />
-          <span data-testid={`post-upvote-count-${post.id}`}>{upvoteCount}</span>
+          <span data-testid={`post-upvote-count-${post.id}`}><span>{upvoteCount}</span></span>
         </button>
 
         <button 
@@ -407,7 +407,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           }`}
         >
           <ThumbsDown className="w-4 h-4" fill={userVote === 'down' ? 'currentColor' : 'none'} />
-          <span data-testid={`post-downvote-count-${post.id}`}>{downvoteCount}</span>
+          <span data-testid={`post-downvote-count-${post.id}`}><span>{downvoteCount}</span></span>
         </button>
 
         <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-1" />
@@ -415,7 +415,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         <button data-testid={`post-comments-btn-${post.id}`} onClick={() => setShowComments(!showComments)}
           className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors">
           <MessageSquare className="w-4 h-4" />
-          <span data-testid={`post-comment-count-${post.id}`}>{post.comment_count || 0}</span>
+          <span data-testid={`post-comment-count-${post.id}`}><span>{post.comment_count || 0}</span></span>
           {hasNewCommentBadge && !showComments && (
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full animate-pulse" />
           )}
@@ -424,7 +424,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         <button data-testid={`post-share-btn-${post.id}`} onClick={() => setShowShare(true)}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors">
           <Share2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Share</span>
+          <span className="hidden sm:inline"><span>Share</span></span>
         </button>
 
         <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-1" />

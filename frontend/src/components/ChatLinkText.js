@@ -65,7 +65,7 @@ export default function ChatLinkText({ text, className = '' }) {
     let lastIndex = 0;
     let match;
 
-    const regex = new RegExp(urlRegex.source, 'gi');
+    const regex = new RegExp(combinedRegex.source, 'gi');
 
     while ((match = regex.exec(text)) !== null) {
       // Add text before the link

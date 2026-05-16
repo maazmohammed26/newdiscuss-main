@@ -82,14 +82,17 @@ async function fetchUserWithTimeout(uid) {
 
 // ─── Helper: build a minimal "basic" user from Firebase Auth data ─────────────
 function buildBasicUser(firebaseUser) {
+  const email = firebaseUser.email?.toLowerCase() || '';
+  let username =
+    firebaseUser.displayName?.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15) ||
+    email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15) ||
+    'user_' + firebaseUser.uid.slice(0, 5);
+    
   return {
     id: firebaseUser.uid,
     uid: firebaseUser.uid,
-    email: firebaseUser.email,
-    username:
-      firebaseUser.displayName?.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15) ||
-      firebaseUser.email?.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15) ||
-      'user',
+    email: email,
+    username: username,
     photo_url: firebaseUser.photoURL || '',
     verified: false,
     admin_message: '',
@@ -197,16 +200,16 @@ export function AuthProvider({ children }) {
       // ── Happy path: RTDB returned data ────────────────────────────────
       // New user — create RTDB record
       if (dbUser === null) {
-        const email = firebaseUser.email?.toLowerCase();
-        let username =
-          firebaseUser.displayName
-            ?.replace(/[^a-zA-Z0-9_]/g, '')
-            .toLowerCase()
-            .slice(0, 15) ||
-          email?.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 15) ||
-          'user';
-
         try {
+          const email = firebaseUser.email?.toLowerCase();
+          let username =
+            firebaseUser.displayName
+              ?.replace(/[^a-zA-Z0-9_]/g, '')
+              .toLowerCase()
+              .slice(0, 15) ||
+            email?.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 15) ||
+            'user_' + firebaseUser.uid.slice(0, 5);
+
           // Each availability check gets its own timeout — resolves `true`
           // (assume available) on timeout so we never block auth forever.
           let isAvailable = await withTimeout(

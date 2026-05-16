@@ -60,13 +60,13 @@ function CommentReply({ reply, currentUser, postId, commentId, postAuthorId, onD
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-[#1D7AFF] discuss:text-[#60A5FA] text-[12px]">
-            {reply.author_username}
+            <span>{reply.author_username}</span>
           </span>
           {reply.author_verified && <VerifiedBadge size="xs" />}
           {isPostAuthor && (
-            <span className="bg-[#BC4800]/15 discuss:bg-[#EF4444]/15 text-[#BC4800] discuss:text-[#EF4444] text-[9px] font-bold uppercase px-1 py-0.5 rounded">Author</span>
+            <span className="bg-[#BC4800]/15 discuss:bg-[#EF4444]/15 text-[#BC4800] discuss:text-[#EF4444] text-[9px] font-bold uppercase px-1 py-0.5 rounded"><span>Author</span></span>
           )}
-          <span className="text-[#6275AF] dark:text-[#94A3B8] text-[10px]">{timeAgo(reply.timestamp)}</span>
+          <span className="text-[#6275AF] dark:text-[#94A3B8] text-[10px]"><span>{timeAgo(reply.timestamp)}</span></span>
         </div>
         {isCurrentUser && (
           <DropdownMenu>
@@ -77,7 +77,7 @@ function CommentReply({ reply, currentUser, postId, commentId, postAuthorId, onD
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(reply.id); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-[11px]">
-                <Trash2 className="w-3 h-3" /> Delete
+                <Trash2 className="w-3 h-3" /> <span>Delete</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -178,19 +178,19 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
           <div className="flex items-center gap-1">
             {isClickable ? (
               <button onClick={() => onUserClick(comment.author_id)} className="font-semibold text-[#1D7AFF] discuss:text-[#60A5FA] hover:underline text-[13px]">
-                {comment.author_username}
+                <span>{comment.author_username}</span>
               </button>
             ) : (
               <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[13px]">
-                {comment.author_username}
+                <span>{comment.author_username}</span>
               </span>
             )}
             {comment.author_verified && <VerifiedBadge size="xs" />}
           </div>
           {isPostAuthor && (
-            <span className="bg-[#BC4800]/15 discuss:bg-[#EF4444]/15 text-[#BC4800] discuss:text-[#EF4444] text-[10px] font-bold uppercase px-1.5 py-0.5 rounded">Author</span>
+            <span className="bg-[#BC4800]/15 discuss:bg-[#EF4444]/15 text-[#BC4800] discuss:text-[#EF4444] text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"><span>Author</span></span>
           )}
-          <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">{timeAgo(comment.timestamp)}</span>
+          <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{timeAgo(comment.timestamp)}</span></span>
         </div>
         {isCurrentUser && (
           <DropdownMenu>
@@ -201,7 +201,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(comment.id); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
-                <Trash2 className="w-3.5 h-3.5" /> Delete
+                <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -222,7 +222,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
           className="flex items-center gap-1 text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] text-[11px] transition-colors"
         >
           <Reply className="w-3.5 h-3.5" />
-          Reply
+          <span>Reply</span>
         </button>
         
         {replyCount > 0 && (
@@ -231,7 +231,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
             className="flex items-center gap-1 text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] text-[11px] transition-colors"
           >
             {showReplies ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            {showReplies ? 'Hide' : 'View'} {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+            <span>{showReplies ? 'Hide' : 'View'} {replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
             {hasNewReply && !showReplies && (
               <span className="w-2 h-2 bg-[#EF4444] rounded-full animate-pulse" />
             )}
@@ -267,10 +267,10 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
         <div className="mt-2">
           {loadingReplies ? (
             <div className="ml-6 flex items-center gap-2 text-[#6275AF] text-[11px]">
-              <Loader2 className="w-3 h-3 animate-spin" /> Loading replies...
+              <Loader2 className="w-3 h-3 animate-spin" /> <span>Loading replies...</span>
             </div>
           ) : replies.length === 0 ? (
-            <div className="ml-6 text-[#6275AF] text-[11px]">No replies yet</div>
+            <div className="ml-6 text-[#6275AF] text-[11px]"><span>No replies yet</span></div>
           ) : (
             replies.map((reply) => (
               <CommentReply 
@@ -412,10 +412,10 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
         {loading ? (
           <div className="flex justify-center items-center gap-2 py-4">
             <Loader2 className="w-5 h-5 animate-spin text-[#6275AF]" />
-            <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading comments...</span>
+            <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs"><span>Loading comments...</span></span>
           </div>
         ) : allComments.length === 0 ? (
-          <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px] text-center py-3">No comments yet. Be the first!</p>
+          <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px] text-center py-3"><span>No comments yet. Be the first!</span></p>
         ) : (
           allComments.map((c) => (
             <CommentItem
@@ -449,7 +449,7 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
             </Button>
           </div>
           <div className="flex justify-between items-center px-1">
-            <span className="text-[#6275AF] dark:text-[#94A3B8] text-[10px]">URLs will be clickable</span>
+            <span className="text-[#6275AF] dark:text-[#94A3B8] text-[10px]"><span>URLs will be clickable</span></span>
             <span className={`text-[10px] ${isOverLimit ? 'text-[#EF4444] font-medium' : 'text-[#6275AF]'}`}>
               {charCount}/{COMMENT_CHAR_LIMIT}
             </span>
@@ -461,13 +461,13 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
         <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Delete comment?</AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">This will permanently delete your comment and all its replies.</AlertDialogDescription>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Delete comment?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]"><span>This will permanently delete your comment and all its replies.</span></AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]"><span>Cancel</span></AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Delete</span>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

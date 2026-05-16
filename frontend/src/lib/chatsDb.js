@@ -101,8 +101,9 @@ const updateUserChatList = async (userId, chatId, otherUserId, lastMessage) => {
  * @param {string} senderId - Sender's user ID
  * @param {string} text - Message text
  * @param {Array} media - Optional media array
+ * @param {Object} location - Optional location {latitude, longitude, address}
  */
-export const sendMessage = async (chatId, senderId, text, media = []) => {
+export const sendMessage = async (chatId, senderId, text, media = [], location = null) => {
   try {
     if (!thirdDatabase) {
       console.error('Third database not initialized');
@@ -120,7 +121,8 @@ export const sendMessage = async (chatId, senderId, text, media = []) => {
       sender: senderId,
       timestamp,
       read: false,
-      status: 'sent'
+      status: 'sent',
+      location: location || null
     };
     await set(newMessageRef, message);
     
@@ -128,7 +130,7 @@ export const sendMessage = async (chatId, senderId, text, media = []) => {
     const chatRef = ref(thirdDatabase, `chats/${chatId}`);
     await update(chatRef, {
       lastMessage: {
-        text: (text || '').trim() || (media?.length > 0 ? '📷 Media' : ''),
+        text: (text || '').trim() || (location ? '📍 Location' : (media?.length > 0 ? '📷 Media' : '')),
         sender: senderId,
         timestamp
       }
@@ -167,7 +169,7 @@ const updateUserChatListAfterMessage = async (userId, chatId, otherUserId, messa
     
     await update(userChatRef, {
       otherUser: otherUserId,
-      lastMessage: message.text || (message.media?.length > 0 ? '📷 Media' : ''),
+      lastMessage: message.text || (message.location ? '📍 Location' : (message.media?.length > 0 ? '📷 Media' : '')),
       lastMessageTime: message.timestamp,
       unreadCount: incrementUnread ? (currentData.unreadCount || 0) + 1 : 0,
       status: CHAT_STATUS.ACTIVE

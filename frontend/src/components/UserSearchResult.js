@@ -34,13 +34,13 @@ export default function UserSearchResult({
         <div className="min-w-0">
           <div className="flex items-center gap-1">
             <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm truncate">
-              @{user.username}
+              <span>@{user.username}</span>
             </span>
             {user.verified && <VerifiedBadge size="sm" />}
           </div>
           {user.email && (
             <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs truncate">
-              {user.email}
+              <span>{user.email}</span>
             </p>
           )}
         </div>

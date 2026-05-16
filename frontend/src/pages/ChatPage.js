@@ -439,18 +439,18 @@ export default function ChatPage() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 min-w-0">
               <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white discuss:text-white' : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'}`}>
-                @{otherUser.username}
+                <span>@{otherUser.username}</span>
               </span>
               {otherUser.verified && <VerifiedBadge size="sm" />}
               {hasAutoDelete && (
                 <span className="bg-[#F59E0B]/20 text-[#F59E0B] text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5" title="Auto-delete enabled (24h)">
                   <Timer className="w-2.5 h-2.5" />
-                  24h
+                  <span>24h</span>
                 </span>
               )}
             </div>
             <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs shrink-0">
-              {formatTime(chat.lastMessageTime)}
+              <span>{formatTime(chat.lastMessageTime)}</span>
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
@@ -502,7 +502,7 @@ export default function ChatPage() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white discuss:text-white' : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'}`}>
-                {group.groupName}
+                <span>{group.groupName}</span>
               </span>
               <span
                 className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-purple-100 dark:bg-purple-900/30 discuss:bg-purple-900/30 text-purple-700 dark:text-purple-300 discuss:text-purple-300"
@@ -510,11 +510,11 @@ export default function ChatPage() {
                   ? { backgroundColor: 'rgba(112,0,255,0.18)', color: '#C084FC' }
                   : {}}
               >
-                Group Chat
+                <span>Group Chat</span>
               </span>
             </div>
             <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs shrink-0">
-              {formatTime(group.lastMessageTime || group.joinedAt)}
+              <span>{formatTime(group.lastMessageTime || group.joinedAt)}</span>
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
@@ -545,12 +545,12 @@ export default function ChatPage() {
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-1">
             <span className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-sm truncate">
-              @{friend.username}
+              <span>@{friend.username}</span>
             </span>
             {friend.verified && <VerifiedBadge size="sm" />}
           </div>
           <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs">
-            Friends since {new Date(friend.since).toLocaleDateString([], { month: 'short', year: 'numeric' })}
+            <span>Friends since {new Date(friend.since).toLocaleDateString([], { month: 'short', year: 'numeric' })}</span>
           </p>
         </div>
 
@@ -590,7 +590,7 @@ export default function ChatPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] flex-1">
-            Messages
+            <span>Messages</span>
           </h1>
           
           {/* Three-dot menu */}
@@ -606,15 +606,15 @@ export default function ChatPage() {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => setCreateGroupOpen(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Create Group
+                <span>Create Group</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSearchGroupsOpen(true)}>
                 <Globe className="w-4 h-4 mr-2" />
-                Search Public Groups
+                <span>Search Public Groups</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/join-requests')} className="relative">
                 <Inbox className="w-4 h-4 mr-2" />
-                View / Manage Requests
+                <span>View / Manage Requests</span>
                 {pendingGroupRequests > 0 && (
                   <span className="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
                 )}
@@ -634,7 +634,7 @@ export default function ChatPage() {
             }`}
           >
             <MessageCircle className="w-4 h-4" />
-            Chats
+            <span>Chats</span>
             {totalUnread > 0 && (
               <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                 {totalUnread > 99 ? '99+' : totalUnread}
@@ -650,7 +650,7 @@ export default function ChatPage() {
             }`}
           >
             <Users className="w-4 h-4" />
-            Friends
+            <span>Friends</span>
             <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[10px] px-1.5 py-0.5 rounded-full">
               {friends.length}
             </span>
@@ -683,7 +683,7 @@ export default function ChatPage() {
           <div className="space-y-2 py-4">
             <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mb-3 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
-              {activeTab === 'chats' ? 'Syncing chats…' : 'Loading friends…'}
+              <span>{activeTab === 'chats' ? 'Syncing chats…' : 'Loading friends…'}</span>
             </p>
             {(activeTab === 'chats' ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4]).map((i) => (
               <div
@@ -704,20 +704,20 @@ export default function ChatPage() {
               <>
                 <Search className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
                 <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
-                  No results found
+                  <span>No results found</span>
                 </h3>
                 <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
-                  Try a different search term
+                  <span>Try a different search term</span>
                 </p>
               </>
             ) : activeTab === 'chats' ? (
               <>
                 <MessageCircle className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
                 <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
-                  No chats yet
+                  <span>No chats yet</span>
                 </h3>
                 <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm mb-4">
-                  Start a conversation with friends or create a group
+                  <span>Start a conversation with friends or create a group</span>
                 </p>
                 <div className="flex gap-2 justify-center">
                   {friends.length > 0 && (
@@ -726,7 +726,7 @@ export default function ChatPage() {
                       className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-[6px] shadow-button"
                     >
                       <Users className="w-4 h-4 mr-2" />
-                      View Friends
+                      <span>View Friends</span>
                     </Button>
                   )}
                   <Button
@@ -735,7 +735,7 @@ export default function ChatPage() {
                     className="border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[6px]"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Create Group
+                    <span>Create Group</span>
                   </Button>
                 </div>
               </>
@@ -743,16 +743,16 @@ export default function ChatPage() {
               <>
                 <Users className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
                 <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
-                  No friends yet
+                  <span>No friends yet</span>
                 </h3>
                 <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm mb-4">
-                  Find people to connect with
+                  <span>Find people to connect with</span>
                 </p>
                 <Button
                   onClick={() => navigate('/profile')}
                   className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-[6px] shadow-button"
                 >
-                  Find Friends
+                  <span>Find Friends</span>
                 </Button>
               </>
             )}

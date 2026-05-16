@@ -49,10 +49,10 @@ ${user?.username || ''}`
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-[#E63946]" />
-            Request Verification
+            <span>Request Verification</span>
           </DialogTitle>
           <DialogDescription>
-            Get the verified badge on your Discuss profile
+            <span>Get the verified badge on your Discuss profile</span>
           </DialogDescription>
         </DialogHeader>
         
@@ -61,13 +61,13 @@ ${user?.username || ''}`
             <>
               <div className="bg-[#FEF3C7] dark:bg-[#78350F]/20 discuss:bg-[#7C2D12]/20 border border-[#FCD34D] discuss:border-[#7C2D12] p-4 rounded-lg">
                 <h4 className="font-semibold text-sm mb-2 text-[#92400E] dark:text-[#FDE68A] discuss:text-[#FED7AA]">
-                  Verification Requirements
+                  <span>Verification Requirements</span>
                 </h4>
                 <ul className="text-xs text-[#92400E] dark:text-[#FDE68A] discuss:text-[#FED7AA] space-y-1 list-disc list-inside">
-                  <li>Active Discuss account in good standing</li>
-                  <li>Comply with all Discuss terms and conditions</li>
-                  <li>Authentic identity representation</li>
-                  <li>Regular platform engagement</li>
+                  <li><span>Active Discuss account in good standing</span></li>
+                  <li><span>Comply with all Discuss terms and conditions</span></li>
+                  <li><span>Authentic identity representation</span></li>
+                  <li><span>Regular platform engagement</span></li>
                 </ul>
               </div>
 
@@ -75,17 +75,17 @@ ${user?.username || ''}`
                 <div className="flex items-start gap-2 text-sm">
                   <Mail className="w-4 h-4 mt-0.5 text-[#1D7AFF]" />
                   <div>
-                    <p className="font-medium mb-1">How to request:</p>
+                    <p className="font-medium mb-1"><span>How to request:</span></p>
                     <p className="text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
-                      Click the button below to open your email client with a pre-filled verification request. 
-                      Send the email from your registered email address: <strong>{user?.email}</strong>
+                      <span>Click the button below to open your email client with a pre-filled verification request. </span>
+                      <span>Send the email from your registered email address: </span><strong>{user?.email}</strong>
                     </p>
                   </div>
                 </div>
 
                 <div className="bg-[#EEF3FB] dark:bg-[#1E293B] discuss:bg-[#262626] p-3 rounded-lg">
                   <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                    <strong>Important:</strong> Please send the email from <strong>{user?.email}</strong> to verify your account ownership.
+                    <strong>Important:</strong> <span>Please send the email from </span><strong>{user?.email}</strong><span> to verify your account ownership.</span>
                   </p>
                 </div>
               </div>
@@ -96,7 +96,7 @@ ${user?.username || ''}`
                 data-primary="true"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Open Email to Send Request
+                <span>Open Email to Send Request</span>
               </Button>
             </>
           ) : (
@@ -104,12 +104,12 @@ ${user?.username || ''}`
               <div className="w-16 h-16 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-[#10B981]" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Email Client Opened</h3>
+              <h3 className="font-semibold text-lg mb-2"><span>Email Client Opened</span></h3>
               <p className="text-sm text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mb-4">
-                Please send the pre-filled email from your registered email address to complete your verification request.
+                <span>Please send the pre-filled email from your registered email address to complete your verification request.</span>
               </p>
               <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                Our team will review your request and update your verification status within 2-3 business days.
+                <span>Our team will review your request and update your verification status within 2-3 business days.</span>
               </p>
             </div>
           )}
@@ -121,7 +121,7 @@ ${user?.username || ''}`
             variant="outline"
             className="border-[#E2E6ED] dark:border-[#334155] discuss:border-[#333333]"
           >
-            Close
+            <span>Close</span>
           </Button>
           {!emailSent && (
             <Button
@@ -130,7 +130,7 @@ ${user?.username || ''}`
               className="text-[#1D7AFF] discuss:text-[#EF4444]"
             >
               <ExternalLink className="w-4 h-4 mr-1" />
-              Send Email
+              <span>Send Email</span>
             </Button>
           )}
         </div>

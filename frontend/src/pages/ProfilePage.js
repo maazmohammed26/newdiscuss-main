@@ -990,16 +990,26 @@ export default function ProfilePage() {
           </div>
 
           <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center justify-center gap-2">
-            {user?.username}
+            <span>{user?.username}</span>
             {user?.verified && <VerifiedBadge size="md" />}
           </h1>
-          <p data-testid="profile-email" className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px] mt-0.5">{user?.email}</p>
+          <p data-testid="profile-email" className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px] mt-0.5"><span>{user?.email}</span></p>
 
           <div className="inline-flex items-center gap-2 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] discuss:border discuss:border-[#333333] px-4 py-2 mt-4 rounded-lg">
             <FileText className="w-4 h-4 text-[#1D7AFF] discuss:text-[#EF4444]" />
             <span data-testid="profile-post-count" className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[13px] font-semibold">
-              {loadingPosts ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : `${userPosts.length} Total Posts`}
+              {loadingPosts ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : <span>{userPosts.length} Total Posts</span>}
             </span>
+          </div>
+
+          {/* Discord Section (Disabled) */}
+          <div className="mt-4 opacity-50 cursor-not-allowed">
+             <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155]">
+               <div className="flex items-center gap-2 text-[#0F172A] dark:text-[#F1F5F9] text-sm">
+                 <span className="font-semibold">Discord Integration</span>
+               </div>
+               <span className="text-[10px] font-bold uppercase bg-[#E2E8F0] dark:bg-[#334155] px-2 py-0.5 rounded text-[#6275AF] dark:text-[#94A3B8]">Coming Soon</span>
+             </div>
           </div>
 
           {!user?.verified && (
@@ -1244,10 +1254,10 @@ export default function ProfilePage() {
               ) : !maxLinksReached ? (
                 <button onClick={() => setAddingLink(true)}
                   className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1">
-                  <Plus className="w-3.5 h-3.5" /> Add social link
+                  <Plus className="w-3.5 h-3.5" /> <span>Add social link</span>
                 </button>
               ) : (
-                <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Maximum links reached</p>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs"><span>Maximum links reached</span></p>
               )}
             </div>
           </div>
@@ -1256,7 +1266,7 @@ export default function ProfilePage() {
           <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">App Security</span>
+                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold"><span>App Security</span></span>
                 <button
                   onClick={() => setShowSecurityInfo(prev => !prev)}
                   className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#2563EB] text-white' : 'bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20'}`}
@@ -1272,7 +1282,7 @@ export default function ProfilePage() {
                   title="Lock the app now"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  Lock Now
+                  <span>Lock Now</span>
                 </button>
               )}
             </div>
@@ -1292,11 +1302,11 @@ export default function ProfilePage() {
                   </button>
                 </div>
                 <div className="text-[11px] text-blue-600 dark:text-blue-300 space-y-2 pl-6">
-                  <p>• App auto-locks after <strong>5 minutes</strong> of inactivity</p>
-                  <p>• Your PIN is <strong>synced across all devices</strong></p>
-                  <p>• Biometrics (Face/Fingerprint) are <strong>device-specific</strong></p>
-                  <p>• <strong>5 wrong attempts</strong> will trigger a 5-minute lockout</p>
-                  <p>• Disabling the lock will remove your PIN from <strong>all devices</strong></p>
+                  <p><span>• App auto-locks after </span><strong>5 minutes</strong><span> of inactivity</span></p>
+                  <p><span>• Your PIN is </span><strong>synced across all devices</strong></p>
+                  <p><span>• Biometrics (Face/Fingerprint) are </span><strong>device-specific</strong></p>
+                  <p><span>• </span><strong>5 wrong attempts</strong><span> will trigger a 5-minute lockout</span></p>
+                  <p><span>• Disabling the lock will remove your PIN from </span><strong>all devices</strong></p>
                 </div>
               </div>
             )}
@@ -1307,11 +1317,11 @@ export default function ProfilePage() {
                     <Smartphone className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">App Lock</p>
+                    <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>App Lock</span></p>
                     <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                      {localSettings?.enabled
+                      <span>{localSettings?.enabled
                         ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
-                        : 'Protect with PIN or Biometrics'}
+                        : 'Protect with PIN or Biometrics'}</span>
                     </p>
                   </div>
                 </div>
@@ -1333,9 +1343,9 @@ export default function ProfilePage() {
                           <BiometricIcon className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">FaceID / Fingerprint</p>
+                          <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>FaceID / Fingerprint</span></p>
                           <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                            {localSettings?.type === 'biometric' ? 'Active - PIN as fallback' : 'Tap to enable biometric unlock'}
+                            <span>{localSettings?.type === 'biometric' ? 'Active - PIN as fallback' : 'Tap to enable biometric unlock'}</span>
                           </p>
                         </div>
                       </div>
@@ -1350,7 +1360,7 @@ export default function ProfilePage() {
                   )}
                   <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-[#6275AF] flex items-center gap-2">
                     <Key className="w-3.5 h-3.5" />
-                    Change Security PIN
+                    <span>Change Security PIN</span>
                   </Button>
                 </div>
               )}
@@ -1361,7 +1371,7 @@ export default function ProfilePage() {
 
           <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium">Theme</span>
+              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium"><span>Theme</span></span>
             </div>
             <ThemeSelector />
           </div>
@@ -1370,7 +1380,7 @@ export default function ProfilePage() {
           <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
             <div className="flex items-center gap-2 mb-3">
               <Bell className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium">Notifications</span>
+              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium"><span>Notifications</span></span>
             </div>
             <NotificationToggle />
           </div>
@@ -1383,7 +1393,7 @@ export default function ProfilePage() {
                   <Send className="w-5 h-5 text-[#229ED9]" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Telegram Alerts</h3>
+                  <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Telegram Alerts</span></h3>
                   <div className="flex items-center gap-2">
                     <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
@@ -1405,25 +1415,25 @@ export default function ProfilePage() {
               <div className="mb-4 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center gap-2 text-[#229ED9]">
                   <MessageSquare className="w-4 h-4" />
-                  <p className="text-sm font-bold">Bot Connectivity Guide</p>
+                  <p className="text-sm font-bold"><span>Bot Connectivity Guide</span></p>
                 </div>
                 
                 <p className="text-[12px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
-                  Discuss uses an <strong>Automated Delivery Agent</strong> on Telegram to bypass browser push limitations. Connect your account in seconds:
+                  <span>Discuss uses an </span><strong>Automated Delivery Agent</strong><span> on Telegram to bypass browser push limitations. Connect your account in seconds:</span>
                 </p>
 
                 <div className="grid grid-cols-1 gap-3">
                   <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. AUTHENTICATE WITH BOT</p>
-                    <p className="text-[11px] text-[#6275AF] mb-3">Send <span className="font-semibold text-[#229ED9]">/start</span> to our official bot to retrieve your secure Chat ID.</p>
+                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1"><span>1. AUTHENTICATE WITH BOT</span></p>
+                    <p className="text-[11px] text-[#6275AF] mb-3"><span>Send </span><span className="font-semibold text-[#229ED9]">/start</span><span> to our official bot to retrieve your secure Chat ID.</span></p>
                     <a href="https://t.me/DiscussNotifications_bot" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1c80b0] text-white text-xs font-bold py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-[#229ED9]/20">
-                      Open Telegram Bot <ExternalLink className="w-3 h-3" />
+                      <span>Open Telegram Bot</span> <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
 
                   <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">2. LINK CHAT ID</p>
-                    <p className="text-[11px] text-[#6275AF]">Paste the numeric ID provided by the bot into the field below and tap <span className="font-semibold">Connect</span>.</p>
+                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1"><span>2. LINK CHAT ID</span></p>
+                    <p className="text-[11px] text-[#6275AF]"><span>Paste the numeric ID provided by the bot into the field below and tap </span><span className="font-semibold">Connect</span>.</p>
                   </div>
                 </div>
               </div>
@@ -1442,8 +1452,8 @@ export default function ProfilePage() {
                       <Check className="w-4 h-4 text-[#10B981]" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider">Secure Tunnel</p>
-                      <p className="text-[13px] font-mono text-[#475569] dark:text-[#94A3B8]">ID: {telegramChatIdInput}</p>
+                      <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider"><span>Active Link</span></p>
+                      <p className="text-[13px] font-mono text-[#475569] dark:text-[#94A3B8]"><span>{telegramChatIdInput}</span></p>
                     </div>
                   </div>
                   <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
@@ -1458,7 +1468,7 @@ export default function ProfilePage() {
                       <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
                         {telegramPrivacy ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </div>
-                      <span className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9]">Message Previews</span>
+                      <span className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9]"><span>Message Previews</span></span>
                     </div>
                     <button
                       onClick={handleToggleTelegramPrivacy}
@@ -1492,11 +1502,11 @@ export default function ProfilePage() {
                     disabled={savingTelegram || !telegramChatIdInput.trim()}
                     className="bg-[#229ED9] hover:bg-[#1c80b0] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#229ED9]/20"
                   >
-                    {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Connect'}
+                    {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
                   </Button>
                 </div>
                 <p className="text-center text-[11px] text-[#6275AF] font-medium italic">
-                   Note: Telegram notifications use industry-standard encryption for privacy.
+                   <span>Note: Telegram notifications use industry-standard encryption for privacy.</span>
                 </p>
               </div>
             )}
@@ -1515,11 +1525,14 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Discord Alerts</h3>
                   <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${discordConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
+                    <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Discord Alerts</span></h3>
+                    <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md border border-neutral-200 dark:border-neutral-700">Coming Soon</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full bg-neutral-300`}></span>
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
-                      {discordConnected ? <span>Protected & Connected</span> : <span>Disconnected</span>}
+                      <span>Disconnected</span>
                     </span>
                   </div>
                 </div>
@@ -1559,80 +1572,29 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* User ID input + action */}
-            {loadingDiscord ? (
-              <div className="flex items-center justify-center py-6 bg-[#F8FAFC] dark:bg-[#0F172A] rounded-2xl border border-dashed border-[#CBD5E1]">
-                <Loader2 className="w-5 h-5 animate-spin text-[#5865F2]" />
-              </div>
-            ) : discordConnected ? (
-              <div className="space-y-4">
-                <div className="bg-[#10B981]/5 border border-[#10B981]/15 rounded-2xl p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#10B981]/10 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-[#10B981]" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider">Active Link</p>
-                      <p className="text-[13px] font-mono text-[#475569] dark:text-[#94A3B8]">{discordUserIdInput}</p>
-                    </div>
-                  </div>
-                  <button onClick={handleDisconnectDiscord} disabled={savingDiscord} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Privacy Card */}
-                <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1.5 rounded-lg ${discordPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#2563EB]/10 text-[#2563EB]'}`}>
-                        {discordPrivacy ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </div>
-                      <span className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9]">Message Previews</span>
-                    </div>
-                    <button
-                      onClick={handleToggleDiscordPrivacy}
-                      disabled={savingDiscord}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${discordPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-[#10B981]'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${discordPrivacy ? 'translate-x-1' : 'translate-x-6'}`} />
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
-                    {discordPrivacy 
-                      ? <span>Privacy Shield Active: Only alerts you to the message type. Content is hidden from Discord DMs for maximum safety.</span> 
-                      : <span>Full Delivery: Shows complete message content and images directly in your Discord DMs.</span>}
-                  </p>
-                </div>
-              </div>
-            ) : (
+                {/* User ID input + action (Consolidated Disabled State for Coming Soon) */}
+            <div className="opacity-50 pointer-events-none select-none">
               <div className="space-y-3">
-                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl focus-within:border-[#5865F2] transition-all">
+                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl">
                   <Input
-                    value={discordUserIdInput}
-                    onChange={e => {
-                      const v = e.target.value;
-                      if (v === '' || /^\d+$/.test(v)) setDiscordUserIdInput(v);
-                    }}
+                    disabled
                     placeholder="Discord User ID (e.g. 123456789...)"
                     className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm font-mono"
                   />
                   <Button
-                    onClick={handleSaveDiscord}
-                    disabled={savingDiscord || !discordUserIdInput.trim()}
-                    className="bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#5865F2]/20"
+                    disabled
+                    className="bg-[#5865F2] text-white font-bold px-5 rounded-xl transition-all"
                   >
-                    {savingDiscord ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Connect'}
+                    <span>Connect</span>
                   </Button>
                 </div>
                 <p className="text-center text-[11px] text-[#6275AF] font-medium italic">
-                   Note: Notifications will only be active after you join the Discord server.
+                   <span>Note: Discord notifications are currently under development.</span>
                 </p>
               </div>
-            )}
+            </div>
           </div>
+      </div>
           {/* ==================== END DISCORD NOTIFICATIONS ==================== */}
 
           <Button data-testid="profile-logout-btn" onClick={handleLogout} disabled={loggingOut}
@@ -1731,7 +1693,7 @@ export default function ProfilePage() {
                 <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                   <h3 className="text-sm font-semibold text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mb-3 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Sent Requests ({sentRequests.length})
+                    <span>Sent Requests ({sentRequests.length})</span>
                   </h3>
                   <div className="space-y-2">
                     {sentRequests.map((request) => {
@@ -1750,9 +1712,9 @@ export default function ProfilePage() {
                             />
                             <div className="text-left min-w-0">
                               <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
-                                @{reqUser?.username || 'Unknown'}
+                                <span>@{reqUser?.username || 'Unknown'}</span>
                               </span>
-                              <span className="text-[#F59E0B] text-xs">Pending</span>
+                              <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
                             </div>
                           </button>
                           <Button
@@ -1775,7 +1737,7 @@ export default function ProfilePage() {
               <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                 <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
                   <Search className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  Find Friends
+                  <span>Find Friends</span>
                 </h3>
                 <div className="relative mb-3">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />
@@ -1812,7 +1774,7 @@ export default function ProfilePage() {
                   </div>
                 ) : friendSearchQuery && !searchingFriends ? (
                   <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm text-center py-4">
-                    No users found
+                    <span>No users found</span>
                   </p>
                 ) : null}
               </div>
@@ -1821,7 +1783,7 @@ export default function ProfilePage() {
               {loadingFriends ? (
                 <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                   <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">Loading friends list...</p>
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm"><span>Loading friends list...</span></p>
                 </div>
               ) : friends.length > 0 ? (
                 <div className="space-y-4">
@@ -1830,12 +1792,12 @@ export default function ProfilePage() {
                     <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                       <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
                         <UserPlus className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                        Suggested Friends
+                        <span>Suggested Friends</span>
                       </h3>
                       {loadingSuggestions ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
-                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">Finding suggestions...</span>
+                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm"><span>Finding suggestions...</span></span>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
@@ -1953,7 +1915,7 @@ export default function ProfilePage() {
                                   )}
                                   <div className="text-left min-w-0">
                                     <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate flex items-center gap-1">
-                                      @{suggested.username}
+                                      <span>@{suggested.username}</span>
                                       {suggested.verified && <VerifiedBadge size="xs" />}
                                     </span>
                                   </div>
@@ -1976,9 +1938,9 @@ export default function ProfilePage() {
                   
                   <div className="text-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                     <Users className="w-10 h-10 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-3" />
-                    <h3 className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] font-semibold mb-1">No friends yet</h3>
+                    <h3 className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] font-semibold mb-1"><span>No friends yet</span></h3>
                     <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">
-                      Search for users above to connect
+                      <span>Search for users above to connect</span>
                     </p>
                   </div>
                 </div>
@@ -2000,8 +1962,8 @@ export default function ProfilePage() {
                 <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Your Posts</h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</p>
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Your Posts</span></h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
             {showPosts ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
@@ -2018,10 +1980,10 @@ export default function ProfilePage() {
                   onChange={(e) => { setFilterType(e.target.value); setFilterMonth(''); setFilterYear(''); }}
                   className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
                 >
-                  <option value="all">All Posts</option>
-                  <option value="this_month">This Month</option>
-                  <option value="month">Select Month</option>
-                  <option value="year">Select Year</option>
+                  <option value="all"><span>All Posts</span></option>
+                  <option value="this_month"><span>This Month</span></option>
+                  <option value="month"><span>Select Month</span></option>
+                  <option value="year"><span>Select Year</span></option>
                 </select>
 
                 {filterType === 'month' && (
@@ -2061,7 +2023,7 @@ export default function ProfilePage() {
 
                 {filterType !== 'all' && (
                   <span className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] ml-auto">
-                    {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}
+                    <span>{filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}</span>
                   </span>
                 )}
               </div>
@@ -2074,7 +2036,7 @@ export default function ProfilePage() {
                 <div className="text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
                   <Calendar className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] mx-auto mb-2" />
                   <p className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
-                    {filterType === 'all' ? "You haven't created any posts yet." : 'No posts found for this period.'}
+                    <span>{filterType === 'all' ? "You haven't created any posts yet." : 'No posts found for this period.'}</span>
                   </p>
                 </div>
               ) : (
@@ -2106,8 +2068,8 @@ export default function ProfilePage() {
                 <PlayCircle className="w-4 h-4 text-[#EF4444] discuss:text-[#EF4444]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Your Pulses</h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</p>
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Your Pulses</span></h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
             {showPulses ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
@@ -2123,7 +2085,7 @@ export default function ProfilePage() {
                 <div className="col-span-full text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
                   <PlayCircle className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] mx-auto mb-2" />
                   <p className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
-                    You haven't posted any Pulse videos yet.
+                    <span>You haven't posted any Pulse videos yet.</span>
                   </p>
                 </div>
               ) : (
@@ -2144,7 +2106,7 @@ export default function ProfilePage() {
         </div>
 
         <p className="text-center text-[#94A3B8] dark:text-[#6275AF] text-xs mt-6">
-          Managed by <span className="font-semibold text-[#BC4800]">&lt;discuss&gt;</span>
+          <span>Managed by </span><span className="font-semibold text-[#BC4800]">&lt;discuss&gt;</span>
         </p>
       </div>
 
@@ -2166,17 +2128,17 @@ export default function ProfilePage() {
       <AlertDialog open={deleteFullNameConfirm} onOpenChange={setDeleteFullNameConfirm}>
         <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Remove full name?</AlertDialogTitle>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove full name?</span></AlertDialogTitle>
             <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-              This will remove your full name from your profile.
+              <span>This will remove your full name from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
-              Cancel
+              <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteFullName} disabled={savingFullName} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
-              {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Remove'}
+              {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Remove</span>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -2186,17 +2148,17 @@ export default function ProfilePage() {
       <AlertDialog open={deleteBioConfirm} onOpenChange={setDeleteBioConfirm}>
         <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Remove bio?</AlertDialogTitle>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove bio?</span></AlertDialogTitle>
             <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-              This will remove your bio from your profile.
+              <span>This will remove your bio from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
-              Cancel
+              <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteBio} disabled={savingBio} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
-              {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Remove'}
+              {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Remove</span>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -2206,17 +2168,17 @@ export default function ProfilePage() {
       <AlertDialog open={deleteLinkConfirm !== null} onOpenChange={(v) => { if (!v) setDeleteLinkConfirm(null); }}>
         <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Remove link?</AlertDialogTitle>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove link?</span></AlertDialogTitle>
             <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-              This will remove this social link from your profile.
+              <span>This will remove this social link from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
-              Cancel
+              <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => handleDeleteLink(deleteLinkConfirm)} disabled={savingLink} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
-              {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Remove'}
+              {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Remove</span>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -59,7 +59,9 @@ import { notifyTelegramDM } from '@/lib/telegramService';
 import { notifyDiscordDM } from '@/lib/discordService';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
-import { IoImage, IoVideocam } from 'react-icons/io5';
+import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
+import { MapPin } from 'lucide-react';
+import LocationMessage from '@/components/LocationMessage';
 
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
@@ -305,6 +307,45 @@ export default function ChatConversationPage() {
       }
     }
     return true;
+  };
+
+  const handleSendLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setSending(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          // Ensure chat exists first
+          const chatExists = await ensureChatExists();
+          if (!chatExists) {
+            throw new Error('Failed to create chat');
+          }
+          await sendMessage(chatId, user.id, '', [], { latitude, longitude });
+          toast.success('Location sent');
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        } catch (error) {
+          console.error('Error sending location:', error);
+          toast.error('Failed to send location');
+        } finally {
+          setSending(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        let msg = 'Failed to get your location';
+        if (error.code === 1) msg = 'Location permission denied';
+        toast.error(msg);
+        setSending(false);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
   };
 
   const handleSendMessage = async (e, mediaFiles = null) => {
@@ -901,6 +942,12 @@ export default function ChatConversationPage() {
                           </div>
                         )}
 
+                        {message.location && (
+                          <div className="mb-2">
+                            <LocationMessage location={message.location} isOwn={isOwn} />
+                          </div>
+                        )}
+
                         {message.text && (
                           <div className="text-[14px] md:text-[15px] leading-relaxed">
                             <ChatLinkText text={message.text} isOwn={isOwn} />
@@ -1040,6 +1087,15 @@ export default function ChatConversationPage() {
                 className={`p-2 rounded-full transition-colors ${showMediaUpload ? 'bg-[#2563EB] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
               >
                 <IoImage size={22} />
+              </button>
+              <button
+                type="button"
+                onClick={handleSendLocation}
+                disabled={sending}
+                className="p-2 rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500"
+                title="Send Location"
+              >
+                <IoLocationSharp size={22} />
               </button>
               <Input
                 ref={inputRef}

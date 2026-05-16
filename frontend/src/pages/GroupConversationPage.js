@@ -31,8 +31,9 @@ import { notifyTelegramGroupMessage } from '@/lib/telegramService';
 import { notifyDiscordGroupMessage } from '@/lib/discordService';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
-import { IoImage, IoVideocam } from 'react-icons/io5';
-import { Check } from 'lucide-react';
+import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
+import { Check, MapPin } from 'lucide-react';
+import LocationMessage from '@/components/LocationMessage';
 
 export default function GroupConversationPage() {
   const { groupId } = useParams();
@@ -263,6 +264,38 @@ export default function GroupConversationPage() {
     }
   };
 
+  const handleSendLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setSending(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          await sendGroupMessage(groupId, user.id, '', null, [], { latitude, longitude });
+          toast.success('Location sent');
+          scrollToBottom();
+        } catch (error) {
+          console.error('Error sending location:', error);
+          toast.error(error.message || 'Failed to send location');
+        } finally {
+          setSending(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        let msg = 'Failed to get your location';
+        if (error.code === 1) msg = 'Location permission denied';
+        toast.error(msg);
+        setSending(false);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
+
   const handleReply = (message) => {
     setReplyTo(message);
     setTimeout(() => {
@@ -428,6 +461,12 @@ export default function GroupConversationPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {message.location && (
+                <div className="mb-2">
+                  <LocationMessage location={message.location} isOwn={isOwn} />
                 </div>
               )}
 
@@ -641,6 +680,15 @@ export default function GroupConversationPage() {
                 className={`p-2 rounded-lg transition-colors ${showMediaUpload ? 'bg-[#2563EB] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
               >
                 <IoImage size={22} />
+              </button>
+              <button
+                type="button"
+                onClick={handleSendLocation}
+                disabled={sending || (isAdminOnlyMode && !isAdmin)}
+                className={`p-2 rounded-lg transition-colors ${sending ? 'opacity-50' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
+                title="Send Location"
+              >
+                <IoLocationSharp size={22} />
               </button>
               <Input ref={inputRef} value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder={isAdminOnlyMode && !isAdmin ? "Only admins can send messages" : "Type a message..."} className="flex-1 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] border-neutral-200 dark:border-neutral-600 discuss:border-[#404040] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]" disabled={sending || (isAdminOnlyMode && !isAdmin)} maxLength={1000} />
               <Button type="submit" disabled={(!messageText.trim() && pendingMedia.length === 0 && !showMediaUpload) || sending || (isAdminOnlyMode && !isAdmin)} className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white px-4">

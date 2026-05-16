@@ -303,7 +303,7 @@ const addGroupToUserList = async (userId, groupId, groupName, groupType, joinedA
   }
 };
 
-export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, media = []) => {
+export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, media = [], location = null) => {
   try {
     if (!fourthDatabase) throw new Error('Database not available');
     const memberRef = ref(fourthDatabase, `groups/${groupId}/members/${senderId}`);
@@ -328,7 +328,8 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
       media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })),
       sender: senderId, 
       timestamp, 
-      type: 'message' 
+      type: 'message',
+      location: location || null
     };
     
     if (replyTo) {
@@ -336,7 +337,7 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
     }
     
     await set(newMessageRef, message);
-    const lastMsgText = (text || '').trim() || (media?.length > 0 ? '📷 Media' : '');
+    const lastMsgText = (text || '').trim() || (location ? '📍 Location' : (media?.length > 0 ? '📷 Media' : ''));
     await update(groupRef, { lastMessage: { text: lastMsgText, sender: senderId, timestamp } });
     
     const membersSnap = await get(ref(fourthDatabase, `groups/${groupId}/members`));

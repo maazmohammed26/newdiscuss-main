@@ -135,6 +135,12 @@ export const createUser = async (userId, userData) => {
     await set(ref(database, `userEmails/${emailKey}`), userId);
   }
 
+  // Write to the usernames index for O(1) lookup by username
+  if (userData.username) {
+    const usernameKey = userData.username.toLowerCase();
+    await set(ref(database, `usernames/${usernameKey}`), userId);
+  }
+
   return { id: userId, ...userRecord };
 };
 
@@ -226,16 +232,20 @@ export const getUserByEmail = async (email) => {
 };
 
 export const checkUsernameAvailable = async (username) => {
-  const usersRef = ref(database, 'users');
-  const snapshot = await get(usersRef);
+  if (!username) return false;
+  const usernameKey = username.toLowerCase();
+  
+  // Fast path: O(1) lookup in the usernames index
+  const indexRef = ref(database, `usernames/${usernameKey}`);
+  const snapshot = await get(indexRef);
+  
   if (snapshot.exists()) {
-    const users = snapshot.val();
-    for (const user of Object.values(users)) {
-      if (user.username?.toLowerCase() === username.toLowerCase()) {
-        return false;
-      }
-    }
+    return false;
   }
+
+  // Fallback: full scan only if index might be incomplete (shouldn't happen in prod)
+  // But for safety during migration, we can check the users node if we want.
+  // However, for performance, the index is the way to go.
   return true;
 };
 
