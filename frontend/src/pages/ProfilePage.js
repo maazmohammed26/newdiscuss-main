@@ -1572,6 +1572,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+            )}
                 {/* User ID input + action (Consolidated Disabled State for Coming Soon) */}
             <div className="opacity-50 pointer-events-none select-none">
               <div className="space-y-3">
@@ -1594,7 +1595,6 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-      </div>
           {/* ==================== END DISCORD NOTIFICATIONS ==================== */}
 
           <Button data-testid="profile-logout-btn" onClick={handleLogout} disabled={loggingOut}
