@@ -17,6 +17,7 @@ import {
   equalTo
 } from './firebaseSecondary';
 import { notifyTelegramFriendRequest, notifyTelegramFriendAccepted } from './telegramService';
+import { notifyDiscordFriendRequest, notifyDiscordFriendAccepted } from './discordService';
 
 // Relationship statuses
 export const RELATIONSHIP_STATUS = {
@@ -120,8 +121,9 @@ export const sendFriendRequest = async (fromUserId, toUserId, fromUsername = nul
       createdAt: timestamp
     });
     
-    // Notify via Telegram (fire-and-forget)
+    // Notify (fire-and-forget)
     notifyTelegramFriendRequest(toUserId, fromUsername).catch(e => console.error('[Telegram]', e));
+    notifyDiscordFriendRequest(toUserId, fromUsername).catch(e => console.error('[Discord]', e));
     
     return { success: true };
   } catch (error) {
@@ -162,8 +164,9 @@ export const acceptFriendRequest = async (currentUserId, fromUserId, currentUser
       chatEnabled: true
     });
     
-    // Notify via Telegram (fire-and-forget)
+    // Notify (fire-and-forget)
     notifyTelegramFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Telegram]', e));
+    notifyDiscordFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Discord]', e));
     
     return { success: true };
   } catch (error) {

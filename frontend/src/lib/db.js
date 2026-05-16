@@ -21,6 +21,7 @@ import {
 } from './firebaseSecondary';
 import { openDB } from 'idb';
 import { notifyTelegramLike } from './telegramService';
+import { notifyDiscordLike } from './discordService';
 
 // IndexedDB for offline caching
 const DB_NAME = 'discuss_offline';
@@ -540,6 +541,7 @@ export const toggleVote = async (postId, voteType, userId) => {
         if (authorId && authorId !== userId) {
           const likerUsername = userSnap.val()?.username || 'Someone';
           notifyTelegramLike(authorId, likerUsername, 'post').catch(e => console.error('[Telegram]', e));
+          notifyDiscordLike(authorId, likerUsername, 'post').catch(e => console.error('[Discord]', e));
         }
       } catch (e) {
         console.error('Error sending like notification:', e);

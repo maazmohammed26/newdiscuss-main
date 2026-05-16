@@ -28,6 +28,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { notifyTelegramGroupMessage } from '@/lib/telegramService';
+import { notifyDiscordGroupMessage } from '@/lib/discordService';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
 import { IoImage, IoVideocam } from 'react-icons/io5';
@@ -249,7 +250,10 @@ export default function GroupConversationPage() {
       const senderName = user?.username || 'Someone';
       members
         .filter(m => m.userId !== user.id)
-        .forEach(m => notifyTelegramGroupMessage(m.userId, groupName, senderName, text, hasMedia).catch(() => {}));
+        .forEach(m => {
+          notifyTelegramGroupMessage(m.userId, groupName, senderName, text, hasMedia).catch(() => {});
+          notifyDiscordGroupMessage(m.userId, groupName, senderName, text, hasMedia).catch(() => {});
+        });
       inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);

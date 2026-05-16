@@ -33,6 +33,7 @@ import {
 import { Send, Trash2, Loader2, MessageSquare, ChevronDown, ChevronUp, Reply, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { notifyTelegramComment, notifyTelegramReply } from '@/lib/telegramService';
+import { notifyDiscordComment, notifyDiscordReply } from '@/lib/discordService';
 
 const COMMENT_CHAR_LIMIT = 500;
 
@@ -142,9 +143,10 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
       setShowReplyInput(false);
       if (!showReplies) setShowReplies(true);
       
-      // Notify comment author via Telegram
+      // Notify comment author (fire-and-forget)
       if (comment.author_id && currentUser?.id !== comment.author_id) {
         notifyTelegramReply(comment.author_id, currentUser?.username, text).catch(() => {});
+        notifyDiscordReply(comment.author_id, currentUser?.username, text).catch(() => {});
       }
     } catch (err) {
       toast.error('Failed to add reply');
@@ -368,9 +370,10 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
       const text = newComment.trim();
       await createCommentFirestore(postId, text, currentUser, postAuthorId);
       setNewComment('');
-      // Notify post author via Telegram (skip if commenter is the author)
+      // Notify post author (fire-and-forget, skip if author is commenter)
       if (postAuthorId && currentUser?.id !== postAuthorId) {
         notifyTelegramComment(postAuthorId, currentUser?.username, text).catch(() => {});
+        notifyDiscordComment(postAuthorId, currentUser?.username, text).catch(() => {});
       }
     } catch (err) {
       toast.error(err.message || 'Failed to add comment');

@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { notifyTelegramGroupJoinAccepted } from '@/lib/telegramService';
+import { notifyDiscordGroupJoinAccepted } from '@/lib/discordService';
 
 
 export default function JoinRequestsPage() {
@@ -114,9 +115,10 @@ export default function JoinRequestsPage() {
         ...prev,
         [groupId]: prev[groupId].filter(r => r.userId !== userId)
       }));
-      // Send Telegram notification to the user whose request was accepted
+      // Send notifications (fires in background)
       const groupName = groups.find(g => g.groupId === groupId)?.name || 'the group';
       notifyTelegramGroupJoinAccepted(userId, groupName).catch(() => {});
+      notifyDiscordGroupJoinAccepted(userId, groupName).catch(() => {});
       toast.success('Request accepted');
     } catch (error) {
       toast.error('Failed to accept request');

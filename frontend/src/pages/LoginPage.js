@@ -183,36 +183,36 @@ export default function LoginPage() {
                 </div>
                 {captchaInput.length > 0 && captchaInput !== captchaTarget && (
                    <span className="text-red-500 text-[11px] mt-1 flex items-center gap-1">
-                     <XCircle className="w-3 h-3" />CAPTCHA does not match
+                     <XCircle className="w-3 h-3" /><span>CAPTCHA does not match</span>
                    </span>
                 )}
               </div>
 
               <Button type="submit" data-testid="login-submit-btn" disabled={loading}
                 className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white font-semibold rounded-[6px] py-3 h-12 text-[15px] shadow-button hover:shadow-button-hover transition-all">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Login'}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Login</span>}
               </Button>
             </form>
 
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]" /></div>
-              <div className="relative flex justify-center text-[11px]"><span className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] px-3 text-neutral-400 uppercase tracking-wider">Or continue with</span></div>
+              <div className="relative flex justify-center text-[11px]"><span className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] px-3 text-neutral-400 uppercase tracking-wider"><span>Or continue with</span></span></div>
             </div>
 
             <Button type="button" data-testid="login-google-btn" onClick={handleGoogle} disabled={googleLoading}
               className="w-full bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#333333] rounded-[6px] py-2.5 h-11 font-medium flex items-center justify-center gap-2.5">
-              {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
+              {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> <span>Continue with Google</span></>}
             </Button>
 
             <p className="text-center text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[13px] mt-5">
-              New to discuss? <Link to="/register" data-testid="login-to-register-link" className="text-[#2563EB] discuss:text-[#EF4444] hover:underline font-semibold">Create account</Link>
+              <span>New to discuss? </span><Link to="/register" data-testid="login-to-register-link" className="text-[#2563EB] discuss:text-[#EF4444] hover:underline font-semibold">Create account</Link>
             </p>
           </div>
 
           {/* Footer links */}
           <div className="text-center mt-6 flex items-center justify-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-neutral-400" />
-            <span className="text-neutral-400 text-[11px] font-semibold uppercase tracking-wider">Secure Authentication</span>
+            <span className="text-neutral-400 text-[11px] font-semibold uppercase tracking-wider"><span>Secure Authentication</span></span>
           </div>
           <div className="text-center mt-2 flex items-center justify-center">
             <button 
@@ -229,7 +229,7 @@ export default function LoginPage() {
       {/* Footer */}
       <footer className="py-4 text-center">
         <p className="text-neutral-400 text-[12px]">
-          Developed by{' '}
+          <span>Developed by </span>
           <span className="text-[#2563EB] discuss:text-[#EF4444] font-semibold">&lt;Mohammed Maaz A&gt;</span>
         </p>
       </footer>

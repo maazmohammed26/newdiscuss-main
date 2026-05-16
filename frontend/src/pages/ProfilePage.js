@@ -62,7 +62,7 @@ import {
   FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock,
-  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon
+  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
@@ -75,9 +75,17 @@ import {
   getTelegramPrivacy,
   notifyTelegramFriendRequest,
   notifyTelegramFriendAccepted,
-  BOT_USERNAME,
-  APP_URL,
+  BOT_USERNAME as TELEGRAM_BOT_USERNAME,
+  APP_URL as TELEGRAM_APP_URL,
 } from '@/lib/telegramService';
+import {
+  saveDiscordUserId,
+  getDiscordUserId,
+  removeDiscordUserId,
+  saveDiscordPrivacy,
+  getDiscordPrivacy,
+  BOT_USERNAME as DISCORD_BOT_USERNAME,
+} from '@/lib/discordService';
 
 import { useSecurity } from '@/contexts/SecurityContext';
 import { isBiometricSupported, registerBiometric } from '@/lib/securityService';
@@ -108,6 +116,14 @@ export default function ProfilePage() {
   const [savingTelegram, setSavingTelegram] = useState(false);
   const [loadingTelegram, setLoadingTelegram] = useState(true);
   const [showTelegramInstructions, setShowTelegramInstructions] = useState(false);
+
+  // Discord notification states
+  const [discordUserIdInput, setDiscordUserIdInput] = useState('');
+  const [discordConnected, setDiscordConnected] = useState(false);
+  const [discordPrivacy, setDiscordPrivacy] = useState(true);
+  const [savingDiscord, setSavingDiscord] = useState(false);
+  const [loadingDiscord, setLoadingDiscord] = useState(true);
+  const [showDiscordInstructions, setShowDiscordInstructions] = useState(false);
 
   // Profile data from secondary Firebase
   const [profileData, setProfileData] = useState(null);
@@ -343,6 +359,22 @@ export default function ProfilePage() {
       })
       .catch(() => {})
       .finally(() => setLoadingTelegram(false));
+    
+    // Load existing Discord User ID and Privacy
+    setLoadingDiscord(true);
+    Promise.all([
+      getDiscordUserId(user.id),
+      getDiscordPrivacy(user.id)
+    ])
+      .then(([discordId, privacy]) => {
+        if (discordId) {
+          setDiscordConnected(true);
+          setDiscordUserIdInput(discordId);
+        }
+        setDiscordPrivacy(privacy);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingDiscord(false));
     
     // Check biometric support
     isBiometricSupported().then(setBiometricAvailable);
@@ -752,6 +784,54 @@ export default function ProfilePage() {
       toast.error('Failed to update privacy setting');
     } finally {
       setSavingTelegram(false);
+    }
+  };
+
+  // Discord handlers
+  const handleSaveDiscord = async () => {
+    const trimmed = discordUserIdInput.trim();
+    if (!trimmed) return;
+    if (!/^\d+$/.test(trimmed)) {
+      toast.error('Invalid Discord ID — must be a numeric ID');
+      return;
+    }
+    setSavingDiscord(true);
+    try {
+      await saveDiscordUserId(user.id, trimmed);
+      setDiscordConnected(true);
+      toast.success('Discord connected! You will now receive notifications.');
+    } catch {
+      toast.error('Failed to save Discord User ID');
+    } finally {
+      setSavingDiscord(false);
+    }
+  };
+
+  const handleDisconnectDiscord = async () => {
+    setSavingDiscord(true);
+    try {
+      await removeDiscordUserId(user.id);
+      setDiscordConnected(false);
+      setDiscordUserIdInput('');
+      toast.success('Discord disconnected');
+    } catch {
+      toast.error('Failed to disconnect Discord');
+    } finally {
+      setSavingDiscord(false);
+    }
+  };
+
+  const handleToggleDiscordPrivacy = async () => {
+    const newValue = !discordPrivacy;
+    setSavingDiscord(true);
+    try {
+      await saveDiscordPrivacy(user.id, newValue);
+      setDiscordPrivacy(newValue);
+      toast.success(newValue ? 'Privacy enabled: Message content hidden' : 'Privacy disabled: Full message previews enabled');
+    } catch {
+      toast.error('Failed to update privacy setting');
+    } finally {
+      setSavingDiscord(false);
     }
   };
 
@@ -1295,26 +1375,26 @@ export default function ProfilePage() {
             <NotificationToggle />
           </div>
 
-          {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {/* Telegram logo SVG */}
-                <svg className="w-4 h-4 text-[#229ED9]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.941z"/>
-                </svg>
-                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium">Telegram Notifications</span>
-                {telegramConnected && (
-                  <span className="inline-flex items-center gap-1 bg-[#10B981]/10 text-[#10B981] text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                    <Check className="w-3 h-3" /> Connected
-                  </span>
-                )}
+          {/* ==================== TELEGRAM NOTIFICATIONS (PREMIUM UI) ==================== */}
+          <div className="mt-8 pt-2">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
+                  <Send className="w-5 h-5 text-[#229ED9]" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Telegram Alerts</h3>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
+                      {telegramConnected ? <span>Verified & Encrypted</span> : <span>Disconnected</span>}
+                    </span>
+                  </div>
+                </div>
               </div>
               <button
                 onClick={() => setShowTelegramInstructions(v => !v)}
-                className="text-[#6275AF] dark:text-[#94A3B8] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors"
-                title="How to connect"
+                className={`p-2 rounded-lg transition-all ${showTelegramInstructions ? 'bg-[#229ED9] text-white shadow-lg shadow-[#229ED9]/20' : 'bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20'}`}
               >
                 <Info className="w-4 h-4" />
               </button>
@@ -1322,159 +1402,242 @@ export default function ProfilePage() {
 
             {/* Instructions panel */}
             {showTelegramInstructions && (
-              <div className="mb-3 bg-[#229ED9]/5 border border-[#229ED9]/20 rounded-lg p-4 text-xs text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] space-y-3">
-                <p className="font-semibold text-[#229ED9] text-sm">How to connect Telegram</p>
-
-                <div className="space-y-2">
-                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Step 1 — Open the bot</p>
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                    Open Telegram and search for <span className="font-mono font-semibold text-[#229ED9]">@userinfobot</span> or tap the link below.
-                  </p>
-                  <a
-                    href={`https://t.me/userinfobot`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[#229ED9] hover:underline font-medium"
-                  >
-                    t.me/userinfobot <ExternalLink className="w-3 h-3" />
-                  </a>
+              <div className="mb-4 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 text-[#229ED9]">
+                  <MessageSquare className="w-4 h-4" />
+                  <p className="text-sm font-bold">Bot Connectivity Guide</p>
                 </div>
+                
+                <p className="text-[12px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                  Discuss uses an <strong>Automated Delivery Agent</strong> on Telegram to bypass browser push limitations. Connect your account in seconds:
+                </p>
 
-                <div className="space-y-1">
-                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Step 2 — Start the bot</p>
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                    Tap <span className="font-semibold">Start</span> or send <span className="font-mono font-semibold">/start</span>. The bot will instantly reply with your <span className="font-semibold">Id</span> — a number like <span className="font-mono">123456789</span>.
-                  </p>
-                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
+                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. AUTHENTICATE WITH BOT</p>
+                    <p className="text-[11px] text-[#6275AF] mb-3">Send <span className="font-semibold text-[#229ED9]">/start</span> to our official bot to retrieve your secure Chat ID.</p>
+                    <a href="https://t.me/DiscussNotifications_bot" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1c80b0] text-white text-xs font-bold py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-[#229ED9]/20">
+                      Open Telegram Bot <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
 
-                <div className="space-y-1">
-                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Step 3 — Paste your Chat ID below</p>
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                    Copy the Chat ID from the bot message and paste it in the field below, then tap <span className="font-semibold">Save</span>.
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-[#229ED9]/20">
-                  <p className="font-medium text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-1">What you will receive:</p>
-                  <ul className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] space-y-0.5">
-                    <li>💬 New direct messages</li>
-                    <li>👥 Friend requests &amp; acceptances</li>
-                    <li>💬 Group chat messages</li>
-                    <li>✅ Group join approvals</li>
-                  </ul>
-                </div>
-
-                <div className="pt-2 border-t border-[#229ED9]/20 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                  <p>Each notification includes a direct link back to the Discuss app. Notifications arrive even when the app is closed.</p>
+                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
+                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">2. LINK CHAT ID</p>
+                    <p className="text-[11px] text-[#6275AF]">Paste the numeric ID provided by the bot into the field below and tap <span className="font-semibold">Connect</span>.</p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Chat ID input + action */}
+            {/* User ID input + action */}
             {loadingTelegram ? (
-              <div className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] py-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-xs">Loading...</span>
+              <div className="flex items-center justify-center py-6 bg-[#F8FAFC] dark:bg-[#0F172A] rounded-2xl border border-dashed border-[#CBD5E1]">
+                <Loader2 className="w-5 h-5 animate-spin text-[#229ED9]" />
               </div>
             ) : telegramConnected ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-[#10B981]/5 border border-[#10B981]/20 rounded-lg px-3 py-2">
-                  <Check className="w-4 h-4 text-[#10B981] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-[#10B981]">Telegram connected</p>
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-mono truncate">Chat ID: {telegramChatIdInput}</p>
+              <div className="space-y-4">
+                <div className="bg-[#10B981]/5 border border-[#10B981]/15 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#10B981]/10 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-[#10B981]" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider">Secure Tunnel</p>
+                      <p className="text-[13px] font-mono text-[#475569] dark:text-[#94A3B8]">ID: {telegramChatIdInput}</p>
+                    </div>
                   </div>
+                  <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Privacy Toggle */}
-                <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
+                {/* Privacy Card */}
+                <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      {telegramPrivacy ? (
-                        <EyeOff className="w-4 h-4 text-[#6275AF]" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                      )}
-                      <span className="text-xs font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Message Preview</span>
+                      <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
+                        {telegramPrivacy ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </div>
+                      <span className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9]">Message Previews</span>
                     </div>
                     <button
                       onClick={handleToggleTelegramPrivacy}
                       disabled={savingTelegram}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${telegramPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-[#2563EB] discuss:bg-[#EF4444]'}`}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${telegramPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-[#10B981]'}`}
                     >
-                      <span
-                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-1' : 'translate-x-4.5'}`}
-                      />
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-1' : 'translate-x-6'}`} />
                     </button>
                   </div>
-                  <div className="flex items-start gap-2">
-                    {telegramPrivacy ? (
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#10B981] mt-0.5 shrink-0" />
-                    ) : (
-                      <MessageSquare className="w-3.5 h-3.5 text-[#2563EB] discuss:text-[#EF4444] mt-0.5 shrink-0" />
-                    )}
-                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] leading-relaxed">
-                      {telegramPrivacy 
-                        ? 'Privacy Active: Notifications show only sender and message type. Content is hidden.' 
-                        : 'Full Previews: Notifications show the complete message content for a better experience.'}
-                    </p>
-                  </div>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
+                    {telegramPrivacy 
+                      ? <span>Incognito Mode: Only notifies you of the message source. Full content is only visible inside the Discuss app.</span> 
+                      : <span>Real-time Delivery: Pushes complete message text and image previews directly to your Telegram chat.</span>}
+                  </p>
                 </div>
-
-                <Button
-                  onClick={handleDisconnectTelegram}
-                  disabled={savingTelegram}
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-[#EF4444]/40 text-[#EF4444] hover:bg-[#EF4444]/10 text-xs"
-                >
-                  {savingTelegram ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <X className="w-3.5 h-3.5 mr-2" />}
-                  Disconnect Telegram
-                </Button>
               </div>
             ) : (
-              <div className="space-y-2">
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
-                  Paste your Telegram Chat ID to receive notifications (tap ℹ️ for instructions).
-                </p>
-                <div className="flex gap-2">
+              <div className="space-y-3">
+                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl focus-within:border-[#229ED9] transition-all">
                   <Input
                     value={telegramChatIdInput}
                     onChange={e => {
                       const v = e.target.value;
-                      // Allow optional leading minus followed by digits only
-                      if (v === '' || v === '-' || /^-?\d+$/.test(v)) {
-                        setTelegramChatIdInput(v);
-                      }
+                      if (v === '' || /^-?\d+$/.test(v)) setTelegramChatIdInput(v);
                     }}
-                    placeholder="e.g. 123456789"
-                    className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-mono"
+                    placeholder="Telegram Chat ID (e.g. 872125...)"
+                    className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm font-mono"
                   />
                   <Button
                     onClick={handleSaveTelegram}
                     disabled={savingTelegram || !telegramChatIdInput.trim()}
-                    size="sm"
-                    className="bg-[#229ED9] hover:bg-[#1a8bbf] text-white shrink-0"
+                    className="bg-[#229ED9] hover:bg-[#1c80b0] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#229ED9]/20"
                   >
-                    {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                    {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Connect'}
                   </Button>
                 </div>
-                <a
-                  href={`https://t.me/${BOT_USERNAME}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[#229ED9] hover:underline text-xs font-medium"
-                >
-                  Open @{BOT_USERNAME} on Telegram <ExternalLink className="w-3 h-3" />
-                </a>
+                <p className="text-center text-[11px] text-[#6275AF] font-medium italic">
+                   Note: Telegram notifications use industry-standard encryption for privacy.
+                </p>
               </div>
             )}
           </div>
           {/* ==================== END TELEGRAM NOTIFICATIONS ==================== */}
 
+
+
+          {/* ==================== DISCORD NOTIFICATIONS (PREMIUM UI) ==================== */}
+          <div className="mt-8 pt-6 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
+                  <svg className="w-6 h-6 text-[#5865F2]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.054-.108.001-.23-.106-.271a12.978 12.978 0 0 1-1.883-.894.083.083 0 0 1-.006-.139c.156-.117.311-.235.459-.356a.075.075 0 0 1 .079-.011c3.923 1.793 8.18 1.793 12.061 0a.075.075 0 0 1 .079.011c.148.121.303.239.459.356a.083.083 0 0 1-.006.139 13.06 13.06 0 0 1-1.883.894.083.083 0 0 0-.106.271c.352.699.764 1.365 1.226 1.994.053.072.03.1.084.028a19.839 19.839 0 0 0 6.002-3.03.085.085 0 0 0 .032-.057c.492-5.156-.844-9.626-3.59-13.66a.065.065 0 0 0-.032-.027zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.947 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Discord Alerts</h3>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${discordConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
+                      {discordConnected ? <span>Protected & Connected</span> : <span>Disconnected</span>}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDiscordInstructions(v => !v)}
+                className={`p-2 rounded-lg transition-all ${showDiscordInstructions ? 'bg-[#5865F2] text-white shadow-lg shadow-[#5865F2]/20' : 'bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20'}`}
+              >
+                <Info className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Instructions panel */}
+            {showDiscordInstructions && (
+              <div className="mb-4 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 text-[#5865F2]">
+                  <ShieldCheck className="w-4 h-4" />
+                  <p className="text-sm font-bold">Privacy & Security Protocol</p>
+                </div>
+                
+                <p className="text-[12px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                  To maintain end-to-end privacy, Discuss uses an <strong>Encrypted Notification Bridge</strong>. For your security, Discord requires a mutual server connection before allowing encrypted DMs.
+                </p>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
+                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. JOIN OFFICIAL SERVER <span className="text-red-500 font-black">(REQUIRED)</span></p>
+                    <p className="text-[11px] text-[#6275AF] mb-3">A shared server connection is mandatory for the bot to verify your identity and send private alerts.</p>
+                    <a href="https://discord.gg/FNhRA5EK" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752c4] text-white text-xs font-bold py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-[#5865F2]/20">
+                      Join Discuss Community <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
+                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">2. CONFIGURE USER ID</p>
+                    <p className="text-[11px] text-[#6275AF]">Enable <span className="font-semibold italic">Developer Mode</span> in Discord settings, right-click your profile, and select <span className="font-semibold text-[#5865F2]">Copy User ID</span>.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* User ID input + action */}
+            {loadingDiscord ? (
+              <div className="flex items-center justify-center py-6 bg-[#F8FAFC] dark:bg-[#0F172A] rounded-2xl border border-dashed border-[#CBD5E1]">
+                <Loader2 className="w-5 h-5 animate-spin text-[#5865F2]" />
+              </div>
+            ) : discordConnected ? (
+              <div className="space-y-4">
+                <div className="bg-[#10B981]/5 border border-[#10B981]/15 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#10B981]/10 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-[#10B981]" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider">Active Link</p>
+                      <p className="text-[13px] font-mono text-[#475569] dark:text-[#94A3B8]">{discordUserIdInput}</p>
+                    </div>
+                  </div>
+                  <button onClick={handleDisconnectDiscord} disabled={savingDiscord} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Privacy Card */}
+                <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded-lg ${discordPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#2563EB]/10 text-[#2563EB]'}`}>
+                        {discordPrivacy ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </div>
+                      <span className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9]">Message Previews</span>
+                    </div>
+                    <button
+                      onClick={handleToggleDiscordPrivacy}
+                      disabled={savingDiscord}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${discordPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-[#10B981]'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${discordPrivacy ? 'translate-x-1' : 'translate-x-6'}`} />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
+                    {discordPrivacy 
+                      ? <span>Privacy Shield Active: Only alerts you to the message type. Content is hidden from Discord DMs for maximum safety.</span> 
+                      : <span>Full Delivery: Shows complete message content and images directly in your Discord DMs.</span>}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl focus-within:border-[#5865F2] transition-all">
+                  <Input
+                    value={discordUserIdInput}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v === '' || /^\d+$/.test(v)) setDiscordUserIdInput(v);
+                    }}
+                    placeholder="Discord User ID (e.g. 123456789...)"
+                    className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm font-mono"
+                  />
+                  <Button
+                    onClick={handleSaveDiscord}
+                    disabled={savingDiscord || !discordUserIdInput.trim()}
+                    className="bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#5865F2]/20"
+                  >
+                    {savingDiscord ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Connect'}
+                  </Button>
+                </div>
+                <p className="text-center text-[11px] text-[#6275AF] font-medium italic">
+                   Note: Notifications will only be active after you join the Discord server.
+                </p>
+              </div>
+            )}
+          </div>
+          {/* ==================== END DISCORD NOTIFICATIONS ==================== */}
+
           <Button data-testid="profile-logout-btn" onClick={handleLogout} disabled={loggingOut}
             className="w-full bg-[#2563EB]/10 hover:bg-[#2563EB]/20 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444]/20 discuss:text-[#EF4444] font-semibold py-3 h-12 mt-5 transition-all">
-            {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LogOut className="w-4 h-4 mr-2" /> Logout</>}
+            {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="flex items-center justify-center gap-2"><LogOut className="w-4 h-4" /> <span>Logout</span></span>}
           </Button>
         </div>
 
@@ -1489,15 +1652,15 @@ export default function ProfilePage() {
                 <Users className="w-4 h-4 text-[#10B981]" />
                 {receivedRequests.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-[#F59E0B] text-white text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-1">
-                    {receivedRequests.length}
+                    <span>{receivedRequests.length}</span>
                   </span>
                 )}
               </div>
               <div className="text-left">
                 <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Friends</h2>
                 <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
-                  {friends.length} friend{friends.length !== 1 ? 's' : ''}
-                  {receivedRequests.length > 0 && ` • ${receivedRequests.length} pending`}
+                  <span>{friends.length} friend{friends.length !== 1 ? 's' : ''}</span>
+                  {receivedRequests.length > 0 && <span> • {receivedRequests.length} pending</span>}
                 </p>
               </div>
             </div>
@@ -1530,10 +1693,10 @@ export default function ProfilePage() {
                             />
                             <div className="text-left min-w-0">
                               <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
-                                @{reqUser?.username || 'Unknown'}
+                                <span>@{reqUser?.username || 'Unknown'}</span>
                               </span>
                               <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
-                                {new Date(request.createdAt).toLocaleDateString()}
+                                <span>{new Date(request.createdAt).toLocaleDateString()}</span>
                               </span>
                             </div>
                           </button>

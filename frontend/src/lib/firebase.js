@@ -63,10 +63,7 @@ const _setPersistencePromise = setPersistence(auth, browserLocalPersistence)
 
 export const authReady = Promise.race([
   _setPersistencePromise,
-  new Promise((resolve) => setTimeout(() => {
-    console.warn('[Auth] setPersistence timed out — proceeding with default persistence.');
-    resolve(auth);
-  }, 10000)),
+  new Promise((resolve) => setTimeout(() => resolve(auth), 5000)), // 5s silent fallback
 ]);
 
 export {

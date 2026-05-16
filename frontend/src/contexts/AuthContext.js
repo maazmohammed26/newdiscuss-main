@@ -88,7 +88,7 @@ function buildBasicUser(firebaseUser) {
     email: firebaseUser.email,
     username:
       firebaseUser.displayName?.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15) ||
-      firebaseUser.email?.split('@')[0] ||
+      firebaseUser.email?.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15) ||
       'user',
     photo_url: firebaseUser.photoURL || '',
     verified: false,
@@ -160,7 +160,7 @@ export function AuthProvider({ children }) {
       }
 
       // ── RTDB timed out or errored: use Firebase Auth data as fallback ──
-      if (timedOut || !dbUser) {
+      if (timedOut) {
         // Still try to create the user record in the background
         if (timedOut && firebaseUser) {
           (async () => {

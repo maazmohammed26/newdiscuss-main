@@ -56,6 +56,7 @@ import {
 import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
 import { notifyTelegramDM } from '@/lib/telegramService';
+import { notifyDiscordDM } from '@/lib/discordService';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
 import { IoImage, IoVideocam } from 'react-icons/io5';
@@ -331,9 +332,10 @@ export default function ChatConversationPage() {
       } else {
         await sendMessage(chatId, user.id, messageText, effectiveMedia);
       }
-      // Send Telegram notification to the recipient (fires in background, non-blocking)
+      // Send notifications (fires in background, non-blocking)
       const isImage = !!(effectiveMedia && effectiveMedia.length > 0);
       notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
+      notifyDiscordDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
       inputRef.current?.focus();
     } catch (error) {
       console.error('Send message error:', error);

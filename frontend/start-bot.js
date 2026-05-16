@@ -1,7 +1,9 @@
+const http = require('http');
 require('dotenv').config({ path: '.env' });
 const fs = require('fs');
 
 const BOT_TOKEN = process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
+const DISCORD_BOT_TOKEN = process.env.REACT_APP_DISCORD_BOT_TOKEN;
 const APP_URL = 'https://discussit.in/';
 
 if (!BOT_TOKEN) {
@@ -104,6 +106,94 @@ async function poll() {
   // Continue polling
   setTimeout(poll, 1000);
 }
+
+// ─── Local Proxy Server for Discord (Bypasses CORS) ──────────────────────────
+const PROXY_PORT = 5000;
+
+const server = http.createServer(async (req, res) => {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/notify-discord') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', async () => {
+      try {
+        const { discordUserId, embed, components } = JSON.parse(body);
+        
+        if (!DISCORD_BOT_TOKEN) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'DISCORD_BOT_TOKEN missing in bot env' }));
+          return;
+        }
+
+        console.log(`[Discord Proxy] Sending DM to ${discordUserId}...`);
+
+        // 1. Create DM channel
+        const channelRes = await fetch('https://discord.com/api/v10/users/@me/channels', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ recipient_id: discordUserId }),
+        });
+        
+        const channelData = await channelRes.json();
+        if (!channelData.id) {
+          console.error('[Discord Proxy] Failed to create DM:', channelData);
+          res.statusCode = 400;
+          res.end(JSON.stringify(channelData));
+          return;
+        }
+
+        // 2. Send message
+        const msgRes = await fetch(`https://discord.com/api/v10/channels/${channelData.id}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            embeds: [
+              {
+                color: 0x2563EB,
+                timestamp: new Date().toISOString(),
+                ...embed,
+                footer: { text: 'Discuss App Notification' },
+              }
+            ],
+            components
+          }),
+        });
+
+        const msgData = await msgRes.json();
+        console.log('[Discord Proxy] Success!');
+        res.statusCode = 200;
+        res.end(JSON.stringify(msgData));
+      } catch (err) {
+        console.error('[Discord Proxy] Error:', err.message);
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  } else {
+    res.statusCode = 404;
+    res.end();
+  }
+});
+
+server.listen(PROXY_PORT, () => {
+  console.log(`🚀 Notification Proxy running on http://localhost:${PROXY_PORT}`);
+});
 
 console.log('✅ Bot is running! Go to Telegram and send /start to your bot.');
 poll();
