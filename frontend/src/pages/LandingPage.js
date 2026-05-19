@@ -147,6 +147,8 @@ const NAV = [
   { label: 'Careers', to: '/careers' },
   { label: 'Blogs', to: '/blogs' },
   { label: 'Contact', to: '/contact' },
+  { label: 'Terms', to: '/terms' },
+  { label: 'Privacy', to: '/privacy' },
   { label: 'Login', to: '/login' },
 ];
 
@@ -515,7 +517,7 @@ export default function LandingPage() {
             &lt;<span>discuss</span>/&gt;
           </span>
           <div className="flex items-center gap-6 text-xs sm:text-sm">
-            {NAV.slice(0, 4).map(n => (
+            {NAV.slice(0, 6).map(n => (
               <Link key={n.label} to={n.to} className="transition-colors"
                 style={{ color: 'rgba(225,224,204,0.5)' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#E1E0CC')}

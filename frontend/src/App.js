@@ -18,6 +18,8 @@ import '@/App.css';
 const LandingPage           = lazy(() => import('@/pages/LandingPage'));
 const LoginPage             = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage          = lazy(() => import('@/pages/RegisterPage'));
+const TermsPage             = lazy(() => import('@/pages/TermsPage'));
+const PrivacyPage           = lazy(() => import('@/pages/PrivacyPage'));
 const FeedPage              = lazy(() => import('@/pages/FeedPage'));
 const ProfilePage           = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage        = lazy(() => import('@/pages/PostDetailPage'));
@@ -114,6 +116,8 @@ function AppRoutes() {
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/blogs"   element={<BlogsPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/terms"   element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
 
         {/* Auth (redirect if already logged in) */}
         <Route path="/login"    element={<AuthRedirect><LoginPage /></AuthRedirect>} />
