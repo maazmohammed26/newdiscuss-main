@@ -378,7 +378,7 @@ export const getGroupMessages = async (groupId, userId) => {
   try {
     if (!fourthDatabase) return [];
     const messagesRef = ref(fourthDatabase, `groups/${groupId}/messages`);
-    const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(100));
+    const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(100000));
     const snapshot = await get(messagesQuery);
     if (!snapshot.exists()) return [];
     
@@ -406,13 +406,13 @@ export const getGroupMessages = async (groupId, userId) => {
   }
 };
 
-export const subscribeToGroupMessages = (groupId, callback) => {
+export const subscribeToGroupMessages = (groupId, callback, limit = 50) => {
   if (!fourthDatabase) {
     callback([]);
     return () => {};
   }
   const messagesRef = ref(fourthDatabase, `groups/${groupId}/messages`);
-  const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(100));
+  const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(limit));
   const handleMessages = (snapshot) => {
     if (!snapshot.exists()) { callback([]); return; }
     const messages = snapshot.val();

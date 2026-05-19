@@ -60,6 +60,14 @@ export default function GroupConversationPage() {
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const [pendingMedia, setPendingMedia] = useState([]);
+  const [messageLimit, setMessageLimit] = useState(50);
+  const [loadingOld, setLoadingOld] = useState(false);
+  const [hasMoreOld, setHasMoreOld] = useState(true);
+
+  const messagesCountRef = useRef(0);
+  useEffect(() => {
+    messagesCountRef.current = messages.length;
+  }, [messages.length]);
 
   // Optimistic UI, expanded and forwarding states
   const [optimisticMessages, setOptimisticMessages] = useState([]);
@@ -77,6 +85,16 @@ export default function GroupConversationPage() {
       }
     });
   }, []);
+
+  const handleScroll = useCallback((e) => {
+    const container = e.currentTarget;
+    if (container.scrollTop === 0 && !loadingOld && hasMoreOld && liveMessagesSynced) {
+      setLoadingOld(true);
+      setTimeout(() => {
+        setMessageLimit((prev) => Math.min(prev + 50, 100000));
+      }, 800);
+    }
+  }, [loadingOld, hasMoreOld, liveMessagesSynced]);
 
   const messagesContainerRef = useRef(null);
 
@@ -254,15 +272,36 @@ export default function GroupConversationPage() {
               return new Date(msg.timestamp) >= new Date(jtNow);
             });
 
+            // Measure scroll height before state update
+            const container = messagesContainerRef.current;
+            const scrollHeightBefore = container ? container.scrollHeight : 0;
+            const scrollTopBefore = container ? container.scrollTop : 0;
+
             setMessages(filtered);
+
+            if (filtered.length < messageLimit) {
+              setHasMoreOld(false);
+            } else {
+              setHasMoreOld(true);
+            }
+
             await cacheGroupMessages(user.id, groupId, filtered);
             setLiveMessagesSynced(true);
             await markGroupMessagesAsRead(groupId, user.id);
+            setLoadingOld(false);
+
+            // Adjust scroll position if we prepended older messages
+            if (container && scrollHeightBefore > 0 && scrollTopBefore === 0 && filtered.length > messagesCountRef.current) {
+              setTimeout(() => {
+                const diff = container.scrollHeight - scrollHeightBefore;
+                container.scrollTop = diff;
+              }, 0);
+            }
           } else {
             setIsAdmin(false);
             setLiveMessagesSynced(true);
           }
-        });
+        }, messageLimit);
         if (cancelled) {
           unsub();
         } else {
@@ -291,7 +330,7 @@ export default function GroupConversationPage() {
         clearInterval(membershipCheckRef.current);
       }
     };
-  }, [user?.id, groupId, checkMembershipStatus]);
+  }, [user?.id, groupId, checkMembershipStatus, messageLimit]);
 
   useEffect(() => {
     if (messages.length > 0) scrollToBottom();
@@ -503,6 +542,8 @@ export default function GroupConversationPage() {
     [combinedMessages]
   );
 
+  const groupedMessages = useMemo(() => groupMessagesByDate(combinedMessages), [combinedMessages]);
+
   const renderMessage = (message) => {
     const isOwn = message.sender === user.id;
     const senderDetails = userDetails[message.sender];
@@ -674,7 +715,6 @@ export default function GroupConversationPage() {
   }
 
   const canSendMessages = isMember && (!groupInfo?.settings?.adminOnlyMessaging || isAdmin);
-  const groupedMessages = groupMessagesByDate(combinedMessages);
   const isAdminOnlyMode = groupInfo?.settings?.adminOnlyMessaging;
 
   return (
@@ -711,10 +751,18 @@ export default function GroupConversationPage() {
       <div 
         ref={messagesContainerRef}
         onClick={clearAllHighlights}
-        className="flex-1 overflow-y-auto px-4 py-4" 
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide" 
         style={{ maxHeight: 'calc(100vh - 180px)' }}
       >
         <div className="max-w-2xl mx-auto">
+          {loadingOld && (
+            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+              <span>Loading old messages, please wait...</span>
+            </div>
+          )}
+
           {!isMember && (
             <div className="mb-4 bg-amber-50 dark:bg-amber-950/30 discuss:bg-amber-950/30 border border-amber-200 dark:border-amber-800 discuss:border-amber-800 rounded-[12px] p-4">
               <div className="flex items-start gap-2">

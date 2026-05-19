@@ -69,6 +69,7 @@ export default function ChatConversationPage() {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const messagesCountRef = useRef(0);
   const inputRef = useRef(null);
   const messageRefs = useRef({});
 
@@ -92,6 +93,13 @@ export default function ChatConversationPage() {
   const [reporting, setReporting] = useState(false);
   const [chatCreated, setChatCreated] = useState(false);
   const [liveMessagesSynced, setLiveMessagesSynced] = useState(false);
+  const [messageLimit, setMessageLimit] = useState(50);
+  const [loadingOld, setLoadingOld] = useState(false);
+  const [hasMoreOld, setHasMoreOld] = useState(true);
+
+  useEffect(() => {
+    messagesCountRef.current = messages.length;
+  }, [messages.length]);
 
   // Optimistic UI, expanded and forwarding states
   const [optimisticMessages, setOptimisticMessages] = useState([]);
@@ -107,6 +115,16 @@ export default function ChatConversationPage() {
       }
     });
   }, []);
+
+  const handleScroll = useCallback((e) => {
+    const container = e.currentTarget;
+    if (container.scrollTop === 0 && !loadingOld && hasMoreOld && liveMessagesSynced) {
+      setLoadingOld(true);
+      setTimeout(() => {
+        setMessageLimit((prev) => Math.min(prev + 50, 100000));
+      }, 800);
+    }
+  }, [loadingOld, hasMoreOld, liveMessagesSynced]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -320,18 +338,39 @@ export default function ChatConversationPage() {
           await notifyChatMessage(chatId, otherUserRef.current?.username);
         }
 
+        // Measure scroll height before state update
+        const container = messagesContainerRef.current;
+        const scrollHeightBefore = container ? container.scrollHeight : 0;
+        const scrollTopBefore = container ? container.scrollTop : 0;
+
         setMessages(newMessages);
+
+        if (newMessages.length < messageLimit) {
+          setHasMoreOld(false);
+        } else {
+          setHasMoreOld(true);
+        }
+
         await cacheMessages(user.id, chatId, newMessages);
         setLiveMessagesSynced(true);
         markMessagesAsRead(chatId, user.id);
-      });
+        setLoadingOld(false);
+
+        // Adjust scroll position if we prepended older messages
+        if (container && scrollHeightBefore > 0 && scrollTopBefore === 0 && newMessages.length > messagesCountRef.current) {
+          setTimeout(() => {
+            const diff = container.scrollHeight - scrollHeightBefore;
+            container.scrollTop = diff;
+          }, 0);
+        }
+      }, messageLimit);
     })();
 
     return () => {
       cancelled = true;
       if (unsubscribe) unsubscribe();
     };
-  }, [chatId, user?.id]);
+  }, [chatId, user?.id, messageLimit]);
 
   // Initial scroll to bottom when chat loads
   useEffect(() => {
@@ -717,16 +756,20 @@ export default function ChatConversationPage() {
     [combinedMessages]
   );
 
-  const visibleMessages = combinedMessages.filter((m) => !deletedMessageIds.includes(m.id));
+  const visibleMessages = useMemo(() => {
+    return combinedMessages.filter((m) => !deletedMessageIds.includes(m.id));
+  }, [combinedMessages, deletedMessageIds]);
 
-  const groupedMessages = visibleMessages.reduce((groups, message) => {
-    const date = formatMessageDate(message.timestamp);
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(message);
-    return groups;
-  }, {});
+  const groupedMessages = useMemo(() => {
+    return visibleMessages.reduce((groups, message) => {
+      const date = formatMessageDate(message.timestamp);
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(message);
+      return groups;
+    }, {});
+  }, [visibleMessages]);
 
   const initials = (otherUser?.username || 'U').slice(0, 2).toUpperCase();
   const displayName = otherUserProfile?.fullName || otherUser?.username || 'Unknown';
@@ -909,10 +952,18 @@ export default function ChatConversationPage() {
       <div 
         ref={messagesContainerRef}
         onClick={clearAllHighlights}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide"
         style={{ maxHeight: `calc(100vh - ${autoDeleteEnabled ? 176 : (replyTo ? 180 : 140)}px)` }}
       >
         <div className="max-w-2xl mx-auto space-y-4">
+          {loadingOld && (
+            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+              <span>Loading old messages, please wait...</span>
+            </div>
+          )}
+
           {!liveMessagesSynced && messages.length === 0 && (
             <div className="space-y-3 py-2" aria-hidden>
               {[1, 2, 3, 4, 5, 6].map((i) => (

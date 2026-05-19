@@ -185,7 +185,7 @@ const updateUserChatListAfterMessage = async (userId, chatId, otherUserId, messa
  * @param {string} chatId - Chat ID
  * @param {number} limit - Max messages to fetch
  */
-export const getMessages = async (chatId, limit = 100) => {
+export const getMessages = async (chatId, limit = 1000) => {
   try {
     const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
     const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(limit));
@@ -216,9 +216,9 @@ export const getMessages = async (chatId, limit = 100) => {
  * @param {string} chatId - Chat ID
  * @param {Function} callback - Callback with messages array
  */
-export const subscribeToMessages = (chatId, callback) => {
+export const subscribeToMessages = (chatId, callback, limit = 50) => {
   const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
-  const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(100));
+  const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(limit));
   
   const handleMessages = (snapshot) => {
     if (!snapshot.exists()) {
@@ -631,7 +631,7 @@ export const deleteOldMessages = async (chatId, hoursOld = 24) => {
     
     // Get chat settings to know when auto-delete was enabled
     const chatSettings = await getChatSettings(chatId);
-    if (!chatSettings || !chatSettings.autoDelete) return { deleted: 0 };
+    if (!chatSettings || chatSettings.autoDelete !== true) return { deleted: 0 };
 
     const enabledAt = chatSettings.autoDeleteEnabledAt;
     const now = new Date();
@@ -1005,7 +1005,7 @@ export const runAutoDeleteCleanup = async () => {
     const oneDayAgoIso = oneDayAgo.toISOString();
     
     for (const [chatId, chat] of Object.entries(chats)) {
-      if (chat.autoDelete) {
+      if (chat && chat.autoDelete === true) {
         const enabledAt = chat.autoDeleteEnabledAt;
         const cutoffForOld = enabledAt ? new Date(new Date(enabledAt).getTime() + 24 * 60 * 60 * 1000) : null;
         
