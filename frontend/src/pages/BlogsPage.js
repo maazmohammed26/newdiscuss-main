@@ -8,6 +8,7 @@ export default function BlogsPage() {
   const [expandedBlog, setExpandedBlog] = useState(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     document.title = "Engineering Blog | Discuss Platforms";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {

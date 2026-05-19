@@ -6,6 +6,9 @@ import { ArrowLeft, Check } from 'lucide-react';
 
 export default function AboutPage() {
   useEffect(() => {
+    if (!window.location.hash) {
+      window.scrollTo(0, 0);
+    }
     document.title = "About | Discuss Platforms";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {

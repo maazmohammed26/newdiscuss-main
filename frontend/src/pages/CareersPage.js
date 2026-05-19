@@ -6,6 +6,7 @@ import { Briefcase, ArrowLeft } from 'lucide-react';
 
 export default function CareersPage() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     document.title = "Careers | Discuss Platforms";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {

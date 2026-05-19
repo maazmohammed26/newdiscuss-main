@@ -6,6 +6,7 @@ import { Mail, Linkedin, Instagram, MapPin, ArrowLeft } from 'lucide-react';
 
 export default function ContactPage() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     document.title = "Contact | Discuss Platforms";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
