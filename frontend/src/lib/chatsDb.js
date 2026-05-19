@@ -629,25 +629,51 @@ export const deleteOldMessages = async (chatId, hoursOld = 24) => {
   try {
     if (!thirdDatabase) return { deleted: 0 };
     
+    // Get chat settings to know when auto-delete was enabled
+    const chatSettings = await getChatSettings(chatId);
+    if (!chatSettings || !chatSettings.autoDelete) return { deleted: 0 };
+
+    const enabledAt = chatSettings.autoDeleteEnabledAt;
+    const now = new Date();
+    const cutoffForNew = new Date(now.getTime() - hoursOld * 60 * 60 * 1000).toISOString();
+    const cutoffForOld = enabledAt ? new Date(new Date(enabledAt).getTime() + hoursOld * 60 * 60 * 1000) : null;
+    
     const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
     const snapshot = await get(messagesRef);
     
     if (!snapshot.exists()) return { deleted: 0 };
     
     const messages = snapshot.val();
-    const cutoffTime = new Date(Date.now() - hoursOld * 60 * 60 * 1000).toISOString();
     let deletedCount = 0;
+    const deletePromises = [];
     
-    const deletePromises = Object.entries(messages)
-      .filter(([, msg]) => msg.timestamp < cutoffTime)
-      .map(async ([id]) => {
+    for (const [id, msg] of Object.entries(messages)) {
+      if (msg.deleted) continue;
+      
+      const msgTimestamp = msg.timestamp;
+      let shouldDelete = false;
+      
+      if (enabledAt && msgTimestamp < enabledAt) {
+        // Message was sent BEFORE auto-delete was enabled.
+        // Wait 24 hours from the moment the option was enabled.
+        if (cutoffForOld && now > cutoffForOld) {
+          shouldDelete = true;
+        }
+      } else {
+        // Message was sent AFTER auto-delete was enabled.
+        // Wait 24 hours from its own timestamp.
+        if (msgTimestamp < cutoffForNew) {
+          shouldDelete = true;
+        }
+      }
+      
+      if (shouldDelete) {
         const msgRef = ref(thirdDatabase, `messages/${chatId}/${id}`);
-        await remove(msgRef);
-        deletedCount++;
-      });
+        deletePromises.push(remove(msgRef).then(() => { deletedCount++; }));
+      }
+    }
     
     await Promise.all(deletePromises);
-    
     return { deleted: deletedCount };
   } catch (error) {
     console.error('Error deleting old messages:', error);
@@ -976,30 +1002,43 @@ export const runAutoDeleteCleanup = async () => {
     const chats = snapshot.val();
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const oneDayAgoIso = oneDayAgo.toISOString();
     
     for (const [chatId, chat] of Object.entries(chats)) {
       if (chat.autoDelete) {
-        // Delete messages older than 24 hours
+        const enabledAt = chat.autoDeleteEnabledAt;
+        const cutoffForOld = enabledAt ? new Date(new Date(enabledAt).getTime() + 24 * 60 * 60 * 1000) : null;
+        
         const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
         const messagesSnap = await get(messagesRef);
         
         if (messagesSnap.exists()) {
           const messages = messagesSnap.val();
           for (const [messageId, message] of Object.entries(messages)) {
-            const messageDate = new Date(message.timestamp);
-            if (messageDate < oneDayAgo && !message.deleted) {
-              // Delete old message
+            if (message.deleted) continue;
+            
+            const msgTimestamp = message.timestamp;
+            let shouldDelete = false;
+            
+            if (enabledAt && msgTimestamp < enabledAt) {
+              // Message sent BEFORE auto-delete was enabled.
+              // Delete only if 24 hours have passed since it was enabled.
+              if (cutoffForOld && now > cutoffForOld) {
+                shouldDelete = true;
+              }
+            } else {
+              // Message sent AFTER auto-delete was enabled.
+              // Delete if message is older than 24 hours.
+              if (msgTimestamp < oneDayAgoIso) {
+                shouldDelete = true;
+              }
+            }
+            
+            if (shouldDelete) {
               const messageRef = ref(thirdDatabase, `messages/${chatId}/${messageId}`);
               await remove(messageRef);
             }
           }
-        }
-        
-        // Check if chat itself should be deleted (24h after last message)
-        const lastMessageTime = new Date(chat.lastMessage?.timestamp || chat.createdAt);
-        if (lastMessageTime < oneDayAgo) {
-          // Delete the entire chat
-          await deleteChat(chatId);
         }
       }
     }
