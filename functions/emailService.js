@@ -139,6 +139,17 @@ function getWelcomeEmailHtml(name) {
                 ⚠️ WARNING: If this account was not registered by you, please immediately email us at <a href="mailto:support@discussit.in" style="color: #DC2626; text-decoration: underline; font-weight: 800;">support@discussit.in</a> to immediately block the account.
               </p>
               
+              <!-- Follow Us On & Instagram Link -->
+              <p style="font-size: 11px; color: #9CA3AF; margin: 0 0 10px 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
+                Follow us on
+              </p>
+              <div style="margin-bottom: 24px;">
+                <a href="https://www.instagram.com/discussit.in" target="_blank" style="display: inline-block; padding: 8px 16px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 8px; font-size: 12px; font-weight: 700; color: #FFFFFF; text-decoration: none;">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png" width="12" height="12" alt="" style="vertical-align: middle; margin-right: 6px; border: 0; display: inline-block;" />
+                  discussit.in
+                </a>
+              </div>
+              
               <!-- Linked Portfolio Signature -->
               <p style="font-size: 12px; font-weight: 700; color: #4B5563; margin: 0;">
                 Developed by <a href="https://www.maazportfolio.site/" target="_blank" style="color: #4B5563; text-decoration: none; font-weight: 800; background: linear-gradient(120deg, #DC2626 0%, #2563EB 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt;mma/&gt;</a>
@@ -304,6 +315,17 @@ function getEngagementEmailHtml(name) {
               <p style="font-size: 11px; line-height: 1.6; color: #DC2626; font-weight: 700; margin: 0 0 20px 0; max-width: 440px;">
                 ⚠️ WARNING: If this account was not registered by you, please immediately email us at <a href="mailto:support@discussit.in" style="color: #DC2626; text-decoration: underline; font-weight: 800;">support@discussit.in</a> to immediately block the account.
               </p>
+              
+              <!-- Follow Us On & Instagram Link -->
+              <p style="font-size: 11px; color: #9CA3AF; margin: 0 0 10px 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
+                Follow us on
+              </p>
+              <div style="margin-bottom: 24px;">
+                <a href="https://www.instagram.com/discussit.in" target="_blank" style="display: inline-block; padding: 8px 16px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 8px; font-size: 12px; font-weight: 700; color: #FFFFFF; text-decoration: none;">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png" width="12" height="12" alt="" style="vertical-align: middle; margin-right: 6px; border: 0; display: inline-block;" />
+                  discussit.in
+                </a>
+              </div>
               
               <!-- Linked Portfolio Signature -->
               <p style="font-size: 12px; font-weight: 700; color: #4B5563; margin: 0;">

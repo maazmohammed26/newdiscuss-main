@@ -17,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, X, Check, Loader2, Hash } from 'lucide-react';
+import { ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, X, Check, Loader2, Hash, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 function timeAgo(iso) {
@@ -133,11 +133,37 @@ export default function PostDetailPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]">
+      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] flex flex-col relative overflow-hidden">
+        {/* Visual noise overlay */}
+        <div className="bg-noise absolute inset-0 opacity-[0.05] pointer-events-none" />
         <Header />
-        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-          <h2 className="text-lg font-bold text-[#0F172A] dark:text-[#F1F5F9]">Post not found</h2>
-          <button onClick={() => navigate('/feed')} className="text-[#2563EB] hover:underline text-[13px] mt-2">Back to Feed</button>
+        
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-3xl p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-none overflow-hidden pt-1.5 animate-in fade-in zoom-in duration-300">
+            {/* Top thick gradient accent line */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+            
+            {/* Glowing Icon Container */}
+            <div className="mx-auto w-16 h-16 bg-[#EF4444]/10 rounded-2xl flex items-center justify-center border border-[#EF4444]/20 mb-6 relative">
+              <AlertCircle className="w-8 h-8 text-[#EF4444] animate-bounce" />
+              <div className="absolute inset-0 rounded-2xl bg-[#EF4444]/20 blur-md -z-10 animate-pulse" />
+            </div>
+
+            <h2 className="text-xl font-black text-[#0F172A] dark:text-[#F1F5F9] tracking-tight mb-2">
+              Post Has Been Deleted
+            </h2>
+            <p className="text-[13px] leading-relaxed text-[#6275AF] dark:text-[#94A3B8] font-medium mb-8 max-w-xs mx-auto">
+              Oops! You are on the wrong page. The link you followed might be broken, or the post may have been removed.
+            </p>
+
+            <button 
+              onClick={() => navigate('/feed')} 
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-bold bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white hover:opacity-95 shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 shrink-0" />
+              <span>Back to Home Page</span>
+            </button>
+          </div>
         </div>
       </div>
     );
