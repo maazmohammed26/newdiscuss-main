@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowRight, Check, Loader2, Share, PlusSquare, X, Smartphone, Download } from 'lucide-react';
 import LoadingScreen from '@/components/LoadingScreen';
 import './LandingPage.css';
 
@@ -150,6 +150,11 @@ const NAV = [
   { label: 'Login', to: '/login' },
 ];
 
+const HEADER_NAV = [
+  { label: 'About', to: '/about' },
+  { label: 'Login', to: '/login' },
+];
+
 // ── Feature Cards Data ────────────────────────────────────────
 const CARDS = [
   {
@@ -181,12 +186,93 @@ export default function LandingPage() {
   const [ready, setReady] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(0);
 
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [isIOSUser, setIsIOSUser] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setQuoteIndex(prev => (prev + 1) % DEV_QUOTES.length);
     }, 5000); // Cycle quotes every 5 seconds
     return () => clearInterval(interval);
   }, []);
+
+  const [autoDismissTimer, setAutoDismissTimer] = useState(null);
+
+  useEffect(() => {
+    // Detect iOS
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOSUser(ios);
+
+    // Detect if already installed / running in standalone mode
+    const standalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    setIsStandalone(standalone);
+
+    // Check if the user closed the banner permanently
+    const isBannerDismissedPermanently = localStorage.getItem('pwa_banner_dismissed_permanently') === 'true';
+
+    // Show banner if not standalone and not dismissed permanently
+    if (!standalone && !isBannerDismissedPermanently) {
+      // Show banner after exactly 10 seconds
+      const showTimer = setTimeout(() => {
+        setShowInstallBanner(true);
+
+        // Automatically remove the banner after another 10 seconds
+        const hideTimer = setTimeout(() => {
+          setShowInstallBanner(false);
+        }, 10000);
+
+        setAutoDismissTimer(hideTimer);
+      }, 10000);
+
+      return () => {
+        clearTimeout(showTimer);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Wait for the 10-second delay timer to show instead of showing instantly
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (isIOSUser) {
+      setShowIOSModal(true);
+      return;
+    }
+
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`[PWA] Install prompt outcome: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+      if (autoDismissTimer) {
+        clearTimeout(autoDismissTimer);
+      }
+    } else {
+      alert('To install Discuss:\n\n• On Chrome/Edge: Click the install icon in the URL search bar.\n• On Mobile: Tap the 3 dots menu and select "Install App".');
+    }
+  };
+
+  const dismissBanner = (isPermanent = false) => {
+    setShowInstallBanner(false);
+    if (autoDismissTimer) {
+      clearTimeout(autoDismissTimer);
+    }
+    if (isPermanent) {
+      localStorage.setItem('pwa_banner_dismissed_permanently', 'true');
+    }
+  };
 
   useEffect(() => { if (!authLoading && user) navigate('/feed', { replace: true }); }, [user, authLoading, navigate]);
   useEffect(() => { const t = setTimeout(() => setReady(true), 1800); return () => clearTimeout(t); }, []);
@@ -209,29 +295,39 @@ export default function LandingPage() {
         <div className="w-12 h-6 hidden md:block"></div>
 
         {/* Center Navbar pill */}
-        <div className="bg-black/95 backdrop-blur-md rounded-full border border-white/10 px-4 py-2 md:px-8 shadow-2xl">
-          <div className="flex items-center gap-3 sm:gap-6 md:gap-12 lg:gap-14">
-            {NAV.map(n => (
+        <div className="bg-black/95 backdrop-blur-md rounded-full border border-white/10 px-4 py-2 shadow-2xl">
+          <div className="flex items-center gap-6 md:gap-8">
+            {HEADER_NAV.map(n => (
               <Link key={n.label} to={n.to}
-                className="text-[10px] sm:text-xs md:text-sm font-medium transition-colors"
-                style={{ color: 'rgba(225,224,204,0.8)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#E1E0CC')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(225,224,204,0.8)')}>
+                className="text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 shining-grey-text hover:scale-105 active:scale-95 px-2.5 py-0.5"
+              >
                 {n.label}
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Right <discuss> brand logo in red & blue colors (dark and thick) */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex items-center gap-0.5 text-xs sm:text-sm md:text-base font-extrabold tracking-tight hover:scale-105 active:scale-95 transition-all select-none bg-black/50 px-3 py-1.5 rounded-full border border-white/5"
-        >
-          <span className="text-[#E53E3E] font-black text-sm sm:text-base md:text-lg">&lt;</span>
-          <span className="text-white font-extrabold tracking-tight">discuss</span>
-          <span className="text-[#3182CE] font-black text-sm sm:text-base md:text-lg">&gt;</span>
-        </button>
+        {/* Right brand logo & install button */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {!isStandalone && (
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center justify-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-full border border-white/10 hover:border-[#DC2626]/30 bg-black/50 text-[10px] md:text-xs font-semibold text-gray-300 hover:text-white hover:shadow-[0_0_12px_rgba(220,38,38,0.15)] transition-all select-none cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-[#DC2626]" />
+              <span className="hidden sm:inline">Install App</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-0.5 text-xs sm:text-sm md:text-base font-extrabold tracking-tight hover:scale-105 active:scale-95 transition-all select-none bg-black/50 px-3 py-1.5 rounded-full border border-white/5"
+          >
+            <span className="text-[#E53E3E] font-black text-sm sm:text-base md:text-lg">&lt;</span>
+            <span className="text-white font-extrabold tracking-tight">discuss</span>
+            <span className="text-[#3182CE] font-black text-sm sm:text-base md:text-lg">&gt;</span>
+          </button>
+        </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════
@@ -248,10 +344,10 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
 
           {/* Hero content — aligned perfectly to prevent overlap */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 lg:p-10 flex flex-col justify-end min-h-[50%]">
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:px-8 md:pb-4 lg:px-10 lg:pb-5 flex flex-col justify-end min-h-[40%]">
             {/* Giant heading on its own row to fully expand without squishing */}
-            <div className="w-full select-none mb-4 md:mb-6">
-              <h1 className="text-[24vw] sm:text-[22vw] md:text-[20vw] lg:text-[18vw] xl:text-[17vw] 2xl:text-[16vw] font-black leading-[0.8] tracking-[-0.07em] pointer-events-none"
+            <div className="w-full select-none mb-2 md:mb-3">
+              <h1 className="text-[21vw] sm:text-[19vw] md:text-[17vw] lg:text-[15vw] xl:text-[14vw] 2xl:text-[13vw] font-black leading-[0.8] tracking-[-0.07em] pointer-events-none"
                 style={{ color: '#E1E0CC' }}>
                 <WordsPullUp text="discuss" showAsterisk />
               </h1>
@@ -448,7 +544,131 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Floating PWA Install Banner */}
+      {showInstallBanner && (
+        <motion.div 
+          initial={{ y: 50, opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          exit={{ y: 50, opacity: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-md z-[99] bg-gradient-to-r from-[#101010]/98 to-[#171717]/98 backdrop-blur-2xl border border-white/10 p-5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-4 transition-all duration-300"
+        >
+          {/* Pulsing Accent Glow Bar */}
+          <div className="absolute top-0 bottom-0 left-0 w-1 rounded-l-2xl bg-gradient-to-b from-[#DC2626] to-[#2563EB]" />
+
+          <div className="flex items-start gap-4 pl-1">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#DC2626] to-[#2563EB] flex items-center justify-center shadow-lg flex-shrink-0 animate-pulse">
+              <span className="text-white font-extrabold text-lg select-none">&lt;/&gt;</span>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-white mb-1">Install Discuss Hub</h4>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Add Discuss directly to your home screen for lightning-fast speeds, offline chat support, and notifications.
+              </p>
+            </div>
+            <button 
+              onClick={() => dismissBanner(true)} 
+              className="text-gray-500 hover:text-white p-1 rounded-full hover:bg-white/5 transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 pl-1">
+            <button
+              onClick={handleInstallClick}
+              className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-[#DEDBC8] text-black hover:bg-[#DEDBC8]/90 transition-all shadow-md text-center cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {isIOSUser ? 'Show iOS Steps' : 'Install Now'}
+            </button>
+            <button
+              onClick={() => dismissBanner(false)}
+              className="py-2.5 px-4 rounded-xl text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              Maybe Later
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* iOS Installation Instruction Modal */}
+      {showIOSModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="relative w-full max-w-sm bg-[#101010] border border-white/10 rounded-2xl overflow-hidden shadow-2xl p-6 flex flex-col gap-5">
+            {/* Top Accent Line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-[#DC2626]" />
+                <h3 className="text-base font-bold text-white">Add to Home Screen</h3>
+              </div>
+              <button 
+                onClick={() => setShowIOSModal(false)}
+                className="text-gray-500 hover:text-white p-1.5 rounded-full hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-400 leading-relaxed text-center">
+              Safari on iOS does not support one-tap web installs. Follow these 3 simple steps to add **Discuss** to your home screen:
+            </p>
+
+            <div className="flex flex-col gap-4 font-sans">
+              <div className="flex items-start gap-3 bg-[#181818] p-3 rounded-xl border border-white/5">
+                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-xs font-mono font-bold text-[#DC2626] flex-shrink-0">
+                  01
+                </div>
+                <div className="text-xs text-gray-300 leading-relaxed">
+                  Tap the <strong className="text-white">Share button</strong> (square with an up arrow <Share className="w-3.5 h-3.5 inline mx-0.5 align-middle text-[#2563EB]" />) in Safari's bottom toolbar.
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-[#181818] p-3 rounded-xl border border-white/5">
+                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-xs font-mono font-bold text-[#2563EB] flex-shrink-0">
+                  02
+                </div>
+                <div className="text-xs text-gray-300 leading-relaxed">
+                  Scroll down the share sheet menu and tap <strong className="text-white">Add to Home Screen</strong> (<PlusSquare className="w-3.5 h-3.5 inline mx-0.5 align-middle text-[#DC2626]" />).
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-[#181818] p-3 rounded-xl border border-white/5">
+                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-xs font-mono font-bold text-white flex-shrink-0">
+                  03
+                </div>
+                <div className="text-xs text-gray-300 leading-relaxed">
+                  Tap <strong className="text-white">Add</strong> in the top right corner of your screen to complete. Done!
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#DEDBC8] text-black hover:bg-[#DEDBC8]/90 transition-colors shadow-md text-center mt-2 cursor-pointer"
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
+        @keyframes shine-grey {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shining-grey-text {
+          background: linear-gradient(120deg, #6B7280 20%, #F3F4F6 50%, #6B7280 80%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-grey 4s linear infinite;
+          text-shadow: 0 0 8px rgba(156, 163, 175, 0.15);
+          display: inline-block;
+        }
         @keyframes shine-purple {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }

@@ -414,8 +414,8 @@ export function AuthProvider({ children }) {
                 photo_url: '',
                 auth_provider: 'email',
               });
-              sendWelcomeEmailDirectly(email.toLowerCase(), storedUsername);
             }
+            sendWelcomeEmailDirectly(email.toLowerCase(), storedUsername);
           } catch {}
           window.localStorage.removeItem('verifyUsername_' + email.toLowerCase());
         }
@@ -606,6 +606,9 @@ export function AuthProvider({ children }) {
         auth_provider: 'email',
       });
       window.localStorage.setItem('showWelcomeModal_' + credential.user.uid, 'true');
+      
+      // Trigger the welcome email immediately upon successful registration
+      sendWelcomeEmailDirectly(email.toLowerCase().trim(), username.trim());
 
       await sendSignInLinkToEmail(auth, email, {
         url: EMAIL_LINK_REDIRECT_URL,
