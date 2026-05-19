@@ -259,3 +259,6 @@ credentials.json
 *.pem
 *.key
 .credentials
+
+# Local databases/JSON stores
+users.json
