@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
+import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -112,10 +113,12 @@ function App() {
             <SecurityProvider>
               <HighlightsProvider>
                 <SecurityWrapper>
-                  {/* Global offline indicator — always rendered */}
-                  <OfflineBanner />
-                  <AppRoutes />
-                  <Toaster position="top-right" />
+                  <OnboardingWrapper>
+                    {/* Global offline indicator — always rendered */}
+                    <OfflineBanner />
+                    <AppRoutes />
+                    <Toaster position="top-right" />
+                  </OnboardingWrapper>
                 </SecurityWrapper>
               </HighlightsProvider>
             </SecurityProvider>
@@ -138,6 +141,35 @@ function SecurityWrapper({ children }) {
   }
 
   return children;
+}
+
+function OnboardingWrapper({ children }) {
+  const { user } = useAuth();
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (user?.uid) {
+      const key = `showWelcomeModal_${user.uid}`;
+      const needsToSee = window.localStorage.getItem(key);
+      if (needsToSee === 'true') {
+        setShowModal(true);
+      }
+    }
+  }, [user]);
+
+  const handleClose = () => {
+    if (user?.uid) {
+      window.localStorage.removeItem(`showWelcomeModal_${user.uid}`);
+    }
+    setShowModal(false);
+  };
+
+  return (
+    <>
+      {children}
+      <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
+    </>
+  );
 }
 
 export default App;

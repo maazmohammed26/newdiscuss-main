@@ -229,6 +229,7 @@ export function AuthProvider({ children }) {
             photo_url: firebaseUser.photoURL || '',
             auth_provider: firebaseUser.providerData[0]?.providerId || 'email',
           });
+          window.localStorage.setItem('showWelcomeModal_' + firebaseUser.uid, 'true');
         } catch (e) {
           console.error('[Auth] createUser error:', e);
           const basicUser = buildBasicUser(firebaseUser);
@@ -475,6 +476,7 @@ export function AuthProvider({ children }) {
         photo_url: '',
         auth_provider: 'email',
       });
+      window.localStorage.setItem('showWelcomeModal_' + credential.user.uid, 'true');
 
       await sendSignInLinkToEmail(auth, email, {
         url: EMAIL_LINK_REDIRECT_URL,
