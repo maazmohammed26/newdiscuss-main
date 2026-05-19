@@ -415,7 +415,6 @@ export function AuthProvider({ children }) {
                 auth_provider: 'email',
               });
             }
-            sendWelcomeEmailDirectly(email.toLowerCase(), storedUsername);
           } catch {}
           window.localStorage.removeItem('verifyUsername_' + email.toLowerCase());
         }
