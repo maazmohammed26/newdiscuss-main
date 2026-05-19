@@ -17,7 +17,7 @@ import { AlertTriangle, ExternalLink } from 'lucide-react';
  * - http:// links show a warning popup before opening
  * - Does not affect existing data/messages
  */
-export default function ChatLinkText({ text, className = '' }) {
+export default function ChatLinkText({ text, className = '', isOwn = false }) {
   const [showHttpWarning, setShowHttpWarning] = useState(false);
   const [pendingUrl, setPendingUrl] = useState('');
 
@@ -86,7 +86,7 @@ export default function ChatLinkText({ text, className = '' }) {
             key={`email-${match.index}`}
             href={`mailto:${matchedText}`}
             onClick={(e) => e.stopPropagation()}
-            className="text-[#60A5FA] hover:text-[#93C5FD] underline underline-offset-2 decoration-1 hover:decoration-2 transition-all"
+            className={`${isOwn ? 'text-blue-200 hover:text-white' : 'text-[#60A5FA] hover:text-[#93C5FD]'} underline underline-offset-2 decoration-1 hover:decoration-2 transition-all font-semibold`}
           >
             {matchedText}
           </a>
@@ -101,8 +101,12 @@ export default function ChatLinkText({ text, className = '' }) {
           <button
             key={`link-${match.index}`}
             onClick={(e) => handleLinkClick(url, e)}
-            className={`inline-flex items-center gap-0.5 text-[#60A5FA] hover:text-[#93C5FD] underline underline-offset-2 decoration-1 hover:decoration-2 transition-all break-all ${
-              isInsecure ? 'text-[#FBBF24] hover:text-[#FCD34D]' : ''
+            className={`inline-flex items-center gap-0.5 underline underline-offset-2 decoration-1 hover:decoration-2 transition-all break-all ${
+              isInsecure 
+                ? 'text-[#FBBF24] hover:text-[#FCD34D]' 
+                : isOwn 
+                  ? 'text-blue-200 hover:text-white font-semibold' 
+                  : 'text-[#60A5FA] hover:text-[#93C5FD]'
             }`}
           >
             {url}

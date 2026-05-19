@@ -647,7 +647,7 @@ export default function GroupConversationPage() {
 
                   return (
                     <div className="text-sm whitespace-pre-wrap break-words">
-                      <ChatLinkText text={displayText} />
+                      <ChatLinkText text={displayText} isOwn={isOwn} />
                       {hasMore && (
                         <button
                           onClick={(e) => {
