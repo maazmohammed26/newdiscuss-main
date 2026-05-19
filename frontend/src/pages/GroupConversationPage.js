@@ -76,6 +76,7 @@ export default function GroupConversationPage() {
   const [showForwardModal, setShowForwardModal] = useState(false);
   const [forwardTargets, setForwardTargets] = useState({ chats: [], groups: [] });
   const [forwardSearch, setForwardSearch] = useState('');
+  const [recommendedUsers, setRecommendedUsers] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showMessageOptions, setShowMessageOptions] = useState(false);
 
@@ -120,6 +121,11 @@ export default function GroupConversationPage() {
           const chats = await getChatsWithUserDetails(user.id);
           const groups = await getUserGroups(user.id);
           setForwardTargets({ chats, groups });
+
+          const { getAllUsersForSearch } = await import('@/lib/relationshipsDb');
+          const allUsers = await getAllUsersForSearch();
+          const others = allUsers.filter(u => u.id !== user.id);
+          setRecommendedUsers(others);
         } catch (error) {
           console.error('Error loading forward targets:', error);
         }
@@ -134,8 +140,9 @@ export default function GroupConversationPage() {
       const forwardedInfo = { originalSender };
       
       if (type === 'dm') {
-        const { sendMessage } = await import('@/lib/chatsDb');
-        await sendMessage(targetId, user.id, selectedMessage.text || '', selectedMessage.media || [], null, forwardedInfo);
+        const { sendMessage, generateChatId } = await import('@/lib/chatsDb');
+        const finalChatId = targetId.includes('_') ? targetId : generateChatId(user.id, targetId);
+        await sendMessage(finalChatId, user.id, selectedMessage.text || '', selectedMessage.media || [], null, forwardedInfo);
       } else {
         await sendGroupMessage(targetId, user.id, selectedMessage.text || '', null, selectedMessage.media || [], null, forwardedInfo);
       }
@@ -1014,39 +1021,75 @@ export default function GroupConversationPage() {
               {/* Direct Chats */}
                <div>
                  <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-2">Direct Chats</p>
-                 {forwardTargets.chats.filter(c => 
-                   c.otherUserDetails?.username?.toLowerCase().includes(forwardSearch.toLowerCase()) ||
-                   c.otherUserDetails?.fullName?.toLowerCase().includes(forwardSearch.toLowerCase())
-                 ).length === 0 ? (
-                   <p className="text-xs text-neutral-500 italic py-1">No chats found</p>
-                 ) : (
-                   <div className="space-y-2">
-                     {forwardTargets.chats.filter(c => 
-                       c.otherUserDetails?.username?.toLowerCase().includes(forwardSearch.toLowerCase()) ||
-                       c.otherUserDetails?.fullName?.toLowerCase().includes(forwardSearch.toLowerCase())
-                     ).map(c => (
-                       <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
-                         <div className="flex items-center gap-2.5 min-w-0">
-                           <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-center bg-neutral-100 text-xs">
-                             {c.otherUserDetails?.username?.substring(0,2).toUpperCase()}
+                 {(() => {
+                   const filteredChats = forwardTargets.chats.filter(c => 
+                     c.otherUserDetails?.username?.toLowerCase().includes(forwardSearch.toLowerCase()) ||
+                     c.otherUserDetails?.fullName?.toLowerCase().includes(forwardSearch.toLowerCase())
+                   );
+                   
+                   if (filteredChats.length > 0) {
+                     return (
+                       <div className="space-y-2">
+                         {filteredChats.map(c => (
+                           <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                             <div className="flex items-center gap-2.5 min-w-0">
+                               <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-center bg-neutral-100 text-xs">
+                                 {c.otherUserDetails?.username?.substring(0,2).toUpperCase()}
+                               </div>
+                               <div className="min-w-0">
+                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                                   {c.otherUserDetails?.fullName || c.otherUserDetails?.username}
+                                 </p>
+                                 <p className="text-[10px] text-neutral-400 truncate">@{c.otherUserDetails?.username}</p>
+                               </div>
+                             </div>
+                             <button
+                               onClick={() => handleForwardToTarget(c.chatId, 'dm')}
+                               className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                             >
+                               Forward
+                             </button>
                            </div>
-                           <div className="min-w-0">
-                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
-                               {c.otherUserDetails?.fullName || c.otherUserDetails?.username}
-                             </p>
-                             <p className="text-[10px] text-neutral-400 truncate">@{c.otherUserDetails?.username}</p>
-                           </div>
-                         </div>
-                         <button
-                           onClick={() => handleForwardToTarget(c.chatId, 'dm')}
-                           className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                         >
-                           Forward
-                         </button>
+                         ))}
                        </div>
-                     ))}
-                   </div>
-                 )}
+                     );
+                   }
+
+                   const filteredUsers = recommendedUsers.filter(u =>
+                     u.username?.toLowerCase().includes(forwardSearch.toLowerCase()) ||
+                     u.email?.toLowerCase().includes(forwardSearch.toLowerCase())
+                   );
+                   
+                   if (filteredUsers.length > 0) {
+                     return (
+                       <div className="space-y-2">
+                         {filteredUsers.map(u => (
+                           <div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                             <div className="flex items-center gap-2.5 min-w-0">
+                               <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-center bg-neutral-100 text-xs">
+                                 {u.username?.substring(0,2).toUpperCase()}
+                               </div>
+                               <div className="min-w-0">
+                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                                   {u.username}
+                                 </p>
+                                 <p className="text-[10px] text-neutral-400 truncate">@{u.username}</p>
+                               </div>
+                             </div>
+                             <button
+                               onClick={() => handleForwardToTarget(u.id, 'dm')}
+                               className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                             >
+                               Forward
+                             </button>
+                           </div>
+                         ))}
+                       </div>
+                     );
+                   }
+
+                   return <p className="text-xs text-neutral-500 italic py-1">No chats or users found</p>;
+                 })()}
                </div>
                
                {/* Groups */}
