@@ -163,6 +163,16 @@ export default function ChatConversationPage() {
 
   const handleForwardToTarget = async (targetId, type) => {
     if (!selectedMessage) return;
+    
+    // Check if it's text-only (no media)
+    const isTextOnly = selectedMessage.text && (!selectedMessage.media || selectedMessage.media.length === 0);
+    if (isTextOnly) {
+      toast.info('Forwarding text messages is coming soon!');
+      setShowForwardModal(false);
+      setSelectedMessage(null);
+      return;
+    }
+
     try {
       const originalSender = selectedMessage.originalSender || selectedMessage.sender;
       const forwardedInfo = { originalSender };
@@ -1383,7 +1393,7 @@ export default function ChatConversationPage() {
                 <span>Copy</span>
               </button>
             )}
-            {!selectedMessage?.deleted && (
+            {!selectedMessage?.deleted && selectedMessage?.sender === user.id && (
               <button
                 onClick={() => {
                   setShowMessageOptions(false);

@@ -129,7 +129,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email Address</label>
-                <Input data-testid="login-email-input" type="email" value={email}
+                <Input data-testid="login-email-input" type="email" id="email" name="email" autocomplete="username" value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="name@example.com"
                   className="mt-1.5 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11" />
@@ -147,7 +147,7 @@ export default function LoginPage() {
                   </button>
                 </div>
                 <div className="relative mt-1.5">
-                  <Input data-testid="login-password-input" type={showPw ? 'text' : 'password'} value={password}
+                  <Input data-testid="login-password-input" type={showPw ? 'text' : 'password'} id="password" name="password" autocomplete="current-password" value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     placeholder="Enter password"
                     className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />

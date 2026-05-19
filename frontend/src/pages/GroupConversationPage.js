@@ -135,6 +135,16 @@ export default function GroupConversationPage() {
 
   const handleForwardToTarget = async (targetId, type) => {
     if (!selectedMessage) return;
+
+    // Check if it's text-only (no media)
+    const isTextOnly = selectedMessage.text && (!selectedMessage.media || selectedMessage.media.length === 0);
+    if (isTextOnly) {
+      toast.info('Forwarding text messages is coming soon!');
+      setShowForwardModal(false);
+      setSelectedMessage(null);
+      return;
+    }
+
     try {
       const originalSender = selectedMessage.originalSender || selectedMessage.sender;
       const forwardedInfo = { originalSender };
@@ -697,10 +707,12 @@ export default function GroupConversationPage() {
                   <DropdownMenuContent align={isOwn ? 'end' : 'start'}>
                     <DropdownMenuItem onClick={() => handleReply(message)}><Reply className="w-4 h-4 mr-2" />Reply</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleCopy(message.text)} disabled={isDeletedForEveryone(message)}><Copy className="w-4 h-4 mr-2" />Copy</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      setSelectedMessage(message);
-                      setShowForwardModal(true);
-                    }} disabled={isDeletedForEveryone(message)}><Send className="w-4 h-4 mr-2 transform rotate-45" />Forward</DropdownMenuItem>
+                    {isOwn && (
+                      <DropdownMenuItem onClick={() => {
+                        setSelectedMessage(message);
+                        setShowForwardModal(true);
+                      }} disabled={isDeletedForEveryone(message)}><Send className="w-4 h-4 mr-2 transform rotate-45" />Forward</DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => openDeleteDialog(message, false)}><Trash2 className="w-4 h-4 mr-2" />Delete for Me</DropdownMenuItem>
                     {isOwn && !isDeletedForEveryone(message) && (
                       <DropdownMenuItem onClick={() => openDeleteDialog(message, true)} className="text-red-600 dark:text-red-400"><Trash2 className="w-4 h-4 mr-2" />Delete for Everyone</DropdownMenuItem>

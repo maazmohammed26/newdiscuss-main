@@ -183,7 +183,8 @@ function SecurityWrapper({ children }) {
 }
 
 function OnboardingWrapper({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const location = useLocation();
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -203,11 +204,15 @@ function OnboardingWrapper({ children }) {
     setShowModal(false);
   };
 
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const showNavbar = user && !loading && !isPublicRoute;
+
   return (
     <>
       {children}
       <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
-      <FloatingNavbar />
+      {showNavbar && <FloatingNavbar />}
     </>
   );
 }
