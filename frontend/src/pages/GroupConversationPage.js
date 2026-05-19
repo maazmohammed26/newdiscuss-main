@@ -23,7 +23,7 @@ import ChatLinkText from '@/components/ChatLinkText';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, Clock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, Clock, AlertCircle, ChevronDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -63,6 +63,7 @@ export default function GroupConversationPage() {
   const [messageLimit, setMessageLimit] = useState(50);
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
+  const [showScrollDown, setShowScrollDown] = useState(false);
 
   const messagesCountRef = useRef(0);
   useEffect(() => {
@@ -88,6 +89,11 @@ export default function GroupConversationPage() {
 
   const handleScroll = useCallback((e) => {
     const container = e.currentTarget;
+    
+    // Check if we should show the scroll-to-bottom button
+    const isFar = container.scrollHeight - container.scrollTop - container.clientHeight > 300;
+    setShowScrollDown(isFar);
+
     if (container.scrollTop === 0 && !loadingOld && hasMoreOld && liveMessagesSynced) {
       setLoadingOld(true);
       setTimeout(() => {
@@ -816,6 +822,20 @@ export default function GroupConversationPage() {
           <div ref={messagesEndRef} />
         </div>
       </div>
+
+      {/* Floating Scroll to Bottom Button */}
+      {showScrollDown && (
+        <button
+          onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          className="absolute bottom-28 right-6 p-2.5 rounded-full bg-white dark:bg-neutral-800 discuss:bg-[#262626] text-[#2563EB] dark:text-neutral-200 discuss:text-[#EF4444] shadow-lg border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:scale-110 active:scale-95 transition-all z-10 animate-bounce"
+          style={document.documentElement.classList.contains('discuss-black')
+            ? { backgroundColor: '#1A1A24', borderColor: 'rgba(255, 0, 127, 0.3)', color: '#FF007F' }
+            : {}}
+          title="Scroll to bottom"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      )}
 
       {canSendMessages ? (
         <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
