@@ -11,6 +11,17 @@ export default function AboutPage() {
     if (metaDesc) {
       metaDesc.setAttribute('content', 'Learn more about Discuss, the 100% free developer discussion platform built for zero noise and engaging tech conversations.');
     }
+    
+    // Smooth scroll to target hash
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
   }, []);
 
   return (
@@ -99,23 +110,82 @@ export default function AboutPage() {
               <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
               The Story Behind the Code
             </h2>
-            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
+            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-4">
               Discuss is a student-built ecosystem designed, architected, and managed entirely by{' '}
               <a 
-                href="https://www.linkedin.com/in/mohammed-maaz-a-0aa730217/" 
+                href="https://www.maazportfolio.site/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="font-extrabold hover:underline transition-all text-[#E53E3E] inline-flex items-center gap-1"
+                className="shining-red-blue-text font-black hover:underline transition-all"
               >
-                Mohammad Maaz
+                Mohammed Maaz A (&lt;mma/&gt;)
               </a>
               , a solo developer and AI engineer passionate about performant web architectures. What started as an academic undertaking has evolved into a production-grade infrastructure aiming to set a gold standard for clean, responsive application design.
+            </p>
+            <p id="digitalclink" className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
+              We are proud to have collaborated with{' '}
+              <a 
+                href="https://roohifida.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="shining-purple-text font-black hover:underline"
+              >
+                DigitalClink
+              </a>{' '}
+              company, which is managed by{' '}
+              <a 
+                href="https://roohifida.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-extrabold hover:underline text-[#3182CE]"
+              >
+                Roohi Fida A
+              </a>
+              . Feel free to explore the company and portfolio at{' '}
+              <a 
+                href="https://roohifida.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-bold underline text-neutral-400 hover:text-white"
+              >
+                roohifida.com
+              </a>.
             </p>
           </section>
 
         </div>
       </main>
 
+      <style>{`
+        @keyframes shine-purple {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes shine-red-blue {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shining-purple-text {
+          background: linear-gradient(120deg, #6B21A8 25%, #C084FC 50%, #6B21A8 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-purple 3.5s linear infinite;
+          text-shadow: 0 0 8px rgba(107, 33, 168, 0.35);
+          font-weight: 800;
+          display: inline-block;
+        }
+        .shining-red-blue-text {
+          background: linear-gradient(120deg, #DC2626 25%, #93C5FD 50%, #2563EB 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-red-blue 3.5s linear infinite;
+          text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
+          font-weight: 800;
+          display: inline-block;
+        }
+      `}</style>
       <Footer />
     </div>
   );

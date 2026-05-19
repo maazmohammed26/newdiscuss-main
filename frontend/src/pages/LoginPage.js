@@ -233,9 +233,30 @@ export default function LoginPage() {
       <footer className="py-6 text-center border-t border-white/5 relative z-10 bg-black">
         <p className="text-gray-500 text-xs font-semibold">
           <span>Developed by </span>
-          <span className="text-[#E53E3E] font-bold">&lt;Mohammed Maaz A&gt;</span>
+          <Link
+            to="/about"
+            className="shining-red-blue-text font-black hover:underline"
+          >
+            &lt;mma/&gt;
+          </Link>
         </p>
       </footer>
+      <style>{`
+        @keyframes shine-red-blue {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shining-red-blue-text {
+          background: linear-gradient(120deg, #DC2626 25%, #93C5FD 50%, #2563EB 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-red-blue 3.5s linear infinite;
+          text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
+          font-weight: 800;
+          display: inline-block;
+        }
+      `}</style>
 
       <TermsModal 
         open={showTerms} 

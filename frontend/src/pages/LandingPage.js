@@ -428,11 +428,56 @@ export default function LandingPage() {
               </Link>
             ))}
           </div>
-          <p className="text-xs" style={{ color: 'rgba(225,224,204,0.4)' }}>
-            &copy; {new Date().getFullYear()} Discuss. Built by Mohammed Maaz A.
-          </p>
+          <div className="text-xs text-center sm:text-right" style={{ color: 'rgba(225,224,204,0.4)' }}>
+            &copy; {new Date().getFullYear()} Discuss. Built by{' '}
+            <a
+              href="https://www.maazportfolio.site/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shining-red-blue-text font-black hover:underline"
+            >
+              &lt;mma/&gt;
+            </a>{' '}
+            in collaboration with{' '}
+            <Link
+              to="/about#digitalclink"
+              className="shining-purple-text font-black hover:underline"
+            >
+              DigitalClink
+            </Link>
+          </div>
         </div>
       </footer>
+      <style>{`
+        @keyframes shine-purple {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes shine-red-blue {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shining-purple-text {
+          background: linear-gradient(120deg, #6B21A8 25%, #C084FC 50%, #6B21A8 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-purple 3.5s linear infinite;
+          text-shadow: 0 0 8px rgba(107, 33, 168, 0.35);
+          font-weight: 800;
+          display: inline-block;
+        }
+        .shining-red-blue-text {
+          background: linear-gradient(120deg, #DC2626 25%, #93C5FD 50%, #2563EB 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-red-blue 3.5s linear infinite;
+          text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
+          font-weight: 800;
+          display: inline-block;
+        }
+      `}</style>
     </div>
   );
 }

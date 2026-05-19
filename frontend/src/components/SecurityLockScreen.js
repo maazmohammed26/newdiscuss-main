@@ -102,7 +102,12 @@ export default function SecurityLockScreen() {
 
   const handleFullLogout = async () => {
     setShowLogoutConfirm(false);
-    await logout();
+    try {
+      await logout();
+    } catch (err) {
+      console.error(err);
+    }
+    window.location.href = '/';
   };
 
   return (
