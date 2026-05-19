@@ -70,13 +70,17 @@ module.exports = {
                                 '3': 'hsl(var(--chart-3))',
                                 '4': 'hsl(var(--chart-4))',
                                 '5': 'hsl(var(--chart-5))'
-                        }
+                        },
+                        brand: '#6366F1',
+                        charcoal: '#2D2D2D',
+                        cream: '#DEDBC8',
                 },
                 fontFamily: {
                         sans: ['DM Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
                         heading: ['Sora', 'sans-serif'],
                         body: ['DM Sans', 'Inter', 'sans-serif'],
-                        mono: ['Roboto Mono', 'Courier New', 'monospace']
+                        mono: ['Roboto Mono', 'Courier New', 'monospace'],
+                        serif: ['"Instrument Serif"', 'serif']
                 },
                 boxShadow: {
                         'card': '0 1px 3px rgba(0, 0, 0, 0.08)',

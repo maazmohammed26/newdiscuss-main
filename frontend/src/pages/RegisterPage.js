@@ -41,13 +41,11 @@ export default function RegisterPage() {
   const { register, loginWithGoogle, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
 
-  // Page loading effect
   useEffect(() => {
     const timer = setTimeout(() => setPageLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Check admin settings
   useEffect(() => {
     getAdminSettings().then(settings => {
       setSignupEnabled(settings.signup_enabled !== false);
@@ -69,7 +67,6 @@ export default function RegisterPage() {
     generateCaptcha();
   }, []);
 
-  // Real-time username validation
   useEffect(() => {
     if (usernameTimeout.current) clearTimeout(usernameTimeout.current);
     if (!username.trim()) { setUsernameStatus(null); return; }
@@ -88,7 +85,6 @@ export default function RegisterPage() {
     }, 500);
   }, [username]);
 
-  // Real-time email validation
   useEffect(() => {
     if (emailTimeout.current) clearTimeout(emailTimeout.current);
     if (!email.trim()) { setEmailStatus(null); return; }
@@ -184,11 +180,11 @@ export default function RegisterPage() {
   };
 
   const statusTextColor = (status) => {
-    if (!status) return 'text-[#6275AF]';
+    if (!status) return 'text-gray-500';
     if (status.type === 'available') return 'text-[#10B981]';
     if (status.type === 'taken') return 'text-[#EF4444]';
     if (status.type === 'invalid') return 'text-[#F59E0B]';
-    return 'text-[#6275AF]';
+    return 'text-gray-500';
   };
 
   if (pageLoading || settingsLoading) {
@@ -196,9 +192,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] flex flex-col">
+    <div className="min-h-screen bg-black text-[#E1E0CC] flex flex-col relative overflow-hidden">
+      <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
       <AdminMessageBanner />
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
+
+      <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <Link to="/" data-testid="register-logo">
@@ -206,27 +204,29 @@ export default function RegisterPage() {
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-[#1E293B] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:shadow-none p-6 md:p-8">
+          <div className="relative bg-[#101010] rounded-2xl shadow-2xl p-6 md:p-8 border border-white/5 pt-1.5 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+
             {verificationSent ? (
               <div data-testid="verification-sent-message" className="text-center py-4">
-                <div className="w-16 h-16 bg-[#2563EB]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-8 h-8 text-[#2563EB]" />
+                <div className="w-16 h-16 bg-[#DC2626]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#DC2626]/20">
+                  <Shield className="w-8 h-8 text-[#DC2626]" />
                 </div>
-                <h3 className="text-[#0F172A] dark:text-[#F1F5F9] font-bold text-lg mb-2">Verify Your Email</h3>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] text-[14px] leading-relaxed mb-1">
+                <h3 className="text-white font-extrabold text-lg mb-2">Verify Your Email</h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-1 font-medium">
                   We've sent a verification link to:
                 </p>
-                <p className="text-[#2563EB] font-semibold text-[15px] mb-4">{verificationEmail}</p>
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] rounded-xl p-4 text-left space-y-2 mb-5 border border-[#E2E8F0] dark:border-[#334155]">
-                  <p className="text-[#0F172A] dark:text-[#F1F5F9] text-[13px] font-medium">Next steps:</p>
-                  <ol className="text-[#6275AF] dark:text-[#94A3B8] text-[13px] space-y-1.5 list-decimal list-inside">
+                <p className="text-[#2563EB] font-bold text-[15px] mb-4">{verificationEmail}</p>
+                <div className="bg-[#181818] rounded-xl p-4 text-left space-y-2 mb-6 border border-white/5">
+                  <p className="text-white text-xs font-bold uppercase tracking-wider">Next steps:</p>
+                  <ol className="text-gray-400 text-[13px] space-y-1.5 list-decimal list-inside font-medium">
                     <li>Open the email from Discuss</li>
                     <li>Click the verification link</li>
                     <li>You'll be redirected and signed in automatically</li>
                   </ol>
                 </div>
                 {error && (
-                  <div className="bg-[#EF4444]/8 border border-[#EF4444]/15 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
+                  <div className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
                     <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
                   </div>
                 )}
@@ -234,55 +234,55 @@ export default function RegisterPage() {
                   data-testid="resend-verification-btn"
                   onClick={handleResendVerification}
                   disabled={resending}
-                  className="w-full bg-[#F5F5F7] dark:bg-[#334155] hover:bg-[#E2E8F0] dark:hover:bg-[#475569] text-[#0F172A] dark:text-[#F1F5F9] font-medium rounded-full py-2.5 h-11 mb-3"
+                  className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-2.5 h-11 mb-3"
                 >
                   {resending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Resend Verification Email'}
                 </Button>
-                <Link to="/login" className="text-[#2563EB] hover:underline font-semibold text-[13px]">
+                <Link to="/login" className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold text-xs transition-colors">
                   Back to Login
                 </Link>
               </div>
             ) : !signupEnabled ? (
               <div data-testid="signup-disabled-message" className="text-center py-8">
-                <div className="w-16 h-16 bg-[#F59E0B]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-[#F59E0B]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#F59E0B]/20">
                   <AlertCircle className="w-8 h-8 text-[#F59E0B]" />
                 </div>
-                <h3 className="text-[#0F172A] font-semibold text-lg mb-2">Sign Up Disabled</h3>
-                <p className="text-[#64748B] text-[14px]">Admin has disabled the sign-up process. Thank you.</p>
-                <Link to="/login" className="inline-block mt-4 text-[#2563EB] hover:underline font-semibold text-[14px]">
+                <h3 className="text-white font-bold text-lg mb-2">Sign Up Disabled</h3>
+                <p className="text-gray-400 text-[14px] font-medium">Admin has disabled the sign-up process. Thank you.</p>
+                <Link to="/login" className="inline-block mt-4 text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold text-[14px]">
                   Go to Login
                 </Link>
               </div>
             ) : (
               <>
                 {error && (
-                  <div data-testid="register-error" className="bg-[#EF4444]/8 border border-[#EF4444]/15 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
+                  <div data-testid="register-error" className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
                     <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
                   </div>
                 )}
 
                 <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={googleLoading}
-                  className="w-full bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] hover:bg-[#E2E8F0] dark:hover:bg-[#334155] rounded-full py-2.5 h-11 font-medium flex items-center justify-center gap-2.5 mb-5">
+                  className="w-full bg-[#181818] border border-white/5 text-[#E1E0CC] hover:bg-[#202020] rounded-xl py-2.5 h-11 font-bold flex items-center justify-center gap-2.5 mb-5">
                   {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
                 </Button>
 
                 <div className="relative mb-5">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#E2E8F0] dark:border-[#334155]" /></div>
-                  <div className="relative flex justify-center text-[11px]"><span className="bg-white dark:bg-[#1E293B] px-3 text-[#94A3B8] uppercase tracking-wider">Or sign up with email</span></div>
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
+                  <div className="relative flex justify-center text-[10px]"><span className="bg-[#101010] px-3 text-gray-500 uppercase tracking-widest font-bold">Or sign up with email</span></div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3.5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Username */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] font-bold uppercase tracking-[0.1em]">Username</label>
+                      <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Username</label>
                       {statusIcon(usernameStatus)}
                     </div>
                     <Input data-testid="register-username-input" value={username} onChange={(e) => setUsername(e.target.value)}
                       placeholder="Choose a username"
-                      className={`mt-1 bg-[#F5F5F7] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#6275AF] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#2563EB] rounded-xl h-11 ${statusColor(usernameStatus)}`} />
+                      className={`mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 ${statusColor(usernameStatus)}`} />
                     {usernameStatus?.msg && (
-                      <p className={`text-[11px] mt-1 flex items-center gap-1 ${statusTextColor(usernameStatus)}`}>
+                      <p className={`text-[11px] mt-1 flex items-center gap-1 font-bold ${statusTextColor(usernameStatus)}`}>
                         {usernameStatus.msg}
                       </p>
                     )}
@@ -291,14 +291,14 @@ export default function RegisterPage() {
                   {/* Email */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] font-bold uppercase tracking-[0.1em]">Email</label>
+                      <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email</label>
                       {statusIcon(emailStatus)}
                     </div>
                     <Input data-testid="register-email-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@example.com"
-                      className={`mt-1 bg-[#F5F5F7] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#6275AF] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#2563EB] rounded-xl h-11 ${statusColor(emailStatus)}`} />
+                      className={`mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 ${statusColor(emailStatus)}`} />
                     {emailStatus?.msg && (
-                      <p className={`text-[11px] mt-1 flex items-center gap-1 ${statusTextColor(emailStatus)}`}>
+                      <p className={`text-[11px] mt-1 flex items-center gap-1 font-bold ${statusTextColor(emailStatus)}`}>
                         {emailStatus.msg}
                       </p>
                     )}
@@ -306,12 +306,12 @@ export default function RegisterPage() {
 
                   {/* Password */}
                   <div>
-                    <label className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
+                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
                     <div className="relative mt-1">
                       <Input data-testid="register-password-input" type={showPw ? 'text' : 'password'} value={password}
                         onChange={(e) => setPassword(e.target.value)} placeholder="6+ characters"
-                        className="bg-[#F5F5F7] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#6275AF] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#2563EB] rounded-xl h-11 pr-10" />
-                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] dark:text-[#94A3B8]">
+                        className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
+                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                         {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -319,12 +319,12 @@ export default function RegisterPage() {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] font-bold uppercase tracking-[0.1em]">Confirm Password</label>
+                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Confirm Password</label>
                     <Input data-testid="register-confirm-password-input" type="password" value={confirmPw}
                       onChange={(e) => setConfirmPw(e.target.value)} placeholder="Repeat password"
-                      className="mt-1 bg-[#F5F5F7] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#6275AF] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#2563EB] rounded-xl h-11" />
+                      className="mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11" />
                     {confirmPw && password !== confirmPw && (
-                      <span className="text-[#EF4444] text-[11px] mt-1 flex items-center gap-1">
+                      <span className="text-[#EF4444] text-[11px] mt-1 flex items-center gap-1 font-bold">
                         <XCircle className="w-3 h-3" />Passwords don't match
                       </span>
                     )}
@@ -332,30 +332,23 @@ export default function RegisterPage() {
 
                   {/* Terms and Conditions */}
                   <div className="flex items-start gap-3 pt-2">
-                    <div 
-                      className="mt-1 w-4 h-4 cursor-pointer"
-                      onClick={() => {
-                        if (!termsAccepted) {
-                          setError("Please click on the Terms and Conditions, review them, and scroll down before accepting.");
-                        }
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={termsAccepted}
+                      onChange={(e) => {
+                        setTermsAccepted(e.target.checked);
+                        setError('');
                       }}
-                    >
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        checked={termsAccepted}
-                        onChange={() => {}}
-                        className="w-full h-full accent-[#2563EB] cursor-pointer pointer-events-none"
-                        data-testid="register-terms-checkbox"
-                        readOnly
-                      />
-                    </div>
-                    <label htmlFor="terms" className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
+                      className="w-4 h-4 mt-0.5 accent-[#2563EB] cursor-pointer rounded bg-[#181818] border-white/10"
+                      data-testid="register-terms-checkbox"
+                    />
+                    <label htmlFor="terms" className="text-gray-400 text-xs font-bold cursor-pointer select-none">
                       I agree to the{' '}
                       <button
                         type="button"
                         onClick={() => setShowTerms(true)}
-                        className="text-[#2563EB] hover:underline font-semibold"
+                        className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold transition-colors"
                         data-testid="register-terms-link"
                       >
                         Terms and Conditions
@@ -365,17 +358,16 @@ export default function RegisterPage() {
 
                   {/* CAPTCHA */}
                   <div>
-                    <label className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] font-bold uppercase tracking-[0.1em]">Security CAPTCHA</label>
+                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Security CAPTCHA</label>
                     <div className="flex items-center gap-3 mt-1 mb-2">
-                      <div className="relative flex-1 max-w-[140px] bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl h-11 flex items-center justify-center overflow-hidden select-none">
-                        <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjxwb2x5Z29uIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4xIiBwb2ludHM9IjQgMCAwIDQgMCAwIDQgNCIvPjwvc3ZnPg==')] pointer-events-none"></div>
-                        <span className="font-mono text-lg font-extrabold tracking-[0.3em] text-[#0F172A] dark:text-[#F1F5F9]">{captchaTarget}</span>
+                      <div className="relative flex-1 max-w-[140px] bg-[#181818] border border-white/5 rounded-xl h-11 flex items-center justify-center overflow-hidden select-none">
+                        <span className="font-mono text-lg font-black tracking-[0.3em] text-[#DEDBC8]">{captchaTarget}</span>
                       </div>
                       <button
                         type="button"
                         onClick={generateCaptcha}
                         title="Refresh CAPTCHA"
-                        className="p-2 text-[#6275AF] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F1F5F9] hover:bg-[#E2E8F0] dark:hover:bg-[#334155] transition-colors rounded-xl"
+                        className="p-2 text-gray-500 hover:text-white transition-colors rounded-xl bg-[#181818] border border-white/5"
                       >
                         <RefreshCw className="w-5 h-5" />
                       </button>
@@ -383,17 +375,17 @@ export default function RegisterPage() {
                     <div className="relative">
                       <Input data-testid="register-captcha-input" type="text" value={captchaInput} onChange={(e) => { setCaptchaInput(e.target.value); setError(''); }}
                         placeholder="Enter above characters"
-                        className="bg-[#F5F5F7] dark:bg-[#0F172A] border-[#E2E8F0] dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#6275AF] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#2563EB] rounded-xl h-11 pr-10" />
+                        className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
                         {captchaInput.length > 0 && captchaInput === captchaTarget ? (
-                          <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                          <CheckCircle2 className="w-5 h-5 text-green-500" />
                         ) : captchaInput.length > 0 ? (
-                          <XCircle className="w-5 h-5 text-[#EF4444]" />
+                          <XCircle className="w-5 h-5 text-red-500" />
                         ) : null}
                       </div>
                     </div>
                     {captchaInput.length > 0 && captchaInput !== captchaTarget && (
-                       <span className="text-[#EF4444] text-[11px] mt-1 flex items-center gap-1">
+                       <span className="text-[#EF4444] text-[11px] mt-1 flex items-center gap-1 font-bold">
                          <XCircle className="w-3 h-3" />CAPTCHA does not match
                        </span>
                     )}
@@ -401,14 +393,14 @@ export default function RegisterPage() {
 
                   <Button type="submit" data-testid="register-submit-btn"
                     disabled={loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted}
-                    className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-full py-3 h-12 text-[15px] shadow-lg shadow-[#2563EB]/20 mt-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all mt-1 disabled:opacity-40 disabled:cursor-not-allowed">
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>
                 </form>
 
-                <p className="text-center text-[#6275AF] dark:text-[#94A3B8] text-[13px] mt-5">
+                <p className="text-center text-gray-500 text-[13px] mt-6 font-medium">
                   Already have an account?{' '}
-                  <Link to="/login" data-testid="register-to-login-link" className="text-[#2563EB] hover:underline font-semibold">
+                  <Link to="/login" data-testid="register-to-login-link" className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold transition-colors">
                     Login
                   </Link>
                 </p>
@@ -417,17 +409,17 @@ export default function RegisterPage() {
           </div>
 
           <div className="text-center mt-6 flex items-center justify-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#94A3B8]" />
-            <span className="text-[#94A3B8] text-[11px] font-semibold uppercase tracking-wider">Secure Authentication</span>
+            <Shield className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Secure Authentication</span>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="py-4 text-center">
-        <p className="text-[#94A3B8] text-[12px]">
+      <footer className="py-6 text-center border-t border-white/5 relative z-10 bg-black">
+        <p className="text-gray-500 text-xs font-semibold">
           Developed by{' '}
-          <span className="text-[#BC4800] font-semibold">&lt;Mohammed Maaz A&gt;</span>
+          <span className="text-[#E53E3E] font-bold">&lt;Mohammed Maaz A&gt;</span>
         </p>
       </footer>
 

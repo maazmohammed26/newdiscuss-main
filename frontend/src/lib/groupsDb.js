@@ -303,7 +303,7 @@ const addGroupToUserList = async (userId, groupId, groupName, groupType, joinedA
   }
 };
 
-export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, media = [], location = null) => {
+export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, media = [], location = null, forwardedInfo = null) => {
   try {
     if (!fourthDatabase) throw new Error('Database not available');
     const memberRef = ref(fourthDatabase, `groups/${groupId}/members/${senderId}`);
@@ -329,7 +329,8 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
       sender: senderId, 
       timestamp, 
       type: 'message',
-      location: location || null
+      location: location || null,
+      ...(forwardedInfo ? { forwarded: true, originalSender: forwardedInfo.originalSender } : {})
     };
     
     if (replyTo) {

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 
 export default function AboutPage() {
   useEffect(() => {
@@ -14,56 +14,102 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen flex flex-col bg-black text-[#E1E0CC]">
       <Header />
       
-      <main className="flex-1 max-w-3xl mx-auto px-6 py-10 md:py-16 w-full">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 discuss:text-[#9CA3AF] discuss:hover:text-[#F5F5F5] transition-colors mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Discuss
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-12 md:py-20 w-full relative z-10">
+        <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
+
+        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold transition-colors mb-10 group" style={{ color: 'rgba(225, 224, 204, 0.7)' }}>
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span>Back to Discuss</span>
         </Link>
-        <h1 className="text-3xl md:text-5xl font-bold font-heading text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-6">
-          About Discuss
-        </h1>
-        
-        <div className="prose prose-neutral dark:prose-invert max-w-none text-neutral-700 dark:text-neutral-300 discuss:text-[#A3A3A3] leading-relaxed space-y-8">
+
+        {/* Section Header with red and blue accent */}
+        <div className="relative mb-12">
+          <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-[#DC2626] to-[#2563EB] rounded-full hidden md:block" />
+          <span className="text-[10px] sm:text-xs font-bold tracking-[0.25em] uppercase text-[#3182CE] mb-2 block">
+            Our Mission & Purpose
+          </span>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 text-[#DEDBC8] leading-none">
+            About Discuss
+          </h1>
+          <div className="w-20 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB] rounded-full" />
+        </div>
+
+        <div className="space-y-12 leading-relaxed">
           
-          <section>
-            <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-3">
+          <section className="bg-[#101010] p-6 sm:p-10 rounded-2xl border border-white/5 shadow-2xl relative pt-1.5">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
               Platform Purpose
             </h2>
-            <p>
-              Discuss is an uncompromising developer discussion platform. It was crafted with a single explicit purpose: to serve as a high-signal, zero-noise ecosystem where developers, engineers, and learners can share ideas, ask deep questions, and connect over technical growth without the distractions of algorithmic feeds or ads.
+            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
+              Discuss is an uncompromising developer discussion platform. It was crafted with a single explicit purpose: to serve as a high-signal, zero-noise ecosystem where developers, engineers, and learners can share ideas, ask deep questions, and connect over technical growth without the distractions of algorithmic feeds, cookies, or intrusive advertising.
             </p>
           </section>
 
-          <section>
-            <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-3">
-              Core Features
-            </h2>
-            <ul className="list-disc pl-5 space-y-2">
-              <li><strong>Real-time Chat & Groups:</strong> Lightning fast messaging caches syncing peer-to-peer or within large community hubs.</li>
-              <li><strong>Technical Feed:</strong> Native support for sharing GitHub repository links wrapped in structured context.</li>
-              <li><strong>Rich Discussions:</strong> Granular comment threads designed to keep engineering solutions organized.</li>
-              <li><strong>Privacy First:</strong> Built-in 24-hour auto-disappearing chat modes for sensitive team chats.</li>
-            </ul>
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#101010] p-6 sm:p-8 rounded-2xl border border-white/5 shadow-xl">
+              <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+                Core Ecosystem Features
+              </h2>
+              <ul className="space-y-3.5">
+                {[
+                  { title: "Real-time Chat & Groups", desc: "Lightning fast messaging caches syncing peer-to-peer or within hubs." },
+                  { title: "Technical Feed", desc: "Native support for sharing GitHub repository links wrapped in structured context." },
+                  { title: "Rich Discussions", desc: "Granular comment threads designed to keep engineering solutions organized." },
+                  { title: "Privacy First", desc: "Built-in 24-hour auto-disappearing chat modes for sensitive team chats." }
+                ].map((f, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm">
+                    <Check className="w-4 h-4 mt-1 flex-shrink-0" style={{ color: i % 2 === 0 ? '#DC2626' : '#2563EB' }} />
+                    <div>
+                      <strong className="text-white block font-semibold">{f.title}</strong>
+                      <span className="text-gray-400 text-xs">{f.desc}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-[#101010] p-6 sm:p-8 rounded-2xl border border-white/5 shadow-xl flex flex-col justify-between">
+              <div>
+                <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
+                  Vision & Promise
+                </h2>
+                <p className="text-sm text-gray-300 mb-4 leading-relaxed font-medium">
+                  The vision is simple: The internet needs fewer distractions and more substantial builder-oriented communities. Discuss is proudly <strong className="text-[#DEDBC8] font-bold">100% free, free from ads, and free from algorithmic manipulation</strong>.
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  There are no tracking scripts mining your time, only the genuine discussions you actively choose to participate in.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-white/5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                Built by Builders, for Builders
+              </div>
+            </div>
           </section>
 
-          <section>
-            <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-3">
-              Vision & Promise
-            </h2>
-            <p>
-              The vision is simple: The internet needs fewer distractions and more substantial builder-oriented communities. Discuss is proudly <strong>100% free, free from ads, and free from algorithmic scams</strong>. There are no tracking scripts mining your time, only the discussions you actively choose to engage with.
-            </p>
-          </section>
-
-          <section className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] p-6 rounded-[16px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] mt-12">
-            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-3">
+          <section className="bg-gradient-to-br from-[#101010] to-[#151515] p-6 sm:p-10 rounded-2xl border border-white/5 mt-12 relative overflow-hidden shadow-2xl">
+            <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-[#DC2626]/10 to-[#2563EB]/10 rounded-full blur-2xl" />
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
               The Story Behind the Code
             </h2>
-            <p className="mb-0">
-              Discuss is a student-built ecosystem designed, architected, and managed entirely by <a href="https://www.linkedin.com/in/mohammed-maaz-a-0aa730217/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 discuss:text-[#EF4444] font-medium hover:underline">Mohammad Maaz</a>, a solo developer and AI engineer passionate about performant web architectures. What started as an academic undertaking has evolved into a production-grade infrastructure aiming to set a gold standard for clean, responsive application design.
+            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
+              Discuss is a student-built ecosystem designed, architected, and managed entirely by{' '}
+              <a 
+                href="https://www.linkedin.com/in/mohammed-maaz-a-0aa730217/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-extrabold hover:underline transition-all text-[#E53E3E] inline-flex items-center gap-1"
+              >
+                Mohammad Maaz
+              </a>
+              , a solo developer and AI engineer passionate about performant web architectures. What started as an academic undertaking has evolved into a production-grade infrastructure aiming to set a gold standard for clean, responsive application design.
             </p>
           </section>
 

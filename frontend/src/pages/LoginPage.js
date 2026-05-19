@@ -92,9 +92,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] flex flex-col">
+    <div className="min-h-screen bg-black text-[#E1E0CC] flex flex-col relative overflow-hidden">
+      <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
       <AdminMessageBanner />
-      <div className="flex-1 flex items-center justify-center px-4">
+      
+      <div className="flex-1 flex items-center justify-center px-4 relative z-10 py-12">
         <div className="w-full max-w-sm">
           {/* Logo */}
           <div className="text-center mb-8">
@@ -104,18 +106,20 @@ export default function LoginPage() {
           </div>
 
           {/* Card */}
-          <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] shadow-card p-6 md:p-8 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+          <div className="relative bg-[#101010] rounded-2xl shadow-2xl p-6 md:p-8 border border-white/5 pt-1.5 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+
             {error && (
-              <div data-testid="login-error" className="bg-[#EF4444]/8 border border-[#EF4444]/15 rounded-[6px] p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
+              <div data-testid="login-error" className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2 font-medium">
                 <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
               </div>
             )}
 
             {showForgotDisabled && (
-              <div data-testid="forgot-disabled-message" className="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-[6px] p-3 text-[#92400E] dark:text-[#FCD34D] text-[13px] mb-4 flex items-start gap-2">
+              <div data-testid="forgot-disabled-message" className="bg-[#F59E0B]/10 border border-[#F59E0B]/25 rounded-xl p-3 text-[#FCD34D] text-[13px] mb-4 flex items-start gap-2 font-medium">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#F59E0B]" />
                 <span>Admin has disabled this feature. Thank you.</span>
-                <button onClick={() => setShowForgotDisabled(false)} className="ml-auto text-[#92400E] dark:text-[#FCD34D] hover:opacity-80">
+                <button onClick={() => setShowForgotDisabled(false)} className="ml-auto text-[#FCD34D] hover:opacity-80">
                   <XCircle className="w-4 h-4" />
                 </button>
               </div>
@@ -123,19 +127,19 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[11px] font-bold uppercase tracking-[0.1em]">Email Address</label>
+                <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email Address</label>
                 <Input data-testid="login-email-input" type="email" value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="name@example.com"
-                  className="mt-1.5 bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#262626] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:bg-white dark:focus:bg-neutral-800 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] h-11" />
+                  className="mt-1.5 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11" />
               </div>
               <div>
                 <div className="flex justify-between items-center">
-                  <label className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
+                  <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
                   <button 
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-[#2563EB] discuss:text-[#EF4444] text-[12px] font-medium hover:underline"
+                    className="text-[#2563EB] hover:text-[#DC2626] text-[12px] font-bold hover:underline"
                     data-testid="login-forgot-password"
                   >
                     Forgot?
@@ -145,8 +149,8 @@ export default function LoginPage() {
                   <Input data-testid="login-password-input" type={showPw ? 'text' : 'password'} value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     placeholder="Enter password"
-                    className="bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#262626] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:bg-white dark:focus:bg-neutral-800 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] h-11 pr-10" />
-                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+                    className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -154,17 +158,16 @@ export default function LoginPage() {
 
               {/* CAPTCHA */}
               <div>
-                <label className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[11px] font-bold uppercase tracking-[0.1em]">Security CAPTCHA</label>
+                <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Security CAPTCHA</label>
                 <div className="flex items-center gap-3 mt-1.5 mb-2">
-                  <div className="relative flex-1 max-w-[140px] bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[6px] h-11 flex items-center justify-center overflow-hidden select-none">
-                    <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjxwb2x5Z29uIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4xIiBwb2ludHM9IjQgMCAwIDQgMCAwIDQgNCIvPjwvc3ZnPg==')] pointer-events-none"></div>
-                    <span className="font-mono text-lg font-extrabold tracking-[0.3em] text-neutral-900 dark:text-white discuss:text-[#F5F5F5]">{captchaTarget}</span>
+                  <div className="relative flex-1 max-w-[140px] bg-[#181818] border border-white/5 rounded-xl h-11 flex items-center justify-center overflow-hidden select-none">
+                    <span className="font-mono text-lg font-black tracking-[0.3em] text-[#DEDBC8]">{captchaTarget}</span>
                   </div>
                   <button
                     type="button"
                     onClick={generateCaptcha}
                     title="Refresh CAPTCHA"
-                    className="p-2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#333333]"
+                    className="p-2 text-gray-500 hover:text-white transition-colors rounded-xl bg-[#181818] border border-white/5"
                   >
                     <RefreshCw className="w-5 h-5" />
                   </button>
@@ -172,7 +175,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <Input data-testid="login-captcha-input" type="text" value={captchaInput} onChange={(e) => { setCaptchaInput(e.target.value); setError(''); }}
                     placeholder="Enter above characters"
-                    className="bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#262626] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:bg-white dark:focus:bg-neutral-800 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] h-11 pr-10" />
+                    className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
                     {captchaInput.length > 0 && captchaInput === captchaTarget ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -182,42 +185,42 @@ export default function LoginPage() {
                   </div>
                 </div>
                 {captchaInput.length > 0 && captchaInput !== captchaTarget && (
-                   <span className="text-red-500 text-[11px] mt-1 flex items-center gap-1">
+                   <span className="text-red-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
                      <XCircle className="w-3 h-3" /><span>CAPTCHA does not match</span>
                    </span>
                 )}
               </div>
 
               <Button type="submit" data-testid="login-submit-btn" disabled={loading}
-                className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white font-semibold rounded-[6px] py-3 h-12 text-[15px] shadow-button hover:shadow-button-hover transition-all">
+                className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Login</span>}
               </Button>
             </form>
 
-            <div className="relative my-5">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]" /></div>
-              <div className="relative flex justify-center text-[11px]"><span className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] px-3 text-neutral-400 uppercase tracking-wider"><span>Or continue with</span></span></div>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
+              <div className="relative flex justify-center text-[10px]"><span className="bg-[#101010] px-3 text-gray-500 uppercase tracking-widest font-bold">Or continue with</span></div>
             </div>
 
             <Button type="button" data-testid="login-google-btn" onClick={handleGoogle} disabled={googleLoading}
-              className="w-full bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#333333] rounded-[6px] py-2.5 h-11 font-medium flex items-center justify-center gap-2.5">
+              className="w-full bg-[#181818] border border-white/5 text-[#E1E0CC] hover:bg-[#202020] rounded-xl py-2.5 h-11 font-bold flex items-center justify-center gap-2.5">
               {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> <span>Continue with Google</span></>}
             </Button>
 
-            <p className="text-center text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[13px] mt-5">
-              <span>New to discuss? </span><Link to="/register" data-testid="login-to-register-link" className="text-[#2563EB] discuss:text-[#EF4444] hover:underline font-semibold">Create account</Link>
+            <p className="text-center text-gray-500 text-[13px] mt-6 font-medium">
+              <span>New to discuss? </span><Link to="/register" data-testid="login-to-register-link" className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold transition-colors">Create account</Link>
             </p>
           </div>
 
           {/* Footer links */}
           <div className="text-center mt-6 flex items-center justify-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-neutral-400" />
-            <span className="text-neutral-400 text-[11px] font-semibold uppercase tracking-wider"><span>Secure Authentication</span></span>
+            <Shield className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Secure Authentication</span>
           </div>
           <div className="text-center mt-2 flex items-center justify-center">
             <button 
               onClick={() => setShowTerms(true)}
-              className="text-neutral-400 text-[11px] hover:text-[#2563EB] discuss:hover:text-[#EF4444] hover:underline"
+              className="text-gray-500 text-xs hover:text-white hover:underline transition-colors font-medium"
               data-testid="login-terms-link"
             >
               Terms and Conditions
@@ -227,10 +230,10 @@ export default function LoginPage() {
       </div>
 
       {/* Footer */}
-      <footer className="py-4 text-center">
-        <p className="text-neutral-400 text-[12px]">
+      <footer className="py-6 text-center border-t border-white/5 relative z-10 bg-black">
+        <p className="text-gray-500 text-xs font-semibold">
           <span>Developed by </span>
-          <span className="text-[#2563EB] discuss:text-[#EF4444] font-semibold">&lt;Mohammed Maaz A&gt;</span>
+          <span className="text-[#E53E3E] font-bold">&lt;Mohammed Maaz A&gt;</span>
         </p>
       </footer>
 

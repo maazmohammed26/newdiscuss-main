@@ -7,10 +7,10 @@ export default function DiscussLogo({ size = 'md', className = '' }) {
   };
 
   return (
-    <span className={`font-heading font-bold italic ${sizes[size]} ${className}`}>
-      <span className="text-[#2563EB]">&lt;</span>
-      <span className="text-[#BC4800]">discuss</span>
-      <span className="text-[#2563EB]">&gt;</span>
+    <span className={`font-heading font-black italic select-none tracking-tight ${sizes[size]} ${className}`}>
+      <span className="text-[#E53E3E] font-black">&lt;</span>
+      <span className="text-white font-extrabold tracking-tight">discuss</span>
+      <span className="text-[#3182CE] font-black">&gt;</span>
     </span>
   );
 }

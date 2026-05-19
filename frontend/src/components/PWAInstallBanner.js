@@ -10,28 +10,21 @@ export default function PWAInstallBanner() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
     const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches ||
                              window.navigator.standalone === true;
     setIsStandalone(isStandaloneMode);
 
-    // Check if iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIOSDevice);
 
-    // Listen for the beforeinstallprompt event
     const handleBeforeInstall = (e) => {
-      // Prevent Chrome 67+ from automatically showing the prompt
       e.preventDefault();
-      // Store the event for later use
       setDeferredPrompt(e);
-      // Show our custom banner
       setShowBanner(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // Show iOS banner after a delay if on iOS and not installed
     if (isIOSDevice && !isStandaloneMode) {
       const timer = setTimeout(() => {
         setShowBanner(true);
@@ -47,7 +40,6 @@ export default function PWAInstallBanner() {
     };
   }, []);
 
-  // Listen for successful install
   useEffect(() => {
     const handleAppInstalled = () => {
       setShowBanner(false);
@@ -61,7 +53,6 @@ export default function PWAInstallBanner() {
 
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) {
-      // For iOS, show instructions
       if (isIOS) {
         alert('To install this app:\n\n1. Tap the Share button\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" to confirm');
       }
@@ -71,20 +62,13 @@ export default function PWAInstallBanner() {
     setIsInstalling(true);
     
     try {
-      // Show the install prompt immediately
       deferredPrompt.prompt();
-      
-      // Wait for the user's response
       const { outcome } = await deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
         setShowBanner(false);
-      } else {
-        console.log('User dismissed the install prompt');
       }
       
-      // Clear the deferred prompt
       setDeferredPrompt(null);
     } catch (error) {
       console.error('Install error:', error);
@@ -95,11 +79,9 @@ export default function PWAInstallBanner() {
 
   const handleDismiss = () => {
     setShowBanner(false);
-    // Store dismissal in localStorage to not show again for a while
     localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
   };
 
-  // Check if banner was recently dismissed
   useEffect(() => {
     const dismissedTime = localStorage.getItem('pwa_banner_dismissed');
     if (dismissedTime) {
@@ -110,7 +92,6 @@ export default function PWAInstallBanner() {
     }
   }, []);
 
-  // Don't show if already installed or no prompt available (and not iOS)
   if (isStandalone || (!showBanner && !isIOS) || (!deferredPrompt && !isIOS && showBanner === false)) {
     return null;
   }
@@ -118,18 +99,21 @@ export default function PWAInstallBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="bg-[#2563EB] discuss:bg-[#EF4444] text-white px-4 py-3 relative animate-fade-in">
+    <div className="relative bg-[#101010] text-[#E1E0CC] border-b border-white/5 px-4 py-3.5 relative animate-fade-in pt-4">
+      {/* Top red-to-blue gradient thin border decoration */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[8px] bg-white/20 flex items-center justify-center shrink-0">
-            <Smartphone className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 flex items-center justify-center shrink-0">
+            <Smartphone className="w-5 h-5 text-[#DC2626]" />
           </div>
           <div>
-            <p className="font-semibold text-sm">Install Discuss App</p>
-            <p className="text-white/80 text-xs">
+            <p className="font-extrabold text-sm text-white">Install Discuss App</p>
+            <p className="text-gray-400 text-xs font-semibold">
               {isIOS 
-                ? 'Add to Home Screen for the best experience' 
-                : 'Get faster access and offline support'}
+                ? 'Add to Home Screen for the ultimate zero-noise feed.' 
+                : 'Get lightning fast local access and offline loading instantly.'}
             </p>
           </div>
         </div>
@@ -139,11 +123,11 @@ export default function PWAInstallBanner() {
             onClick={handleInstall}
             disabled={isInstalling}
             size="sm"
-            className="bg-white text-[#2563EB] discuss:text-[#EF4444] hover:bg-white/90 rounded-[6px] shadow-button font-semibold"
+            className="bg-[#181818] border border-white/5 text-white hover:bg-[#202020] hover:border-[#2563EB]/40 rounded-xl font-bold transition-all shadow-inner h-9"
           >
             {isInstalling ? (
               <span className="flex items-center gap-1.5">
-                <div className="w-3 h-3 border-2 border-[#2563EB]/30 border-t-[#2563EB] rounded-full animate-spin" />
+                <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                 Installing...
               </span>
             ) : (
@@ -155,10 +139,10 @@ export default function PWAInstallBanner() {
           </Button>
           <button
             onClick={handleDismiss}
-            className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+            className="p-1.5 hover:bg-white/5 rounded-full transition-colors"
             aria-label="Dismiss"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 text-gray-500 hover:text-white" />
           </button>
         </div>
       </div>

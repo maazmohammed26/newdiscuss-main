@@ -1,32 +1,48 @@
 /**
  * Full-viewport route skeleton for lazy-loaded pages (Suspense fallback).
+ * Styled perfectly to match the premium dark cinematic Discuss platform theme.
  */
 export default function PageRouteSkeleton() {
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
-      <header className="h-14 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#333333] bg-white dark:bg-neutral-900 discuss:bg-[#1a1a1a] animate-pulse">
-        <div className="max-w-6xl mx-auto px-4 h-full flex items-center justify-between">
-          <div className="h-8 w-28 rounded-md bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
-          <div className="flex gap-2">
-            <div className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
-            <div className="h-9 w-9 rounded-full bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
+    <div className="min-h-screen bg-black text-[#E1E0CC] select-none relative overflow-hidden">
+      <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
+
+      {/* Header Skeleton */}
+      <header className="h-14 border-b border-white/5 bg-black/90 backdrop-blur-md animate-pulse relative">
+        {/* Top red-and-blue thick accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+
+        <div className="max-w-5xl mx-auto px-4 h-full flex items-center justify-between">
+          {/* Logo Placeholder */}
+          <div className="h-6 w-24 rounded-lg bg-[#181818] border border-white/5" />
+          
+          <div className="flex gap-3">
+            <div className="h-9 w-14 rounded-xl bg-[#181818] border border-white/5" />
+            <div className="h-9 w-9 rounded-xl bg-[#181818] border border-white/5" />
+            <div className="h-9 w-9 rounded-xl bg-[#181818] border border-white/5" />
           </div>
         </div>
       </header>
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-4">
-        <div className="h-8 w-48 rounded-md bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] animate-pulse" />
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
+
+      {/* Main Skeleton */}
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6 relative z-10">
+        <div className="h-7 w-40 rounded-lg bg-[#181818] border border-white/5 animate-pulse" />
+        
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-24 rounded-[12px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] overflow-hidden animate-pulse"
+              className="h-24 rounded-2xl bg-[#101010] border border-white/5 overflow-hidden animate-pulse relative pt-1"
             >
-              <div className="p-4 flex gap-3">
-                <div className="h-12 w-12 rounded-full bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] shrink-0" />
-                <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-3 w-1/3 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] rounded" />
-                  <div className="h-2 w-full bg-neutral-100 dark:bg-neutral-600 discuss:bg-[#262626] rounded" />
-                  <div className="h-2 w-4/5 bg-neutral-100 dark:bg-neutral-600 discuss:bg-[#262626] rounded" />
+              {/* Subtle top border gradient accent on cards */}
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-[#DC2626]/20 to-[#2563EB]/20" />
+
+              <div className="p-4 flex gap-4 items-start">
+                <div className="h-12 w-12 rounded-xl bg-[#181818] border border-white/5 shrink-0" />
+                <div className="flex-1 space-y-2.5 pt-1">
+                  <div className="h-3 w-1/4 bg-[#181818] rounded-md border border-white/5" />
+                  <div className="h-2.5 w-full bg-[#181818] rounded-md border border-white/5" />
+                  <div className="h-2.5 w-5/6 bg-[#181818] rounded-md border border-white/5" />
                 </div>
               </div>
             </div>

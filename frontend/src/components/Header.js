@@ -65,7 +65,10 @@ export default function Header() {
   const totalNotifications = unreadChatCount + pendingFriendRequests + pendingGroupRequests + commentBadgeCount;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 dark:bg-neutral-900/95 discuss:bg-[#121212]/95 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#333333]">
+    <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/5 relative select-none">
+      {/* Top red-and-blue thick accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center" data-testid="header-logo">
           <DiscussLogo size="md" />
@@ -78,7 +81,7 @@ export default function Header() {
                 <Button 
                   variant="ghost" 
                   data-testid="header-feed-btn" 
-                  className="text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] rounded-[6px] px-3 sm:px-4 text-[13px] font-medium"
+                  className="text-gray-400 hover:text-white hover:bg-[#181818] rounded-xl px-3 sm:px-4 text-[13px] font-bold transition-all"
                 >
                   Feed
                 </Button>
@@ -90,24 +93,24 @@ export default function Header() {
                   <PopoverTrigger asChild>
                     <Button 
                       variant="ghost" 
-                      className="relative w-9 h-9 p-0 rounded-[6px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+                      className="relative w-9 h-9 p-0 rounded-xl bg-[#181818] hover:bg-[#202020] border border-white/5 transition-all"
                     >
-                      <Megaphone className="w-4 h-4 text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF]" />
+                      <Megaphone className="w-4 h-4 text-gray-400 hover:text-white" />
                       {hasUnseenAdmin && (
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#EF4444] rounded-full animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#DC2626] rounded-full animate-pulse" />
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-72 p-3" align="end">
+                  <PopoverContent className="w-72 p-4 bg-[#101010] border border-white/5 text-[#E1E0CC] rounded-xl shadow-2xl" align="end">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-medium text-[#2563EB] discuss:text-[#EF4444]">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#DC2626]">
                         <Megaphone className="w-4 h-4" />
-                        Admin Message
+                        Admin Announcement
                       </div>
-                      <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                      <p className="text-sm text-gray-300 font-medium leading-relaxed">
                         {adminMessage.message}
                       </p>
-                      <p className="text-[10px] text-neutral-500">
+                      <p className="text-[10px] text-gray-500 font-mono">
                         {adminMessage.createdAt && new Date(adminMessage.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -119,12 +122,12 @@ export default function Header() {
                 <Button 
                   variant="ghost" 
                   data-testid="header-chat-btn" 
-                  className="w-9 h-9 p-0 rounded-[6px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+                  className="w-9 h-9 p-0 rounded-xl bg-[#181818] hover:bg-[#202020] border border-white/5 transition-all"
                 >
-                  <MessageCircle className="w-4 h-4 text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF]" />
+                  <MessageCircle className="w-4 h-4 text-gray-400 hover:text-white" />
                 </Button>
                 {(unreadChatCount > 0 || unreadGroupMessages || hasNewGroupRequests) && (
-                  <span className="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[10px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1">
+                  <span className="absolute -top-1 -right-1 bg-[#DC2626] text-white text-[10px] font-black min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1 shadow-[0_0_8px_rgba(220,38,38,0.4)]">
                     {unreadChatCount > 0 ? (unreadChatCount > 99 ? '99+' : unreadChatCount) : ''}
                   </span>
                 )}
@@ -133,7 +136,7 @@ export default function Header() {
                 <Button 
                   variant="ghost" 
                   data-testid="header-profile-btn" 
-                  className="w-9 h-9 p-0 rounded-[6px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] overflow-hidden"
+                  className="w-9 h-9 p-0 rounded-xl bg-[#181818] hover:bg-[#202020] border border-white/5 overflow-hidden transition-all"
                 >
                   <UserAvatar
                     src={user.photo_url || null}
@@ -143,7 +146,7 @@ export default function Header() {
                   />
                 </Button>
                 {(pendingFriendRequests > 0 || commentBadgeCount > 0) && (
-                  <span className="absolute -top-1 -right-1 bg-[#F59E0B] text-white text-[10px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1">
+                  <span className="absolute -top-1 -right-1 bg-[#2563EB] text-white text-[10px] font-black min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1 shadow-[0_0_8px_rgba(37,99,235,0.4)]">
                     {(pendingFriendRequests + commentBadgeCount) > 99 ? '99+' : pendingFriendRequests + commentBadgeCount}
                   </span>
                 )}
@@ -155,12 +158,7 @@ export default function Header() {
                 <Button 
                   variant="ghost" 
                   data-testid="header-login-btn" 
-                  className="text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] rounded-[6px] px-4 text-[13px] font-medium border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
-                  style={
-                    document.documentElement.classList.contains('discuss-black')
-                      ? { color: '#F0F0F8', borderColor: 'rgba(255,0,127,0.25)', backgroundColor: 'transparent' }
-                      : {}
-                  }
+                  className="text-gray-400 hover:text-white hover:bg-[#181818] rounded-xl px-4 text-[13px] font-bold border border-white/5 transition-all"
                 >
                   Login
                 </Button>
@@ -168,7 +166,7 @@ export default function Header() {
               <Link to="/register">
                 <Button 
                   data-testid="header-register-btn" 
-                  className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] rounded-[6px] px-5 text-[13px] font-medium shadow-button hover:shadow-button-hover transition-all"
+                  className="bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white hover:opacity-90 rounded-xl px-5 text-[13px] font-black transition-opacity shadow-lg"
                 >
                   Register
                 </Button>

@@ -103,7 +103,7 @@ const updateUserChatList = async (userId, chatId, otherUserId, lastMessage) => {
  * @param {Array} media - Optional media array
  * @param {Object} location - Optional location {latitude, longitude, address}
  */
-export const sendMessage = async (chatId, senderId, text, media = [], location = null) => {
+export const sendMessage = async (chatId, senderId, text, media = [], location = null, forwardedInfo = null) => {
   try {
     if (!thirdDatabase) {
       console.error('Third database not initialized');
@@ -122,7 +122,8 @@ export const sendMessage = async (chatId, senderId, text, media = [], location =
       timestamp,
       read: false,
       status: 'sent',
-      location: location || null
+      location: location || null,
+      ...(forwardedInfo ? { forwarded: true, originalSender: forwardedInfo.originalSender } : {})
     };
     await set(newMessageRef, message);
     

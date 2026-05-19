@@ -12,14 +12,12 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="py-8 px-6 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] bg-white dark:bg-[#1E1E1E] discuss:bg-[#121212]">
+    <footer className="py-8 px-6 border-t border-white/10 bg-black text-[#DEDBC8]">
       <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
         
         {/* Left Side: Branding */}
         <div className="flex items-center gap-4">
           <DiscussLogo size="md" />
-          <div className="h-6 w-px bg-neutral-300 dark:bg-neutral-600 discuss:bg-[#333333] hidden sm:block"></div>
-          <ThemeToggle />
         </div>
 
         {/* Middle: Links */}
@@ -28,7 +26,10 @@ export default function Footer() {
             <Link
               key={link.name}
               to={link.path}
-              className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50 discuss:text-[#9CA3AF] discuss:hover:text-[#F5F5F5] transition-colors"
+              className="transition-colors text-neutral-400 hover:text-white"
+              style={{ color: 'rgba(225,224,204,0.6)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#E1E0CC')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(225,224,204,0.6)')}
             >
               {link.name}
             </Link>
@@ -36,7 +37,7 @@ export default function Footer() {
         </div>
 
         {/* Right Side: Copyright */}
-        <div className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-center lg:text-right">
+        <div className="text-xs text-neutral-500 text-center lg:text-right" style={{ color: 'rgba(225,224,204,0.4)' }}>
           &copy; {new Date().getFullYear()} Discuss. Built for developers.<br />
           <span className="opacity-70 mt-1 inline-block">All rights reserved.</span>
         </div>

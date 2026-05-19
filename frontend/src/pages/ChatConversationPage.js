@@ -93,6 +93,66 @@ export default function ChatConversationPage() {
   const [chatCreated, setChatCreated] = useState(false);
   const [liveMessagesSynced, setLiveMessagesSynced] = useState(false);
 
+  // Optimistic UI, expanded and forwarding states
+  const [optimisticMessages, setOptimisticMessages] = useState([]);
+  const [expandedMessages, setExpandedMessages] = useState({});
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwardTargets, setForwardTargets] = useState({ chats: [], groups: [] });
+  const [forwardSearch, setForwardSearch] = useState('');
+
+  const clearAllHighlights = useCallback(() => {
+    Object.values(messageRefs.current).forEach(element => {
+      if (element) {
+        element.classList.remove('ring-2', 'ring-[#2563EB]', 'ring-opacity-50', 'highlight-message');
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', clearAllHighlights);
+      return () => container.removeEventListener('scroll', clearAllHighlights);
+    }
+  }, [clearAllHighlights]);
+
+  useEffect(() => {
+    if (showForwardModal && user?.id) {
+      (async () => {
+        try {
+          const chats = await getChatsWithUserDetails(user.id);
+          const { getUserGroups } = await import('@/lib/groupsDb');
+          const groups = await getUserGroups(user.id);
+          setForwardTargets({ chats, groups });
+        } catch (error) {
+          console.error('Error loading forward targets:', error);
+        }
+      })();
+    }
+  }, [showForwardModal, user?.id]);
+
+  const handleForwardToTarget = async (targetId, type) => {
+    if (!selectedMessage) return;
+    try {
+      const originalSender = selectedMessage.originalSender || selectedMessage.sender;
+      const forwardedInfo = { originalSender };
+      
+      if (type === 'dm') {
+        await sendMessage(targetId, user.id, selectedMessage.text || '', selectedMessage.media || [], null, forwardedInfo);
+      } else {
+        const { sendGroupMessage } = await import('@/lib/groupsDb');
+        await sendGroupMessage(targetId, user.id, selectedMessage.text || '', null, selectedMessage.media || [], null, forwardedInfo);
+      }
+      
+      toast.success('Message forwarded successfully!');
+      setShowForwardModal(false);
+      setSelectedMessage(null);
+    } catch (error) {
+      console.error('Error forwarding message:', error);
+      toast.error(error.message || 'Failed to forward message');
+    }
+  };
+
   const deletedIdsRef = useRef([]);
   const otherUserRef = useRef(null);
   const userIdRef = useRef(null);
@@ -348,43 +408,78 @@ export default function ChatConversationPage() {
     );
   };
 
-  const handleSendMessage = async (e, mediaFiles = null) => {
+  const handleSendMessage = (e, mediaFiles = null) => {
     if (e) e.preventDefault();
     const effectiveMedia = mediaFiles || pendingMedia;
     if (!newMessage.trim() && (!effectiveMedia || effectiveMedia.length === 0) && !chatId) return;
     if (!chatEnabled) return;
 
     const messageText = newMessage.trim();
+    
+    // 1. Instantly reset inputs/state for instant feel (0ms lag)
     setNewMessage('');
     setShowMediaUpload(false);
     setPendingMedia([]);
-    setSending(true);
-    
-    try {
-      // Ensure chat exists first
-      const chatExists = await ensureChatExists();
-      if (!chatExists) {
-        throw new Error('Failed to create chat');
-      }
-
-      if (replyTo) {
-        await sendReplyMessage(chatId, user.id, messageText, replyTo, effectiveMedia);
-        setReplyTo(null);
-      } else {
-        await sendMessage(chatId, user.id, messageText, effectiveMedia);
-      }
-      // Send notifications (fires in background, non-blocking)
-      const isImage = !!(effectiveMedia && effectiveMedia.length > 0);
-      notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
-      notifyDiscordDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
-      inputRef.current?.focus();
-    } catch (error) {
-      console.error('Send message error:', error);
-      setNewMessage(messageText);
-      toast.error(error.message || 'Failed to send message');
-    } finally {
-      setSending(false);
+    const currentReplyTo = replyTo;
+    setReplyTo(null);
+    if (inputRef.current) {
+      inputRef.current.style.height = '40px';
+      inputRef.current.style.overflowY = 'hidden';
     }
+
+    // 2. Generate and add the optimistic message to state instantly!
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      sender: user.id,
+      text: messageText,
+      timestamp: new Date().toISOString(),
+      read: false,
+      status: 'sent',
+      media: effectiveMedia || [],
+      location: null,
+      replyTo: currentReplyTo ? {
+        id: currentReplyTo.id,
+        text: currentReplyTo.text?.substring(0, 100) || '',
+        sender: currentReplyTo.sender
+      } : null
+    };
+    
+    setOptimisticMessages(prev => [...prev, optimisticMsg]);
+
+    // 3. Dispatch the database write completely in the background without blocking the UI
+    (async () => {
+      try {
+        const chatExists = await ensureChatExists();
+        if (!chatExists) {
+          throw new Error('Failed to create chat');
+        }
+
+        if (currentReplyTo) {
+          await sendReplyMessage(chatId, user.id, messageText, currentReplyTo, effectiveMedia);
+        } else {
+          await sendMessage(chatId, user.id, messageText, effectiveMedia);
+        }
+        
+        // Background non-blocking triggers
+        const isImage = !!(effectiveMedia && effectiveMedia.length > 0);
+        notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
+        notifyDiscordDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
+        
+        // Remove from optimistic list since it's successfully written
+        setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
+      } catch (error) {
+        console.error('Send message error:', error);
+        // Put the message back in the input box so they don't lose it if it actually failed!
+        setNewMessage(messageText);
+        toast.error(error.message || 'Failed to send message');
+        // Clean up this optimistic message since it failed
+        setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
+      }
+    })();
+
+    // Always keep focus in input
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleDeleteChat = async () => {
@@ -605,12 +700,24 @@ export default function ChatConversationPage() {
     }
   };
 
+  const combinedMessages = useMemo(() => {
+    const filteredOptimistic = optimisticMessages.filter(om => {
+      const omTime = new Date(om.timestamp).getTime();
+      return !messages.some(m => 
+        m.sender === om.sender && 
+        m.text === om.text && 
+        Math.abs(new Date(m.timestamp).getTime() - omTime) < 8000
+      );
+    });
+    return [...messages, ...filteredOptimistic];
+  }, [messages, optimisticMessages]);
+
   const messageById = useMemo(
-    () => Object.fromEntries(messages.map((m) => [m.id, m])),
-    [messages]
+    () => Object.fromEntries(combinedMessages.map((m) => [m.id, m])),
+    [combinedMessages]
   );
 
-  const visibleMessages = messages.filter((m) => !deletedMessageIds.includes(m.id));
+  const visibleMessages = combinedMessages.filter((m) => !deletedMessageIds.includes(m.id));
 
   const groupedMessages = visibleMessages.reduce((groups, message) => {
     const date = formatMessageDate(message.timestamp);
@@ -801,6 +908,7 @@ export default function ChatConversationPage() {
       {/* Messages */}
       <div 
         ref={messagesContainerRef}
+        onClick={clearAllHighlights}
         className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide"
         style={{ maxHeight: `calc(100vh - ${autoDeleteEnabled ? 176 : (replyTo ? 180 : 140)}px)` }}
       >
@@ -948,11 +1056,38 @@ export default function ChatConversationPage() {
                           </div>
                         )}
 
-                        {message.text && (
-                          <div className="text-[14px] md:text-[15px] leading-relaxed">
-                            <ChatLinkText text={message.text} isOwn={isOwn} />
+                        {message.forwarded && message.originalSender && message.originalSender !== message.sender && (
+                          <div className={`flex items-center gap-1 text-[10px] opacity-75 mb-1 italic ${isOwn ? 'text-white/80' : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]'}`}>
+                            <Reply className="w-3 h-3 transform scale-x-[-1]" />
+                            <span>Forwarded</span>
                           </div>
                         )}
+
+                        {message.text && (() => {
+                          const lines = message.text.split('\n');
+                          const hasMore = lines.length > 8;
+                          const isExpanded = expandedMessages[message.id];
+                          const displayText = hasMore && !isExpanded 
+                            ? lines.slice(0, 8).join('\n') 
+                            : message.text;
+
+                          return (
+                            <div className="text-[14px] md:text-[15px] leading-relaxed">
+                              <ChatLinkText text={displayText} isOwn={isOwn} />
+                              {hasMore && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedMessages(prev => ({ ...prev, [message.id]: !prev[message.id] }));
+                                  }}
+                                  className={`font-semibold text-xs ml-1 hover:underline focus:outline-none ${isOwn ? 'text-blue-100 hover:text-white underline' : 'text-blue-600 dark:text-blue-400'}`}
+                                >
+                                  {isExpanded ? 'Less' : '... More'}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                         
                         <div className={`flex items-center justify-end gap-1 mt-1 opacity-70`}>
                           <span className="text-[10px] tabular-nums">
@@ -1097,24 +1232,43 @@ export default function ChatConversationPage() {
               >
                 <IoLocationSharp size={22} />
               </button>
-              <Input
+              <textarea
                 ref={inputRef}
+                rows={1}
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => {
+                  setNewMessage(e.target.value);
+                  e.target.style.height = 'auto';
+                  const computedHeight = e.target.scrollHeight;
+                  if (computedHeight > 130) {
+                    e.target.style.height = '130px';
+                    e.target.style.overflowY = 'auto';
+                  } else {
+                    e.target.style.height = `${computedHeight}px`;
+                    e.target.style.overflowY = 'hidden';
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage(e);
+                  }
+                }}
                 placeholder={replyTo ? "Type your reply..." : "Type a message..."}
-                className="flex-1 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-full px-4"
+                className="flex-1 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-2xl px-4 py-2.5 text-[14px] md:text-[15px] focus:outline-none resize-none max-h-[130px] input-textarea-scroll"
+                style={{
+                  height: '40px',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
                 disabled={sending}
               />
               <Button
                 type="submit"
-                disabled={(!newMessage.trim() && pendingMedia.length === 0 && !showMediaUpload) || sending}
+                disabled={!newMessage.trim() && pendingMedia.length === 0 && !showMediaUpload}
                 className="rounded-full w-10 h-10 p-0 bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white shadow-button"
               >
-                {sending ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
+                <Send className="w-5 h-5" />
               </Button>
             </form>
           </div>
@@ -1149,6 +1303,18 @@ export default function ChatConversationPage() {
               >
                 <Copy className="w-5 h-5 text-[#10B981]" />
                 <span>Copy</span>
+              </button>
+            )}
+            {!selectedMessage?.deleted && (
+              <button
+                onClick={() => {
+                  setShowMessageOptions(false);
+                  setShowForwardModal(true);
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] transition-colors"
+              >
+                <Send className="w-5 h-5 text-[#3b82f6] transform rotate-45" />
+                <span>Forward</span>
               </button>
             )}
             <button
@@ -1300,6 +1466,121 @@ export default function ChatConversationPage() {
           onClose={() => setShowFullscreen(false)} 
         />
       )}
+
+      {showForwardModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-between">
+              <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] flex items-center gap-2">
+                <Send className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444] transform rotate-45" />
+                Forward Message
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForwardModal(false);
+                  setForwardSearch('');
+                }}
+                className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Search Input */}
+            <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+              <input
+                type="text"
+                value={forwardSearch}
+                onChange={(e) => setForwardSearch(e.target.value)}
+                placeholder="Search friends or groups..."
+                className="w-full bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 rounded-lg px-3 py-2 text-sm focus:outline-none"
+              />
+            </div>
+            
+            {/* Targets List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[45vh] scrollbar-hide">
+              {/* Direct Chats */}
+               <div>
+                 <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-2">Direct Chats</p>
+                 {forwardTargets.chats.filter(c => 
+                   c.otherUserDetails?.username?.toLowerCase().includes(forwardSearch.toLowerCase()) ||
+                   c.otherUserDetails?.fullName?.toLowerCase().includes(forwardSearch.toLowerCase())
+                 ).length === 0 ? (
+                   <p className="text-xs text-neutral-500 italic py-1">No chats found</p>
+                 ) : (
+                   <div className="space-y-2">
+                     {forwardTargets.chats.filter(c => 
+                       c.otherUserDetails?.username?.toLowerCase().includes(forwardSearch.toLowerCase()) ||
+                       c.otherUserDetails?.fullName?.toLowerCase().includes(forwardSearch.toLowerCase())
+                     ).map(c => (
+                       <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                         <div className="flex items-center gap-2.5 min-w-0">
+                           <UserAvatar src={c.otherUserDetails?.photo_url} username={c.otherUserDetails?.username} className="w-8 h-8" />
+                           <div className="min-w-0">
+                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                               {c.otherUserDetails?.fullName || c.otherUserDetails?.username}
+                             </p>
+                             <p className="text-[10px] text-neutral-400 truncate">@{c.otherUserDetails?.username}</p>
+                           </div>
+                         </div>
+                         <button
+                           onClick={() => handleForwardToTarget(c.chatId, 'dm')}
+                           className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                         >
+                           Forward
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+               
+               {/* Groups */}
+               <div>
+                 <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-2">Groups</p>
+                 {forwardTargets.groups.filter(g =>
+                   g.groupName?.toLowerCase().includes(forwardSearch.toLowerCase())
+                 ).length === 0 ? (
+                   <p className="text-xs text-neutral-500 italic py-1">No groups found</p>
+                 ) : (
+                   <div className="space-y-2">
+                     {forwardTargets.groups.filter(g =>
+                       g.groupName?.toLowerCase().includes(forwardSearch.toLowerCase())
+                     ).map(g => (
+                       <div key={g.groupId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                         <div className="flex items-center gap-2.5 min-w-0">
+                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#2563EB] flex items-center justify-center text-white text-xs font-bold font-mono">
+                             G
+                           </div>
+                           <div className="min-w-0">
+                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                               {g.groupName}
+                             </p>
+                             <p className="text-[10px] text-neutral-400 truncate">{g.groupType === 'public' ? '🌍 Public Group' : '🔒 Private Group'}</p>
+                           </div>
+                         </div>
+                         <button
+                           onClick={() => handleForwardToTarget(g.groupId, 'group')}
+                           className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                         >
+                           Forward
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .input-textarea-scroll::-webkit-scrollbar {
+          display: none;
+        }
+      `}} />
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

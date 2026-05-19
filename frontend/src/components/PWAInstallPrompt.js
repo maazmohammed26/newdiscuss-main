@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Download, Share, Plus, Smartphone, Monitor, Bell } from 'lucide-react';
 
-// Local storage key for tracking if prompt was shown
 const PROMPT_SHOWN_KEY = 'discuss_pwa_prompt_shown';
 const PROMPT_DISMISSED_KEY = 'discuss_pwa_prompt_dismissed';
 
@@ -17,13 +16,11 @@ export default function PWAInstallPrompt() {
   const [installing, setInstalling] = useState(false);
   
   useEffect(() => {
-    // Check if already shown or dismissed
     const wasShown = localStorage.getItem(PROMPT_SHOWN_KEY);
     const wasDismissed = localStorage.getItem(PROMPT_DISMISSED_KEY);
     
     if (wasDismissed) return;
     
-    // Detect platform
     const ua = navigator.userAgent;
     let detectedPlatform = 'desktop';
     
@@ -35,24 +32,20 @@ export default function PWAInstallPrompt() {
     
     setPlatform(detectedPlatform);
     
-    // Check if already installed as PWA
     const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
                         window.navigator.standalone === true;
     
     if (isInstalled) return;
     
-    // Listen for beforeinstallprompt (Android/Desktop Chrome)
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show prompt after short delay for better UX
       setTimeout(() => setShowPrompt(true), 2000);
       localStorage.setItem(PROMPT_SHOWN_KEY, 'true');
     };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     
-    // For iOS or if no beforeinstallprompt, show manual instructions
     if (detectedPlatform === 'ios' || !wasShown) {
       setTimeout(() => {
         setShowPrompt(true);
@@ -65,7 +58,6 @@ export default function PWAInstallPrompt() {
     };
   }, []);
   
-  // Handle install click
   const handleInstall = async () => {
     if (deferredPrompt) {
       setInstalling(true);
@@ -82,68 +74,68 @@ export default function PWAInstallPrompt() {
     }
   };
   
-  // Handle dismiss
   const handleDismiss = () => {
     setShowPrompt(false);
     localStorage.setItem(PROMPT_DISMISSED_KEY, 'true');
   };
   
-  // Handle "Maybe Later"
   const handleLater = () => {
     setShowPrompt(false);
-    // Don't set dismissed, will show again next visit
   };
   
   if (!showPrompt) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="w-full max-w-md mx-4 mb-4 sm:mb-0 bg-background rounded-2xl shadow-2xl border overflow-hidden animate-in slide-in-from-bottom duration-300">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="w-full max-w-md mx-4 mb-4 sm:mb-0 bg-[#101010] rounded-2xl shadow-2xl border border-white/5 overflow-hidden animate-in slide-in-from-bottom duration-300 pt-1">
+        {/* Top thick gradient accent line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
+
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+        <div className="relative p-6 text-white bg-gradient-to-b from-[#181818] to-[#101010]">
           <button
             onClick={handleDismiss}
-            className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/10 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-gray-400" />
           </button>
           
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-white/20 rounded-xl">
+            <div className="p-3 bg-[#DC2626]/10 rounded-xl border border-[#DC2626]/20">
               {platform === 'ios' ? (
-                <Smartphone className="h-8 w-8" />
+                <Smartphone className="h-7 w-7 text-[#DC2626]" />
               ) : platform === 'android' ? (
-                <Download className="h-8 w-8" />
+                <Download className="h-7 w-7 text-[#2563EB]" />
               ) : (
-                <Monitor className="h-8 w-8" />
+                <Monitor className="h-7 w-7 text-[#2563EB]" />
               )}
             </div>
             <div>
-              <h3 className="text-xl font-bold">Install Discuss</h3>
-              <p className="text-white/80 text-sm">Get the full app experience</p>
+              <h3 className="text-lg font-black tracking-tight text-white">Install Discuss</h3>
+              <p className="text-gray-400 text-xs font-semibold">Get the ultimate zero-noise developer experience</p>
             </div>
           </div>
         </div>
         
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 text-gray-300 font-medium">
           {/* Benefits */}
           <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <div className="p-1.5 rounded-full bg-green-100 dark:bg-green-900/30">
-                <Bell className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="flex items-center gap-3 text-xs sm:text-sm">
+              <div className="p-1.5 rounded-full bg-[#DC2626]/10 border border-[#DC2626]/20">
+                <Bell className="h-4 w-4 text-[#DC2626]" />
               </div>
               <span>Real-time push notifications</span>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="p-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center gap-3 text-xs sm:text-sm">
+              <div className="p-1.5 rounded-full bg-[#2563EB]/10 border border-[#2563EB]/20">
+                <Download className="h-4 w-4 text-[#2563EB]" />
               </div>
               <span>Works offline & loads instantly</span>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="p-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30">
-                <Smartphone className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="flex items-center gap-3 text-xs sm:text-sm">
+              <div className="p-1.5 rounded-full bg-[#DC2626]/10 border border-[#DC2626]/20">
+                <Smartphone className="h-4 w-4 text-[#DC2626]" />
               </div>
               <span>Home screen access like a native app</span>
             </div>
@@ -151,19 +143,19 @@ export default function PWAInstallPrompt() {
           
           {/* Platform-specific instructions */}
           {platform === 'ios' && (
-            <div className="p-4 bg-muted rounded-xl space-y-3">
-              <p className="font-medium text-sm">How to install on iOS:</p>
-              <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="p-4 bg-[#181818] rounded-xl border border-white/5 space-y-3">
+              <p className="font-bold text-xs sm:text-sm text-white">How to install on iOS:</p>
+              <div className="space-y-2 text-xs text-gray-400 font-medium">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">1</span>
-                  <span>Tap the <Share className="inline h-4 w-4 mx-1" /> Share button below</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#DC2626]/20 text-[#DC2626] text-[10px] font-black">1</span>
+                  <span>Tap the <Share className="inline h-3.5 w-3.5 mx-1" /> Share button below</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">2</span>
-                  <span>Scroll down and tap <Plus className="inline h-4 w-4 mx-1" /> "Add to Home Screen"</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563EB]/20 text-[#2563EB] text-[10px] font-black">2</span>
+                  <span>Scroll down and tap <Plus className="inline h-3.5 w-3.5 mx-1" /> "Add to Home Screen"</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">3</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#DC2626]/20 text-[#DC2626] text-[10px] font-black">3</span>
                   <span>Tap "Add" to confirm</span>
                 </div>
               </div>
@@ -171,15 +163,15 @@ export default function PWAInstallPrompt() {
           )}
           
           {platform === 'android' && !deferredPrompt && (
-            <div className="p-4 bg-muted rounded-xl space-y-3">
-              <p className="font-medium text-sm">How to install on Android:</p>
-              <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="p-4 bg-[#181818] rounded-xl border border-white/5 space-y-3">
+              <p className="font-bold text-xs sm:text-sm text-white">How to install on Android:</p>
+              <div className="space-y-2 text-xs text-gray-400 font-medium">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">1</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#DC2626]/20 text-[#DC2626] text-[10px] font-black">1</span>
                   <span>Tap the menu (⋮) in your browser</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">2</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563EB]/20 text-[#2563EB] text-[10px] font-black">2</span>
                   <span>Select "Add to Home screen" or "Install app"</span>
                 </div>
               </div>
@@ -192,7 +184,7 @@ export default function PWAInstallPrompt() {
           <Button
             variant="outline"
             onClick={handleLater}
-            className="flex-1"
+            className="flex-1 bg-[#181818] hover:bg-[#202020] text-gray-400 hover:text-white border-white/5 rounded-xl h-11 font-bold"
           >
             Maybe Later
           </Button>
@@ -201,14 +193,14 @@ export default function PWAInstallPrompt() {
             <Button
               onClick={handleInstall}
               disabled={installing}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              className="flex-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white hover:opacity-90 transition-opacity rounded-xl h-11 font-bold shadow-lg"
             >
               {installing ? 'Installing...' : 'Install Now'}
             </Button>
           ) : (
             <Button
               onClick={handleDismiss}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              className="flex-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white hover:opacity-90 transition-opacity rounded-xl h-11 font-bold shadow-lg"
             >
               Got it!
             </Button>
