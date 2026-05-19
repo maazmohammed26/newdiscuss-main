@@ -220,11 +220,6 @@ export default function FeedPage() {
       )}
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
-        {/* Header */}
-        <div className="mb-4">
-          <h1 data-testid="feed-title" className="font-heading text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">Feed</h1>
-        </div>
-
         {/* Signal Stories Row */}
         <SignalStoriesRow />
 
