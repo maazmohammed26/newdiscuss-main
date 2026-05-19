@@ -147,6 +147,8 @@ function getWelcomeEmailHtml(name) {
 </html>`;
 }
 
+const https = require('https');
+
 /**
  * Sends a welcome transactional email via Brevo's API.
  * @param {string} toEmail - The recipient's email address.
@@ -164,10 +166,9 @@ async function sendWelcomeEmail(toEmail, displayName, apiKey) {
     return false;
   }
 
-  const url = 'https://api.brevo.com/v3/smtp/email';
   const htmlContent = getWelcomeEmailHtml(displayName);
 
-  const payload = {
+  const payload = JSON.stringify({
     sender: {
       name: '<Discuss/>',
       email: 'support@discussit.in'
@@ -180,32 +181,53 @@ async function sendWelcomeEmail(toEmail, displayName, apiKey) {
     ],
     subject: 'Welcome to Discuss!',
     htmlContent: htmlContent
+  });
+
+  const options = {
+    hostname: 'api.brevo.com',
+    port: 443,
+    path: '/v3/smtp/email',
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json',
+      'content-length': Buffer.byteLength(payload)
+    }
   };
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'api-key': apiKey,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+  return new Promise((resolve) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            const parsed = JSON.parse(data);
+            console.log(`[EmailService] Welcome email successfully sent to ${toEmail}. MessageId:`, parsed.messageId);
+          } catch (e) {
+            console.log(`[EmailService] Welcome email successfully sent to ${toEmail}.`);
+          }
+          resolve(true);
+        } else {
+          console.error(`[EmailService] Failed to send email via Brevo API (Status ${res.statusCode}):`, data);
+          resolve(false);
+        }
+      });
     });
 
-    const data = await response.json();
+    req.on('error', (error) => {
+      console.error('[EmailService] HTTPS request error sending email:', error.message);
+      resolve(false);
+    });
 
-    if (response.ok) {
-      console.log(`[EmailService] Welcome email successfully sent to ${toEmail}. MessageId:`, data.messageId);
-      return true;
-    } else {
-      console.error('[EmailService] Failed to send email via Brevo API:', JSON.stringify(data));
-      return false;
-    }
-  } catch (error) {
-    console.error('[EmailService] Network or unexpected error sending email:', error.message);
-    return false;
-  }
+    req.write(payload);
+    req.end();
+  });
 }
 
 module.exports = {
