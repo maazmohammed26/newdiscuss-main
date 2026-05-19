@@ -9,6 +9,8 @@ export default function Footer() {
     { name: 'Careers', path: '/careers' },
     { name: 'Blogs', path: '/blogs' },
     { name: 'Contact', path: '/contact' },
+    { name: 'Terms', path: '/terms' },
+    { name: 'Privacy', path: '/privacy' },
   ];
 
   return (
