@@ -39,8 +39,14 @@
 
 'use strict';
 
+const admin = require('firebase-admin');
+admin.initializeApp();
+
+const functions = require('firebase-functions');
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
+const { sendWelcomeEmail } = require('./emailService');
+
 
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_BOT_TOKEN');
 
@@ -199,3 +205,42 @@ exports.telegramWebhook = onRequest(
     res.status(200).send('ok');
   }
 );
+
+// ─── Welcome Email Auth Trigger ────────────────────────────────────────────────
+exports.sendWelcomeEmailOnSignUp = functions
+  .runWith({ secrets: ['BREVO_API_KEY'] })
+  .auth.user()
+  .onCreate(async (user) => {
+    const email = user.email;
+    if (!email) {
+      console.log('[AuthTrigger] User has no email. Skipping welcome email.');
+      return;
+    }
+
+    let displayName = user.displayName;
+
+    // If displayName is not present directly, fetch the username from RTDB /users/{uid}
+    if (!displayName && user.uid) {
+      try {
+        const dbRef = admin.database().ref(`users/${user.uid}`);
+        const snapshot = await dbRef.once('value');
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          displayName = userData.username;
+        }
+      } catch (err) {
+        console.warn(`[AuthTrigger] Error fetching username from RTDB for ${user.uid}:`, err.message);
+      }
+    }
+
+    // Fallback: use local part of email address
+    if (!displayName) {
+      displayName = email.split('@')[0] || 'Discuss Member';
+    }
+
+    const apiKey = process.env.BREVO_API_KEY;
+    console.log(`[AuthTrigger] Welcome email trigger initiated for ${user.uid} (${email}) with name: "${displayName}"`);
+    
+    await sendWelcomeEmail(email, displayName, apiKey);
+  });
+
