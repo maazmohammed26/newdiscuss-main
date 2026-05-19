@@ -220,16 +220,9 @@ export default function FeedPage() {
       )}
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
-        {/* Header + Create */}
-        <div className="flex items-center justify-between mb-4">
+        {/* Header */}
+        <div className="mb-4">
           <h1 data-testid="feed-title" className="font-heading text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">Feed</h1>
-          <Button
-            data-testid="create-post-btn"
-            onClick={() => setShowCreate(true)}
-            className="bg-[#2563EB] text-white hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] rounded-[6px] px-4 py-2 font-medium shadow-button hover:shadow-button-hover transition-all"
-          >
-            <Plus className="w-4 h-4 mr-1.5" /> New Post
-          </Button>
         </div>
 
         {/* Signal Stories Row */}
