@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { checkUsernameAvailable, checkEmailAvailable, getAdminSettings } from '@/lib/db';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ export default function RegisterPage() {
   const emailTimeout = useRef(null);
   const { register, loginWithGoogle, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setTimeout(() => setPageLoading(false), 1500);
@@ -126,7 +127,7 @@ export default function RegisterPage() {
       setVerificationSent(true);
       setVerificationEmail(email.trim());
     } else if (r.success) {
-      navigate('/feed');
+      navigate(location.state?.from || '/feed', { replace: true });
     } else {
       setError(r.error);
     }
@@ -153,7 +154,7 @@ export default function RegisterPage() {
     setGoogleLoading(true);
     const r = await loginWithGoogle();
     setGoogleLoading(false);
-    if (r.success) navigate('/feed');
+    if (r.success) navigate(location.state?.from || '/feed', { replace: true });
     else if (r.error) setError(r.error);
   };
 

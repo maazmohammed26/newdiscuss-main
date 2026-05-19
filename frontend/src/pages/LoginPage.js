@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setTimeout(() => setPageLoading(false), 1500);
@@ -70,7 +71,7 @@ export default function LoginPage() {
     setLoading(true);
     const r = await login(email, password);
     setLoading(false);
-    if (r.success) navigate('/feed');
+    if (r.success) navigate(location.state?.from || '/feed', { replace: true });
     else setError(r.error);
   };
 
@@ -83,7 +84,7 @@ export default function LoginPage() {
     setGoogleLoading(true);
     const r = await loginWithGoogle();
     setGoogleLoading(false);
-    if (r.success) navigate('/feed');
+    if (r.success) navigate(location.state?.from || '/feed', { replace: true });
     else if (r.error) setError(r.error);
   };
 

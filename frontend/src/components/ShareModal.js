@@ -43,11 +43,9 @@ export default function ShareModal({ open, onClose, post }) {
   const postTitle = truncateForDisplay(rawTitle, 80);
   const fullContent = post.content || '';
 
-  // Full share text (contains full URLs — used for sharing/copying)
-  let shareText = `"${post.title || post.content?.slice(0, 60) || 'Post'}" by @${post.author_username}\n\n${fullContent}`;
-  if (post.github_link) shareText += `\n\nGitHub: ${post.github_link}`;
-  if (post.preview_link) shareText += `\nLive Preview: ${post.preview_link}`;
-  shareText += '\n\nJoin Discuss';
+  // Full share text (contains the post's direct deep-link URL — used for sharing/copying)
+  const postUrl = `${window.location.origin}/post/${post.id}`;
+  const shareText = postUrl;
   const encodedText = encodeURIComponent(shareText);
 
   const handleCopy = async () => {
