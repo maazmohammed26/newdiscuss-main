@@ -149,9 +149,9 @@ export default function PostDetailPage() {
   const userVote = (post.votes || {})[user?.id] || null;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] pb-28">
       <Header />
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Back button */}
         <button
           data-testid="post-detail-back"

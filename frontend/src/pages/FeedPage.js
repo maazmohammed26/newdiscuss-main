@@ -209,7 +209,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
       <Header />
       
       {isOffline && (
@@ -219,7 +219,7 @@ export default function FeedPage() {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Header + Create */}
         <div className="flex items-center justify-between mb-4">
           <h1 data-testid="feed-title" className="font-heading text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">Feed</h1>

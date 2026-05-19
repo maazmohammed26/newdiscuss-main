@@ -72,9 +72,9 @@ export default function UserPostsPage() {
     : profileData?.bio;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212]">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
       <Header />
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
         <button
           data-testid="user-posts-back"
           onClick={() => navigate(location.state?.from || '/feed')}

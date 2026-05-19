@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
 import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
+import FloatingNavbar from '@/components/FloatingNavbar';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
@@ -202,6 +203,7 @@ function OnboardingWrapper({ children }) {
     <>
       {children}
       <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
+      <FloatingNavbar />
     </>
   );
 }

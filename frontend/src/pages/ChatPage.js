@@ -577,10 +577,10 @@ export default function ChatPage() {
                       groups.reduce((sum, g) => sum + (g.unreadCount || 0), 0);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
       <Header />
       
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Header with three-dot menu */}
         <div className="flex items-center gap-3 mb-4">
           <button

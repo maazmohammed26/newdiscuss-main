@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createPost } from '@/lib/db';
 import { Button } from '@/components/ui/button';
@@ -12,9 +12,15 @@ import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
 import { createPulse } from '@/lib/pulseDb';
 
-export default function CreatePostModal({ open, onClose, onCreated }) {
+export default function CreatePostModal({ open, onClose, onCreated, initialType = 'discussion' }) {
   const { user } = useAuth();
-  const [postType, setPostType] = useState('discussion');
+  const [postType, setPostType] = useState(initialType);
+
+  useEffect(() => {
+    if (open) {
+      setPostType(initialType);
+    }
+  }, [open, initialType]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [githubLink, setGithubLink] = useState('');

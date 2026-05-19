@@ -444,6 +444,7 @@ function SignalStoryViewer({
 
   return (
     <div
+      id="discuss-story-viewer"
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(8px)' }}
     >

@@ -39,7 +39,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center select-none overflow-hidden">
+    <div id="discuss-loading-screen" className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center select-none overflow-hidden">
       <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
 
       {/* Logo — with subtle fade when stuck */}

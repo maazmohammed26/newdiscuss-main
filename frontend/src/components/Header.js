@@ -77,16 +77,6 @@ export default function Header() {
         <nav className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <>
-              <Link to="/feed">
-                <Button 
-                  variant="ghost" 
-                  data-testid="header-feed-btn" 
-                  className="text-gray-400 hover:text-white hover:bg-[#181818] rounded-xl px-3 sm:px-4 text-[13px] font-bold transition-all"
-                >
-                  Feed
-                </Button>
-              </Link>
-              
               {/* Admin Message Icon - Only show if active */}
               {adminMessage && (
                 <Popover open={showAdminPopover} onOpenChange={handleAdminPopoverOpen}>
@@ -118,20 +108,6 @@ export default function Header() {
                 </Popover>
               )}
               
-              <Link to="/chat" className="relative">
-                <Button 
-                  variant="ghost" 
-                  data-testid="header-chat-btn" 
-                  className="w-9 h-9 p-0 rounded-xl bg-[#181818] hover:bg-[#202020] border border-white/5 transition-all"
-                >
-                  <MessageCircle className="w-4 h-4 text-gray-400 hover:text-white" />
-                </Button>
-                {(unreadChatCount > 0 || unreadGroupMessages || hasNewGroupRequests) && (
-                  <span className="absolute -top-1 -right-1 bg-[#DC2626] text-white text-[10px] font-black min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1 shadow-[0_0_8px_rgba(220,38,38,0.4)]">
-                    {unreadChatCount > 0 ? (unreadChatCount > 99 ? '99+' : unreadChatCount) : ''}
-                  </span>
-                )}
-              </Link>
               <Link to="/profile" className="relative">
                 <Button 
                   variant="ghost" 
