@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect } from 'react';
 import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { HighlightsProvider } from '@/contexts/HighlightsContext';
 import { SecurityProvider, useSecurity } from '@/contexts/SecurityContext';
 import SecurityLockScreen from '@/components/SecurityLockScreen';
@@ -70,6 +70,40 @@ function AuthRedirect({ children }) {
 
 // ── AppRoutes ─────────────────────────────────────────────────────────────────
 function AppRoutes() {
+  const { user } = useAuth();
+  const location = useLocation();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    
+    // Public routes that should always render in default light theme
+    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy'];
+    const isPublicRoute = publicRoutes.includes(location.pathname);
+
+    if (isPublicRoute || !user) {
+      // Force default light theme (remove all active theme selectors)
+      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black');
+      root.style.setProperty('--splash-bg', '#F5F5F7');
+    } else {
+      // Restore selected inside-app theme
+      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black');
+      
+      if (theme === 'dark') {
+        root.classList.add('dark');
+        root.style.setProperty('--splash-bg', '#000000');
+      } else if (theme === 'discuss-light') {
+        root.classList.add('discuss', 'discuss-light');
+        root.style.setProperty('--splash-bg', '#F5F5F7');
+      } else if (theme === 'discuss-black') {
+        root.classList.add('discuss-black');
+        root.style.setProperty('--splash-bg', '#0D0D12');
+      } else {
+        root.style.setProperty('--splash-bg', '#F5F5F7');
+      }
+    }
+  }, [location.pathname, user, theme]);
+
   return (
     <Suspense fallback={<PageRouteSkeleton />}>
       <Routes>
