@@ -44,8 +44,7 @@ admin.initializeApp();
 
 const functions = require('firebase-functions');
 const { onRequest } = require('firebase-functions/v2/https');
-const { defineSecret } = require('firebase-functions/params');
-const { sendWelcomeEmail } = require('./emailService');
+const { sendWelcomeEmail, sendEngagementEmail } = require('./emailService');
 
 
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_BOT_TOKEN');
@@ -208,7 +207,6 @@ exports.telegramWebhook = onRequest(
 
 // ─── Welcome Email Auth Trigger ────────────────────────────────────────────────
 exports.sendWelcomeEmailOnSignUp = functions
-  .runWith({ secrets: ['BREVO_API_KEY'] })
   .auth.user()
   .onCreate(async (user) => {
     const email = user.email;
@@ -242,5 +240,115 @@ exports.sendWelcomeEmailOnSignUp = functions
     console.log(`[AuthTrigger] Welcome email trigger initiated for ${user.uid} (${email}) with name: "${displayName}"`);
     
     await sendWelcomeEmail(email, displayName, apiKey);
+  });
+
+// ─── Broadcast Email Database Trigger ──────────────────────────────────────────
+exports.onAdminBroadcastTrigger = functions.database
+  .ref('/adminBroadcastTrigger')
+  .onWrite(async (change, context) => {
+    const data = change.after.val();
+    
+    // Only run if trigger is set to true
+    if (!data || data.trigger !== true) {
+      return null;
+    }
+    
+    const subject = data.subject || 'Share Your Insights on Discuss!';
+    const apiKey = process.env.BREVO_API_KEY;
+    
+    if (!apiKey) {
+      console.error('[BroadcastTrigger] BREVO_API_KEY environment variable is not defined.');
+      return change.after.ref.update({
+        trigger: false,
+        status: 'error',
+        error: 'API key is missing'
+      });
+    }
+
+    console.log('[BroadcastTrigger] Trigger detected! Resetting state to prevent double execution...');
+    
+    // 1. Immediately reset trigger to false and set status to processing to lock the function
+    await change.after.ref.update({
+      trigger: false,
+      status: 'processing',
+      error: null
+    });
+
+    try {
+      console.log('[BroadcastTrigger] Fetching user profiles from /users...');
+      const usersRef = admin.database().ref('users');
+      const usersSnapshot = await usersRef.once('value');
+      
+      if (!usersSnapshot.exists()) {
+        console.log('[BroadcastTrigger] No users found in database. Aborting.');
+        return change.after.ref.update({
+          status: 'error',
+          error: 'No users found in database'
+        });
+      }
+
+      const usersObj = usersSnapshot.val();
+      const recipients = [];
+
+      for (const uid in usersObj) {
+        const userProfile = usersObj[uid];
+        if (userProfile && userProfile.email) {
+          recipients.push({
+            email: userProfile.email.toLowerCase().trim(),
+            displayName: userProfile.username || 'Discuss Member'
+          });
+        }
+      }
+
+      console.log(`[BroadcastTrigger] Found ${recipients.length} recipients to email. Initiating batch processing...`);
+
+      // 2. Batch processing (20 emails at a time with a delay to prevent overloading)
+      const BATCH_SIZE = 20;
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const batch = recipients.slice(i, i + BATCH_SIZE);
+        console.log(`[BroadcastTrigger] Sending batch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} emails)...`);
+
+        const promises = batch.map(async (recipient) => {
+          try {
+            const success = await sendEngagementEmail(recipient.email, recipient.displayName, subject, apiKey);
+            if (success) successCount++;
+            else failureCount++;
+          } catch (err) {
+            console.error(`[BroadcastTrigger] Error sending to ${recipient.email}:`, err.message);
+            failureCount++;
+          }
+        });
+
+        await Promise.all(promises);
+
+        // Brief delay between batches (e.g. 500ms) to respect rate limits
+        if (i + BATCH_SIZE < recipients.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      console.log(`[BroadcastTrigger] Broadcast complete! Success: ${successCount}, Failures: ${failureCount}`);
+
+      // 3. Update database status to completed with results
+      return change.after.ref.update({
+        status: 'completed',
+        lastRun: new Date().toISOString(),
+        results: {
+          totalRecipients: recipients.length,
+          successCount,
+          failureCount
+        }
+      });
+
+    } catch (err) {
+      console.error('[BroadcastTrigger] Critical error during broadcast execution:', err.message);
+      return change.after.ref.update({
+        status: 'error',
+        error: err.message
+      });
+    }
   });
 
