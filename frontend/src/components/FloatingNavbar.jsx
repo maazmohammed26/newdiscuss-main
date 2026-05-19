@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { useSecurity } from '@/contexts/SecurityContext';
 import CreatePostModal from '@/components/CreatePostModal';
@@ -20,6 +21,7 @@ import {
 import { toast } from 'sonner';
 
 export default function FloatingNavbar() {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -128,6 +130,181 @@ export default function FloatingNavbar() {
     }
   };
 
+  // Theme-specific styles
+  const isLight = theme === 'light';
+  const isDark = theme === 'dark';
+  const isDiscussLight = theme === 'discuss-light';
+  const isDiscussBlack = theme === 'discuss-black';
+
+  // 1. Outer Dock Container Classes
+  let dockContainerClass = '';
+  if (isLight) {
+    dockContainerClass = 'bg-white/90 backdrop-blur-xl border border-neutral-200/50 shadow-[0_10px_35px_rgba(0,0,0,0.06)] rounded-[28px]';
+  } else if (isDark) {
+    dockContainerClass = 'bg-[#0F172A]/80 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)] rounded-[28px]';
+  } else if (isDiscussLight) {
+    dockContainerClass = 'bg-white border-2 border-black shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none';
+  } else if (isDiscussBlack) {
+    dockContainerClass = 'bg-[#13131A]/90 backdrop-blur-xl border border-[#FF007F]/20 shadow-[0_8px_32px_rgba(0,0,0,0.7),_0_0_15px_rgba(255,0,127,0.15)] rounded-[28px]';
+  }
+
+  // Top Accent Line
+  let topAccentClass = '';
+  if (isLight) {
+    topAccentClass = 'bg-gradient-to-r from-transparent via-blue-500/10 to-transparent';
+  } else if (isDark) {
+    topAccentClass = 'bg-gradient-to-r from-transparent via-blue-500/35 to-transparent';
+  } else if (isDiscussLight) {
+    topAccentClass = 'hidden';
+  } else if (isDiscussBlack) {
+    topAccentClass = 'bg-gradient-to-r from-transparent via-[#FF007F]/30 to-transparent';
+  }
+
+  // 2. Nav Item Base & Active Classes
+  const getNavItemClass = (path) => {
+    const isActive = path === '/feed' ? currentPath === '/feed' 
+                   : path === '/chat' ? currentPath.startsWith('/chat')
+                   : path === '/pulse' ? currentPath === '/pulse'
+                   : false;
+
+    const baseRound = isDiscussLight ? 'rounded-none' : 'rounded-2xl';
+
+    if (isActive) {
+      if (isLight) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-blue-600 bg-blue-50`;
+      } else if (isDark) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-blue-400 bg-blue-950/20`;
+      } else if (isDiscussLight) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-red-600 bg-red-50 border border-black`;
+      } else if (isDiscussBlack) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-[#FF007F] bg-[#FF007F]/10`;
+      }
+    } else {
+      if (isLight) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-[#64748B] hover:text-neutral-900 hover:bg-neutral-100/80`;
+      } else if (isDark) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-neutral-400 hover:text-white hover:bg-white/5`;
+      } else if (isDiscussLight) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-black hover:bg-black/5`;
+      } else if (isDiscussBlack) {
+        return `group relative flex items-center justify-center w-12 h-12 ${baseRound} transition-all duration-300 text-[#9090A8] hover:text-white hover:bg-white/5`;
+      }
+    }
+  };
+
+  // Nav Item Drop Shadow for Icons
+  const getIconDropShadow = (path) => {
+    const isActive = path === '/feed' ? currentPath === '/feed' 
+                   : path === '/chat' ? currentPath.startsWith('/chat')
+                   : path === '/pulse' ? currentPath === '/pulse'
+                   : false;
+    if (!isActive) return '';
+    if (isLight) return 'drop-shadow-[0_2px_6px_rgba(37,99,235,0.25)]';
+    if (isDark) return 'drop-shadow-[0_0_8px_rgba(59,130,246,0.45)]';
+    if (isDiscussLight) return '';
+    if (isDiscussBlack) return 'drop-shadow-[0_0_8px_rgba(255,0,127,0.5)]';
+    return '';
+  };
+
+  // Active Dot Indicator
+  const getActiveDot = (path) => {
+    const isActive = path === '/feed' ? currentPath === '/feed' 
+                   : path === '/chat' ? currentPath.startsWith('/chat')
+                   : path === '/pulse' ? currentPath === '/pulse'
+                   : false;
+    if (!isActive) return null;
+    
+    if (isLight) {
+      return <span className="absolute bottom-1 w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />;
+    } else if (isDark) {
+      return <span className="absolute bottom-1 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />;
+    } else if (isDiscussLight) {
+      return <span className="absolute bottom-1 w-1.5 h-1.5 bg-red-600 rounded-none border border-black animate-pulse" />;
+    } else if (isDiscussBlack) {
+      return <span className="absolute bottom-1 w-1.5 h-1.5 bg-[#FF007F] rounded-full animate-pulse shadow-[0_0_6px_#FF007F]" />;
+    }
+    return null;
+  };
+
+  // 3. Central Plus Button Classes
+  let plusButtonClass = '';
+  let plusOrbitClass = '';
+  let speedDialClass = '';
+  let speedDialBtnClass = '';
+  let speedDialTipClass = '';
+  
+  if (isLight) {
+    plusButtonClass = 'text-white bg-blue-600 hover:bg-blue-700 shadow-[0_4px_14px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.45)] border border-blue-500/10';
+    plusOrbitClass = menuOpen 
+      ? 'scale-110 blur-md bg-gradient-to-tr from-blue-400 via-blue-500 to-indigo-500 opacity-60'
+      : 'scale-100 blur-sm bg-blue-500 opacity-20 group-hover:scale-105';
+    speedDialClass = 'bg-white/95 backdrop-blur-xl border border-neutral-200/50 shadow-[0_10px_35px_rgba(0,0,0,0.1)] rounded-2xl';
+    speedDialBtnClass = 'bg-neutral-50 border border-neutral-200/40 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-500/20';
+    speedDialTipClass = 'bg-neutral-900 border border-neutral-800 text-white';
+  } else if (isDark) {
+    plusButtonClass = 'text-white bg-blue-600 hover:bg-blue-500 shadow-[0_4px_14px_rgba(37,99,235,0.45)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.55)] border border-white/20';
+    plusOrbitClass = menuOpen 
+      ? 'scale-110 blur-md bg-gradient-to-tr from-blue-500 via-indigo-600 to-blue-400 opacity-80'
+      : 'scale-100 blur-sm bg-blue-600 opacity-30 group-hover:scale-105';
+    speedDialClass = 'bg-[#0F172A]/95 backdrop-blur-xl border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] rounded-2xl';
+    speedDialBtnClass = 'bg-neutral-900 border border-white/5 text-neutral-400 hover:text-blue-400 hover:bg-blue-950/20 hover:border-blue-500/50';
+    speedDialTipClass = 'bg-black border border-white/10 text-white';
+  } else if (isDiscussLight) {
+    plusButtonClass = 'text-white bg-[#EF4444] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,1)] rounded-none';
+    plusOrbitClass = 'hidden';
+    speedDialClass = 'bg-white border-2 border-black shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none';
+    speedDialBtnClass = 'bg-white border border-neutral-300 text-black hover:bg-neutral-100 rounded-none';
+    speedDialTipClass = 'bg-white border-2 border-black text-black font-mono';
+  } else if (isDiscussBlack) {
+    plusButtonClass = 'text-white bg-gradient-to-tr from-[#FF007F] via-[#9333EA] to-[#7000FF] shadow-[0_4px_16px_rgba(255,0,127,0.4)] border border-[#FF007F]/20';
+    plusOrbitClass = menuOpen 
+      ? 'scale-110 blur-md bg-gradient-to-tr from-[#FF007F] via-[#9333EA] to-[#7000FF] opacity-90 animate-spin-slow'
+      : 'scale-100 blur-sm bg-gradient-to-tr from-[#FF007F] to-[#7000FF] opacity-40 group-hover:scale-105';
+    speedDialClass = 'bg-[#13131A]/95 backdrop-blur-xl border border-[#FF007F]/25 shadow-[0_15px_40px_rgba(0,0,0,0.8),_0_0_12px_rgba(255,0,127,0.1)] rounded-2xl';
+    speedDialBtnClass = 'bg-neutral-900/60 border border-[#FF007F]/15 text-[#9090A8] hover:text-[#FF007F] hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50';
+    speedDialTipClass = 'bg-[#13131A] border border-[#FF007F]/30 text-white';
+  }
+
+  // 4. Lock Icon Colors
+  let lockBtnClass = '';
+  let lockIconClass = '';
+  let lockDotClass = '';
+
+  if (isLockEnabled) {
+    if (isLight) {
+      lockBtnClass = 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100/50';
+      lockIconClass = 'drop-shadow-[0_1.5px_4px_rgba(16,185,129,0.3)] text-emerald-600';
+      lockDotClass = 'bg-emerald-600';
+    } else if (isDark) {
+      lockBtnClass = 'text-emerald-400 hover:text-emerald-300';
+      lockIconClass = 'drop-shadow-[0_0_8px_rgba(16,185,129,0.45)] text-emerald-400';
+      lockDotClass = 'bg-emerald-500';
+    } else if (isDiscussLight) {
+      lockBtnClass = 'text-[#10B981] bg-emerald-50/20 border border-[#10B981] rounded-none';
+      lockIconClass = 'text-[#10B981]';
+      lockDotClass = 'bg-[#10B981] rounded-none border border-black';
+    } else if (isDiscussBlack) {
+      lockBtnClass = 'text-[#FF8C00] hover:text-[#FFB84D]';
+      lockIconClass = 'drop-shadow-[0_0_8px_rgba(255,140,0,0.5)] text-[#FF8C00]';
+      lockDotClass = 'bg-[#FF8C00] shadow-[0_0_6px_#FF8C00]';
+    }
+  } else {
+    // Inactive Lock
+    if (isLight) {
+      lockBtnClass = 'text-[#64748B] hover:text-neutral-900 hover:bg-neutral-100/80';
+      lockIconClass = 'text-[#64748B] group-hover:text-neutral-800';
+    } else if (isDark) {
+      lockBtnClass = 'text-neutral-400 hover:text-white hover:bg-white/5';
+      lockIconClass = 'text-neutral-500 group-hover:text-neutral-300';
+    } else if (isDiscussLight) {
+      lockBtnClass = 'text-black hover:bg-black/5 rounded-none';
+      lockIconClass = 'text-black';
+    } else if (isDiscussBlack) {
+      lockBtnClass = 'text-[#9090A8] hover:text-white hover:bg-white/5';
+      lockIconClass = 'text-[#9090A8] group-hover:text-white';
+    }
+  }
+
   return (
     <>
       <div 
@@ -139,39 +316,25 @@ export default function FloatingNavbar() {
         }`}
       >
         {/* Main Dock Bar with 5 columns for perfect centering */}
-        <div className="relative grid grid-cols-5 items-center justify-items-center h-[66px] px-2 bg-[#0D0D12]/80 backdrop-blur-xl border border-white/10 rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
+        <div className={`relative grid grid-cols-5 items-center justify-items-center h-[66px] px-2 ${dockContainerClass}`}>
           {/* Top light neon bar accent */}
-          <div className="absolute top-0 left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+          <div className={`absolute top-0 left-6 right-6 h-[1px] ${topAccentClass}`} />
           
           {/* Nav Item 1: Feed / Home */}
           <Link 
             to="/feed" 
-            className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all ${
-              currentPath === '/feed' 
-                ? 'text-blue-500 bg-blue-950/10' 
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-white/5'
-            }`}
+            className={getNavItemClass('/feed')}
           >
-            <Compass className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:rotate-12 ${
-              currentPath === '/feed' ? 'drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]' : ''
-            }`} />
-            {currentPath === '/feed' && (
-              <span className="absolute bottom-1 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-            )}
+            <Compass className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:rotate-12 ${getIconDropShadow('/feed')}`} />
+            {getActiveDot('/feed')}
           </Link>
 
           {/* Nav Item 2: Chat */}
           <Link 
             to="/chat" 
-            className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all ${
-              currentPath.startsWith('/chat') 
-                ? 'text-purple-500 bg-purple-950/10' 
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-white/5'
-            }`}
+            className={getNavItemClass('/chat')}
           >
-            <MessageSquare className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${
-              currentPath.startsWith('/chat') ? 'drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : ''
-            }`} />
+            <MessageSquare className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${getIconDropShadow('/chat')}`} />
             
             {/* Dynamic Chat Badge count */}
             {unreadChatCount > 0 && (
@@ -180,16 +343,14 @@ export default function FloatingNavbar() {
               </span>
             )}
 
-            {currentPath.startsWith('/chat') && !unreadChatCount && (
-              <span className="absolute bottom-1 w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
-            )}
+            {getActiveDot('/chat')}
           </Link>
 
-          {/* Nav Item 3: Plus Button Container (No elevation, fully inside) */}
+          {/* Nav Item 3: Plus Button Container */}
           <div className="relative flex items-center justify-center w-12 h-12">
-            {/* Speed Dial Menu - Anchored and centered exactly above the Plus button */}
+            {/* Speed Dial Menu */}
             <div 
-              className={`absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 bg-[#0D0D12]/95 backdrop-blur-xl border border-white/10 px-4 py-2.5 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ${
+              className={`absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 px-4 py-2.5 shadow-[0_15px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ${speedDialClass} ${
                 menuOpen 
                   ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' 
                   : 'opacity-0 scale-75 translate-y-6 pointer-events-none'
@@ -198,10 +359,10 @@ export default function FloatingNavbar() {
               {/* Create Discussion */}
               <button 
                 onClick={() => handleOpenCreateModal('discussion')}
-                className="group relative flex flex-col items-center justify-center w-11 h-11 rounded-xl bg-neutral-900 border border-white/5 hover:border-blue-500/50 hover:bg-blue-950/20 text-neutral-400 hover:text-blue-400 transition-all active:scale-90"
+                className={`group relative flex flex-col items-center justify-center w-11 h-11 transition-all active:scale-90 ${isDiscussLight ? 'rounded-none' : 'rounded-xl'} ${speedDialBtnClass}`}
               >
                 <MessageSquarePlus className="w-4 h-4 transition-transform group-hover:scale-110" />
-                <div className="absolute -top-8 px-2 py-0.5 rounded bg-black text-[9px] text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                <div className={`absolute -top-8 px-2 py-0.5 rounded text-[9px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${speedDialTipClass}`}>
                   Discussion
                 </div>
               </button>
@@ -209,10 +370,10 @@ export default function FloatingNavbar() {
               {/* Create Project */}
               <button 
                 onClick={() => handleOpenCreateModal('project')}
-                className="group relative flex flex-col items-center justify-center w-11 h-11 rounded-xl bg-neutral-900 border border-white/5 hover:border-purple-500/50 hover:bg-purple-950/20 text-neutral-400 hover:text-purple-400 transition-all active:scale-90"
+                className={`group relative flex flex-col items-center justify-center w-11 h-11 transition-all active:scale-90 ${isDiscussLight ? 'rounded-none' : 'rounded-xl'} ${speedDialBtnClass}`}
               >
                 <FolderGit2 className="w-4 h-4 transition-transform group-hover:scale-110" />
-                <div className="absolute -top-8 px-2 py-0.5 rounded bg-black text-[9px] text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                <div className={`absolute -top-8 px-2 py-0.5 rounded text-[9px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${speedDialTipClass}`}>
                   Project
                 </div>
               </button>
@@ -220,25 +381,21 @@ export default function FloatingNavbar() {
               {/* Create Pulse */}
               <button 
                 onClick={() => handleOpenCreateModal('pulse')}
-                className="group relative flex flex-col items-center justify-center w-11 h-11 rounded-xl bg-neutral-900 border border-white/5 hover:border-red-500/50 hover:bg-red-950/20 text-neutral-400 hover:text-red-400 transition-all active:scale-90"
+                className={`group relative flex flex-col items-center justify-center w-11 h-11 transition-all active:scale-90 ${isDiscussLight ? 'rounded-none' : 'rounded-xl'} ${speedDialBtnClass}`}
               >
                 <Video className="w-4 h-4 transition-transform group-hover:scale-110" />
-                <div className="absolute -top-8 px-2 py-0.5 rounded bg-black text-[9px] text-white border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                <div className={`absolute -top-8 px-2 py-0.5 rounded text-[9px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${speedDialTipClass}`}>
                   Pulse
                 </div>
               </button>
             </div>
 
             {/* Orbit / Glow ring */}
-            <div className={`absolute inset-0 rounded-full transition-all duration-500 ${
-              menuOpen 
-                ? 'scale-110 blur-md bg-gradient-to-tr from-red-500 via-purple-600 to-blue-500 opacity-80 animate-spin-slow'
-                : 'scale-100 blur-sm bg-gradient-to-tr from-red-600 to-blue-600 opacity-40 group-hover:scale-105'
-            }`} />
+            <div className={`absolute inset-0 rounded-full transition-all duration-500 ${plusOrbitClass}`} />
 
             <button 
               onClick={() => setMenuOpen(!menuOpen)}
-              className={`relative flex items-center justify-center w-11 h-11 rounded-full text-white bg-gradient-to-tr from-[#DC2626] via-[#9333EA] to-[#2563EB] shadow-[0_4px_12px_rgba(147,51,234,0.45)] border border-white/20 transition-all duration-300 active:scale-90 ${
+              className={`relative flex items-center justify-center w-11 h-11 border transition-all duration-300 active:scale-90 ${isDiscussLight ? 'rounded-none' : 'rounded-full'} ${plusButtonClass} ${
                 menuOpen ? 'rotate-135' : 'hover:scale-105'
               }`}
             >
@@ -253,36 +410,24 @@ export default function FloatingNavbar() {
           {/* Nav Item 4: Pulse Feed */}
           <Link 
             to="/pulse" 
-            className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all ${
-              currentPath === '/pulse' 
-                ? 'text-red-500 bg-red-950/10' 
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-white/5'
-            }`}
+            className={getNavItemClass('/pulse')}
           >
-            <Play className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${
-              currentPath === '/pulse' ? 'drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : ''
-            }`} />
-            {currentPath === '/pulse' && (
-              <span className="absolute bottom-1 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-            )}
+            <Play className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${getIconDropShadow('/pulse')}`} />
+            {getActiveDot('/pulse')}
           </Link>
 
           {/* Nav Item 5: Lock / Unlock Security */}
           <button 
             onClick={handleLockClick}
-            className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all ${
-              isLockEnabled 
-                ? 'text-emerald-400 hover:text-emerald-300' 
-                : 'text-neutral-500 hover:text-neutral-200 hover:bg-white/5'
-            }`}
+            className={`group relative flex items-center justify-center w-12 h-12 transition-all ${isDiscussLight ? 'rounded-none' : 'rounded-2xl'} ${lockBtnClass}`}
           >
             {isLockEnabled ? (
-              <Lock className="w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.45)] text-emerald-400" />
+              <Lock className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${lockIconClass}`} />
             ) : (
-              <Unlock className="w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 text-neutral-500 group-hover:text-neutral-300" />
+              <Unlock className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${lockIconClass}`} />
             )}
             {isLockEnabled && (
-              <span className="absolute bottom-1 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full animate-pulse ${lockDotClass}`} />
             )}
           </button>
         </div>
