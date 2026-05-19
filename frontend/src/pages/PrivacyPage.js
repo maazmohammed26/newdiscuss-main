@@ -1,9 +1,23 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, EyeOff, Key, BellRing, ArrowLeft, CheckCircle } from 'lucide-react';
 import DiscussLogo from '@/components/DiscussLogo';
 import AdminMessageBanner from '@/components/AdminMessageBanner';
 
+const NAV = [
+  { label: 'About', to: '/about' },
+  { label: 'Careers', to: '/careers' },
+  { label: 'Blogs', to: '/blogs' },
+  { label: 'Contact', to: '/contact' },
+  { label: 'Terms', to: '/terms' },
+  { label: 'Privacy', to: '/privacy' },
+];
+
 export default function PrivacyPage() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-[#E1E0CC] flex flex-col relative overflow-hidden">
       {/* Visual noise overlay */}
@@ -105,17 +119,49 @@ export default function PrivacyPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 text-center border-t border-white/5 relative z-10 bg-black">
-        <p className="text-gray-500 text-xs font-semibold">
-          <span>Developed by </span>
-          <a href="https://www.maazportfolio.site/" target="_blank" rel="noopener noreferrer" className="shining-red-blue-text font-black hover:underline">
-            &lt;mma/&gt;
-          </a>
-        </p>
+      {/* ═══ FOOTER ══════════════════════════════════════════ */}
+      <footer className="bg-black border-t border-white/10 py-8 px-4 sm:px-6 relative z-10">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-lg font-bold italic" style={{ color: '#DEDBC8' }}>
+            &lt;<span>discuss</span>/&gt;
+          </span>
+          <div className="flex items-center gap-6 text-xs sm:text-sm">
+            {NAV.map(n => (
+              <Link key={n.label} to={n.to} className="transition-colors"
+                style={{ color: 'rgba(225,224,204,0.5)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#E1E0CC')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(225,224,204,0.5)')}>
+                {n.label}
+              </Link>
+            ))}
+          </div>
+          <div className="text-xs text-center sm:text-right" style={{ color: 'rgba(225,224,204,0.4)' }}>
+            &copy; {new Date().getFullYear()} Discuss. Built by{' '}
+            <a
+              href="https://www.maazportfolio.site/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shining-red-blue-text font-black hover:underline"
+            >
+              &lt;mma/&gt;
+            </a>{' '}
+            in collaboration with{' '}
+            <Link
+              to="/about#digitalclink"
+              className="shining-purple-text font-black hover:underline"
+            >
+              DigitalClink
+            </Link>
+          </div>
+        </div>
       </footer>
+
       <style>{`
         @keyframes shine-red-blue {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes shine-purple {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
         }
@@ -126,6 +172,16 @@ export default function PrivacyPage() {
           -webkit-text-fill-color: transparent;
           animation: shine-red-blue 3.5s linear infinite;
           text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
+          font-weight: 800;
+          display: inline-block;
+        }
+        .shining-purple-text {
+          background: linear-gradient(120deg, #6B21A8 25%, #C084FC 50%, #6B21A8 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine-purple 3.5s linear infinite;
+          text-shadow: 0 0 8px rgba(107, 33, 168, 0.35);
           font-weight: 800;
           display: inline-block;
         }
