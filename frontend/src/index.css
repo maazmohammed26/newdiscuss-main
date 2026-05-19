@@ -40,31 +40,31 @@
   }
 
   .dark {
-    /* New Design System - Dark Mode */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    /* Premium High-Contrast Pitch Black Mode */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
     --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 226 24% 54%;
+    --secondary: 240 5% 26%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 20%;
-    --accent-foreground: 221 83% 70%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
     --ring: 221 83% 53%;
     
     /* Dark Mode Custom Tokens */
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.6);
     --shadow-button: 0 2px 4px rgba(37, 99, 235, 0.25);
-    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.8);
   }
 
   /* Discuss Light Theme - Retro Tech Mode */
@@ -140,6 +140,24 @@
   .discuss-light p, .discuss-light span, .discuss-light label,
   .discuss-light input, .discuss-light textarea, .discuss-light button {
     font-family: 'Roboto Mono', 'Courier New', monospace !important;
+  }
+
+  /* Force clean Inter font (from landing page) for all elements in first two themes (default & black) */
+  html:not(.discuss-light):not(.discuss-black) body,
+  html:not(.discuss-light):not(.discuss-black) h1,
+  html:not(.discuss-light):not(.discuss-black) h2,
+  html:not(.discuss-light):not(.discuss-black) h3,
+  html:not(.discuss-light):not(.discuss-black) h4,
+  html:not(.discuss-light):not(.discuss-black) h5,
+  html:not(.discuss-light):not(.discuss-black) h6,
+  html:not(.discuss-light):not(.discuss-black) p,
+  html:not(.discuss-light):not(.discuss-black) span,
+  html:not(.discuss-light):not(.discuss-black) label,
+  html:not(.discuss-light):not(.discuss-black) input,
+  html:not(.discuss-light):not(.discuss-black) textarea,
+  html:not(.discuss-light):not(.discuss-black) button,
+  html:not(.discuss-light):not(.discuss-black) .font-heading {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   }
 }
 
