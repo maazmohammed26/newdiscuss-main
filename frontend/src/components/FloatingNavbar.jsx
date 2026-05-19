@@ -309,10 +309,8 @@ export default function FloatingNavbar() {
     <>
       <div 
         ref={menuRef}
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-[420px] select-none transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${
-          visible 
-            ? 'translate-y-0 opacity-100 scale-100' 
-            : 'translate-y-[120px] opacity-0 scale-95 pointer-events-none'
+        className={`floating-navbar-container fixed bottom-6 left-1/2 z-50 w-[92%] max-w-[420px] select-none ${
+          visible ? 'visible-state' : 'hidden-state'
         }`}
       >
         {/* Main Dock Bar with 5 columns for perfect centering */}
@@ -530,6 +528,19 @@ export default function FloatingNavbar() {
       />
 
       <style>{`
+        .floating-navbar-container {
+          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .floating-navbar-container.visible-state {
+          transform: translateX(-50%) translateY(0) scale(1) !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+        }
+        .floating-navbar-container.hidden-state {
+          transform: translateX(-50%) translateY(120px) scale(0.95) !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
         @keyframes spin-slow {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
