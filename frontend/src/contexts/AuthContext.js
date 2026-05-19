@@ -100,8 +100,19 @@ function buildBasicUser(firebaseUser) {
   };
 }
 
+const sentWelcomeEmails = new Set();
+
 // ─── Helper: Send Welcome Email Directly via Frontend ─────────────────────────
 async function sendWelcomeEmailDirectly(toEmail, username) {
+  const normalizedEmail = toEmail?.toLowerCase().trim();
+  if (!normalizedEmail) return;
+
+  if (sentWelcomeEmails.has(normalizedEmail)) {
+    console.log(`[AuthContext] Welcome email already sent or sending to ${normalizedEmail} in this session. Skipping.`);
+    return;
+  }
+  sentWelcomeEmails.add(normalizedEmail);
+
   const apiKey = process.env.REACT_APP_BREVO_API_KEY;
   if (!apiKey) {
     console.warn('[AuthContext] REACT_APP_BREVO_API_KEY is not defined in frontend env.');
