@@ -189,11 +189,10 @@ export default function UserPostsPage() {
                     <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
                       <FileText className="w-3.5 h-3.5" /> {posts.length} posts
                     </span>
-                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Last seen: </span>
-                      <span className={formatLastSeen() === 'Online' ? 'text-emerald-500 font-semibold' : ''}>
-                        {formatLastSeen()}
+                    <span className="flex items-center gap-1.5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
+                      <div className={`w-2 h-2 rounded-full ${formatLastSeen() === 'Online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-neutral-400 dark:bg-neutral-500'}`} />
+                      <span className={formatLastSeen() === 'Online' ? 'text-emerald-500 font-semibold tracking-wide' : 'font-medium'}>
+                        {formatLastSeen() === 'Online' ? 'Online' : formatLastSeen() === 'Offline' ? 'Offline' : `Last seen ${formatLastSeen()}`}
                       </span>
                     </span>
                   </div>
