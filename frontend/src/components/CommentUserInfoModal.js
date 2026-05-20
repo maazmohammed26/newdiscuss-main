@@ -2,7 +2,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect } from 'react';
 import { getUser } from '@/lib/db';
 import { getUserProfile } from '@/lib/userProfileDb';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User } from 'lucide-react';
@@ -50,9 +50,11 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
         <DialogContent 
+          aria-describedby={undefined}
           hideClose={true}
           className="sm:max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] dark:border-[#334155] discuss:border-[#333333] p-0 overflow-hidden"
         >
+          <DialogTitle className="sr-only">Commenter Profile Preview</DialogTitle>
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" />
