@@ -318,6 +318,15 @@ function SignalStoryViewer({
   const currentStory = currentGroup?.stories[storyIdx];
   const isOwner = currentStory?.authorId === user?.id;
 
+  // Prevent page scroll when story viewer is active
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   // ── navigation helpers ──────────────────────────────────────
   const goNext = useCallback(() => {
     const group = groups[groupIdx];
@@ -445,26 +454,20 @@ function SignalStoryViewer({
   return (
     <div
       id="discuss-story-viewer"
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
     >
-      {/* Main card */}
+      {/* Main card - Fullscreen on mobile, perfectly sized aspect card on desktop */}
       <div
-        className="relative w-full max-w-sm mx-auto flex flex-col"
+        className="relative w-full h-full sm:h-[90vh] sm:max-h-[780px] sm:max-w-[420px] sm:mx-auto flex flex-col sm:rounded-2xl overflow-hidden shadow-2xl border-0 sm:border sm:border-purple-500/20"
         style={{
-          height: '90dvh',
-          maxHeight: '700px',
-          borderRadius: '20px',
-          overflow: 'hidden',
           background: 'linear-gradient(160deg,#0f0f1a 0%,#1a0a2e 50%,#0a1628 100%)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(168,85,247,0.15)',
         }}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        {/* Progress bars */}
-        <div className="absolute top-0 left-0 right-0 z-10 flex gap-1 p-3 pt-4">
+        {/* Progress bars - Notch safe padding and dark top gradient to guarantee visibility */}
+        <div className="absolute top-0 left-0 right-0 z-10 flex gap-1 px-4 pt-6 sm:pt-4 pb-3 bg-gradient-to-b from-black/80 to-transparent">
           {currentGroup.stories.map((s, i) => (
             <div
               key={s.id}
@@ -489,8 +492,8 @@ function SignalStoryViewer({
           ))}
         </div>
 
-        {/* Top bar: author + controls */}
-        <div className="absolute top-0 left-0 right-0 z-10 pt-10 px-4 pb-2 flex items-center justify-between">
+        {/* Top bar: author info + control buttons (Notch safe pt-12 on mobile) */}
+        <div className="absolute top-0 left-0 right-0 z-10 pt-12 sm:pt-9 px-4 pb-2 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {/* Author avatar */}
             {currentGroup.authorPhotoUrl ? (
@@ -504,11 +507,11 @@ function SignalStoryViewer({
               </div>
             )}
             <div>
-              <p className="text-white text-[13px] font-semibold leading-tight">
+              <p className="text-white text-[13px] font-semibold leading-tight drop-shadow-md">
                 {currentGroup.authorUsername}
               </p>
               <div className="flex items-center gap-2">
-                <p className="text-white/60 text-[11px]">
+                <p className="text-white/60 text-[11px] drop-shadow-sm">
                   {relativeTime(currentStory.createdAt)}
                 </p>
                 <StoryViewCount
@@ -519,11 +522,11 @@ function SignalStoryViewer({
             </div>
           </div>
 
-          {/* Right controls */}
-          <div className="flex items-center gap-1">
+          {/* Right controls - Tactile circular blur buttons */}
+          <div className="flex items-center gap-2">
             {/* Pause indicator */}
             {paused && (
-              <div className="bg-white/20 rounded-full p-1.5">
+              <div className="bg-black/40 rounded-full p-2 border border-white/10 backdrop-blur-md">
                 <Pause className="w-3.5 h-3.5 text-white" />
               </div>
             )}
@@ -536,14 +539,15 @@ function SignalStoryViewer({
                   setMenuOpen((v) => !v);
                   setPaused((v) => !v);
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/15 transition-all"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-md"
+                aria-label="Story actions"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
 
               {menuOpen && (
                 <div
-                  className="absolute right-0 top-9 w-48 rounded-[10px] py-1 overflow-hidden z-20"
+                  className="absolute right-0 top-11 w-48 rounded-[12px] py-1 overflow-hidden z-20"
                   style={{
                     background: 'rgba(20,10,40,0.95)',
                     border: '1px solid rgba(168,85,247,0.25)',
@@ -560,7 +564,7 @@ function SignalStoryViewer({
                       navigate(`/user/${currentGroup.authorId}`);
                       onClose();
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-white/80 hover:text-white hover:bg-white/10 transition-all text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-white/80 hover:text-white hover:bg-white/10 transition-all text-left cursor-pointer"
                   >
                     <User className="w-4 h-4" />
                     View Profile
@@ -579,13 +583,13 @@ function SignalStoryViewer({
                             <button
                               onClick={handleDelete}
                               disabled={deleting}
-                              className="flex-1 text-[12px] font-semibold text-white bg-red-500/80 hover:bg-red-500 rounded-[6px] py-1.5 transition-all"
+                              className="flex-1 text-[12px] font-semibold text-white bg-red-500/80 hover:bg-red-500 rounded-[6px] py-1.5 transition-all cursor-pointer"
                             >
                               {deleting ? '…' : 'Delete'}
                             </button>
                             <button
                               onClick={() => setConfirmDelete(false)}
-                              className="flex-1 text-[12px] font-semibold text-white/70 bg-white/10 hover:bg-white/20 rounded-[6px] py-1.5 transition-all"
+                              className="flex-1 text-[12px] font-semibold text-white/70 bg-white/10 hover:bg-white/20 rounded-[6px] py-1.5 transition-all cursor-pointer"
                             >
                               Cancel
                             </button>
@@ -594,7 +598,7 @@ function SignalStoryViewer({
                       ) : (
                         <button
                           onClick={() => setConfirmDelete(true)}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-left"
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-left cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete Story
@@ -609,14 +613,15 @@ function SignalStoryViewer({
             {/* X close */}
             <button
               onClick={(e) => { e.stopPropagation(); onClose(); }}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/15 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-md"
+              aria-label="Close story viewer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Story Media Background */}
+        {/* Story Media Background - Perfectly centered containment so it NEVER crops */}
         {currentStory.mediaUrl && (
           <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
             {currentStory.type === 'video' || currentStory.mediaUrl.includes('video') ? (
@@ -729,10 +734,10 @@ function SignalStoryViewer({
         />
       </div>
 
-      {/* Group navigation arrows (outside card) */}
+      {/* Group navigation arrows (outside card) - Hidden on mobile viewports to prevent overlays */}
       {groupIdx > 0 && (
         <button
-          className="absolute left-4 flex items-center justify-center w-10 h-10 rounded-full text-white/70 hover:text-white transition-all"
+          className="hidden sm:flex absolute left-4 items-center justify-center w-10 h-10 rounded-full text-white/70 hover:text-white transition-all z-20"
           style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}
           onClick={() => { setGroupIdx((g) => g - 1); setStoryIdx(0); }}
           aria-label="Previous user"
@@ -742,7 +747,7 @@ function SignalStoryViewer({
       )}
       {groupIdx < groups.length - 1 && (
         <button
-          className="absolute right-4 flex items-center justify-center w-10 h-10 rounded-full text-white/70 hover:text-white transition-all"
+          className="hidden sm:flex absolute right-4 items-center justify-center w-10 h-10 rounded-full text-white/70 hover:text-white transition-all z-20"
           style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}
           onClick={() => { setGroupIdx((g) => g + 1); setStoryIdx(0); }}
           aria-label="Next user"

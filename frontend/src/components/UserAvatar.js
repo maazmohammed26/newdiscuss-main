@@ -16,7 +16,7 @@ import { useHighlights } from '@/contexts/HighlightsContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import SignalStoryViewer from '@/components/SignalStoryViewer';
-import { Zap, User as UserIcon, ExternalLink } from 'lucide-react';
+import { Zap, User as UserIcon, ExternalLink, X } from 'lucide-react';
 
 /**
  * @param {string}  src          — image URL (photo_url / photoURL)
@@ -117,52 +117,49 @@ export default function UserAvatar({
 
       {/* Premium Glassmorphic Popover Modal */}
       {showOptions && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div 
+          onClick={() => setShowOptions(false)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xs p-5 bg-white/90 dark:bg-[#1E293B]/90 discuss:bg-[#1a1a1a]/90 border border-neutral-200 dark:border-white/10 discuss:border-[#333333] rounded-2xl shadow-2xl backdrop-blur-2xl text-center"
+            className="w-full max-w-[280px] p-5 bg-white/95 dark:bg-[#1E293B]/95 discuss:bg-[#1a1a1a]/95 border border-neutral-200 dark:border-white/10 discuss:border-[#333333] rounded-2xl shadow-2xl backdrop-blur-2xl"
           >
-            <h3 className="text-sm font-black tracking-tight text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] mb-4">
-              Select Action for @{username}
-            </h3>
-            <div className="flex flex-col gap-2.5">
+            {/* Header row with Title and Close X Button */}
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200/50 dark:border-white/10 discuss:border-[#333333]">
+              <span className="text-xs font-extrabold tracking-tight text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5]">
+                @{username}
+              </span>
+              <button 
+                onClick={() => setShowOptions(false)}
+                className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#262626] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer"
+                aria-label="Close options"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3">
               <button
                 onClick={() => {
                   setShowOptions(false);
                   setViewerOpen(true);
                 }}
-                className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/10 cursor-pointer"
+                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white text-[13px] font-extrabold rounded-xl active:scale-[0.96] transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5" />
+                <Zap className="w-4 h-4" />
                 View Signal Story
               </button>
+              
               <button
                 onClick={() => {
                   setShowOptions(false);
                   setShowImagePreview(true);
                 }}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/10 cursor-pointer"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-extrabold rounded-xl active:scale-[0.96] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 cursor-pointer"
               >
-                <UserIcon className="w-3.5 h-3.5" />
+                <UserIcon className="w-4 h-4" />
                 View Profile Picture
-              </button>
-              {!isOnProfilePage && (
-                <button
-                  onClick={() => {
-                    setShowOptions(false);
-                    navigate(`/user/${userId}`);
-                  }}
-                  className="w-full py-2.5 px-4 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-neutral-200 dark:border-neutral-700/50"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  View Profile
-                </button>
-              )}
-              <button
-                onClick={() => setShowOptions(false)}
-                className="w-full py-2.5 px-4 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 text-xs font-bold rounded-xl active:scale-[0.98] transition-all cursor-pointer"
-              >
-                Cancel
               </button>
             </div>
           </div>
