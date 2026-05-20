@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ZoomIn } from 'lucide-react';
 
 export default function ImagePreviewModal({ open, onClose, imageUrl, altText = 'Profile picture' }) {
@@ -26,7 +27,7 @@ export default function ImagePreviewModal({ open, onClose, imageUrl, altText = '
 
   if (!open || !imageUrl) return null;
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
       onClick={onClose}
@@ -80,7 +81,8 @@ export default function ImagePreviewModal({ open, onClose, imageUrl, altText = '
       >
         Tap anywhere outside the image to close
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

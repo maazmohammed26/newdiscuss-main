@@ -6,6 +6,7 @@ import {
   useCallback,
   memo,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -451,7 +452,7 @@ function SignalStoryViewer({
 
   const parts = parseTextWithLinks(currentStory.text);
 
-  return (
+  return createPortal(
     <div
       id="discuss-story-viewer"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
@@ -755,7 +756,8 @@ function SignalStoryViewer({
           <ChevronRight className="w-5 h-5" />
         </button>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -32,6 +32,33 @@ export default function DevRadarPage() {
 
   const centeredRef = useRef(false);
 
+  const formatLastSeen = (loc) => {
+    if (!loc) return '';
+    const lastSeenTime = loc.lastSeen || (loc.lastUpdated ? new Date(loc.lastUpdated).getTime() : 0);
+    if (!lastSeenTime) return 'Offline';
+    
+    const diffMs = Date.now() - lastSeenTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else {
+      const date = new Date(lastSeenTime);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const activeUserLoc = activeUser ? locations.find(l => l.userId === activeUser.userId) || activeUser : null;
+  
+  const isActiveUserOnline = activeUserLoc
+    ? (activeUserLoc.userId === user?.id || (activeUserLoc.isOnline === true && (Date.now() - (activeUserLoc.lastSeen || (activeUserLoc.lastUpdated ? new Date(activeUserLoc.lastUpdated).getTime() : 0)) < 20000)))
+    : false;
+
   const onlineCount = locations.filter(loc => {
     if (loc.isOnline !== true) return false;
     const lastSeenTime = loc.lastSeen || (loc.lastUpdated ? new Date(loc.lastUpdated).getTime() : 0);
@@ -216,7 +243,8 @@ export default function DevRadarPage() {
         ? (isDiscussBlack ? '#FF007F' : isDiscussLight ? '#EF4444' : '#2563EB')
         : (isDiscussBlack ? '#A855F7' : isDiscussLight ? '#10B981' : '#6366F1');
 
-      const isActuallyOnline = isMe || (loc.isOnline === true && (Date.now() - (loc.lastSeen || 0) < 20000));
+      const lastSeenTime = loc.lastSeen || (loc.lastUpdated ? new Date(loc.lastUpdated).getTime() : 0);
+      const isActuallyOnline = isMe || (loc.isOnline === true && (Date.now() - lastSeenTime < 20000));
       const dotClass = isActuallyOnline 
         ? 'bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse' 
         : 'bg-gray-400';
@@ -458,17 +486,23 @@ export default function DevRadarPage() {
           <div className="flex items-center justify-between border-b pb-2 mb-3.5 border-black/5 dark:border-white/5 font-mono text-[9px] uppercase tracking-wider pr-8">
             <div className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full relative flex`}>
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isDiscussBlack ? 'bg-[#FF007F]' : isDiscussLight ? 'bg-[#EF4444]' : 'bg-emerald-400'
-                }`} />
+                {isActiveUserOnline && (
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isDiscussBlack ? 'bg-[#FF007F]' : isDiscussLight ? 'bg-[#EF4444]' : 'bg-emerald-400'
+                  }`} />
+                )}
                 <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isDiscussBlack ? 'bg-[#FF007F]' : isDiscussLight ? 'bg-[#EF4444]' : 'bg-emerald-500'
+                  isActiveUserOnline
+                    ? (isDiscussBlack ? 'bg-[#FF007F]' : isDiscussLight ? 'bg-[#EF4444]' : 'bg-emerald-500')
+                    : 'bg-gray-400 dark:bg-gray-500'
                 }`} />
               </span>
               <span className={
-                isDiscussBlack ? 'text-[#FF007F] font-bold' : isDiscussLight ? 'text-black font-black' : 'text-neutral-500 dark:text-neutral-400 font-bold'
+                isActiveUserOnline
+                  ? (isDiscussBlack ? 'text-[#FF007F] font-bold' : isDiscussLight ? 'text-black font-black' : 'text-emerald-500 font-bold')
+                  : 'text-neutral-400 dark:text-neutral-500 font-bold'
               }>
-                beacon [online]
+                {isActiveUserOnline ? 'beacon [online]' : `beacon [offline] - last seen: ${formatLastSeen(activeUserLoc)}`}
               </span>
             </div>
             <div className={

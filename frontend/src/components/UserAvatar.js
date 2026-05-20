@@ -11,6 +11,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -116,7 +117,7 @@ export default function UserAvatar({
       {innerAvatarMarkup}
 
       {/* Premium Glassmorphic Popover Modal */}
-      {showOptions && (
+      {showOptions && createPortal(
         <div 
           onClick={() => setShowOptions(false)}
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
@@ -163,7 +164,8 @@ export default function UserAvatar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Signal Story Viewer overlay */}
