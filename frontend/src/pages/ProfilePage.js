@@ -228,31 +228,39 @@ export default function ProfilePage() {
     }
   }, [profileData?.fullName, profileData?.bio, user?.photo_url, user?.photoURL, user?.username, user?.displayName, user?.verified, shareLocation, locationCoords, user?.id]);
 
-  const handleToggleLocationSharing = async () => {
+  const handleToggleLocationSharing = () => {
     if (updatingLocation) return;
-    setUpdatingLocation(true);
 
     if (shareLocation) {
-      // Opt-out / Disable location sharing
-      try {
-        await deleteUserLocation(user.id);
-        setShareLocation(false);
-        setLocationCoords(null);
-        toast.success('Location sharing disabled. You are now invisible on DevRadar.');
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to disable location sharing.');
-      } finally {
-        setUpdatingLocation(false);
-      }
-    } else {
-      // Opt-in / Enable location sharing
-      if (!navigator.geolocation) {
-        toast.error('Geolocation is not supported by your browser.');
-        setUpdatingLocation(false);
-        return;
-      }
+      // Opt-out path — no geolocation needed, safe to be async
+      setUpdatingLocation(true);
+      deleteUserLocation(user.id)
+        .then(() => {
+          setShareLocation(false);
+          setLocationCoords(null);
+          toast.success('Location sharing disabled. You are now invisible on DevRadar.');
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error('Failed to disable location sharing.');
+        })
+        .finally(() => setUpdatingLocation(false));
+      return;
+    }
 
+    // Opt-in path — MUST call getCurrentPosition synchronously here,
+    // directly inside the user-gesture (click) handler, BEFORE any setState.
+    // Android Chrome strictly requires this or it silently denies without a popup.
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    // First do a fast Permissions API pre-check (no popup side-effect).
+    // If already 'denied' → skip straight to manual map. 
+    // If 'granted' or 'prompt' → fire getCurrentPosition right away to trigger the popup.
+    const fireGetCurrentPosition = () => {
+      setUpdatingLocation(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
@@ -281,15 +289,35 @@ export default function ProfilePage() {
         (error) => {
           console.error('[Geolocation Error]', error);
           setUpdatingLocation(false);
-          if (error.code === 1 || error.code === 2 || error.message.toLowerCase().includes('denied')) {
-            toast.info('Location auto-detect blocked by Android/browser. Please place your pin manually.');
+          // error.code 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE
+          if (error.code === 1 || error.code === 2) {
+            toast.info('Location blocked. Please place your pin manually on the map.');
             handleOpenAdjustModal();
           } else {
-            toast.error('Failed to retrieve location coordinates. Try again.');
+            toast.error('Could not get your location. Try again.');
           }
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        // enableHighAccuracy:false = use network/wifi location which is faster & works
+        // without GPS hardware being fully active (important for Android WebView)
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
       );
+    };
+
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'denied') {
+          toast.info('Location is blocked. Please place your pin manually on the map.');
+          handleOpenAdjustModal();
+        } else {
+          // 'granted' or 'prompt' — fire the actual prompt/get position
+          fireGetCurrentPosition();
+        }
+      }).catch(() => {
+        // permissions API not supported — just try directly
+        fireGetCurrentPosition();
+      });
+    } else {
+      fireGetCurrentPosition();
     }
   };
 

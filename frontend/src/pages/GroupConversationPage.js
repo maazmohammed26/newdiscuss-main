@@ -434,30 +434,49 @@ export default function GroupConversationPage() {
       return;
     }
 
-    setSending(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          await sendGroupMessage(groupId, user.id, '', null, [], { latitude, longitude });
-          toast.success('Location sent');
-          scrollToBottom();
-        } catch (error) {
-          console.error('Error sending location:', error);
-          toast.error(error.message || 'Failed to send location');
-        } finally {
+    // CRITICAL: getCurrentPosition MUST be called synchronously here (directly
+    // inside the click handler) BEFORE any setState call. Android Chrome requires
+    // an unbroken user-gesture chain to show the permission popup.
+    const fireGetCurrentPosition = () => {
+      setSending(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            await sendGroupMessage(groupId, user.id, '', null, [], { latitude, longitude });
+            toast.success('Location sent');
+            scrollToBottom();
+          } catch (error) {
+            console.error('Error sending location:', error);
+            toast.error(error.message || 'Failed to send location');
+          } finally {
+            setSending(false);
+          }
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
           setSending(false);
+          if (error.code === 1) {
+            toast.error('Location permission denied. Please allow location in your browser settings.');
+          } else {
+            toast.error('Failed to get your location. Try again.');
+          }
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+      );
+    };
+
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'denied') {
+          toast.error('Location permission is blocked. Please enable it in your browser settings.');
+        } else {
+          fireGetCurrentPosition();
         }
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        let msg = 'Failed to get your location';
-        if (error.code === 1) msg = 'Location permission denied';
-        toast.error(msg);
-        setSending(false);
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-    );
+      }).catch(() => fireGetCurrentPosition());
+    } else {
+      fireGetCurrentPosition();
+    }
   };
 
   const handleReply = (message) => {
