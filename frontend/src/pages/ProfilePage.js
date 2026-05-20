@@ -281,8 +281,9 @@ export default function ProfilePage() {
         (error) => {
           console.error('[Geolocation Error]', error);
           setUpdatingLocation(false);
-          if (error.code === 1) {
-            toast.error('Location permission denied. Please allow location access in your browser settings.');
+          if (error.code === 1 || error.code === 2 || error.message.toLowerCase().includes('denied')) {
+            toast.info('Location auto-detect blocked by Android/browser. Please place your pin manually.');
+            handleOpenAdjustModal();
           } else {
             toast.error('Failed to retrieve location coordinates. Try again.');
           }
@@ -396,6 +397,7 @@ export default function ProfilePage() {
       };
       await saveUserLocation(user.id, locData);
       setLocationCoords({ latitude: tempCoords.latitude, longitude: tempCoords.longitude });
+      setShareLocation(true);
       toast.success('Precise location updated successfully!');
       setShowAdjustLocationModal(false);
     } catch (err) {
