@@ -26,6 +26,9 @@ export default function DevRadarPage() {
   const [activeUser, setActiveUser] = useState(null);
   const [myCoords, setMyCoords] = useState(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  const centeredRef = useRef(false);
 
   useEffect(() => {
     const seen = localStorage.getItem('devradar_tutorial_seen_v2');
@@ -111,16 +114,13 @@ export default function DevRadarPage() {
     return () => unsubscribe();
   }, []);
 
-  // 4. Initialize Vanilla Leaflet Map
+  // 4. Initialize Vanilla Leaflet Map ONCE (does not recreation on coordinate updates!)
   useEffect(() => {
-    if (loading || !mapContainerRef.current) return;
+    if (loading || !mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Center coordinates: My coordinates or default center (India / Global center)
-    const initialCenter = myCoords 
-      ? [myCoords.lat, myCoords.lng] 
-      : [20.5937, 78.9629]; // Default: Geographical center of India
-
-    const initialZoom = myCoords ? 13 : 5;
+    // Use default center for first render
+    const initialCenter = [20.5937, 78.9629]; // Default: Geographical center of India
+    const initialZoom = 5;
 
     // Create Map
     const map = L.map(mapContainerRef.current, {
@@ -144,19 +144,31 @@ export default function DevRadarPage() {
     const markersGroup = L.layerGroup().addTo(map);
     markersGroupRef.current = markersGroup;
 
+    setMapReady(true);
+
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        setMapReady(false);
       }
     };
-  }, [loading, myCoords]);
+  }, [loading]);
 
-  // 5. Sync Markers on Map when locations list updates
+  // Centering map smoothly on user location when it first loads without map re-creation
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (map && myCoords && !centeredRef.current && mapReady) {
+      map.setView([myCoords.lat, myCoords.lng], 13, { animate: true });
+      centeredRef.current = true;
+    }
+  }, [myCoords, mapReady]);
+
+  // 5. Sync Markers on Map when locations list updates or map becomes ready
   useEffect(() => {
     const map = mapInstanceRef.current;
     const markersGroup = markersGroupRef.current;
-    if (!map || !markersGroup) return;
+    if (!map || !markersGroup || !mapReady) return;
 
     // Clear old markers
     markersGroup.clearLayers();
@@ -199,7 +211,7 @@ export default function DevRadarPage() {
 
       marker.addTo(markersGroup);
     });
-  }, [locations, user?.id, isDiscussBlack, isDiscussLight]);
+  }, [locations, user?.id, isDiscussBlack, isDiscussLight, mapReady]);
 
   // Recenter map on user's coordinates
   const handleRecenter = () => {
@@ -228,26 +240,36 @@ export default function DevRadarPage() {
   let containerClass = '';
   let cardClass = '';
   let mapThemeClass = '';
+  let settingsOverlayClass = '';
+  let techieBoxClass = '';
 
   if (isLight) {
     headerClass = 'bg-white/80 border-neutral-200 text-neutral-800 backdrop-blur-md';
     containerClass = 'bg-[#F3F4F6] text-neutral-800';
     cardClass = 'bg-white/95 border-neutral-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)] text-neutral-800';
+    settingsOverlayClass = 'bg-white/95 border-slate-200 shadow-[0_4px_20px_rgba(0,0,0,0.05)] text-slate-700 rounded-2xl';
+    techieBoxClass = 'bg-white/90 border-slate-200/80 shadow-[0_15px_40px_rgba(0,0,0,0.06)] text-slate-800 rounded-2xl border backdrop-blur-2xl';
     mapThemeClass = '';
   } else if (isDark) {
     headerClass = 'bg-[#0F172A]/80 border-white/10 text-white backdrop-blur-md';
     containerClass = 'bg-[#0b0f19] text-white';
     cardClass = 'bg-[#0F172A]/95 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)] text-white';
+    settingsOverlayClass = 'bg-[#0F172A]/95 border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)] text-neutral-200 rounded-2xl';
+    techieBoxClass = 'bg-slate-950/80 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] text-white rounded-2xl border backdrop-blur-2xl';
     mapThemeClass = 'dark-map';
   } else if (isDiscussLight) {
     headerClass = 'bg-white border-b-2 border-black text-black';
     containerClass = 'bg-white text-black';
     cardClass = 'bg-white border-2 border-black shadow-[4px_4px_0_rgba(0,0,0,1)] text-black rounded-none';
+    settingsOverlayClass = 'bg-white border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,1)] text-black rounded-none';
+    techieBoxClass = 'bg-white border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)] text-black rounded-none';
     mapThemeClass = '';
   } else if (isDiscussBlack) {
     headerClass = 'bg-[#13131A]/80 border-[#FF007F]/20 text-[#F5F5F5] backdrop-blur-md';
     containerClass = 'bg-[#0D0D12] text-[#F5F5F5]';
     cardClass = 'bg-[#13131A]/95 border-[#FF007F]/30 shadow-[0_8px_32px_rgba(0,0,0,0.8),_0_0_15px_rgba(255,0,127,0.15)] text-[#F5F5F5] rounded-3xl';
+    settingsOverlayClass = 'bg-[#13131A] border border-[#FF007F]/40 shadow-[0_4px_25px_rgba(255,0,127,0.2)] text-[#F5F5F5] rounded-2xl';
+    techieBoxClass = 'bg-[#13131A]/95 border border-[#FF007F]/40 shadow-[0_8px_32px_rgba(0,0,0,0.8),_0_0_25px_rgba(255,0,127,0.25)] text-[#F5F5F5] rounded-3xl';
     mapThemeClass = 'discuss-black-map';
   }
 
@@ -311,13 +333,23 @@ export default function DevRadarPage() {
       {/* ── RADAR CONTROLS & DOCKS ───────────────────────────────────────────── */}
       {/* Recenter / Action Panel overlay in case no current location shared */}
       {!myCoords && !loading && (
-        <div className="absolute top-20 left-4 z-[999] max-w-[280px] p-3 rounded-2xl bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md border border-neutral-200 dark:border-white/10 shadow-md">
-          <p className="text-[11px] font-bold text-neutral-600 dark:text-neutral-300 leading-snug">
-            📍 You aren't visible on the map. Turn on Location Sharing in your profile to show up and center the map on your location!
-          </p>
-          <Link to="/profile" className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-[#2563EB] discuss:text-[#EF4444] hover:underline">
-            Go to Settings <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
-          </Link>
+        <div className={`absolute top-20 left-4 z-[999] max-w-[280px] p-4 border backdrop-blur-md transition-all ${settingsOverlayClass}`}>
+          <div className="flex items-start gap-2.5">
+            <span className={`text-base shrink-0 ${isDiscussBlack ? 'text-[#FF007F]' : isDiscussLight ? 'text-[#EF4444]' : 'text-blue-500'}`}>📍</span>
+            <div>
+              <p className="text-[11px] font-bold leading-relaxed">
+                You aren't visible on the map. Turn on Location Sharing in your profile to show up and center the map on your location!
+              </p>
+              <div className="mt-2.5">
+                <Link to="/profile" className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider transition-all hover:underline ${
+                  isDiscussBlack ? 'text-[#FF007F] hover:text-[#FF007F]/80' : isDiscussLight ? 'text-black underline font-black' : 'text-[#2563EB] hover:text-blue-700'
+                }`}>
+                  <span>Go to Settings</span>
+                  <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -327,41 +359,114 @@ export default function DevRadarPage() {
           ? 'translate-y-0 opacity-100' 
           : 'translate-y-full opacity-0 pointer-events-none'
       }`}>
-        <div className={`w-full max-w-md p-5 border backdrop-blur-xl relative overflow-hidden ${cardClass}`}>
+        <div className={`w-full max-w-md p-5 border relative overflow-hidden ${techieBoxClass}`}>
+          
           {/* Subtle neon glowing accent inside the card in retro black */}
           {isDiscussBlack && (
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FF007F]/40 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#FF007F] to-transparent animate-pulse" />
+          )}
+
+          {/* Glowing cybernetic corner HUD highlights color-coded to theme */}
+          {isDiscussBlack && (
+            <>
+              <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-[#FF007F] pointer-events-none" />
+              <div className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-[#FF007F] pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-[#FF007F] pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 border-[#FF007F] pointer-events-none" />
+            </>
+          )}
+          {isDiscussLight && (
+            <>
+              <div className="absolute top-0 left-0 w-3 h-3 border-t-4 border-l-4 border-black pointer-events-none" />
+              <div className="absolute top-0 right-0 w-3 h-3 border-t-4 border-r-4 border-black pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-3 h-3 border-b-4 border-l-4 border-black pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 border-b-4 border-r-4 border-black pointer-events-none" />
+            </>
+          )}
+          {isDark && (
+            <>
+              <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-white/30 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-white/30 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-white/30 pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-white/30 pointer-events-none" />
+            </>
+          )}
+          {isLight && (
+            <>
+              <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-slate-300 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-slate-300 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-slate-300 pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-slate-300 pointer-events-none" />
+            </>
           )}
 
           {/* Close Button / Back Arrow */}
           <button 
             onClick={() => setActiveUser(null)}
-            className="absolute top-3.5 right-3.5 p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+            className={`absolute top-3.5 right-3.5 p-1.5 rounded-full active:scale-95 transition-all ${
+              isDiscussBlack ? 'hover:bg-[#FF007F]/10 text-[#FF007F]' : isDiscussLight ? 'hover:bg-black/5 text-black border border-black' : 'hover:bg-black/5 dark:hover:bg-white/5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200'
+            }`}
             aria-label="Back to Map"
           >
             <X className="w-4 h-4" />
           </button>
 
+          {/* Technical Telemetry Row */}
+          <div className="flex items-center justify-between border-b pb-2 mb-3.5 border-black/5 dark:border-white/5 font-mono text-[9px] uppercase tracking-wider">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full relative flex`}>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isDiscussBlack ? 'bg-[#FF007F]' : isDiscussLight ? 'bg-[#EF4444]' : 'bg-emerald-400'
+                }`} />
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isDiscussBlack ? 'bg-[#FF007F]' : isDiscussLight ? 'bg-[#EF4444]' : 'bg-emerald-500'
+                }`} />
+              </span>
+              <span className={
+                isDiscussBlack ? 'text-[#FF007F] font-bold' : isDiscussLight ? 'text-black font-black' : 'text-neutral-500 dark:text-neutral-400 font-bold'
+              }>
+                beacon [online]
+              </span>
+            </div>
+            <div className={
+              isDiscussBlack ? 'text-[#FF007F]/75 font-semibold' : isDiscussLight ? 'text-black/70 font-bold' : 'text-neutral-400 dark:text-neutral-400 font-semibold'
+            }>
+              {activeUser?.latitude && activeUser?.longitude 
+                ? `LOC: ${parseFloat(activeUser.latitude).toFixed(4)}° N, ${parseFloat(activeUser.longitude).toFixed(4)}° E` 
+                : 'COORDS OFFLINE'}
+            </div>
+          </div>
+
           {/* User Details Layout */}
-          <div className="flex gap-4 items-start pr-6">
-            <UserAvatar
-              src={activeUser?.photo_url}
-              username={activeUser?.username || 'Dev'}
-              className="w-14 h-14 border border-black/10 dark:border-white/10 shrink-0"
-            />
+          <div className="flex gap-4 items-start pr-6 mt-1">
+            <div className="relative shrink-0">
+              <UserAvatar
+                src={activeUser?.photo_url}
+                username={activeUser?.username || 'Dev'}
+                className={`w-14 h-14 border shrink-0 ${
+                  isDiscussBlack ? 'border-[#FF007F]/40 shadow-[0_0_10px_rgba(255,0,127,0.2)]' : isDiscussLight ? 'border-2 border-black rounded-none' : 'border-neutral-200 dark:border-white/10'
+                }`}
+              />
+            </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="text-base font-black truncate text-neutral-900 dark:text-white discuss:text-black discuss-black:text-[#F5F5F5]">
+                <h3 className={`text-base font-black truncate ${
+                  isDiscussBlack ? 'text-[#F5F5F5]' : isDiscussLight ? 'text-black font-black' : 'text-neutral-900 dark:text-white'
+                }`}>
                   {activeUser?.fullName || activeUser?.username || 'Developer'}
                 </h3>
                 {activeUser?.verified && <VerifiedBadge size="sm" />}
               </div>
-              <p className="text-xs font-semibold text-[#6275AF] dark:text-[#94A3B8] discuss:text-black/60 discuss-black:text-[#9CA3AF]">
+              <p className={`text-xs font-mono font-semibold ${
+                isDiscussBlack ? 'text-[#FF007F]/80' : isDiscussLight ? 'text-black/60 font-black' : 'text-slate-400 dark:text-slate-400'
+              }`}>
                 @{activeUser?.username || 'username'}
               </p>
               
               {activeUser?.bio ? (
-                <p className="text-xs mt-2.5 text-neutral-600 dark:text-neutral-300 discuss:text-neutral-700 discuss-black:text-neutral-300 line-clamp-3 leading-relaxed">
+                <p className={`text-xs mt-2.5 leading-relaxed line-clamp-3 ${
+                  isDiscussBlack ? 'text-neutral-300' : isDiscussLight ? 'text-black font-semibold' : 'text-neutral-600 dark:text-neutral-300'
+                }`}>
                   {activeUser.bio}
                 </p>
               ) : (
@@ -376,7 +481,15 @@ export default function DevRadarPage() {
           <div className="flex gap-3 mt-5">
             <button
               onClick={() => setActiveUser(null)}
-              className="flex items-center justify-center gap-1 text-xs font-extrabold uppercase px-4 py-3 rounded-xl border border-neutral-300 dark:border-white/10 discuss:border-black text-neutral-600 dark:text-neutral-300 discuss:text-black hover:bg-black/5 dark:hover:bg-white/5 transition-all active:scale-95"
+              className={`flex items-center justify-center gap-1.5 text-xs font-extrabold uppercase px-4 py-3 cursor-pointer ${
+                isDiscussBlack 
+                  ? 'border border-[#FF007F]/40 text-[#FF007F] bg-black/40 hover:bg-[#FF007F]/10 hover:border-[#FF007F] font-mono shadow-[0_0_10px_rgba(255,0,127,0.05)] active:scale-[0.95] duration-200 transition-all rounded-xl' 
+                  : isDiscussLight 
+                  ? 'border-2 border-black text-black bg-white hover:bg-black hover:text-white font-black rounded-none shadow-[2px_2px_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all active:scale-[0.95]' 
+                  : isDark 
+                  ? 'border border-white/10 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-all duration-200 active:scale-[0.95] rounded-xl' 
+                  : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-800 transition-all duration-200 active:scale-[0.95] rounded-xl'
+              }`}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back Map</span>
@@ -384,7 +497,15 @@ export default function DevRadarPage() {
             
             <Link
               to={`/user/${activeUser?.userId}`}
-              className="flex-1 flex items-center justify-center gap-2 text-xs font-extrabold uppercase px-4 py-3 rounded-xl bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-md shadow-blue-500/20 discuss:shadow-red-500/20 hover:brightness-105 active:scale-95 transition-all"
+              className={`flex-1 flex items-center justify-center gap-2 text-xs font-extrabold uppercase px-4 py-3 cursor-pointer ${
+                isDiscussBlack 
+                  ? 'bg-[#FF007F] text-black font-black hover:bg-[#FF007F]/90 shadow-[0_0_15px_rgba(255,0,127,0.3)] active:scale-[0.95] transition-all duration-200 rounded-xl' 
+                  : isDiscussLight 
+                  ? 'border-2 border-black bg-[#EF4444] text-white hover:bg-white hover:text-[#EF4444] font-black rounded-none shadow-[2px_2px_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all active:scale-[0.95]' 
+                  : isDark 
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition-all duration-200 active:scale-[0.95] rounded-xl' 
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/10 transition-all duration-200 active:scale-[0.95] rounded-xl'
+              }`}
             >
               <User className="w-3.5 h-3.5" />
               <span>View Profile</span>
