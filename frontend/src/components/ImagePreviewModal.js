@@ -6,10 +6,9 @@ export default function ImagePreviewModal({ open, onClose, imageUrl, altText = '
   // Prevent page scroll when preview is active
   useEffect(() => {
     if (open) {
-      const originalStyle = window.getComputedStyle(document.body).overflow;
       document.body.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = originalStyle;
+        document.body.style.overflow = '';
       };
     }
   }, [open]);
