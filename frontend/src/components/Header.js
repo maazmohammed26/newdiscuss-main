@@ -108,21 +108,34 @@ export default function Header() {
                 </Popover>
               )}
               
-              <Link to="/profile" className="relative">
-                <Button 
-                  variant="ghost" 
-                  data-testid="header-profile-btn" 
-                  className="w-9 h-9 p-0 rounded-xl bg-[#181818] hover:bg-[#202020] border border-white/5 overflow-hidden transition-all"
-                >
-                  <UserAvatar
-                    src={user.photo_url || null}
-                    username={user.username}
-                    className="w-full h-full rounded-none"
-                    alt={user.username}
+              <Link to="/profile" className="relative flex items-center justify-center">
+                {/* Perfect Round Red & Blue Shining Portal Ring */}
+                <div className="relative group p-[1.5px] rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-tr from-[#EF4444] via-[#2563EB] to-[#EF4444] shadow-[0_0_10px_rgba(37,99,235,0.4),_0_0_10px_rgba(239,68,68,0.4)] hover:scale-105 transition-all">
+                  {/* Rotating Conic Gradient Backdrop */}
+                  <div 
+                    className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,#EF4444,#2563EB,#EF4444)] opacity-90 group-hover:opacity-100 transition-opacity" 
+                    style={{ 
+                      animation: 'spin-slow-portal 4s linear infinite',
+                      mixBlendMode: 'normal' 
+                    }} 
                   />
-                </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    data-testid="header-profile-btn" 
+                    className="relative z-10 w-9 h-9 p-0 rounded-full bg-[#181818] overflow-hidden border border-black/20"
+                  >
+                    <UserAvatar
+                      src={user.photo_url || null}
+                      username={user.username}
+                      className="w-full h-full rounded-full"
+                      alt={user.username}
+                    />
+                  </Button>
+                </div>
+                
                 {(pendingFriendRequests > 0 || commentBadgeCount > 0) && (
-                  <span className="absolute -top-1 -right-1 bg-[#2563EB] text-white text-[10px] font-black min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1 shadow-[0_0_8px_rgba(37,99,235,0.4)]">
+                  <span className="absolute -top-1 -right-1 bg-[#2563EB] text-white text-[10px] font-black min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-1 shadow-[0_0_8px_rgba(37,99,235,0.4)] z-20">
                     {(pendingFriendRequests + commentBadgeCount) > 99 ? '99+' : pendingFriendRequests + commentBadgeCount}
                   </span>
                 )}

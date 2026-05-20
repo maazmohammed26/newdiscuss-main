@@ -30,6 +30,7 @@ const GroupConversationPage = lazy(() => import('@/pages/GroupConversationPage')
 const GroupInfoPage         = lazy(() => import('@/pages/GroupInfoPage'));
 const JoinRequestsPage      = lazy(() => import('@/pages/JoinRequestsPage'));
 const PulsePage             = lazy(() => import('@/pages/PulsePage'));
+const DevRadarPage          = lazy(() => import('@/pages/DevRadarPage'));
 
 // Public static pages
 const AboutPage   = lazy(() => import('@/pages/AboutPage'));
@@ -134,6 +135,7 @@ function AppRoutes() {
         <Route path="/join-requests"           element={<ProtectedRoute><JoinRequestsPage /></ProtectedRoute>} />
         <Route path="/profile"                 element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/pulse"                   element={<ProtectedRoute><PulsePage /></ProtectedRoute>} />
+        <Route path="/devradar"                element={<ProtectedRoute><DevRadarPage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,8 +1,10 @@
 import UserAvatar from '@/components/UserAvatar';
 import MediaUpload from '@/components/MediaUpload';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import L from 'leaflet';
 import { getPosts, getUser } from '@/lib/db';
 import { getUserPulses } from '@/lib/pulseDb';
 import {
@@ -17,6 +19,12 @@ import {
   BIO_CHAR_LIMIT,
   MAX_SOCIAL_LINKS
 } from '@/lib/userProfileDb';
+import {
+  saveUserLocation,
+  deleteUserLocation,
+  getUserLocation,
+  isDevRadarDbAvailable
+} from '@/lib/firebaseSixth';
 import {
   getReceivedRequests,
   getSentRequests,
@@ -62,7 +70,7 @@ import {
   FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock,
-  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send
+  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
@@ -94,6 +102,7 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [userPosts, setUserPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
@@ -170,6 +179,230 @@ export default function ProfilePage() {
   const [showDisablePin, setShowDisablePin] = useState(false);
   const [disablingLock, setDisablingLock] = useState(false);
   const [showSecurityInfo, setShowSecurityInfo] = useState(false);
+
+  // --- DevRadar Location States ---
+  const [shareLocation, setShareLocation] = useState(false);
+  const [updatingLocation, setUpdatingLocation] = useState(false);
+  const [locationCoords, setLocationCoords] = useState(null);
+
+  // Load DevRadar sharing status on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    const loadLocationSharingStatus = async () => {
+      try {
+        const loc = await getUserLocation(user.id);
+        if (loc) {
+          setShareLocation(loc.isPublic || false);
+          if (loc.latitude && loc.longitude) {
+            setLocationCoords({ latitude: loc.latitude, longitude: loc.longitude });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load DevRadar status:', err);
+      }
+    };
+    loadLocationSharingStatus();
+  }, [user?.id]);
+
+  // Sync profile details to DevRadar in background when profile details change
+  useEffect(() => {
+    if (shareLocation && locationCoords && user?.id) {
+      const syncLocationProfile = async () => {
+        try {
+          const locData = {
+            latitude: locationCoords.latitude,
+            longitude: locationCoords.longitude,
+            isPublic: true,
+            username: user.username || user.displayName || '',
+            fullName: profileData?.fullName || '',
+            bio: profileData?.bio || '',
+            photo_url: user.photo_url || user.photoURL || '',
+            verified: user.verified || false,
+          };
+          await saveUserLocation(user.id, locData);
+        } catch (err) {
+          console.warn('[DevRadar Sync] Stale profile data sync failed:', err.message);
+        }
+      };
+      syncLocationProfile();
+    }
+  }, [profileData?.fullName, profileData?.bio, user?.photo_url, user?.photoURL, user?.username, user?.displayName, user?.verified, shareLocation, locationCoords, user?.id]);
+
+  const handleToggleLocationSharing = async () => {
+    if (updatingLocation) return;
+    setUpdatingLocation(true);
+
+    if (shareLocation) {
+      // Opt-out / Disable location sharing
+      try {
+        await deleteUserLocation(user.id);
+        setShareLocation(false);
+        setLocationCoords(null);
+        toast.success('Location sharing disabled. You are now invisible on DevRadar.');
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to disable location sharing.');
+      } finally {
+        setUpdatingLocation(false);
+      }
+    } else {
+      // Opt-in / Enable location sharing
+      if (!navigator.geolocation) {
+        toast.error('Geolocation is not supported by your browser.');
+        setUpdatingLocation(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const locData = {
+              latitude,
+              longitude,
+              isPublic: true,
+              username: user.username || user.displayName || '',
+              fullName: profileData?.fullName || '',
+              bio: profileData?.bio || '',
+              photo_url: user.photo_url || user.photoURL || '',
+              verified: user.verified || false,
+            };
+            await saveUserLocation(user.id, locData);
+            setShareLocation(true);
+            setLocationCoords({ latitude, longitude });
+            toast.success('Location sharing enabled! You are now visible on DevRadar.');
+          } catch (err) {
+            console.error(err);
+            toast.error('Failed to save your location details.');
+          } finally {
+            setUpdatingLocation(false);
+          }
+        },
+        (error) => {
+          console.error('[Geolocation Error]', error);
+          setUpdatingLocation(false);
+          if (error.code === 1) {
+            toast.error('Location permission denied. Please allow location access in your browser settings.');
+          } else {
+            toast.error('Failed to retrieve location coordinates. Try again.');
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  };
+
+  // --- Drag and Drop Adjust Location States ---
+  const [showAdjustLocationModal, setShowAdjustLocationModal] = useState(false);
+  const adjustMapContainerRef = useRef(null);
+  const adjustMapInstanceRef = useRef(null);
+  const adjustMarkerRef = useRef(null);
+  const [tempCoords, setTempCoords] = useState(null);
+
+  // Load Leaflet CSS dynamically if not present
+  useEffect(() => {
+    const linkId = 'leaflet-css-cdn';
+    let link = document.getElementById(linkId);
+    if (!link) {
+      link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+  }, []);
+
+  // Initialize Adjust Location Map with robust container timing
+  useEffect(() => {
+    if (!showAdjustLocationModal || !adjustMapContainerRef.current) return;
+
+    const centerLat = tempCoords?.latitude || locationCoords?.latitude || 12.9716;
+    const centerLng = tempCoords?.longitude || locationCoords?.longitude || 77.5946;
+
+    const timer = setTimeout(() => {
+      if (!adjustMapContainerRef.current) return;
+
+      // Fix leaflet default marker icon assets for safety inside ProfilePage
+      if (L.Icon.Default.prototype._getIconUrl) {
+        delete L.Icon.Default.prototype._getIconUrl;
+      }
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+      
+      const map = L.map(adjustMapContainerRef.current, {
+        zoomControl: false
+      }).setView([centerLat, centerLng], 14);
+
+      adjustMapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      const marker = L.marker([centerLat, centerLng], {
+        draggable: true
+      }).addTo(map);
+
+      adjustMarkerRef.current = marker;
+
+      marker.on('dragend', () => {
+        const position = marker.getLatLng();
+        setTempCoords({ latitude: position.lat, longitude: position.lng });
+      });
+
+      map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        marker.setLatLng([lat, lng]);
+        setTempCoords({ latitude: lat, longitude: lng });
+      });
+    }, 150);
+
+    return () => {
+      clearTimeout(timer);
+      if (adjustMapInstanceRef.current) {
+        adjustMapInstanceRef.current.remove();
+        adjustMapInstanceRef.current = null;
+      }
+    };
+  }, [showAdjustLocationModal]); // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  const handleOpenAdjustModal = () => {
+    if (locationCoords) {
+      setTempCoords({ latitude: locationCoords.latitude, longitude: locationCoords.longitude });
+    } else {
+      setTempCoords({ latitude: 12.9716, longitude: 77.5946 });
+    }
+    setShowAdjustLocationModal(true);
+  };
+
+  const handleSaveAdjustedLocation = async () => {
+    if (!tempCoords) return;
+    try {
+      const locData = {
+        latitude: tempCoords.latitude,
+        longitude: tempCoords.longitude,
+        isPublic: true,
+        username: user.username || user.displayName || '',
+        fullName: profileData?.fullName || '',
+        bio: profileData?.bio || '',
+        photo_url: user.photo_url || user.photoURL || '',
+        verified: user.verified || false,
+      };
+      await saveUserLocation(user.id, locData);
+      setLocationCoords({ latitude: tempCoords.latitude, longitude: tempCoords.longitude });
+      toast.success('Precise location updated successfully!');
+      setShowAdjustLocationModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update precise location.');
+    }
+  };
 
   useEffect(() => {
     if (typeof isBiometricSupported === 'function') {
@@ -1369,6 +1602,118 @@ export default function ProfilePage() {
           </div>
 
 
+          {/* ==================== DEVRADAR LOCATION SETTINGS ==================== */}
+          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">DevRadar Telemetry Network</span>
+              </div>
+              
+              {/* Dynamic Status Live Pulse Indicator */}
+              {shareLocation ? (
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 ${theme === 'discuss-light' ? 'rounded-none border-black text-black' : 'rounded-full'}`}>
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10B981]" />
+                  <span>Telemetry Broadcast Active</span>
+                </div>
+              ) : (
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-500 border border-neutral-500/25 ${theme === 'discuss-light' ? 'rounded-none border-black text-black' : 'rounded-full'}`}>
+                  <span className="w-1.5 h-1.5 bg-neutral-400 dark:bg-neutral-600 rounded-full" />
+                  <span>Telemetry Offline</span>
+                </div>
+              )}
+            </div>
+
+            {/* Premium Theme-Tailored Glass/Border Panel */}
+            <div className={`p-5 transition-all duration-300 ${
+              theme === 'discuss-black'
+                ? 'border border-[#FF007F]/20 bg-[#13131A]/90 hover:border-[#FF007F]/35 shadow-[0_4px_25px_rgba(255,0,127,0.06),_0_0_12px_rgba(255,0,127,0.03)] rounded-2xl'
+                : theme === 'discuss-light'
+                ? 'border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none'
+                : theme === 'dark'
+                ? 'border border-white/10 bg-slate-950/40 shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md rounded-2xl'
+                : 'border border-slate-200 bg-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] backdrop-blur-md rounded-2xl'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className={`p-2.5 rounded-xl transition-all duration-300 ${
+                    shareLocation 
+                      ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] discuss-black:text-[#FF007F] discuss-black:bg-[#FF007F]/10' 
+                      : 'bg-neutral-500/10 text-neutral-400 dark:text-neutral-500'
+                  }`}>
+                    <MapPin className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-extrabold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] discuss:text-black discuss-black:text-[#F5F5F5]">
+                      Geospatial Telemetry Broadcast
+                    </p>
+                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5 leading-relaxed max-w-[220px]">
+                      {updatingLocation ? (
+                        <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#2563EB] discuss:text-[#EF4444]" /> Synchronizing coordinates...</span>
+                      ) : shareLocation ? (
+                        <span>Your node specification is broadcasted publicly on the interactive map.</span>
+                      ) : (
+                        <span>Activate coordinate tracking to become discoverable to nearby developers and community nodes.</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleToggleLocationSharing}
+                  disabled={updatingLocation}
+                  className={`relative inline-flex h-6 w-11 items-center transition-all duration-300 focus:outline-none ${
+                    theme === 'discuss-light' ? 'rounded-none border border-black' : 'rounded-full'
+                  } ${
+                    shareLocation 
+                      ? theme === 'discuss-black'
+                        ? 'bg-[#FF007F] shadow-[0_0_10px_rgba(255,0,127,0.5)]'
+                        : theme === 'discuss-light'
+                        ? 'bg-[#EF4444]'
+                        : 'bg-[#2563EB]'
+                      : 'bg-neutral-200 dark:bg-neutral-700'
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 transform bg-white transition-transform ${
+                    theme === 'discuss-light' ? 'rounded-none border-r border-black' : 'rounded-full'
+                  } ${shareLocation ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {shareLocation && locationCoords && (
+                <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
+                  theme === 'discuss-black' 
+                    ? 'border-[#FF007F]/10' 
+                    : theme === 'discuss-light' 
+                    ? 'border-black' 
+                    : 'border-[#E2E8F0] dark:border-white/5'
+                }`}>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Node Coordinates:</span>
+                    <span className={`font-mono font-bold ${theme === 'discuss-black' ? 'text-[#FF007F]' : theme === 'discuss-light' ? 'text-black' : 'text-[#2563EB]'}`}>
+                      {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
+                    </span>
+                  </div>
+                  <Button
+                    onClick={handleOpenAdjustModal}
+                    variant="outline"
+                    size="sm"
+                    className={`w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 ${
+                      theme === 'discuss-black'
+                        ? 'text-[#FF007F] border-[#FF007F]/30 bg-[#FF007F]/5 hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50 rounded-xl'
+                        : theme === 'discuss-light'
+                        ? 'text-black border-black bg-white hover:bg-neutral-100 rounded-none border-2'
+                        : 'text-[#2563EB] border-[#2563EB] bg-[#2563EB]/5 hover:bg-[#2563EB]/10 rounded-xl'
+                    }`}
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>Calibrate Precision Node Pin</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium"><span>Theme</span></span>
@@ -1432,8 +1777,13 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
+                    <p className="text-[11px] font-bold text-amber-500 mb-1"><span>ALTERNATIVE: GET ID INSTANTLY</span></p>
+                    <p className="text-[11px] text-[#6275AF] mb-3"><span>If you don't get the ID from our bot, open </span><a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@userinfobot</a><span> or </span><a href="https://t.me/RawDataBot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@RawDataBot</a><span> on Telegram and send a message. It will immediately give you your numeric User ID!</span></p>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
                     <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1"><span>2. LINK CHAT ID</span></p>
-                    <p className="text-[11px] text-[#6275AF]"><span>Paste the numeric ID provided by the bot into the field below and tap </span><span className="font-semibold">Connect</span>.</p>
+                    <p className="text-[11px] text-[#6275AF]"><span>Paste your numeric Telegram ID into the input field below and click </span><span className="font-semibold">Connect</span>.</p>
                   </div>
                 </div>
               </div>
@@ -1487,7 +1837,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl focus-within:border-[#229ED9] transition-all">
+                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl focus-within:border-[#229ED9] discuss:focus-within:border-[#EF4444] discuss-black:focus-within:border-[#FF007F] transition-all">
                   <Input
                     value={telegramChatIdInput}
                     onChange={e => {
@@ -1500,7 +1850,7 @@ export default function ProfilePage() {
                   <Button
                     onClick={handleSaveTelegram}
                     disabled={savingTelegram || !telegramChatIdInput.trim()}
-                    className="bg-[#229ED9] hover:bg-[#1c80b0] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#229ED9]/20"
+                    className="bg-[#229ED9] hover:bg-[#1c80b0] discuss:bg-[#EF4444] discuss:hover:bg-[#d93838] discuss-black:bg-[#FF007F] discuss-black:hover:bg-[#e0006f] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#229ED9]/20 discuss:shadow-[#EF4444]/20 discuss-black:shadow-[#FF007F]/20"
                   >
                     {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
                   </Button>
@@ -2479,6 +2829,80 @@ export default function ProfilePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Precise Location Adjust Modal */}
+      {showAdjustLocationModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg p-5 rounded-2xl bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] pb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                <h3 className="text-base font-black text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] uppercase tracking-tight">
+                  Adjust Precise Location
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowAdjustLocationModal(false)}
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-[#F1F5F9] transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Description */}
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] leading-relaxed">
+              Drag the blue marker or click anywhere on the map to pinpoint your exact office/building. This bypasses generic browser/ISP geolocation for extreme accuracy.
+            </p>
+
+            {/* Coordinates Real-time Display */}
+            {tempCoords && (
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#111] p-3 rounded-xl border border-neutral-200 dark:border-white/5 discuss:border-black flex justify-between items-center text-xs">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Latitude</span>
+                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#EF4444]">
+                    {tempCoords.latitude.toFixed(6)}
+                  </span>
+                </div>
+                <div className="h-6 w-[1px] bg-neutral-300 dark:bg-white/10 discuss:bg-[#333]" />
+                <div className="flex flex-col text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Longitude</span>
+                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#EF4444]">
+                    {tempCoords.longitude.toFixed(6)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Map Area */}
+            <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 discuss:border-black shadow-inner">
+              <div
+                ref={adjustMapContainerRef}
+                className={`w-full h-full ${
+                  theme === 'dark' ? 'dark-map' : theme === 'discuss-black' ? 'discuss-black-map' : ''
+                }`}
+              />
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex gap-3 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] pt-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowAdjustLocationModal(false)}
+                className="flex-1 text-xs font-bold uppercase py-2.5 discuss:border-black text-neutral-600 dark:text-neutral-300 discuss:text-black hover:bg-black/5 dark:hover:bg-white/5 rounded-xl active:scale-95 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveAdjustedLocation}
+                className="flex-1 text-xs font-bold uppercase py-2.5 rounded-xl bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-md shadow-blue-500/20 discuss:shadow-red-500/20 hover:brightness-105 active:scale-95 transition-all"
+              >
+                Confirm Pin Location
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

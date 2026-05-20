@@ -16,7 +16,8 @@ import {
   MessageSquare,
   Lock,
   Unlock,
-  Shield
+  Shield,
+  Radar
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -165,6 +166,7 @@ export default function FloatingNavbar() {
     const isActive = path === '/feed' ? currentPath === '/feed' 
                    : path === '/chat' ? currentPath.startsWith('/chat')
                    : path === '/pulse' ? currentPath === '/pulse'
+                   : path === '/devradar' ? currentPath === '/devradar'
                    : false;
 
     const baseRound = isDiscussLight ? 'rounded-none' : 'rounded-2xl';
@@ -197,6 +199,7 @@ export default function FloatingNavbar() {
     const isActive = path === '/feed' ? currentPath === '/feed' 
                    : path === '/chat' ? currentPath.startsWith('/chat')
                    : path === '/pulse' ? currentPath === '/pulse'
+                   : path === '/devradar' ? currentPath === '/devradar'
                    : false;
     if (!isActive) return '';
     if (isLight) return 'drop-shadow-[0_2px_6px_rgba(37,99,235,0.25)]';
@@ -211,6 +214,7 @@ export default function FloatingNavbar() {
     const isActive = path === '/feed' ? currentPath === '/feed' 
                    : path === '/chat' ? currentPath.startsWith('/chat')
                    : path === '/pulse' ? currentPath === '/pulse'
+                   : path === '/devradar' ? currentPath === '/devradar'
                    : false;
     if (!isActive) return null;
     
@@ -414,20 +418,14 @@ export default function FloatingNavbar() {
             {getActiveDot('/pulse')}
           </Link>
 
-          {/* Nav Item 5: Lock / Unlock Security */}
-          <button 
-            onClick={handleLockClick}
-            className={`group relative flex items-center justify-center w-12 h-12 transition-all ${isDiscussLight ? 'rounded-none' : 'rounded-2xl'} ${lockBtnClass}`}
+          {/* Nav Item 5: DevRadar */}
+          <Link 
+            to="/devradar" 
+            className={getNavItemClass('/devradar')}
           >
-            {isLockEnabled ? (
-              <Lock className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${lockIconClass}`} />
-            ) : (
-              <Unlock className={`w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 ${lockIconClass}`} />
-            )}
-            {isLockEnabled && (
-              <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full animate-pulse ${lockDotClass}`} />
-            )}
-          </button>
+            <Radar className={`w-[22px] h-[22px] transition-transform duration-700 ease-out group-hover:rotate-[360deg] group-hover:scale-110 ${getIconDropShadow('/devradar')}`} />
+            {getActiveDot('/devradar')}
+          </Link>
         </div>
       </div>
 
@@ -541,6 +539,39 @@ export default function FloatingNavbar() {
           opacity: 0 !important;
           pointer-events: none !important;
         }
+
+        /* High-end spring click physics & tactile ripples for navbar buttons */
+        .floating-navbar-container a {
+          position: relative;
+          transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease, color 0.2s ease !important;
+        }
+        
+        /* Spring scale-down on active click */
+        .floating-navbar-container a:active {
+          transform: scale(0.88) !important;
+          transition: transform 0.08s cubic-bezier(0.25, 1, 0.5, 1) !important;
+        }
+
+        /* CurrentColor dynamic glowing aura ripple halo */
+        .floating-navbar-container a::after {
+          content: '';
+          position: absolute;
+          inset: 4px;
+          background: currentColor;
+          opacity: 0;
+          border-radius: inherit;
+          transform: scale(0.7);
+          transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .floating-navbar-container a:active::after {
+          opacity: 0.18;
+          transform: scale(1.15);
+          transition: 0s;
+        }
+
         @keyframes spin-slow {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

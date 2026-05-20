@@ -53,7 +53,9 @@ This bot will send you real-time alerts directly from your Discuss account.
 2. Scroll down to <b>Telegram Notifications</b>.
 3. Paste your Chat ID (<code>YOUR_ID_HERE</code>) and tap <b>Save</b>.
 
-Once connected, you will receive alerts for New Messages, Friend Requests, and Group Invites!`;
+Once connected, you will receive alerts for New Messages, Friend Requests, and Group Invites!
+
+💡 <i>Alternative Tip: If you ever need your Chat ID instantly, you can also send a message to @userinfobot or @RawDataBot on Telegram to get your numeric ID!</i>`;
 
 const HELP_MESSAGE = `ℹ️ <b>Discuss Notifications Bot — Help</b>
 
@@ -82,12 +84,12 @@ async function poll() {
         const msg = update.message;
         const chatId = msg.chat?.id;
         const text = (msg.text || '').trim();
-
+ 
         if (!chatId) continue;
-
+ 
         if (text.startsWith('/start')) {
           console.log(`[Command] /start from ${chatId}`);
-          const welcome = WELCOME_MESSAGE.replace('YOUR_ID_HERE', String(chatId));
+          const welcome = WELCOME_MESSAGE.replace(/YOUR_ID_HERE/g, String(chatId));
           await sendReply(chatId, welcome, { reply_markup: appButton('📲 Open Discuss App') });
         } 
         else if (text.startsWith('/help')) {
