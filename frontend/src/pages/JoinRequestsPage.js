@@ -224,6 +224,7 @@ export default function JoinRequestsPage() {
                               <div key={request.userId} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700 discuss:bg-[#262626] rounded-lg">
                                 <div className="flex items-center gap-3">
                                   <UserAvatar
+                                    userId={request.userId}
                                     src={details?.photo_url}
                                     username={details?.username || 'User'}
                                     className="w-10 h-10"

@@ -120,7 +120,8 @@ export default function UserAvatar({
       {showOptions && createPortal(
         <div 
           onClick={() => setShowOptions(false)}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[99999] pointer-events-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          style={{ pointerEvents: 'auto' }}
         >
           <div 
             onClick={(e) => e.stopPropagation()}

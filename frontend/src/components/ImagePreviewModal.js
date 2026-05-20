@@ -29,7 +29,8 @@ export default function ImagePreviewModal({ open, onClose, imageUrl, altText = '
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
+      className="fixed inset-0 z-[99999] flex flex-col justify-between bg-black/95 backdrop-blur-xl animate-in fade-in duration-200 pointer-events-auto"
+      style={{ pointerEvents: 'auto' }}
       onClick={onClose}
     >
       {/* Top Header Bar */}
@@ -62,13 +63,13 @@ export default function ImagePreviewModal({ open, onClose, imageUrl, altText = '
         onClick={onClose}
       >
         <div 
-          className="relative max-w-full max-h-[80vh] flex items-center justify-center"
+          className="relative w-full h-full max-h-screen flex items-center justify-center p-2"
           onClick={(e) => e.stopPropagation()}
         >
           <img 
             src={imageUrl} 
             alt={altText}
-            className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl select-none animate-in zoom-in-95 duration-200"
+            className="w-full h-full object-contain select-none animate-in zoom-in-95 duration-200"
             draggable={false}
           />
         </div>

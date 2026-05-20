@@ -5,7 +5,6 @@ import { getUserProfile } from '@/lib/userProfileDb';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
-import ImagePreviewModal from '@/components/ImagePreviewModal';
 import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User } from 'lucide-react';
 
 export default function CommentUserInfoModal({ open, onClose, userId, currentUserId }) {
@@ -14,8 +13,6 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
-  const [showImagePreview, setShowImagePreview] = useState(false);
-
   const BIO_TRUNCATE_LENGTH = 100;
 
   useEffect(() => {
@@ -23,7 +20,6 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
       setLoading(true);
       setLoadingProfile(true);
       setBioExpanded(false);
-      setShowImagePreview(false);
       
       // Fetch from primary Firebase
       getUser(userId)
@@ -52,7 +48,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
 
   return (
     <>
-      <Dialog open={open && !showImagePreview} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
         <DialogContent 
           hideClose={true}
           className="sm:max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] dark:border-[#334155] discuss:border-[#333333] p-0 overflow-hidden"
@@ -80,24 +76,22 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
               <div className="bg-gradient-to-b from-[#2563EB]/10 dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 to-transparent pt-8 pb-4 px-6 text-center">
                 {/* Profile Picture - Clickable if exists */}
                 {userData.photo_url ? (
-                  <button 
-                    onClick={() => setShowImagePreview(true)}
-                    className="relative group mx-auto mb-3 block"
-                  >
+                  <div className="relative group mx-auto mb-3 block">
                     <UserAvatar
+                      userId={userId}
                       src={userData.photo_url}
                       username={userData.username}
                       className="w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] group-hover:opacity-90 transition-opacity"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full pointer-events-none">
                       <div className="bg-black/50 rounded-full p-1.5">
                         <User className="w-3.5 h-3.5 text-white" />
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ) : (
                   <div className="mx-auto mb-3">
-                    <UserAvatar src={null} username={userData?.username} className="w-16 h-16 mx-auto" />
+                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto" />
                   </div>
                 )}
                 
@@ -185,14 +179,6 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Image Preview Modal */}
-      <ImagePreviewModal 
-        open={showImagePreview}
-        onClose={() => setShowImagePreview(false)}
-        imageUrl={userData?.photo_url}
-        altText={userData?.username}
-      />
     </>
   );
 }

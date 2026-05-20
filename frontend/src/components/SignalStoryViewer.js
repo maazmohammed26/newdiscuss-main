@@ -455,7 +455,8 @@ function SignalStoryViewer({
   return createPortal(
     <div
       id="discuss-story-viewer"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95 backdrop-blur-md pointer-events-auto"
+      style={{ pointerEvents: 'auto' }}
     >
       {/* Main card - Fullscreen on mobile, perfectly sized aspect card on desktop */}
       <div

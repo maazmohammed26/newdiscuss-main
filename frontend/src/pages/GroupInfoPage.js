@@ -420,6 +420,7 @@ export default function GroupInfoPage() {
                     <div key={member.userId} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
                       <button onClick={() => handleUserClick(member.userId)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                         <UserAvatar
+                          userId={member.userId}
                           src={details?.photo_url}
                           username={details?.username || 'User'}
                           className="w-10 h-10 shrink-0"
@@ -458,6 +459,7 @@ export default function GroupInfoPage() {
                     <div key={member.userId} className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
                       <button onClick={() => handleUserClick(member.userId)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                         <UserAvatar
+                          userId={member.userId}
                           src={details?.photo_url}
                           username={details?.username || 'User'}
                           className="w-10 h-10 shrink-0"
@@ -542,6 +544,7 @@ export default function GroupInfoPage() {
                   <div key={u.id} className="flex items-center justify-between p-2 bg-neutral-50 dark:bg-neutral-700 rounded-lg">
                     <div className="flex items-center gap-3">
                       <UserAvatar
+                        userId={u.id}
                         src={u?.photo_url}
                         username={u?.username || 'User'}
                         className="w-10 h-10"
