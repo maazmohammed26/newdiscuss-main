@@ -786,3 +786,56 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Premium rotating active story portal ring styles */
+.story-shining-portal-ring-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-shining-portal-ring {
+  position: absolute;
+  inset: -3.5px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #3b82f6, #ef4444, #3b82f6);
+  animation: spin-slow-portal 4s linear infinite;
+  mask: radial-gradient(circle, transparent 66%, black 67%);
+  -webkit-mask: radial-gradient(circle, transparent 66%, black 67%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Theme overrides */
+/* discuss-black theme gets glowing Hot Pink + Purple portal effect */
+.discuss-black .story-shining-portal-ring {
+  background: conic-gradient(from 0deg, #FF007F, #a855f7, #FF007F);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.5), 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+/* discuss-light theme gets retro blocky solid Red + Black square frame */
+.discuss-light .story-shining-portal-ring {
+  background: conic-gradient(from 0deg, #000, #EF4444, #000);
+  border-radius: 0% !important;
+  animation: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
+  padding: 3px;
+  background-clip: content-box;
+}
+
+.discuss-light .story-shining-portal-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid #000;
+  pointer-events: none;
+}
+
+/* Ensure avatar inside is properly positioned above the ring */
+.story-shining-avatar {
+  position: relative;
+  z-index: 1;
+  background-color: var(--card);
+}

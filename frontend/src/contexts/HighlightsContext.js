@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { subscribeToUserGroups, subscribeToGroupInvites, subscribeToAdminJoinRequests } from '@/lib/groupsDb';
 import { subscribeToReceivedRequests } from '@/lib/relationshipsDb';
 import { subscribeToUserChats } from '@/lib/chatsDb';
+import { subscribeToActiveStories, subscribeToSeenStoryIds, groupStoriesByAuthor } from '@/lib/storiesDb';
 
 const HighlightsContext = createContext();
 
@@ -15,6 +16,12 @@ export function HighlightsProvider({ children }) {
   const [pendingAdminGroupRequests, setPendingAdminGroupRequests] = useState(0);
   const [viewedGroupRequests, setViewedGroupRequests] = useState(0);
   const [clearedSections, setClearedSections] = useState({});
+
+  // Signal Stories global sync state
+  const [activeStories, setActiveStories] = useState([]);
+  const [seenStoryIds, setSeenStoryIds] = useState(new Set());
+  const [storyGroups, setStoryGroups] = useState([]);
+  const [usersWithStories, setUsersWithStories] = useState(new Set());
 
   useEffect(() => {
     if (!user?.id) {
@@ -57,6 +64,36 @@ export function HighlightsProvider({ children }) {
     };
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setActiveStories([]);
+      setSeenStoryIds(new Set());
+      setStoryGroups([]);
+      setUsersWithStories(new Set());
+      return;
+    }
+
+    const unsubSeen = subscribeToSeenStoryIds(user.id, (seen) => {
+      setSeenStoryIds(seen);
+    });
+
+    const unsubStories = subscribeToActiveStories((storiesList) => {
+      setActiveStories(storiesList);
+    });
+
+    return () => {
+      unsubSeen();
+      unsubStories();
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    const groups = groupStoriesByAuthor(activeStories, seenStoryIds, user?.id);
+    setStoryGroups(groups);
+    const uids = new Set(activeStories.map(s => s.authorId));
+    setUsersWithStories(uids);
+  }, [activeStories, seenStoryIds, user?.id]);
+
   const pendingGroupRequests = pendingGroupInvites + pendingAdminGroupRequests;
   const hasNewGroupRequests = pendingGroupRequests > viewedGroupRequests;
 
@@ -95,7 +132,11 @@ export function HighlightsProvider({ children }) {
     markGroupRequestsViewed,
     clearSection,
     clearAllHighlights,
-    clearedSections
+    clearedSections,
+    activeStories,
+    seenStoryIds,
+    storyGroups,
+    usersWithStories,
   };
 
   return (

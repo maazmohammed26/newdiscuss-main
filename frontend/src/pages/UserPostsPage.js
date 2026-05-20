@@ -10,7 +10,9 @@ import PostCard from '@/components/PostCard';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
-import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock } from 'lucide-react';
+import { database, ref, onValue } from '@/lib/firebase';
+
 
 
 export default function UserPostsPage() {
@@ -26,9 +28,51 @@ export default function UserPostsPage() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [presenceData, setPresenceData] = useState({ isOnline: false, lastSeen: 0 });
 
   // Max characters before truncation
   const BIO_TRUNCATE_LENGTH = 150;
+
+  useEffect(() => {
+    if (!userId) return;
+    const presenceRef = ref(database, `users/${userId}`);
+    const unsubscribe = onValue(presenceRef, (snap) => {
+      if (snap.exists()) {
+        const val = snap.val();
+        setPresenceData({
+          isOnline: val.isOnline || false,
+          lastSeen: val.lastSeen || 0
+        });
+      } else {
+        setPresenceData({ isOnline: false, lastSeen: 0 });
+      }
+    }, (err) => {
+      console.error("Presence subscribe error:", err);
+    });
+    return () => unsubscribe();
+  }, [userId]);
+
+  const formatLastSeen = () => {
+    const isActuallyOnline = presenceData.isOnline && (Date.now() - presenceData.lastSeen < 20000);
+    if (isActuallyOnline) return 'Online';
+    if (!presenceData.lastSeen) return 'Offline';
+    
+    const diffMs = Date.now() - presenceData.lastSeen;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else {
+      const date = new Date(presenceData.lastSeen);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
 
   useEffect(() => {
     if (userId) {
@@ -77,10 +121,16 @@ export default function UserPostsPage() {
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
         <button
           data-testid="user-posts-back"
-          onClick={() => navigate(location.state?.from || '/feed')}
+          onClick={() => {
+            if (location.state?.fromMap) {
+              navigate('/devradar');
+            } else {
+              navigate(location.state?.from || '/feed');
+            }
+          }}
           className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] text-[13px] font-medium mb-4 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> {location.state?.fromMap ? 'Back to Map' : 'Back'}
         </button>
 
         {loading ? (
@@ -101,6 +151,7 @@ export default function UserPostsPage() {
                     className="relative group shrink-0"
                   >
                     <UserAvatar
+                      userId={userId}
                       src={userData.photo_url}
                       username={userData.username}
                       className="w-14 h-14 shadow-md discuss:shadow-none discuss:border discuss:border-[#333333] group-hover:opacity-90 transition-opacity"
@@ -113,7 +164,7 @@ export default function UserPostsPage() {
                   </button>
                 ) : (
                   <div className="shrink-0">
-                    <UserAvatar src={null} username={userData?.username} className="w-14 h-14" />
+                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-14 h-14" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -131,12 +182,19 @@ export default function UserPostsPage() {
                     {!profileData?.fullName && userData.verified && <VerifiedBadge size="sm" />}
                   </div>
                   
-                  <div className="flex items-center gap-4 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                     <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
                       <Calendar className="w-3.5 h-3.5" /> Joined {joinDate}
                     </span>
                     <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
                       <FileText className="w-3.5 h-3.5" /> {posts.length} posts
+                    </span>
+                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Last seen: </span>
+                      <span className={formatLastSeen() === 'Online' ? 'text-emerald-500 font-semibold' : ''}>
+                        {formatLastSeen()}
+                      </span>
                     </span>
                   </div>
 

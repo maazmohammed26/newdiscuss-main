@@ -39,7 +39,9 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink,
 } from '@/lib/firebase';
-import { database, ref, onValue } from '@/lib/firebase';
+import { database, ref, onValue, get } from '@/lib/firebase';
+import { update, onDisconnect } from 'firebase/database';
+import { isDevRadarDbAvailable, devRadarDatabase } from '@/lib/firebaseSixth';
 import {
   createUser,
   getUser,
@@ -580,6 +582,84 @@ export function AuthProvider({ children }) {
     const unsub = onValue(userRef, handleUserUpdate);
     return () => unsub();
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Real-time presence engine ───────────────────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Database references
+    const userRef = ref(database, `users/${user.id}`);
+    const userPresenceRef = ref(database, `users/${user.id}/isOnline`);
+    const userLastSeenRef = ref(database, `users/${user.id}/lastSeen`);
+
+    // Primary DB onDisconnect handlers
+    const primaryPresenceOnDisconnect = onDisconnect(userPresenceRef);
+    const primaryLastSeenOnDisconnect = onDisconnect(userLastSeenRef);
+
+    primaryPresenceOnDisconnect.set(false);
+    primaryLastSeenOnDisconnect.set(Date.now());
+
+    // Update immediately on load
+    const updateOnline = () => {
+      const now = Date.now();
+      
+      // Update primary user node
+      const updates = {
+        isOnline: true,
+        lastSeen: now,
+      };
+      
+      update(userRef, updates).catch(() => {});
+
+      // If sixth db is available, synchronise presence
+      if (isDevRadarDbAvailable()) {
+        const sixthUserLocRef = ref(devRadarDatabase, `devRadarLocations/${user.id}`);
+        // Read location node first to verify if it exists, to prevent creating empty location records
+        get(sixthUserLocRef).then((snap) => {
+          if (snap.exists()) {
+            const sixthUpdates = {
+              isOnline: true,
+              lastSeen: now,
+            };
+            update(sixthUserLocRef, sixthUpdates).catch(() => {});
+            
+            // Set up onDisconnect for sixth db too
+            const sixthPresenceRef = ref(devRadarDatabase, `devRadarLocations/${user.id}/isOnline`);
+            const sixthLastSeenRef = ref(devRadarDatabase, `devRadarLocations/${user.id}/lastSeen`);
+            
+            const sixthPresenceOnDisconnect = onDisconnect(sixthPresenceRef);
+            const sixthLastSeenOnDisconnect = onDisconnect(sixthLastSeenRef);
+            
+            sixthPresenceOnDisconnect.set(false);
+            sixthLastSeenOnDisconnect.set(Date.now());
+          }
+        }).catch(() => {});
+      }
+    };
+
+    updateOnline();
+
+    // Heartbeat every 10 seconds
+    const interval = setInterval(updateOnline, 10000);
+
+    return () => {
+      clearInterval(interval);
+      primaryPresenceOnDisconnect.cancel();
+      primaryLastSeenOnDisconnect.cancel();
+      
+      // Set to offline when unmounting (logging out / session expired)
+      update(userRef, { isOnline: false, lastSeen: Date.now() }).catch(() => {});
+      
+      if (isDevRadarDbAvailable()) {
+        const sixthUserLocRef = ref(devRadarDatabase, `devRadarLocations/${user.id}`);
+        get(sixthUserLocRef).then((snap) => {
+          if (snap.exists()) {
+            update(sixthUserLocRef, { isOnline: false, lastSeen: Date.now() }).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    };
+  }, [user?.id]);
 
   // ── Auth methods ────────────────────────────────────────────────────────
 

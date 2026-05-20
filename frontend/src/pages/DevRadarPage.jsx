@@ -6,6 +6,7 @@ import { subscribeToPublicLocations, getUserLocation } from '@/lib/firebaseSixth
 import { ArrowLeft, MapPin, Loader2, ExternalLink, X, Navigation, User, ChevronLeft, Sparkles, Compass, ShieldCheck, Check, Radar } from 'lucide-react';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import UserAvatar from '@/components/UserAvatar';
+import { useHighlights } from '@/contexts/HighlightsContext';
 import L from 'leaflet';
 
 // Fix leaflet default marker icon assets for safety
@@ -23,12 +24,20 @@ export default function DevRadarPage() {
 
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState([]);
+  const { usersWithStories } = useHighlights();
   const [activeUser, setActiveUser] = useState(null);
   const [myCoords, setMyCoords] = useState(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
   const centeredRef = useRef(false);
+
+  const onlineCount = locations.filter(loc => {
+    if (loc.isOnline !== true) return false;
+    const lastSeenTime = loc.lastSeen || (loc.lastUpdated ? new Date(loc.lastUpdated).getTime() : 0);
+    return (Date.now() - lastSeenTime) < 20000;
+  }).length;
+
 
   useEffect(() => {
     const seen = localStorage.getItem('devradar_tutorial_seen_v2');
@@ -173,8 +182,29 @@ export default function DevRadarPage() {
     // Clear old markers
     markersGroup.clearLayers();
 
-    // Map each public user to a Marker
-    locations.forEach((loc) => {
+    // Map each public user to a Marker, applying deterministic offset if they share exact coordinates
+    const processedLocations = locations.map(loc => ({ ...loc }));
+    const coordinateCounts = {};
+
+    processedLocations.forEach((loc) => {
+      if (!loc.latitude || !loc.longitude) return;
+      const latVal = parseFloat(loc.latitude).toFixed(5);
+      const lngVal = parseFloat(loc.longitude).toFixed(5);
+      const coordKey = `${latVal}_${lngVal}`;
+
+      if (coordinateCounts[coordKey]) {
+        const idx = coordinateCounts[coordKey]++;
+        const angle = (idx * 60) * (Math.PI / 180);
+        const layer = Math.ceil(idx / 6);
+        const radius = 0.00018 * layer;
+        loc.latitude = parseFloat(loc.latitude) + radius * Math.cos(angle);
+        loc.longitude = parseFloat(loc.longitude) + radius * Math.sin(angle);
+      } else {
+        coordinateCounts[coordKey] = 1;
+      }
+    });
+
+    processedLocations.forEach((loc) => {
       if (!loc.latitude || !loc.longitude) return;
 
       const isMe = loc.userId === user?.id;
@@ -186,11 +216,22 @@ export default function DevRadarPage() {
         ? (isDiscussBlack ? '#FF007F' : isDiscussLight ? '#EF4444' : '#2563EB')
         : (isDiscussBlack ? '#A855F7' : isDiscussLight ? '#10B981' : '#6366F1');
 
+      const isActuallyOnline = isMe || (loc.isOnline === true && (Date.now() - (loc.lastSeen || 0) < 20000));
+      const dotClass = isActuallyOnline 
+        ? 'bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse' 
+        : 'bg-gray-400';
+
+      const hasStory = loc.userId !== user?.id && usersWithStories && usersWithStories.has(loc.userId);
+      const ringWrapperStart = hasStory ? `<div class="story-shining-portal-ring-wrapper inline-block relative"><div class="story-shining-portal-ring"></div>` : '';
+      const ringWrapperEnd = hasStory ? `</div>` : '';
+
       const avatarMarkup = `
+        ${ringWrapperStart}
         <div class="relative w-10 h-10 rounded-full border-2 border-white shadow-xl bg-white flex items-center justify-center transition-transform hover:scale-110 active:scale-95" style="border-color: ${pinColor}">
           <img src="${avatarUrl}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'" />
-          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isMe ? 'bg-green-500 animate-pulse' : 'bg-indigo-500'}"></span>
+          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${dotClass}"></span>
         </div>
+        ${ringWrapperEnd}
         <div class="w-4 h-4 rounded-full bg-black/15 blur-sm mx-auto -mt-1 scale-x-150"></div>
       `;
 
@@ -211,7 +252,7 @@ export default function DevRadarPage() {
 
       marker.addTo(markersGroup);
     });
-  }, [locations, user?.id, isDiscussBlack, isDiscussLight, mapReady]);
+  }, [locations, user?.id, isDiscussBlack, isDiscussLight, mapReady, usersWithStories]);
 
   // Recenter map on user's coordinates
   const handleRecenter = () => {
@@ -300,9 +341,11 @@ export default function DevRadarPage() {
               <span className="hidden sm:inline">My Position</span>
             </button>
           )}
-          <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 animate-pulse">
-            {locations.length} Devs Online
-          </div>
+          {onlineCount > 0 && (
+            <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 animate-pulse">
+              {onlineCount} Devs Online
+            </div>
+          )}
         </div>
       </header>
 
@@ -412,7 +455,7 @@ export default function DevRadarPage() {
           </button>
 
           {/* Technical Telemetry Row */}
-          <div className="flex items-center justify-between border-b pb-2 mb-3.5 border-black/5 dark:border-white/5 font-mono text-[9px] uppercase tracking-wider">
+          <div className="flex items-center justify-between border-b pb-2 mb-3.5 border-black/5 dark:border-white/5 font-mono text-[9px] uppercase tracking-wider pr-8">
             <div className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full relative flex`}>
                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
@@ -441,6 +484,7 @@ export default function DevRadarPage() {
           <div className="flex gap-4 items-start pr-6 mt-1">
             <div className="relative shrink-0">
               <UserAvatar
+                userId={activeUser?.userId}
                 src={activeUser?.photo_url}
                 username={activeUser?.username || 'Dev'}
                 className={`w-14 h-14 border shrink-0 ${
@@ -497,6 +541,7 @@ export default function DevRadarPage() {
             
             <Link
               to={`/user/${activeUser?.userId}`}
+              state={{ fromMap: true }}
               className={`flex-1 flex items-center justify-center gap-2 text-xs font-extrabold uppercase px-4 py-3 cursor-pointer ${
                 isDiscussBlack 
                   ? 'bg-[#FF007F] text-black font-black hover:bg-[#FF007F]/90 shadow-[0_0_15px_rgba(255,0,127,0.3)] active:scale-[0.95] transition-all duration-200 rounded-xl' 

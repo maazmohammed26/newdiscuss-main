@@ -86,6 +86,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
                     className="relative group mx-auto mb-3 block"
                   >
                     <UserAvatar
+                      userId={userId}
                       src={userData.photo_url}
                       username={userData.username}
                       className="w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] group-hover:opacity-90 transition-opacity"
@@ -98,7 +99,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
                   </button>
                 ) : (
                   <div className="mx-auto mb-3">
-                    <UserAvatar src={null} username={userData?.username} className="w-16 h-16 mx-auto" />
+                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto" />
                   </div>
                 )}
                 

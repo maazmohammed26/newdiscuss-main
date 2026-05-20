@@ -27,6 +27,7 @@ export default function UserSearchResult({
         className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
       >
         <UserAvatar
+          userId={user.id}
           src={user.photo_url}
           username={user.username}
           className="w-10 h-10 shrink-0"
