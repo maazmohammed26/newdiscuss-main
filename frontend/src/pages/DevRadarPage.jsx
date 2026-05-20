@@ -255,9 +255,9 @@ export default function DevRadarPage() {
 
       const avatarMarkup = `
         ${ringWrapperStart}
-        <div title="${isActuallyOnline ? 'Online' : formatLastSeen(loc) === 'Offline' ? 'Offline' : 'Last seen ' + formatLastSeen(loc)}" class="relative w-10 h-10 rounded-full border-2 border-white shadow-xl bg-white flex items-center justify-center transition-transform hover:scale-110 active:scale-95 cursor-pointer" style="border-color: ${pinColor}">
+        <div title="${isActuallyOnline ? 'Online' : formatLastSeen(loc) === 'Offline' ? 'Offline' : 'Last seen ' + formatLastSeen(loc)}" class="relative w-10 h-10 rounded-full border-2 border-white shadow-xl bg-white overflow-hidden flex items-center justify-center transition-transform hover:scale-110 active:scale-95 cursor-pointer" style="border-color: ${pinColor}">
           <img src="${avatarUrl}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'" />
-          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${dotClass}"></span>
+          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${dotClass}" style="overflow:visible"></span>
         </div>
         ${ringWrapperEnd}
         <div class="w-4 h-4 rounded-full bg-black/15 blur-sm mx-auto -mt-1 scale-x-150 pointer-events-none"></div>

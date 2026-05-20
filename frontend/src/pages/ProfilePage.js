@@ -248,77 +248,56 @@ export default function ProfilePage() {
       return;
     }
 
-    // Opt-in path — MUST call getCurrentPosition synchronously here,
-    // directly inside the user-gesture (click) handler, BEFORE any setState.
-    // Android Chrome strictly requires this or it silently denies without a popup.
+    // Opt-in path.
+    // ⚠️ CRITICAL FOR ANDROID CHROME: navigator.geolocation.getCurrentPosition()
+    // MUST be the very first call inside this click handler — zero async/await,
+    // zero setState, zero Promises before it. Android Chrome's strict "user gesture"
+    // security rule immediately kills the permission popup if anything executes
+    // asynchronously before getCurrentPosition() fires.
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser.');
       return;
     }
 
-    // First do a fast Permissions API pre-check (no popup side-effect).
-    // If already 'denied' → skip straight to manual map. 
-    // If 'granted' or 'prompt' → fire getCurrentPosition right away to trigger the popup.
-    const fireGetCurrentPosition = () => {
-      setUpdatingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const locData = {
-              latitude,
-              longitude,
-              isPublic: true,
-              username: user.username || user.displayName || '',
-              fullName: profileData?.fullName || '',
-              bio: profileData?.bio || '',
-              photo_url: user.photo_url || user.photoURL || '',
-              verified: user.verified || false,
-            };
-            await saveUserLocation(user.id, locData);
-            setShareLocation(true);
-            setLocationCoords({ latitude, longitude });
-            toast.success('Location sharing enabled! You are now visible on DevRadar.');
-          } catch (err) {
-            console.error(err);
-            toast.error('Failed to save your location details.');
-          } finally {
-            setUpdatingLocation(false);
-          }
-        },
-        (error) => {
-          console.error('[Geolocation Error]', error);
+    setUpdatingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const locData = {
+            latitude,
+            longitude,
+            isPublic: true,
+            username: user.username || user.displayName || '',
+            fullName: profileData?.fullName || '',
+            bio: profileData?.bio || '',
+            photo_url: user.photo_url || user.photoURL || '',
+            verified: user.verified || false,
+          };
+          await saveUserLocation(user.id, locData);
+          setShareLocation(true);
+          setLocationCoords({ latitude, longitude });
+          toast.success('Location sharing enabled! You are now visible on DevRadar.');
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to save your location details.');
+        } finally {
           setUpdatingLocation(false);
-          // error.code 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE
-          if (error.code === 1 || error.code === 2) {
-            toast.info('Location blocked. Please place your pin manually on the map.');
-            handleOpenAdjustModal();
-          } else {
-            toast.error('Could not get your location. Try again.');
-          }
-        },
-        // enableHighAccuracy:false = use network/wifi location which is faster & works
-        // without GPS hardware being fully active (important for Android WebView)
-        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
-      );
-    };
-
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-        if (result.state === 'denied') {
-          toast.info('Location is blocked. Please place your pin manually on the map.');
-          handleOpenAdjustModal();
-        } else {
-          // 'granted' or 'prompt' — fire the actual prompt/get position
-          fireGetCurrentPosition();
         }
-      }).catch(() => {
-        // permissions API not supported — just try directly
-        fireGetCurrentPosition();
-      });
-    } else {
-      fireGetCurrentPosition();
-    }
+      },
+      (error) => {
+        console.error('[Geolocation Error]', error);
+        setUpdatingLocation(false);
+        // code 1 = PERMISSION_DENIED (user blocked or site blocked by browser)
+        // code 2 = POSITION_UNAVAILABLE (GPS off, no network)
+        // code 3 = TIMEOUT
+        toast.info('📍 Tap anywhere on the map to drop your pin and set your location manually!');
+        handleOpenAdjustModal();
+      },
+      // enableHighAccuracy: false → uses fast WiFi/network location on Android,
+      // avoids waiting for slow GPS hardware which causes silent timeouts
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+    );
   };
 
   // --- Drag and Drop Adjust Location States ---
@@ -2881,9 +2860,12 @@ export default function ProfilePage() {
             </div>
 
             {/* Description */}
-            <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] leading-relaxed">
-              Drag the blue marker or click anywhere on the map to pinpoint your exact office/building. This bypasses generic browser/ISP geolocation for extreme accuracy.
-            </p>
+            <div className="bg-blue-50 dark:bg-blue-950/30 discuss:bg-[#262626] border border-blue-200 dark:border-blue-800 discuss:border-[#333] rounded-xl px-3 py-2.5 flex items-start gap-2">
+              <span className="text-lg leading-none mt-0.5">📍</span>
+              <p className="text-xs text-blue-800 dark:text-blue-200 discuss:text-[#9CA3AF] leading-relaxed font-medium">
+                <strong>Tap anywhere on the map</strong> to drop your pin at that location, or <strong>drag the existing marker</strong> to move it. Once you're happy with the position, tap <strong>"Confirm Pin Location"</strong> to save.
+              </p>
+            </div>
 
             {/* Coordinates Real-time Display */}
             {tempCoords && (
