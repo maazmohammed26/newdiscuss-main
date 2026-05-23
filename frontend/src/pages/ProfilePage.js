@@ -50,6 +50,7 @@ import UserAdminMessage from '@/components/UserAdminMessage';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import UserSearchResult from '@/components/UserSearchResult';
 import ProfileShareModal from '@/components/ProfileShareModal';
+import CurrentLocationUpdateModal from '@/components/CurrentLocationUpdateModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -97,6 +98,12 @@ import {
 
 import { useSecurity } from '@/contexts/SecurityContext';
 import { isBiometricSupported, registerBiometric } from '@/lib/securityService';
+import {
+  LOCATION_REQUEST_COOLDOWN_MS,
+  LOCATION_SUCCESS_CLOSE_DELAY_MS,
+  getCurrentPositionWithAndroidSupport,
+  getFriendlyLocationErrorMessage,
+} from '@/lib/locationPermission';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -184,6 +191,10 @@ export default function ProfilePage() {
   const [shareLocation, setShareLocation] = useState(false);
   const [updatingLocation, setUpdatingLocation] = useState(false);
   const [locationCoords, setLocationCoords] = useState(null);
+  const [showLocationUpdateModal, setShowLocationUpdateModal] = useState(false);
+  const [locationUpdateStatus, setLocationUpdateStatus] = useState('idle');
+  const [locationUpdateError, setLocationUpdateError] = useState('');
+  const locationRequestCooldownRef = useRef(0);
 
   // Load DevRadar sharing status on mount
   useEffect(() => {
@@ -248,56 +259,68 @@ export default function ProfilePage() {
       return;
     }
 
-    // Opt-in path.
-    // ⚠️ CRITICAL FOR ANDROID CHROME: navigator.geolocation.getCurrentPosition()
-    // MUST be the very first call inside this click handler — zero async/await,
-    // zero setState, zero Promises before it. Android Chrome's strict "user gesture"
-    // security rule immediately kills the permission popup if anything executes
-    // asynchronously before getCurrentPosition() fires.
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser.');
+    setLocationUpdateError('');
+    setLocationUpdateStatus('idle');
+    setShowLocationUpdateModal(true);
+  };
+
+  const handleConfirmLiveLocationUpdate = async () => {
+    const now = Date.now();
+    const isCoolingDown = now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS;
+    const isCurrentlyUpdating = updatingLocation;
+    if (isCoolingDown) {
+      toast.info('Please wait a moment before requesting location again.');
+      return;
+    }
+    if (isCurrentlyUpdating) return;
+    locationRequestCooldownRef.current = now;
+
+    setUpdatingLocation(true);
+    setLocationUpdateStatus('loading');
+    setLocationUpdateError('');
+
+    const result = await getCurrentPositionWithAndroidSupport();
+
+    if (!result.ok) {
+      setUpdatingLocation(false);
+      if (result.reason === 'blocked') {
+        setLocationUpdateStatus('blocked');
+        return;
+      }
+      setLocationUpdateStatus('error');
+      setLocationUpdateError(getFriendlyLocationErrorMessage(result.reason));
       return;
     }
 
-    setUpdatingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const locData = {
-            latitude,
-            longitude,
-            isPublic: true,
-            username: user.username || user.displayName || '',
-            fullName: profileData?.fullName || '',
-            bio: profileData?.bio || '',
-            photo_url: user.photo_url || user.photoURL || '',
-            verified: user.verified || false,
-          };
-          await saveUserLocation(user.id, locData);
-          setShareLocation(true);
-          setLocationCoords({ latitude, longitude });
-          toast.success('Location sharing enabled! You are now visible on DevRadar.');
-        } catch (err) {
-          console.error(err);
-          toast.error('Failed to save your location details.');
-        } finally {
-          setUpdatingLocation(false);
-        }
-      },
-      (error) => {
-        console.error('[Geolocation Error]', error);
-        setUpdatingLocation(false);
-        // code 1 = PERMISSION_DENIED (user blocked or site blocked by browser)
-        // code 2 = POSITION_UNAVAILABLE (GPS off, no network)
-        // code 3 = TIMEOUT
-        toast.info('📍 Tap anywhere on the map to drop your pin and set your location manually!');
-        handleOpenAdjustModal();
-      },
-      // enableHighAccuracy: false → uses fast WiFi/network location on Android,
-      // avoids waiting for slow GPS hardware which causes silent timeouts
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
-    );
+    const { latitude, longitude } = result.position.coords;
+    try {
+      const locData = {
+        latitude,
+        longitude,
+        isPublic: true,
+        username: user.username || user.displayName || '',
+        fullName: profileData?.fullName || '',
+        bio: profileData?.bio || '',
+        photo_url: user.photo_url || user.photoURL || '',
+        verified: user.verified || false,
+      };
+      await saveUserLocation(user.id, locData);
+      setShareLocation(true);
+      setLocationCoords({ latitude, longitude });
+      setLocationUpdateStatus('success');
+      toast.success('Current location updated. You are now visible on DevRadar.');
+      setTimeout(() => {
+        setShowLocationUpdateModal(false);
+        setLocationUpdateStatus('idle');
+      }, LOCATION_SUCCESS_CLOSE_DELAY_MS);
+    } catch (err) {
+      console.error(err);
+      setLocationUpdateStatus('error');
+      setLocationUpdateError('Failed to save your location. Please retry.');
+      toast.error('Failed to save your location details.');
+    } finally {
+      setUpdatingLocation(false);
+    }
   };
 
   // --- Drag and Drop Adjust Location States ---
@@ -1689,37 +1712,59 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {shareLocation && locationCoords && (
-                <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
-                  theme === 'discuss-black' 
-                    ? 'border-[#FF007F]/10' 
-                    : theme === 'discuss-light' 
-                    ? 'border-black' 
-                    : 'border-[#E2E8F0] dark:border-white/5'
-                }`}>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Node Coordinates:</span>
-                    <span className={`font-mono font-bold ${theme === 'discuss-black' ? 'text-[#FF007F]' : theme === 'discuss-light' ? 'text-black' : 'text-[#2563EB]'}`}>
-                      {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
-                    </span>
+              <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
+                theme === 'discuss-black' 
+                  ? 'border-[#FF007F]/10' 
+                  : theme === 'discuss-light' 
+                  ? 'border-black' 
+                  : 'border-[#E2E8F0] dark:border-white/5'
+              }`}>
+                <Button
+                  onClick={() => {
+                    setLocationUpdateError('');
+                    setLocationUpdateStatus('idle');
+                    setShowLocationUpdateModal(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className={`w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all ${
+                    theme === 'discuss-black'
+                      ? 'text-[#FF007F] border-[#FF007F]/30 bg-[#FF007F]/5 hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50 rounded-xl'
+                      : theme === 'discuss-light'
+                      ? 'text-black border-black bg-white hover:bg-neutral-100 rounded-none border-2'
+                      : 'text-[#2563EB] border-[#2563EB] bg-[#2563EB]/5 hover:bg-[#2563EB]/10 rounded-xl'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Update Current Location</span>
+                </Button>
+
+                {shareLocation && locationCoords && (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Node Coordinates:</span>
+                      <span className={`font-mono font-bold ${theme === 'discuss-black' ? 'text-[#FF007F]' : theme === 'discuss-light' ? 'text-black' : 'text-[#2563EB]'}`}>
+                        {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
+                      </span>
+                    </div>
+                    <Button
+                      onClick={handleOpenAdjustModal}
+                      variant="outline"
+                      size="sm"
+                      className={`w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 ${
+                        theme === 'discuss-black'
+                          ? 'text-[#FF007F] border-[#FF007F]/30 bg-[#FF007F]/5 hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50 rounded-xl'
+                          : theme === 'discuss-light'
+                          ? 'text-black border-black bg-white hover:bg-neutral-100 rounded-none border-2'
+                          : 'text-[#2563EB] border-[#2563EB] bg-[#2563EB]/5 hover:bg-[#2563EB]/10 rounded-xl'
+                      }`}
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>Calibrate Precision Node Pin</span>
+                    </Button>
                   </div>
-                  <Button
-                    onClick={handleOpenAdjustModal}
-                    variant="outline"
-                    size="sm"
-                    className={`w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 ${
-                      theme === 'discuss-black'
-                        ? 'text-[#FF007F] border-[#FF007F]/30 bg-[#FF007F]/5 hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50 rounded-xl'
-                        : theme === 'discuss-light'
-                        ? 'text-black border-black bg-white hover:bg-neutral-100 rounded-none border-2'
-                        : 'text-[#2563EB] border-[#2563EB] bg-[#2563EB]/5 hover:bg-[#2563EB]/10 rounded-xl'
-                    }`}
-                  >
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>Calibrate Precision Node Pin</span>
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
@@ -2838,6 +2883,20 @@ export default function ProfilePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CurrentLocationUpdateModal
+        open={showLocationUpdateModal}
+        status={locationUpdateStatus}
+        errorMessage={locationUpdateError}
+        theme={theme}
+        onClose={() => {
+          if (locationUpdateStatus === 'loading') return;
+          setShowLocationUpdateModal(false);
+          setLocationUpdateStatus('idle');
+        }}
+        onConfirm={handleConfirmLiveLocationUpdate}
+        onRetry={handleConfirmLiveLocationUpdate}
+      />
 
       {/* Precise Location Adjust Modal */}
       {showAdjustLocationModal && (

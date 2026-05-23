@@ -53,7 +53,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
 
     # Disable unused device APIs
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), interest-cohort=()"
 
     # Required for Google Auth popup to work across browser contexts.
     # "same-origin-allow-popups" allows Firebase signInWithPopup() while

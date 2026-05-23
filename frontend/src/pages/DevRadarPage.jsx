@@ -2,11 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { subscribeToPublicLocations, getUserLocation } from '@/lib/firebaseSixth';
+import { subscribeToPublicLocations, getUserLocation, saveUserLocation } from '@/lib/firebaseSixth';
 import { ArrowLeft, MapPin, Loader2, ExternalLink, X, Navigation, User, ChevronLeft, Sparkles, Compass, ShieldCheck, Check, Radar } from 'lucide-react';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import UserAvatar from '@/components/UserAvatar';
 import { useHighlights } from '@/contexts/HighlightsContext';
+import CurrentLocationUpdateModal from '@/components/CurrentLocationUpdateModal';
+import { toast } from 'sonner';
+import {
+  DEVRADAR_PROMPT_SNOOZE_MS,
+  LOCATION_REQUEST_COOLDOWN_MS,
+  LOCATION_SUCCESS_CLOSE_DELAY_MS,
+  getCurrentPositionWithAndroidSupport,
+  getFriendlyLocationErrorMessage,
+} from '@/lib/locationPermission';
 import L from 'leaflet';
 
 // Fix leaflet default marker icon assets for safety
@@ -29,8 +38,15 @@ export default function DevRadarPage() {
   const [myCoords, setMyCoords] = useState(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [showLocationUpdateModal, setShowLocationUpdateModal] = useState(false);
+  const [locationUpdateStatus, setLocationUpdateStatus] = useState('idle');
+  const [locationUpdateError, setLocationUpdateError] = useState('');
+  const [updatingLocation, setUpdatingLocation] = useState(false);
+  const [myCoordsLoaded, setMyCoordsLoaded] = useState(false);
 
   const centeredRef = useRef(false);
+  const locationRequestCooldownRef = useRef(0);
+  const autoPromptShownRef = useRef(false);
 
   const formatLastSeen = (loc) => {
     if (!loc) return '';
@@ -136,10 +152,23 @@ export default function DevRadarPage() {
         }
       } catch (err) {
         console.warn('Could not retrieve current user location from 6th DB:', err);
+      } finally {
+        setMyCoordsLoaded(true);
       }
     };
     fetchMyCoords();
   }, [user?.id]);
+
+  useEffect(() => {
+    const canEvaluatePrompt = !loading && !!user?.id && myCoordsLoaded && !myCoords && !autoPromptShownRef.current;
+    if (!canEvaluatePrompt) return;
+    const snoozeUntil = Number(sessionStorage.getItem('devradarLocationPromptSnoozeUntil') || 0);
+    if (Date.now() < snoozeUntil) return;
+    autoPromptShownRef.current = true;
+    setLocationUpdateStatus('idle');
+    setLocationUpdateError('');
+    setShowLocationUpdateModal(true);
+  }, [loading, user?.id, myCoords, myCoordsLoaded]);
 
   // 3. Subscribe to public locations
   useEffect(() => {
@@ -298,9 +327,82 @@ export default function DevRadarPage() {
       // Prompt user to enable
       navigate('/profile');
       setTimeout(() => {
-        const toast = require('sonner').toast;
         toast.info('Go to DevRadar settings and turn on Location Sharing to see yourself on the map!');
       }, 300);
+    }
+  };
+
+  const handleConfirmLiveLocationUpdate = async () => {
+    const now = Date.now();
+    const isCoolingDown = now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS;
+    const isCurrentlyUpdating = updatingLocation;
+    const hasUserId = !!user?.id;
+    if (isCoolingDown) {
+      toast.info('Please wait a moment before requesting location again.');
+      return;
+    }
+    if (isCurrentlyUpdating || !hasUserId) return;
+    locationRequestCooldownRef.current = now;
+
+    setUpdatingLocation(true);
+    setLocationUpdateStatus('loading');
+    setLocationUpdateError('');
+
+    const result = await getCurrentPositionWithAndroidSupport();
+    if (!result.ok) {
+      setUpdatingLocation(false);
+      if (result.reason === 'blocked') {
+        setLocationUpdateStatus('blocked');
+        return;
+      }
+      setLocationUpdateStatus('error');
+      setLocationUpdateError(getFriendlyLocationErrorMessage(result.reason));
+      return;
+    }
+
+    const { latitude, longitude } = result.position.coords;
+    try {
+      const existingLoc = await getUserLocation(user.id);
+      const payload = {
+        latitude,
+        longitude,
+        isPublic: existingLoc?.isPublic ?? true,
+        username: existingLoc?.username || user.username || user.displayName || '',
+        fullName: existingLoc?.fullName || '',
+        bio: existingLoc?.bio || '',
+        photo_url: existingLoc?.photo_url || user.photo_url || user.photoURL || '',
+        verified: existingLoc?.verified ?? user.verified ?? false,
+      };
+
+      await saveUserLocation(user.id, payload);
+      setMyCoords({ lat: latitude, lng: longitude });
+      setLocations((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const meIndex = next.findIndex((loc) => loc.userId === user.id);
+        const meLocation = { userId: user.id, ...payload };
+        if (meIndex >= 0) {
+          next[meIndex] = { ...next[meIndex], ...meLocation };
+        } else {
+          next.push(meLocation);
+        }
+        return next;
+      });
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setView([latitude, longitude], 14, { animate: true, duration: 0.8 });
+      }
+      setLocationUpdateStatus('success');
+      toast.success('Current location updated in DevRadar.');
+      setTimeout(() => {
+        setShowLocationUpdateModal(false);
+        setLocationUpdateStatus('idle');
+      }, LOCATION_SUCCESS_CLOSE_DELAY_MS);
+    } catch (err) {
+      console.error(err);
+      setLocationUpdateStatus('error');
+      setLocationUpdateError('Failed to sync your location. Please retry.');
+      toast.error('Failed to update location.');
+    } finally {
+      setUpdatingLocation(false);
     }
   };
 
@@ -402,6 +504,28 @@ export default function DevRadarPage() {
       </div>
 
       {/* ── RADAR CONTROLS & DOCKS ───────────────────────────────────────────── */}
+      {!loading && (
+        <button
+          onClick={() => {
+            setLocationUpdateStatus('idle');
+            setLocationUpdateError('');
+            setShowLocationUpdateModal(true);
+          }}
+          className={`absolute right-4 bottom-24 z-[1001] w-12 h-12 flex items-center justify-center shadow-xl transition-all active:scale-95 ${
+            isDiscussBlack
+              ? 'bg-[#FF007F] text-black rounded-2xl'
+              : isDiscussLight
+              ? 'bg-[#EF4444] text-white border-2 border-black rounded-none'
+              : isDark
+              ? 'bg-blue-600 text-white rounded-2xl border border-white/10'
+              : 'bg-white text-blue-600 rounded-2xl border border-slate-200'
+          }`}
+          aria-label="Update Current Location"
+        >
+          <MapPin className={`w-5 h-5 ${updatingLocation ? 'animate-pulse' : ''}`} />
+        </button>
+      )}
+
       {/* Recenter / Action Panel overlay in case no current location shared */}
       {!myCoords && !loading && (
         <div className={`absolute top-20 left-4 z-[999] max-w-[280px] p-4 border backdrop-blur-md transition-all ${settingsOverlayClass}`}>
@@ -670,6 +794,23 @@ export default function DevRadarPage() {
           </div>
         </div>
       )}
+
+      <CurrentLocationUpdateModal
+        open={showLocationUpdateModal}
+        status={locationUpdateStatus}
+        errorMessage={locationUpdateError}
+        theme={theme}
+        onClose={() => {
+          if (locationUpdateStatus === 'loading') return;
+          setShowLocationUpdateModal(false);
+          if (locationUpdateStatus !== 'success') {
+            sessionStorage.setItem('devradarLocationPromptSnoozeUntil', String(Date.now() + DEVRADAR_PROMPT_SNOOZE_MS));
+          }
+          setLocationUpdateStatus('idle');
+        }}
+        onConfirm={handleConfirmLiveLocationUpdate}
+        onRetry={handleConfirmLiveLocationUpdate}
+      />
 
       {/* Global styling overrides for Leaflet map styling */}
       <style>{`
