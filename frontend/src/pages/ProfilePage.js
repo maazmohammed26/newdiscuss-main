@@ -70,7 +70,7 @@ import {
 import { 
   FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
-  Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock,
+  Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
   Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -104,6 +104,7 @@ import {
   getCurrentPositionWithAndroidSupport,
   getFriendlyLocationErrorMessage,
 } from '@/lib/locationPermission';
+import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessageDb';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -144,6 +145,9 @@ export default function ProfilePage() {
   // Profile data from secondary Firebase
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [adminMessage, setAdminMessage] = useState(null);
+  const [hasUnseenAdminMessage, setHasUnseenAdminMessage] = useState(false);
+  const [adminPopoverOpen, setAdminPopoverOpen] = useState(false);
 
   // Edit states
   const [editingFullName, setEditingFullName] = useState(false);
@@ -238,6 +242,15 @@ export default function ProfilePage() {
       syncLocationProfile();
     }
   }, [profileData?.fullName, profileData?.bio, user?.photo_url, user?.photoURL, user?.username, user?.displayName, user?.verified, shareLocation, locationCoords, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const unsubscribe = subscribeToAdminMessage((msg, isNew) => {
+      setAdminMessage(msg);
+      setHasUnseenAdminMessage(isNew);
+    });
+    return () => unsubscribe();
+  }, [user?.id]);
 
   const handleToggleLocationSharing = () => {
     if (updatingLocation) return;
@@ -1101,6 +1114,17 @@ export default function ProfilePage() {
   };
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
+  const adminPreviewText = adminMessage?.message
+    ? (adminMessage.message.length > 220 ? `${adminMessage.message.slice(0, 220)}…` : adminMessage.message)
+    : '';
+
+  const handleAdminPopoverToggle = (open) => {
+    setAdminPopoverOpen(open);
+    if (open && hasUnseenAdminMessage) {
+      markAdminMessageSeen();
+      setHasUnseenAdminMessage(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
@@ -1117,6 +1141,43 @@ export default function ProfilePage() {
           
           {/* Top Right Icons - Share & Info */}
           <div className="absolute top-4 right-4 flex items-center gap-1">
+            {adminMessage && (
+              <Popover open={adminPopoverOpen} onOpenChange={handleAdminPopoverToggle}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="relative p-2 rounded-full bg-[#EEF2FF] dark:bg-[#0F172A] discuss:bg-[#262626] border border-[#C7D2FE]/70 dark:border-white/20 discuss:border-[#333333] text-[#4338CA] dark:text-[#A5B4FC] discuss:text-[#F5F5F5] hover:scale-105 transition-all shadow-[0_0_16px_rgba(99,102,241,0.18)]"
+                    title="Admin Message"
+                    aria-label="Admin Message"
+                  >
+                    <Megaphone className="w-[18px] h-[18px]" />
+                    {hasUnseenAdminMessage && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-[#1E293B]" />
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0 bg-white/95 dark:bg-[#101827]/95 discuss:bg-[#1E1E1E]/95 backdrop-blur-xl border border-[#C7D2FE]/50 dark:border-white/15 discuss:border-[#333333] rounded-xl shadow-[0_24px_48px_rgba(15,23,42,0.32)]" align="end">
+                  <div className="p-3.5 border-b border-[#E2E8F0] dark:border-white/10 discuss:border-[#333333] flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-gradient-to-tr from-[#EF4444] to-[#2563EB] text-white">
+                      <Megaphone className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-extrabold tracking-wide text-[#0F172A] dark:text-white discuss:text-[#F5F5F5]">ADMIN UPDATE</p>
+                      <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">Tech feed notification</p>
+                    </div>
+                  </div>
+                  <div className="px-3.5 py-3">
+                    <p className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
+                      {adminPreviewText}
+                    </p>
+                    {adminMessage?.message?.length > 220 && (
+                      <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                        Long message clipped for clean layout.
+                      </p>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             {/* Share Button */}
             <button 
               onClick={() => setShowShareModal(true)}

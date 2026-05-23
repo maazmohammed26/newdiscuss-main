@@ -3,25 +3,39 @@ import { useState } from 'react';
 
 export default function UserAdminMessage({ message }) {
   const [dismissed, setDismissed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   if (!message || message.trim() === '' || dismissed) {
     return null;
   }
 
+  const trimmedMessage = message.trim();
+  const isLongMessage = trimmedMessage.length > 220;
+  const shownMessage = isLongMessage && !expanded ? `${trimmedMessage.slice(0, 220)}…` : trimmedMessage;
+
   return (
     <>
       <div 
         data-testid="user-admin-message"
-        className="user-admin-msg-box rounded-xl p-4 mb-4"
+        className="user-admin-msg-box rounded-xl p-4 mb-4 overflow-hidden"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <div className="flex items-center shrink-0">
             <span className="msg-tag-left text-2xl font-bold">&lt;</span>
             <span className="msg-tag-right text-2xl font-bold">&gt;</span>
           </div>
-          <p className="flex-1 text-[13px] md:text-[14px] msg-text-container">
+          <p className="flex-1 text-[13px] md:text-[14px] msg-text-container break-words whitespace-pre-wrap">
             <span className="msg-label font-bold">Admin message: </span>
-            <span className="msg-content font-medium">{message}</span>
+            <span className="msg-content font-medium">{shownMessage}</span>
+            {isLongMessage && (
+              <button
+                type="button"
+                onClick={() => setExpanded((prev) => !prev)}
+                className="ml-1 text-[11px] font-bold underline msg-more-btn"
+              >
+                {expanded ? 'Show less' : 'Show more'}
+              </button>
+            )}
           </p>
           <button
             onClick={() => setDismissed(true)}
@@ -50,6 +64,7 @@ export default function UserAdminMessage({ message }) {
           background-color: rgba(59, 130, 246, 0.1);
           color: #3B82F6;
         }
+        .msg-more-btn { color: #2563EB; }
 
         /* Dark Theme */
         .dark .user-admin-msg-box {
@@ -67,6 +82,7 @@ export default function UserAdminMessage({ message }) {
           background-color: rgba(96, 165, 250, 0.15);
           color: #60A5FA;
         }
+        .dark .msg-more-btn { color: #93C5FD; }
 
         /* Retro / Discuss Light Theme */
         .discuss-light .user-admin-msg-box {
@@ -86,6 +102,7 @@ export default function UserAdminMessage({ message }) {
         .discuss-light .msg-close-btn:hover {
           background-color: rgba(0, 0, 0, 0.05) !important;
         }
+        .discuss-light .msg-more-btn { color: #EF4444 !important; }
 
         /* Cyberpunk / Discuss Black Theme */
         .discuss-black .user-admin-msg-box {
@@ -104,6 +121,7 @@ export default function UserAdminMessage({ message }) {
           background-color: rgba(255, 0, 127, 0.1) !important;
           color: #FF007F !important;
         }
+        .discuss-black .msg-more-btn { color: #FF007F !important; }
       `}</style>
     </>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -6,13 +6,12 @@ import { useHighlights } from '@/contexts/HighlightsContext';
 import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessageDb';
 import CreatePostModal from '@/components/CreatePostModal';
 import UserAvatar from '@/components/UserAvatar';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Plus,
   Home,
   MessageCircle,
   Radar,
-  Megaphone,
 } from 'lucide-react';
 
 export default function FloatingNavbar() {
@@ -20,12 +19,14 @@ export default function FloatingNavbar() {
   const { user } = useAuth();
   const location = useLocation();
   const { unreadChatCount, pendingFriendRequests } = useHighlights();
+  const prefersReducedMotion = useReducedMotion();
 
   const [visible, setVisible] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
-  const [adminMessage, setAdminMessage] = useState(null);
   const [hasUnseenAdmin, setHasUnseenAdmin] = useState(false);
+  const lastScrollY = useRef(0);
+  const rafLock = useRef(false);
 
   // Check for DOM loading screens/animations dynamically to hide navbar
   useEffect(() => {
@@ -42,36 +43,39 @@ export default function FloatingNavbar() {
     return () => clearInterval(interval);
   }, []);
 
-  // Hide bottom nav on scroll, show when scroll stops
+  // Hide/show bottom nav based on scroll direction with smooth spring-like behavior
   useEffect(() => {
-    let scrollTimeout = null;
+    const updateVisibility = () => {
+      const currentY = window.scrollY || 0;
+      const delta = currentY - lastScrollY.current;
 
-    const handleScroll = () => {
-      // Hide while actively scrolling
-      setVisible(false);
-
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
+      if (currentY < 40) {
+        setVisible(true);
+      } else if (delta > 8) {
+        setVisible(false);
+      } else if (delta < -8) {
+        setVisible(true);
       }
 
-      // Show back up after 250ms of inactivity
-      scrollTimeout = setTimeout(() => {
-        setVisible(true);
-      }, 250);
+      lastScrollY.current = currentY;
+      rafLock.current = false;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeout) clearTimeout(scrollTimeout);
+    const handleScroll = () => {
+      if (rafLock.current) return;
+      rafLock.current = true;
+      window.requestAnimationFrame(updateVisibility);
     };
+
+    lastScrollY.current = window.scrollY || 0;
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Subscribe to admin message state for profile tab indicator
   useEffect(() => {
     if (!user?.id) return;
-    const unsubscribe = subscribeToAdminMessage((msg, isNew) => {
-      setAdminMessage(msg);
+    const unsubscribe = subscribeToAdminMessage((_, isNew) => {
       setHasUnseenAdmin(isNew);
     });
     return () => unsubscribe();
@@ -120,40 +124,50 @@ export default function FloatingNavbar() {
   let activeIconClass = '';
   let activeGlowClass = '';
   let addButtonClass = '';
-  let profileRingClass = '';
+  let profileAvatarShellClass = '';
+  let glassReflectionClass = '';
+  let glassBorderGlowClass = '';
 
   if (isLight) {
-    dockContainerClass = 'bg-white/65 border border-white/60 shadow-[0_12px_36px_rgba(31,41,55,0.16)]';
+    dockContainerClass = 'bg-white/45 border border-white/65 shadow-[0_16px_42px_rgba(15,23,42,0.18)]';
     indicatorClass = 'bg-white/85 border border-white/80 shadow-[0_8px_24px_rgba(59,130,246,0.24)]';
     inactiveIconClass = 'text-slate-500';
     activeIconClass = 'text-blue-600';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(37,99,235,0.45)]';
     addButtonClass = 'bg-blue-600 text-white shadow-[0_8px_24px_rgba(37,99,235,0.4)]';
-    profileRingClass = 'ring-blue-500/30';
+    profileAvatarShellClass = 'bg-gradient-to-tr from-[#EF4444] via-[#2563EB] to-[#EF4444] shadow-[0_0_14px_rgba(37,99,235,0.35),_0_0_14px_rgba(239,68,68,0.35)]';
+    glassReflectionClass = 'from-white/65 via-white/20 to-transparent';
+    glassBorderGlowClass = 'ring-white/50';
   } else if (isDark) {
-    dockContainerClass = 'bg-slate-900/55 border border-white/15 shadow-[0_12px_42px_rgba(0,0,0,0.48)]';
+    dockContainerClass = 'bg-slate-900/52 border border-white/22 shadow-[0_16px_46px_rgba(0,0,0,0.55)]';
     indicatorClass = 'bg-white/12 border border-white/20 shadow-[0_0_22px_rgba(59,130,246,0.38)]';
     inactiveIconClass = 'text-slate-300/85';
     activeIconClass = 'text-blue-300';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(147,197,253,0.55)]';
     addButtonClass = 'bg-blue-500 text-white shadow-[0_8px_24px_rgba(59,130,246,0.45)]';
-    profileRingClass = 'ring-blue-300/40';
+    profileAvatarShellClass = 'bg-gradient-to-tr from-[#EF4444] via-[#2563EB] to-[#EF4444] shadow-[0_0_16px_rgba(37,99,235,0.42),_0_0_16px_rgba(239,68,68,0.42)]';
+    glassReflectionClass = 'from-white/40 via-white/10 to-transparent';
+    glassBorderGlowClass = 'ring-white/30';
   } else if (isDiscussLight) {
-    dockContainerClass = 'bg-white/70 border border-slate-300/80 shadow-[0_12px_36px_rgba(0,0,0,0.2)]';
+    dockContainerClass = 'bg-white/48 border border-slate-300/85 shadow-[0_16px_40px_rgba(0,0,0,0.22)]';
     indicatorClass = 'bg-white/90 border border-slate-200 shadow-[0_8px_24px_rgba(14,165,233,0.24)]';
     inactiveIconClass = 'text-slate-600';
     activeIconClass = 'text-sky-600';
     activeGlowClass = 'drop-shadow-[0_0_12px_rgba(2,132,199,0.4)]';
     addButtonClass = 'bg-sky-600 text-white shadow-[0_8px_24px_rgba(2,132,199,0.4)]';
-    profileRingClass = 'ring-sky-500/30';
+    profileAvatarShellClass = 'bg-gradient-to-tr from-[#EF4444] via-[#2563EB] to-[#EF4444] shadow-[0_0_12px_rgba(37,99,235,0.32),_0_0_12px_rgba(239,68,68,0.32)]';
+    glassReflectionClass = 'from-white/70 via-white/25 to-transparent';
+    glassBorderGlowClass = 'ring-white/55';
   } else if (isDiscussBlack) {
-    dockContainerClass = 'bg-[#11121C]/55 border border-white/10 shadow-[0_12px_42px_rgba(0,0,0,0.65),_0_0_20px_rgba(59,130,246,0.16)]';
+    dockContainerClass = 'bg-[#11121C]/50 border border-white/16 shadow-[0_16px_48px_rgba(0,0,0,0.7),_0_0_20px_rgba(59,130,246,0.14)]';
     indicatorClass = 'bg-white/10 border border-white/20 shadow-[0_0_24px_rgba(124,58,237,0.42)]';
     inactiveIconClass = 'text-slate-300/80';
     activeIconClass = 'text-violet-200';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(196,181,253,0.55)]';
     addButtonClass = 'bg-violet-500 text-white shadow-[0_8px_24px_rgba(139,92,246,0.45)]';
-    profileRingClass = 'ring-violet-400/40';
+    profileAvatarShellClass = 'bg-gradient-to-tr from-[#EF4444] via-[#2563EB] to-[#EF4444] shadow-[0_0_16px_rgba(59,130,246,0.35),_0_0_16px_rgba(239,68,68,0.35)]';
+    glassReflectionClass = 'from-white/38 via-white/10 to-transparent';
+    glassBorderGlowClass = 'ring-white/28';
   }
 
   const navItems = [
@@ -166,16 +180,22 @@ export default function FloatingNavbar() {
 
   return (
     <>
-      <div
+      <motion.div
         className={`floating-navbar-container fixed left-1/2 z-50 w-[92%] max-w-[420px] select-none ${
-          visible ? 'visible-state' : 'hidden-state'
+          visible ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+        initial={false}
+        animate={visible ? { x: '-50%', y: 0, scale: 1, opacity: 1 } : { x: '-50%', y: 110, scale: 0.98, opacity: 1 }}
+        transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 280, damping: 28, mass: 0.8 }}
       >
-        <div className={`relative h-[74px] rounded-full px-2 backdrop-blur-[24px] ${dockContainerClass}`}>
-          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/65 to-transparent pointer-events-none" />
+        <div className={`relative h-[74px] rounded-full px-2 backdrop-blur-[26px] overflow-hidden ${dockContainerClass}`}>
+          <div className={`absolute inset-[1px] rounded-full ring-1 ${glassBorderGlowClass} pointer-events-none`} />
+          <div className={`absolute inset-x-8 top-[2px] h-[1px] bg-gradient-to-r from-transparent ${glassReflectionClass} pointer-events-none`} />
+          <div className="absolute -top-5 -left-10 w-40 h-14 bg-white/25 blur-xl rotate-[-8deg] pointer-events-none" />
+          <div className="absolute -bottom-6 right-[-18%] w-36 h-12 bg-sky-300/10 blur-2xl pointer-events-none" />
           <div className="grid grid-cols-5 h-full items-center justify-items-center relative">
-            {navItems.map((item, index) => {
+            {navItems.map((item) => {
               const isActive = item.active;
               const Icon = item.icon;
               const baseIconClass = `relative z-10 transition-all duration-300 ${
@@ -196,21 +216,17 @@ export default function FloatingNavbar() {
 
                   {item.key === 'profile' ? (
                     <div className="relative z-10">
-                      <div className={`rounded-full ring-2 ${isActive ? profileRingClass : 'ring-transparent'} transition-all duration-300`}>
-                        <UserAvatar
-                          src={user.photo_url || null}
-                          username={user.username}
-                          alt={user.username}
-                          className="h-7 w-7 rounded-full"
-                        />
+                      <div className={`relative p-[1.5px] rounded-full ${profileAvatarShellClass}`}>
+                        <div className="absolute inset-[-95%] rounded-full bg-[conic-gradient(from_0deg,#EF4444,#2563EB,#EF4444)] opacity-85 animate-[spin_4.2s_linear_infinite]" />
+                        <div className="relative rounded-full overflow-hidden bg-black/20">
+                          <UserAvatar
+                            src={user.photo_url || null}
+                            username={user.username}
+                            alt={user.username}
+                            className="h-7 w-7 rounded-full"
+                          />
+                        </div>
                       </div>
-                      {adminMessage && (
-                        <span className={`absolute -top-1.5 -right-2 rounded-full p-0.5 border shadow-[0_0_8px_rgba(148,163,184,0.5)] ${
-                          hasUnseenAdmin ? 'bg-red-500/95 border-red-300/80' : 'bg-slate-900/90 border-white/40'
-                        }`}>
-                          <Megaphone className={`w-2.5 h-2.5 ${hasUnseenAdmin ? 'text-white' : 'text-amber-300'}`} />
-                        </span>
-                      )}
                       {pendingFriendRequests > 0 && (
                         <span className="absolute -bottom-1 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-blue-600 text-[8px] font-black text-white flex items-center justify-center">
                           {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
@@ -260,7 +276,7 @@ export default function FloatingNavbar() {
             })}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <CreatePostModal
         open={showCreateModal}
@@ -269,21 +285,6 @@ export default function FloatingNavbar() {
         onCreated={() => setShowCreateModal(false)}
       />
 
-      <style>{`
-        .floating-navbar-container {
-          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-        .floating-navbar-container.visible-state {
-          transform: translateX(-50%) translateY(0) scale(1) !important;
-          opacity: 1 !important;
-          pointer-events: auto !important;
-        }
-        .floating-navbar-container.hidden-state {
-          transform: translateX(-50%) translateY(120px) scale(0.95) !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-        }
-      `}</style>
     </>
   );
 }
