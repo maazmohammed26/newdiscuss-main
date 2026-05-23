@@ -76,8 +76,7 @@ export default function FloatingNavbar() {
   // Subscribe to admin message state for profile tab indicator
   useEffect(() => {
     if (!user?.id) return;
-    const unsubscribe = subscribeToAdminMessage((message, isNew) => {
-      void message;
+    const unsubscribe = subscribeToAdminMessage((_message, isNew) => {
       setHasUnseenAdmin(isNew);
     });
     return () => unsubscribe();
@@ -189,7 +188,7 @@ export default function FloatingNavbar() {
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
         initial={false}
         animate={visible ? { x: '-50%', y: 0, scale: 1, opacity: 1 } : { x: '-50%', y: 110, scale: 0.98, opacity: 1 }}
-        transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 280, damping: 28, mass: 0.8 }}
+        transition={prefersReducedMotion ? { type: 'tween', duration: 0 } : { type: 'spring', stiffness: 280, damping: 28, mass: 0.8 }}
       >
         <div className={`relative h-[74px] rounded-full px-2 backdrop-blur-[26px] overflow-hidden ${dockContainerClass}`}>
           <div className={`absolute inset-[1px] rounded-full ring-1 ${glassBorderGlowClass} pointer-events-none`} />
@@ -219,7 +218,9 @@ export default function FloatingNavbar() {
                   {item.key === 'profile' ? (
                     <div className="relative z-10">
                       <div className={`relative p-[1.5px] rounded-full ${profileAvatarShellClass}`}>
-                        <div className="absolute inset-[-30px] rounded-full bg-[conic-gradient(from_0deg,#EF4444,#2563EB,#EF4444)] opacity-85 animate-[spin_4.2s_linear_infinite]" />
+                        <div className={`absolute inset-[-30px] rounded-full bg-[conic-gradient(from_0deg,#EF4444,#2563EB,#EF4444)] opacity-85 ${
+                          prefersReducedMotion ? '' : 'animate-[spin_4.2s_linear_infinite]'
+                        }`} />
                         <div className="relative rounded-full overflow-hidden bg-black/20">
                           <UserAvatar
                             src={user.photo_url || null}
