@@ -118,6 +118,7 @@ export default function FloatingNavbar() {
   let indicatorClass = '';
   let inactiveIconClass = '';
   let activeIconClass = '';
+  let activeGlowClass = '';
   let addButtonClass = '';
   let profileRingClass = '';
 
@@ -126,6 +127,7 @@ export default function FloatingNavbar() {
     indicatorClass = 'bg-white/85 border border-white/80 shadow-[0_8px_24px_rgba(59,130,246,0.24)]';
     inactiveIconClass = 'text-slate-500';
     activeIconClass = 'text-blue-600';
+    activeGlowClass = 'drop-shadow-[0_0_14px_rgba(37,99,235,0.45)]';
     addButtonClass = 'bg-blue-600 text-white shadow-[0_8px_24px_rgba(37,99,235,0.4)]';
     profileRingClass = 'ring-blue-500/30';
   } else if (isDark) {
@@ -133,6 +135,7 @@ export default function FloatingNavbar() {
     indicatorClass = 'bg-white/12 border border-white/20 shadow-[0_0_22px_rgba(59,130,246,0.38)]';
     inactiveIconClass = 'text-slate-300/85';
     activeIconClass = 'text-blue-300';
+    activeGlowClass = 'drop-shadow-[0_0_14px_rgba(147,197,253,0.55)]';
     addButtonClass = 'bg-blue-500 text-white shadow-[0_8px_24px_rgba(59,130,246,0.45)]';
     profileRingClass = 'ring-blue-300/40';
   } else if (isDiscussLight) {
@@ -140,6 +143,7 @@ export default function FloatingNavbar() {
     indicatorClass = 'bg-white/90 border border-slate-200 shadow-[0_8px_24px_rgba(14,165,233,0.24)]';
     inactiveIconClass = 'text-slate-600';
     activeIconClass = 'text-sky-600';
+    activeGlowClass = 'drop-shadow-[0_0_12px_rgba(2,132,199,0.4)]';
     addButtonClass = 'bg-sky-600 text-white shadow-[0_8px_24px_rgba(2,132,199,0.4)]';
     profileRingClass = 'ring-sky-500/30';
   } else if (isDiscussBlack) {
@@ -147,6 +151,7 @@ export default function FloatingNavbar() {
     indicatorClass = 'bg-white/10 border border-white/20 shadow-[0_0_24px_rgba(124,58,237,0.42)]';
     inactiveIconClass = 'text-slate-300/80';
     activeIconClass = 'text-violet-200';
+    activeGlowClass = 'drop-shadow-[0_0_14px_rgba(196,181,253,0.55)]';
     addButtonClass = 'bg-violet-500 text-white shadow-[0_8px_24px_rgba(139,92,246,0.45)]';
     profileRingClass = 'ring-violet-400/40';
   }
@@ -162,7 +167,7 @@ export default function FloatingNavbar() {
   return (
     <>
       <div
-        className={`floating-navbar-container fixed bottom-6 left-1/2 z-50 w-[92%] max-w-[420px] select-none ${
+        className={`floating-navbar-container fixed left-1/2 z-50 w-[92%] max-w-[420px] select-none ${
           visible ? 'visible-state' : 'hidden-state'
         }`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
@@ -174,7 +179,7 @@ export default function FloatingNavbar() {
               const isActive = item.active;
               const Icon = item.icon;
               const baseIconClass = `relative z-10 transition-all duration-300 ${
-                isActive ? `${activeIconClass} scale-110 drop-shadow-[0_0_14px_rgba(99,102,241,0.55)]` : `${inactiveIconClass} scale-100`
+                isActive ? `${activeIconClass} ${activeGlowClass} scale-110` : `${inactiveIconClass} scale-100`
               }`;
 
               const content = (
@@ -183,7 +188,7 @@ export default function FloatingNavbar() {
                     {isActive && (
                       <motion.span
                         layoutId="floating-nav-active-pill"
-                        transition={{ type: 'spring', stiffness: 520, damping: 34, mass: 0.6 }}
+                        transition={{ type: 'spring', stiffness: 380, damping: 38, mass: 0.7 }}
                         className={`absolute inset-1 rounded-full ${indicatorClass}`}
                       />
                     )}
