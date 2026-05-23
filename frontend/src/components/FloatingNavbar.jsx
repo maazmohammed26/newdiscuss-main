@@ -26,8 +26,8 @@ export default function FloatingNavbar() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
   const [hasUnseenAdmin, setHasUnseenAdmin] = useState(false);
-  const lastScrollY = useRef(0);
-  const rafLock = useRef(false);
+  const lastScrollYRef = useRef(0);
+  const scrollUpdatePendingRef = useRef(false);
 
   // Check for DOM loading screens/animations dynamically to hide navbar
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function FloatingNavbar() {
   useEffect(() => {
     const updateVisibility = () => {
       const currentY = window.scrollY || 0;
-      const delta = currentY - lastScrollY.current;
+      const delta = currentY - lastScrollYRef.current;
 
       if (currentY < 40) {
         setVisible(true);
@@ -58,17 +58,17 @@ export default function FloatingNavbar() {
         setVisible(true);
       }
 
-      lastScrollY.current = currentY;
-      rafLock.current = false;
+      lastScrollYRef.current = currentY;
+      scrollUpdatePendingRef.current = false;
     };
 
     const handleScroll = () => {
-      if (rafLock.current) return;
-      rafLock.current = true;
+      if (scrollUpdatePendingRef.current) return;
+      scrollUpdatePendingRef.current = true;
       window.requestAnimationFrame(updateVisibility);
     };
 
-    lastScrollY.current = window.scrollY || 0;
+    lastScrollYRef.current = window.scrollY || 0;
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -76,7 +76,8 @@ export default function FloatingNavbar() {
   // Subscribe to admin message state for profile tab indicator
   useEffect(() => {
     if (!user?.id) return;
-    const unsubscribe = subscribeToAdminMessage((_, isNew) => {
+    const unsubscribe = subscribeToAdminMessage((message, isNew) => {
+      void message;
       setHasUnseenAdmin(isNew);
     });
     return () => unsubscribe();
