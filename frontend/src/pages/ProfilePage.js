@@ -268,7 +268,11 @@ export default function ProfilePage() {
     const now = Date.now();
     const isCoolingDown = now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS;
     const isCurrentlyUpdating = updatingLocation;
-    if (isCoolingDown || isCurrentlyUpdating) return;
+    if (isCoolingDown) {
+      toast.info('Please wait a moment before requesting location again.');
+      return;
+    }
+    if (isCurrentlyUpdating) return;
     locationRequestCooldownRef.current = now;
 
     setUpdatingLocation(true);

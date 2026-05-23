@@ -162,7 +162,7 @@ export default function DevRadarPage() {
   useEffect(() => {
     const canEvaluatePrompt = !loading && !!user?.id && myCoordsLoaded && !myCoords && !autoPromptShownRef.current;
     if (!canEvaluatePrompt) return;
-    const snoozeUntil = Number(sessionStorage.getItem('devradar_location_prompt_snooze_until') || 0);
+    const snoozeUntil = Number(sessionStorage.getItem('devradarLocationPromptSnoozeUntil') || 0);
     if (Date.now() < snoozeUntil) return;
     autoPromptShownRef.current = true;
     setLocationUpdateStatus('idle');
@@ -337,7 +337,11 @@ export default function DevRadarPage() {
     const isCoolingDown = now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS;
     const isCurrentlyUpdating = updatingLocation;
     const hasUserId = !!user?.id;
-    if (isCoolingDown || isCurrentlyUpdating || !hasUserId) return;
+    if (isCoolingDown) {
+      toast.info('Please wait a moment before requesting location again.');
+      return;
+    }
+    if (isCurrentlyUpdating || !hasUserId) return;
     locationRequestCooldownRef.current = now;
 
     setUpdatingLocation(true);
@@ -800,7 +804,7 @@ export default function DevRadarPage() {
           if (locationUpdateStatus === 'loading') return;
           setShowLocationUpdateModal(false);
           if (locationUpdateStatus !== 'success') {
-            sessionStorage.setItem('devradar_location_prompt_snooze_until', String(Date.now() + DEVRADAR_PROMPT_SNOOZE_MS));
+            sessionStorage.setItem('devradarLocationPromptSnoozeUntil', String(Date.now() + DEVRADAR_PROMPT_SNOOZE_MS));
           }
           setLocationUpdateStatus('idle');
         }}

@@ -1,6 +1,6 @@
 const DEFAULT_GEO_OPTIONS = {
   enableHighAccuracy: false,
-  timeout: 12000,
+  timeout: 10000,
   maximumAge: 30000,
 };
 
