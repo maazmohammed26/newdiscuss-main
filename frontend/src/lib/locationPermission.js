@@ -4,6 +4,10 @@ const DEFAULT_GEO_OPTIONS = {
   maximumAge: 30000,
 };
 
+export const LOCATION_REQUEST_COOLDOWN_MS = 2500;
+export const LOCATION_SUCCESS_CLOSE_DELAY_MS = 1200;
+export const DEVRADAR_PROMPT_SNOOZE_MS = 300000;
+
 const queryGeolocationPermission = async () => {
   try {
     if (!navigator.permissions?.query) return 'unknown';

@@ -99,6 +99,8 @@ import {
 import { useSecurity } from '@/contexts/SecurityContext';
 import { isBiometricSupported, registerBiometric } from '@/lib/securityService';
 import {
+  LOCATION_REQUEST_COOLDOWN_MS,
+  LOCATION_SUCCESS_CLOSE_DELAY_MS,
   getCurrentPositionWithAndroidSupport,
   getFriendlyLocationErrorMessage,
 } from '@/lib/locationPermission';
@@ -264,7 +266,7 @@ export default function ProfilePage() {
 
   const handleConfirmLiveLocationUpdate = async () => {
     const now = Date.now();
-    if (now - locationRequestCooldownRef.current < 2500 || updatingLocation) return;
+    if (now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS || updatingLocation) return;
     locationRequestCooldownRef.current = now;
 
     setUpdatingLocation(true);
@@ -304,7 +306,7 @@ export default function ProfilePage() {
       setTimeout(() => {
         setShowLocationUpdateModal(false);
         setLocationUpdateStatus('idle');
-      }, 1200);
+      }, LOCATION_SUCCESS_CLOSE_DELAY_MS);
     } catch (err) {
       console.error(err);
       setLocationUpdateStatus('error');

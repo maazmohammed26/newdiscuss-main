@@ -10,6 +10,9 @@ import { useHighlights } from '@/contexts/HighlightsContext';
 import CurrentLocationUpdateModal from '@/components/CurrentLocationUpdateModal';
 import { toast } from 'sonner';
 import {
+  DEVRADAR_PROMPT_SNOOZE_MS,
+  LOCATION_REQUEST_COOLDOWN_MS,
+  LOCATION_SUCCESS_CLOSE_DELAY_MS,
   getCurrentPositionWithAndroidSupport,
   getFriendlyLocationErrorMessage,
 } from '@/lib/locationPermission';
@@ -39,6 +42,7 @@ export default function DevRadarPage() {
   const [locationUpdateStatus, setLocationUpdateStatus] = useState('idle');
   const [locationUpdateError, setLocationUpdateError] = useState('');
   const [updatingLocation, setUpdatingLocation] = useState(false);
+  const [myCoordsLoaded, setMyCoordsLoaded] = useState(false);
 
   const centeredRef = useRef(false);
   const locationRequestCooldownRef = useRef(0);
@@ -148,20 +152,22 @@ export default function DevRadarPage() {
         }
       } catch (err) {
         console.warn('Could not retrieve current user location from 6th DB:', err);
+      } finally {
+        setMyCoordsLoaded(true);
       }
     };
     fetchMyCoords();
   }, [user?.id]);
 
   useEffect(() => {
-    if (loading || !user?.id || myCoords || autoPromptShownRef.current) return;
+    if (loading || !user?.id || !myCoordsLoaded || myCoords || autoPromptShownRef.current) return;
     const snoozeUntil = Number(sessionStorage.getItem('devradar_location_prompt_snooze_until') || 0);
     if (Date.now() < snoozeUntil) return;
     autoPromptShownRef.current = true;
     setLocationUpdateStatus('idle');
     setLocationUpdateError('');
     setShowLocationUpdateModal(true);
-  }, [loading, user?.id, myCoords]);
+  }, [loading, user?.id, myCoords, myCoordsLoaded]);
 
   // 3. Subscribe to public locations
   useEffect(() => {
@@ -327,7 +333,7 @@ export default function DevRadarPage() {
 
   const handleConfirmLiveLocationUpdate = async () => {
     const now = Date.now();
-    if (now - locationRequestCooldownRef.current < 2500 || updatingLocation || !user?.id) return;
+    if (now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS || updatingLocation || !user?.id) return;
     locationRequestCooldownRef.current = now;
 
     setUpdatingLocation(true);
@@ -381,7 +387,7 @@ export default function DevRadarPage() {
       setTimeout(() => {
         setShowLocationUpdateModal(false);
         setLocationUpdateStatus('idle');
-      }, 1200);
+      }, LOCATION_SUCCESS_CLOSE_DELAY_MS);
     } catch (err) {
       console.error(err);
       setLocationUpdateStatus('error');
@@ -790,7 +796,7 @@ export default function DevRadarPage() {
           if (locationUpdateStatus === 'loading') return;
           setShowLocationUpdateModal(false);
           if (locationUpdateStatus !== 'success') {
-            sessionStorage.setItem('devradar_location_prompt_snooze_until', String(Date.now() + 300000));
+            sessionStorage.setItem('devradar_location_prompt_snooze_until', String(Date.now() + DEVRADAR_PROMPT_SNOOZE_MS));
           }
           setLocationUpdateStatus('idle');
         }}
