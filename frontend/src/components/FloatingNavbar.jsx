@@ -9,7 +9,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
-  House,
+  Home,
   MessageCircle,
   Radar,
   Megaphone,
@@ -152,7 +152,7 @@ export default function FloatingNavbar() {
   }
 
   const navItems = [
-    { key: 'home', to: '/feed', active: currentPath === '/feed', icon: House, label: 'Home' },
+    { key: 'home', to: '/feed', active: currentPath === '/feed', icon: Home, label: 'Home' },
     { key: 'chats', to: '/chat', active: currentPath.startsWith('/chat'), icon: MessageCircle, label: 'Chats' },
     { key: 'add', action: handleOpenCreateModal, active: false, icon: Plus, label: 'Add Post' },
     { key: 'devradar', to: '/devradar', active: currentPath === '/devradar', icon: Radar, label: 'DevRadar' },
