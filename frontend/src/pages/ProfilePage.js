@@ -105,6 +105,7 @@ import {
   getFriendlyLocationErrorMessage,
 } from '@/lib/locationPermission';
 import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessageDb';
+import { ADMIN_MESSAGE_PREVIEW_LENGTH } from '@/lib/uiConstants';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -1115,7 +1116,9 @@ export default function ProfilePage() {
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
   const adminPreviewText = adminMessage?.message
-    ? (adminMessage.message.length > 220 ? `${adminMessage.message.slice(0, 220)}…` : adminMessage.message)
+    ? (adminMessage.message.length > ADMIN_MESSAGE_PREVIEW_LENGTH
+      ? `${adminMessage.message.slice(0, ADMIN_MESSAGE_PREVIEW_LENGTH)}…`
+      : adminMessage.message)
     : '';
 
   const handleAdminPopoverToggle = (open) => {
@@ -1169,7 +1172,7 @@ export default function ProfilePage() {
                     <p className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
                       {adminPreviewText}
                     </p>
-                    {adminMessage?.message?.length > 220 && (
+                    {adminMessage?.message?.length > ADMIN_MESSAGE_PREVIEW_LENGTH && (
                       <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
                         Long message clipped for clean layout.
                       </p>

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessageDb';
+import { NAVBAR_SCROLL_DELTA_THRESHOLD } from '@/lib/uiConstants';
 import CreatePostModal from '@/components/CreatePostModal';
 import UserAvatar from '@/components/UserAvatar';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -51,9 +52,9 @@ export default function FloatingNavbar() {
 
       if (currentY < 40) {
         setVisible(true);
-      } else if (delta > 8) {
+      } else if (delta > NAVBAR_SCROLL_DELTA_THRESHOLD) {
         setVisible(false);
-      } else if (delta < -8) {
+      } else if (delta < -NAVBAR_SCROLL_DELTA_THRESHOLD) {
         setVisible(true);
       }
 
@@ -217,7 +218,7 @@ export default function FloatingNavbar() {
                   {item.key === 'profile' ? (
                     <div className="relative z-10">
                       <div className={`relative p-[1.5px] rounded-full ${profileAvatarShellClass}`}>
-                        <div className="absolute inset-[-95%] rounded-full bg-[conic-gradient(from_0deg,#EF4444,#2563EB,#EF4444)] opacity-85 animate-[spin_4.2s_linear_infinite]" />
+                        <div className="absolute inset-[-30px] rounded-full bg-[conic-gradient(from_0deg,#EF4444,#2563EB,#EF4444)] opacity-85 animate-[spin_4.2s_linear_infinite]" />
                         <div className="relative rounded-full overflow-hidden bg-black/20">
                           <UserAvatar
                             src={user.photo_url || null}

@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { ADMIN_MESSAGE_PREVIEW_LENGTH } from '@/lib/uiConstants';
 
 export default function UserAdminMessage({ message }) {
   const [dismissed, setDismissed] = useState(false);
@@ -10,8 +11,10 @@ export default function UserAdminMessage({ message }) {
   }
 
   const trimmedMessage = message.trim();
-  const isLongMessage = trimmedMessage.length > 220;
-  const shownMessage = isLongMessage && !expanded ? `${trimmedMessage.slice(0, 220)}…` : trimmedMessage;
+  const isLongMessage = trimmedMessage.length > ADMIN_MESSAGE_PREVIEW_LENGTH;
+  const shownMessage = isLongMessage && !expanded
+    ? `${trimmedMessage.slice(0, ADMIN_MESSAGE_PREVIEW_LENGTH)}…`
+    : trimmedMessage;
 
   return (
     <>
