@@ -266,7 +266,9 @@ export default function ProfilePage() {
 
   const handleConfirmLiveLocationUpdate = async () => {
     const now = Date.now();
-    if (now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS || updatingLocation) return;
+    const isCoolingDown = now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS;
+    const isCurrentlyUpdating = updatingLocation;
+    if (isCoolingDown || isCurrentlyUpdating) return;
     locationRequestCooldownRef.current = now;
 
     setUpdatingLocation(true);

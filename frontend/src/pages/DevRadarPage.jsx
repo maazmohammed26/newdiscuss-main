@@ -160,7 +160,8 @@ export default function DevRadarPage() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (loading || !user?.id || !myCoordsLoaded || myCoords || autoPromptShownRef.current) return;
+    const canEvaluatePrompt = !loading && !!user?.id && myCoordsLoaded && !myCoords && !autoPromptShownRef.current;
+    if (!canEvaluatePrompt) return;
     const snoozeUntil = Number(sessionStorage.getItem('devradar_location_prompt_snooze_until') || 0);
     if (Date.now() < snoozeUntil) return;
     autoPromptShownRef.current = true;
@@ -333,7 +334,10 @@ export default function DevRadarPage() {
 
   const handleConfirmLiveLocationUpdate = async () => {
     const now = Date.now();
-    if (now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS || updatingLocation || !user?.id) return;
+    const isCoolingDown = now - locationRequestCooldownRef.current < LOCATION_REQUEST_COOLDOWN_MS;
+    const isCurrentlyUpdating = updatingLocation;
+    const hasUserId = !!user?.id;
+    if (isCoolingDown || isCurrentlyUpdating || !hasUserId) return;
     locationRequestCooldownRef.current = now;
 
     setUpdatingLocation(true);
