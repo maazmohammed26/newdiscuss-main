@@ -69,7 +69,7 @@ export default function FloatingNavbar() {
 
   // Subscribe to admin message state for profile tab indicator
   useEffect(() => {
-    if (!user?.id) return undefined;
+    if (!user?.id) return;
     const unsubscribe = subscribeToAdminMessage((msg, isNew) => {
       setAdminMessage(msg);
       setHasUnseenAdmin(isNew);
@@ -200,16 +200,15 @@ export default function FloatingNavbar() {
                         />
                       </div>
                       {adminMessage && (
-                        <span className="absolute -top-1.5 -right-2 rounded-full p-0.5 bg-slate-900/90 border border-white/40 shadow-[0_0_8px_rgba(148,163,184,0.5)]">
-                          <Megaphone className="w-2.5 h-2.5 text-amber-300" />
+                        <span className={`absolute -top-1.5 -right-2 rounded-full p-0.5 border shadow-[0_0_8px_rgba(148,163,184,0.5)] ${
+                          hasUnseenAdmin ? 'bg-red-500/95 border-red-300/80' : 'bg-slate-900/90 border-white/40'
+                        }`}>
+                          <Megaphone className={`w-2.5 h-2.5 ${hasUnseenAdmin ? 'text-white' : 'text-amber-300'}`} />
                         </span>
-                      )}
-                      {hasUnseenAdmin && (
-                        <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white/90" />
                       )}
                       {pendingFriendRequests > 0 && (
                         <span className="absolute -bottom-1 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-blue-600 text-[8px] font-black text-white flex items-center justify-center">
-                          {pendingFriendRequests > 9 ? '9+' : pendingFriendRequests}
+                          {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
                         </span>
                       )}
                     </div>
