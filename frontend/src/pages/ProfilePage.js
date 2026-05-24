@@ -1117,11 +1117,8 @@ export default function ProfilePage() {
   };
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
-  const adminPreviewText = adminMessage?.message
-    ? (adminMessage.message.length > ADMIN_MESSAGE_PREVIEW_LENGTH
-      ? `${adminMessage.message.slice(0, ADMIN_MESSAGE_PREVIEW_LENGTH)}…`
-      : adminMessage.message)
-    : '';
+  const adminPreviewText = typeof adminMessage?.message === 'string' ? adminMessage.message : '';
+  const adminMessageNeedsScroll = adminPreviewText.length > ADMIN_MESSAGE_PREVIEW_LENGTH;
 
   const handleAdminPopoverToggle = (open) => {
     setAdminPopoverOpen(open);
@@ -1171,12 +1168,17 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="px-3.5 py-3">
-                    <p className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
-                      {adminPreviewText}
-                    </p>
-                    {adminMessage?.message?.length > ADMIN_MESSAGE_PREVIEW_LENGTH && (
+                    <div
+                      className="max-h-40 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 scrollbar-hide"
+                      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+                    >
+                      <p className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
+                        {adminPreviewText}
+                      </p>
+                    </div>
+                    {adminMessageNeedsScroll && (
                       <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                        Long message clipped for clean layout.
+                        Scroll to read full message.
                       </p>
                     )}
                   </div>
