@@ -274,9 +274,7 @@ export default function DevRadarPage() {
 
       const lastSeenTime = loc.lastSeen || (loc.lastUpdated ? new Date(loc.lastUpdated).getTime() : 0);
       const isActuallyOnline = isMe || (loc.isOnline === true && (Date.now() - lastSeenTime < 20000));
-      const dotClass = isActuallyOnline 
-        ? 'bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse' 
-        : 'bg-gray-400';
+      const dotClass = isActuallyOnline ? 'devradar-online-dot--online' : 'devradar-online-dot--offline';
 
       const hasStory = loc.userId !== user?.id && usersWithStories && usersWithStories.has(loc.userId);
       const ringWrapperStart = hasStory ? `<div class="story-shining-portal-ring-wrapper inline-block relative"><div class="story-shining-portal-ring"></div>` : '';
@@ -284,12 +282,12 @@ export default function DevRadarPage() {
 
       const avatarMarkup = `
         ${ringWrapperStart}
-        <div title="${isActuallyOnline ? 'Online' : formatLastSeen(loc) === 'Offline' ? 'Offline' : 'Last seen ' + formatLastSeen(loc)}" class="relative w-10 h-10 rounded-full border-2 border-white shadow-xl bg-white overflow-hidden flex items-center justify-center transition-transform hover:scale-110 active:scale-95 cursor-pointer" style="border-color: ${pinColor}">
-          <img src="${avatarUrl}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'" />
-          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${dotClass}" style="overflow:visible"></span>
+        <div title="${isActuallyOnline ? 'Online' : formatLastSeen(loc) === 'Offline' ? 'Offline' : 'Last seen ' + formatLastSeen(loc)}" class="devradar-avatar-marker relative w-10 h-10 rounded-full border-2 border-white bg-white overflow-hidden flex items-center justify-center transition-transform hover:scale-110 active:scale-95 cursor-pointer" style="border-color: ${pinColor}">
+          <img src="${avatarUrl}" class="devradar-avatar-image w-full h-full rounded-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'" />
+          <span class="devradar-online-dot absolute -top-1 -right-1 w-3 h-3 rounded-full border border-white ${dotClass}"></span>
         </div>
         ${ringWrapperEnd}
-        <div class="w-4 h-4 rounded-full bg-black/15 blur-sm mx-auto -mt-1 scale-x-150 pointer-events-none"></div>
+        <div class="devradar-avatar-shadow w-4 h-4 rounded-full bg-black/15 blur-sm mx-auto -mt-1 scale-x-150 pointer-events-none"></div>
       `;
 
       const markerIcon = L.divIcon({
@@ -859,6 +857,33 @@ export default function DevRadarPage() {
           background: none !important;
           border: none !important;
         }
+        .devradar-avatar-marker {
+          box-shadow: 0 8px 16px rgba(15, 23, 42, 0.28) !important;
+        }
+        .devradar-avatar-image {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center center !important;
+          display: block !important;
+          flex: 0 0 100% !important;
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+        }
+        .devradar-online-dot {
+          z-index: 5 !important;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95), 0 2px 6px rgba(15, 23, 42, 0.35) !important;
+        }
+        .devradar-online-dot--online {
+          background-color: #10B981 !important;
+          animation: devradar-dot-pulse 1.5s ease-in-out infinite;
+        }
+        .devradar-online-dot--offline {
+          background-color: #9CA3AF !important;
+        }
+        .devradar-avatar-shadow {
+          opacity: 0.55;
+        }
         .leaflet-marker-icon {
           background: none !important;
           border: none !important;
@@ -870,6 +895,10 @@ export default function DevRadarPage() {
         @keyframes marker-drop {
           0% { transform: translateY(-20px) scale(0.5); opacity: 0; }
           100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @keyframes devradar-dot-pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.75; }
         }
       `}</style>
 
