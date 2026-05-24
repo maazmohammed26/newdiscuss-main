@@ -20,7 +20,7 @@ export default function UserAdminMessage({ message }) {
     <>
       <div 
         data-testid="user-admin-message"
-        className="user-admin-msg-box rounded-xl p-4 mb-4 overflow-hidden"
+        className="user-admin-msg-box rounded-xl p-4 mb-4"
       >
         <div className="flex items-start gap-3">
           <div className="flex items-center shrink-0">

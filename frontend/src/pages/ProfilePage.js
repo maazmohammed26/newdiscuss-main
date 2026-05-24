@@ -250,7 +250,9 @@ export default function ProfilePage() {
       setAdminMessage(msg);
       setHasUnseenAdminMessage(isNew);
     });
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, [user?.id]);
 
   const handleToggleLocationSharing = () => {

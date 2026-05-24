@@ -4,7 +4,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessageDb';
-import { NAVBAR_SCROLL_DELTA_THRESHOLD, NAVBAR_SCROLL_IDLE_SHOW_DELAY_MS } from '@/lib/uiConstants';
+import {
+  NAVBAR_SCROLL_DELTA_THRESHOLD,
+  NAVBAR_SCROLL_IDLE_SHOW_DELAY_MS,
+  NAVBAR_HIDDEN_TRANSLATE_Y,
+  NAVBAR_HIDDEN_SCALE,
+  NAVBAR_HIDDEN_OPACITY,
+  AVATAR_PULSE_MIN_OPACITY,
+  AVATAR_PULSE_MAX_OPACITY,
+} from '@/lib/uiConstants';
 import CreatePostModal from '@/components/CreatePostModal';
 import UserAvatar from '@/components/UserAvatar';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -91,7 +99,9 @@ export default function FloatingNavbar() {
     const unsubscribe = subscribeToAdminMessage((_message, isNew) => {
       setHasUnseenAdmin(isNew);
     });
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, [user?.id]);
 
   // Only render for logged-in users
@@ -139,6 +149,7 @@ export default function FloatingNavbar() {
   let addButtonClass = '';
   let profileAvatarShellClass = '';
   let profileAvatarPulseShadowClass = '';
+  let profileAvatarInnerClass = '';
   let glassReflectionClass = '';
   let glassBorderGlowClass = '';
 
@@ -151,6 +162,7 @@ export default function FloatingNavbar() {
     addButtonClass = 'bg-blue-600 text-white shadow-[0_8px_24px_rgba(37,99,235,0.4)]';
     profileAvatarShellClass = 'border border-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.55),_0_0_10px_rgba(37,99,235,0.24),_0_0_10px_rgba(239,68,68,0.24)]';
     profileAvatarPulseShadowClass = 'shadow-[0_0_9px_rgba(37,99,235,0.28),_0_0_9px_rgba(239,68,68,0.22)]';
+    profileAvatarInnerClass = 'bg-white/20';
     glassReflectionClass = 'from-white/45 via-white/10 to-transparent';
     glassBorderGlowClass = 'ring-white/35';
   } else if (isDark) {
@@ -162,6 +174,7 @@ export default function FloatingNavbar() {
     addButtonClass = 'bg-blue-500 text-white shadow-[0_8px_24px_rgba(59,130,246,0.45)]';
     profileAvatarShellClass = 'border border-white/65 shadow-[0_0_0_1px_rgba(255,255,255,0.36),_0_0_12px_rgba(37,99,235,0.3),_0_0_12px_rgba(239,68,68,0.3)]';
     profileAvatarPulseShadowClass = 'shadow-[0_0_12px_rgba(37,99,235,0.32),_0_0_12px_rgba(239,68,68,0.28)]';
+    profileAvatarInnerClass = 'bg-black/20';
     glassReflectionClass = 'from-white/40 via-white/10 to-transparent';
     glassBorderGlowClass = 'ring-white/30';
   } else if (isDiscussLight) {
@@ -173,6 +186,7 @@ export default function FloatingNavbar() {
     addButtonClass = 'bg-sky-600 text-white shadow-[0_8px_24px_rgba(2,132,199,0.4)]';
     profileAvatarShellClass = 'border border-white/70 shadow-[0_0_0_1px_rgba(255,255,255,0.42),_0_0_10px_rgba(37,99,235,0.24),_0_0_10px_rgba(239,68,68,0.22)]';
     profileAvatarPulseShadowClass = 'shadow-[0_0_10px_rgba(37,99,235,0.25),_0_0_10px_rgba(239,68,68,0.22)]';
+    profileAvatarInnerClass = 'bg-white/20';
     glassReflectionClass = 'from-white/42 via-white/12 to-transparent';
     glassBorderGlowClass = 'ring-white/36';
   } else if (isDiscussBlack) {
@@ -184,6 +198,7 @@ export default function FloatingNavbar() {
     addButtonClass = 'bg-violet-500 text-white shadow-[0_8px_24px_rgba(139,92,246,0.45)]';
     profileAvatarShellClass = 'border border-white/58 shadow-[0_0_0_1px_rgba(255,255,255,0.24),_0_0_12px_rgba(59,130,246,0.3),_0_0_12px_rgba(239,68,68,0.28)]';
     profileAvatarPulseShadowClass = 'shadow-[0_0_12px_rgba(59,130,246,0.3),_0_0_12px_rgba(239,68,68,0.28)]';
+    profileAvatarInnerClass = 'bg-black/20';
     glassReflectionClass = 'from-white/38 via-white/10 to-transparent';
     glassBorderGlowClass = 'ring-white/28';
   }
@@ -204,7 +219,7 @@ export default function FloatingNavbar() {
         }`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
         initial={false}
-        animate={visible ? { x: '-50%', y: 0, scale: 1, opacity: 1 } : { x: '-50%', y: 108, scale: 0.985, opacity: 0.86 }}
+        animate={visible ? { x: '-50%', y: 0, scale: 1, opacity: 1 } : { x: '-50%', y: NAVBAR_HIDDEN_TRANSLATE_Y, scale: NAVBAR_HIDDEN_SCALE, opacity: NAVBAR_HIDDEN_OPACITY }}
         transition={prefersReducedMotion ? { type: 'tween', duration: 0 } : { type: 'spring', stiffness: 260, damping: 28, mass: 0.84 }}
       >
         <div className={`relative h-[74px] rounded-full px-2 backdrop-blur-[26px] overflow-hidden ${dockContainerClass}`}>
@@ -236,11 +251,11 @@ export default function FloatingNavbar() {
                     <div className="relative z-10">
                       <motion.div
                         className={`relative p-[1px] rounded-full ${profileAvatarShellClass} ${profileAvatarPulseShadowClass}`}
-                        animate={prefersReducedMotion ? {} : { opacity: [0.92, 1, 0.92] }}
+                        animate={prefersReducedMotion ? false : { opacity: [AVATAR_PULSE_MIN_OPACITY, AVATAR_PULSE_MAX_OPACITY, AVATAR_PULSE_MIN_OPACITY] }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 2.3, repeat: Infinity, ease: 'easeInOut' }}
                       >
                         <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_20%_25%,rgba(239,68,68,0.38),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.35),transparent_45%)] pointer-events-none" />
-                        <div className="relative rounded-full overflow-hidden bg-black/20">
+                        <div className={`relative rounded-full overflow-hidden ${profileAvatarInnerClass}`}>
                           <UserAvatar
                             src={user.photo_url || null}
                             username={user.username}
@@ -248,7 +263,7 @@ export default function FloatingNavbar() {
                             className="h-7 w-7 rounded-full"
                           />
                         </div>
-                      </div>
+                      </motion.div>
                       {pendingFriendRequests > 0 && (
                         <span className="absolute -bottom-1 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-blue-600 text-[8px] font-black text-white flex items-center justify-center">
                           {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
