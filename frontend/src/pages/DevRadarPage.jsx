@@ -274,9 +274,9 @@ export default function DevRadarPage() {
 
       const lastSeenTime = loc.lastSeen || (loc.lastUpdated ? new Date(loc.lastUpdated).getTime() : 0);
       const isActuallyOnline = isMe || (loc.isOnline === true && (Date.now() - lastSeenTime < 20000));
-      const dotClass = isActuallyOnline 
-        ? 'bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse' 
-        : 'bg-gray-400';
+      const dotClass = isActuallyOnline
+        ? 'devradar-status-dot-online'
+        : 'devradar-status-dot-offline';
 
       const hasStory = loc.userId !== user?.id && usersWithStories && usersWithStories.has(loc.userId);
       const ringWrapperStart = hasStory ? `<div class="story-shining-portal-ring-wrapper inline-block relative"><div class="story-shining-portal-ring"></div>` : '';
@@ -284,19 +284,21 @@ export default function DevRadarPage() {
 
       const avatarMarkup = `
         ${ringWrapperStart}
-        <div title="${isActuallyOnline ? 'Online' : formatLastSeen(loc) === 'Offline' ? 'Offline' : 'Last seen ' + formatLastSeen(loc)}" class="relative w-10 h-10 rounded-full border-2 border-white shadow-xl bg-white overflow-hidden flex items-center justify-center transition-transform hover:scale-110 active:scale-95 cursor-pointer" style="border-color: ${pinColor}">
-          <img src="${avatarUrl}" class="w-full h-full rounded-full object-cover" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'" />
-          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${dotClass}" style="overflow:visible"></span>
+        <div title="${isActuallyOnline ? 'Online' : formatLastSeen(loc) === 'Offline' ? 'Offline' : 'Last seen ' + formatLastSeen(loc)}" class="devradar-avatar-wrap cursor-pointer">
+          <div class="devradar-avatar-circle" style="border-color: ${pinColor}">
+            <img src="${avatarUrl}" alt="${loc.username || 'User'}" class="devradar-avatar-image" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'" />
+          </div>
+          <span class="devradar-status-dot ${dotClass}"></span>
         </div>
         ${ringWrapperEnd}
-        <div class="w-4 h-4 rounded-full bg-black/15 blur-sm mx-auto -mt-1 scale-x-150 pointer-events-none"></div>
+        <div class="devradar-avatar-shadow"></div>
       `;
 
       const markerIcon = L.divIcon({
         html: avatarMarkup,
         className: 'custom-dev-marker-container',
-        iconSize: [40, 50],
-        iconAnchor: [20, 45],
+        iconSize: [48, 58],
+        iconAnchor: [24, 50],
       });
 
       const marker = L.marker([loc.latitude, loc.longitude], { icon: markerIcon });
@@ -863,9 +865,78 @@ export default function DevRadarPage() {
           background: none !important;
           border: none !important;
         }
+        .devradar-avatar-wrap {
+          position: relative;
+          width: 40px;
+          height: 40px;
+          display: block;
+          transition: transform 0.2s ease;
+        }
+        .devradar-avatar-wrap:hover {
+          transform: scale(1.1);
+        }
+        .devradar-avatar-wrap:active {
+          transform: scale(0.95);
+        }
+        .devradar-avatar-circle {
+          position: relative;
+          width: 40px;
+          height: 40px;
+          border-radius: 9999px;
+          border: 2px solid #ffffff;
+          overflow: hidden;
+          background-color: #E2E8F0;
+          box-shadow: 0 10px 18px rgba(15, 23, 42, 0.24), 0 2px 4px rgba(15, 23, 42, 0.12);
+          isolation: isolate;
+        }
+        .devradar-avatar-image {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          border-radius: 9999px;
+          object-fit: cover;
+          object-position: center;
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+        }
+        .devradar-status-dot {
+          position: absolute;
+          top: -2px;
+          right: -2px;
+          width: 12px;
+          height: 12px;
+          border-radius: 9999px;
+          border: 2px solid #ffffff;
+          z-index: 30;
+          pointer-events: none;
+        }
+        .devradar-status-dot-online {
+          background: #10B981;
+          box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+          animation: devradar-dot-pulse 1.4s ease-in-out infinite;
+        }
+        .devradar-status-dot-offline {
+          background: #9CA3AF;
+        }
+        .devradar-avatar-shadow {
+          width: 26px;
+          height: 8px;
+          border-radius: 9999px;
+          background: rgba(15, 23, 42, 0.24);
+          filter: blur(4px);
+          margin: 2px auto 0;
+          transform: scaleX(1.35);
+          pointer-events: none;
+        }
         /* Custom avatar marker animations */
-        .custom-dev-marker-container div {
+        .custom-dev-marker-container .devradar-avatar-wrap {
           animation: marker-drop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes devradar-dot-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.12); }
         }
         @keyframes marker-drop {
           0% { transform: translateY(-20px) scale(0.5); opacity: 0; }

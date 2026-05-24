@@ -90,7 +90,7 @@ export default function UserAdminMessage({ message }) {
             <span className="msg-tag-left text-2xl font-bold">&lt;</span>
             <span className="msg-tag-right text-2xl font-bold">&gt;</span>
           </div>
-          <div className="flex-1 text-[13px] md:text-[14px] msg-text-container">
+          <div className="flex-1 min-h-0 text-[13px] md:text-[14px] msg-text-container">
             <span className="msg-label font-bold">Admin message: </span>
             <div className="msg-content font-medium mt-1 max-h-36 overflow-y-auto scrollbar-hide whitespace-pre-wrap break-words pr-1">
               {renderLinkedMessage(trimmedMessage)}
@@ -119,6 +119,15 @@ export default function UserAdminMessage({ message }) {
         .msg-tag-right { color: #EF4444; }
         .msg-label { color: #1E293B; }
         .msg-content { color: #2563EB; }
+        .msg-text-container {
+          min-width: 0;
+          min-height: 0;
+        }
+        .msg-content {
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
+          touch-action: pan-y;
+        }
         .msg-close-btn {
           color: #64748B;
         }
