@@ -867,7 +867,7 @@ export default function DevRadarPage() {
           width: 40px !important;
           height: 40px !important;
           overflow: visible !important;
-          contain: layout paint style;
+          contain: strict;
         }
         .leaflet-marker-icon {
           background: none !important;
