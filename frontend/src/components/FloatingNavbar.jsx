@@ -1,15 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessageDb';
 import {
-  NAVBAR_SCROLL_DELTA_THRESHOLD,
-  NAVBAR_SCROLL_IDLE_SHOW_DELAY_MS,
-  NAVBAR_HIDDEN_TRANSLATE_Y,
-  NAVBAR_HIDDEN_SCALE,
-  NAVBAR_HIDDEN_OPACITY,
   AVATAR_PULSE_MIN_OPACITY,
   AVATAR_PULSE_MAX_OPACITY,
 } from '@/lib/uiConstants';
@@ -30,13 +25,9 @@ export default function FloatingNavbar() {
   const { unreadChatCount, pendingFriendRequests } = useHighlights();
   const prefersReducedMotion = useReducedMotion();
 
-  const [visible, setVisible] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
   const [hasUnseenAdmin, setHasUnseenAdmin] = useState(false);
-  const lastScrollYRef = useRef(0);
-  const scrollUpdatePendingRef = useRef(false);
-  const scrollIdleTimeoutRef = useRef(null);
 
   // Check for DOM loading screens/animations dynamically to hide navbar
   useEffect(() => {
@@ -51,46 +42,6 @@ export default function FloatingNavbar() {
     checkLoader();
     const interval = setInterval(checkLoader, 100);
     return () => clearInterval(interval);
-  }, []);
-
-  // Hide while scrolling in any direction, show smoothly after scrolling stops
-  useEffect(() => {
-    const updateVisibility = () => {
-      const currentY = window.scrollY || 0;
-      const delta = Math.abs(currentY - lastScrollYRef.current);
-
-      if (currentY < 40) {
-        setVisible(true);
-      } else if (delta > NAVBAR_SCROLL_DELTA_THRESHOLD) {
-        setVisible(false);
-
-        if (scrollIdleTimeoutRef.current) {
-          clearTimeout(scrollIdleTimeoutRef.current);
-        }
-
-        scrollIdleTimeoutRef.current = setTimeout(() => {
-          setVisible(true);
-        }, NAVBAR_SCROLL_IDLE_SHOW_DELAY_MS);
-      }
-
-      lastScrollYRef.current = currentY;
-      scrollUpdatePendingRef.current = false;
-    };
-
-    const handleScroll = () => {
-      if (scrollUpdatePendingRef.current) return;
-      scrollUpdatePendingRef.current = true;
-      window.requestAnimationFrame(updateVisibility);
-    };
-
-    lastScrollYRef.current = window.scrollY || 0;
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollIdleTimeoutRef.current) {
-        clearTimeout(scrollIdleTimeoutRef.current);
-      }
-    };
   }, []);
 
   // Subscribe to admin message state for profile tab indicator
@@ -156,8 +107,8 @@ export default function FloatingNavbar() {
   if (isLight) {
     dockContainerClass = 'bg-black/52 border border-white/20 shadow-[0_16px_42px_rgba(2,6,23,0.48)]';
     indicatorClass = 'bg-white/85 border border-white/80 shadow-[0_8px_24px_rgba(59,130,246,0.24)]';
-    inactiveIconClass = 'text-slate-300/90';
-    activeIconClass = 'text-blue-200';
+    inactiveIconClass = 'text-slate-100';
+    activeIconClass = 'text-blue-800';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(37,99,235,0.45)]';
     addButtonClass = 'bg-blue-600 text-white shadow-[0_8px_24px_rgba(37,99,235,0.4)]';
     profileAvatarShellClass = 'border border-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.55),_0_0_10px_rgba(37,99,235,0.24),_0_0_10px_rgba(239,68,68,0.24)]';
@@ -168,8 +119,8 @@ export default function FloatingNavbar() {
   } else if (isDark) {
     dockContainerClass = 'bg-slate-900/52 border border-white/22 shadow-[0_16px_46px_rgba(0,0,0,0.55)]';
     indicatorClass = 'bg-white/12 border border-white/20 shadow-[0_0_22px_rgba(59,130,246,0.38)]';
-    inactiveIconClass = 'text-slate-300/85';
-    activeIconClass = 'text-blue-300';
+    inactiveIconClass = 'text-slate-100';
+    activeIconClass = 'text-blue-100';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(147,197,253,0.55)]';
     addButtonClass = 'bg-blue-500 text-white shadow-[0_8px_24px_rgba(59,130,246,0.45)]';
     profileAvatarShellClass = 'border border-white/65 shadow-[0_0_0_1px_rgba(255,255,255,0.36),_0_0_12px_rgba(37,99,235,0.3),_0_0_12px_rgba(239,68,68,0.3)]';
@@ -180,8 +131,8 @@ export default function FloatingNavbar() {
   } else if (isDiscussLight) {
     dockContainerClass = 'bg-black/54 border border-white/18 shadow-[0_16px_42px_rgba(2,6,23,0.55)]';
     indicatorClass = 'bg-white/90 border border-slate-200 shadow-[0_8px_24px_rgba(14,165,233,0.24)]';
-    inactiveIconClass = 'text-slate-300/90';
-    activeIconClass = 'text-sky-200';
+    inactiveIconClass = 'text-slate-100';
+    activeIconClass = 'text-sky-800';
     activeGlowClass = 'drop-shadow-[0_0_12px_rgba(2,132,199,0.4)]';
     addButtonClass = 'bg-sky-600 text-white shadow-[0_8px_24px_rgba(2,132,199,0.4)]';
     profileAvatarShellClass = 'border border-white/70 shadow-[0_0_0_1px_rgba(255,255,255,0.42),_0_0_10px_rgba(37,99,235,0.24),_0_0_10px_rgba(239,68,68,0.22)]';
@@ -192,8 +143,8 @@ export default function FloatingNavbar() {
   } else if (isDiscussBlack) {
     dockContainerClass = 'bg-[#11121C]/50 border border-white/16 shadow-[0_16px_48px_rgba(0,0,0,0.7),_0_0_20px_rgba(59,130,246,0.14)]';
     indicatorClass = 'bg-white/10 border border-white/20 shadow-[0_0_24px_rgba(124,58,237,0.42)]';
-    inactiveIconClass = 'text-slate-300/80';
-    activeIconClass = 'text-violet-200';
+    inactiveIconClass = 'text-slate-100';
+    activeIconClass = 'text-violet-100';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(196,181,253,0.55)]';
     addButtonClass = 'bg-violet-500 text-white shadow-[0_8px_24px_rgba(139,92,246,0.45)]';
     profileAvatarShellClass = 'border border-white/58 shadow-[0_0_0_1px_rgba(255,255,255,0.24),_0_0_12px_rgba(59,130,246,0.3),_0_0_12px_rgba(239,68,68,0.28)]';
@@ -214,12 +165,10 @@ export default function FloatingNavbar() {
   return (
     <>
       <motion.div
-        className={`floating-navbar-container fixed left-1/2 z-50 w-[92%] max-w-[420px] select-none ${
-          visible ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
+        className="floating-navbar-container fixed left-1/2 z-50 w-[92%] max-w-[420px] select-none pointer-events-auto"
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
         initial={false}
-        animate={visible ? { x: '-50%', y: 0, scale: 1, opacity: 1 } : { x: '-50%', y: NAVBAR_HIDDEN_TRANSLATE_Y, scale: NAVBAR_HIDDEN_SCALE, opacity: NAVBAR_HIDDEN_OPACITY }}
+        animate={{ x: '-50%', y: 0, scale: 1, opacity: 1 }}
         transition={prefersReducedMotion ? { type: 'tween', duration: 0 } : { type: 'spring', stiffness: 260, damping: 28, mass: 0.84 }}
       >
         <div className={`relative h-[74px] rounded-full px-2 backdrop-blur-[26px] overflow-hidden ${dockContainerClass}`}>
