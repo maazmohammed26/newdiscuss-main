@@ -51,7 +51,9 @@ export default function FloatingNavbar() {
       const currentY = window.scrollY || 0;
       const delta = Math.abs(currentY - lastScrollYRef.current);
 
-      if (delta > NAVBAR_SCROLL_DELTA_THRESHOLD) {
+      if (currentY < 40) {
+        setVisible(true);
+      } else if (delta > NAVBAR_SCROLL_DELTA_THRESHOLD) {
         setVisible(false);
 
         if (scrollIdleTimeoutRef.current) {
@@ -61,8 +63,6 @@ export default function FloatingNavbar() {
         scrollIdleTimeoutRef.current = setTimeout(() => {
           setVisible(true);
         }, NAVBAR_SCROLL_IDLE_SHOW_DELAY_MS);
-      } else if (delta < -NAVBAR_SCROLL_DELTA_THRESHOLD) {
-        setVisible(true);
       }
 
       lastScrollYRef.current = currentY;
