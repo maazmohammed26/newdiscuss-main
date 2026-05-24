@@ -107,8 +107,8 @@ export default function FloatingNavbar() {
   if (isLight) {
     dockContainerClass = 'bg-black/52 border border-white/20 shadow-[0_16px_42px_rgba(2,6,23,0.48)]';
     indicatorClass = 'bg-white/85 border border-white/80 shadow-[0_8px_24px_rgba(59,130,246,0.24)]';
-    inactiveIconClass = 'text-slate-100';
-    activeIconClass = 'text-blue-800';
+    inactiveIconClass = 'text-slate-700';
+    activeIconClass = 'text-slate-900';
     activeGlowClass = 'drop-shadow-[0_0_14px_rgba(37,99,235,0.45)]';
     addButtonClass = 'bg-blue-600 text-white shadow-[0_8px_24px_rgba(37,99,235,0.4)]';
     profileAvatarShellClass = 'border border-white/80 shadow-[0_0_0_1px_rgba(255,255,255,0.55),_0_0_10px_rgba(37,99,235,0.24),_0_0_10px_rgba(239,68,68,0.24)]';
@@ -131,8 +131,8 @@ export default function FloatingNavbar() {
   } else if (isDiscussLight) {
     dockContainerClass = 'bg-black/54 border border-white/18 shadow-[0_16px_42px_rgba(2,6,23,0.55)]';
     indicatorClass = 'bg-white/90 border border-slate-200 shadow-[0_8px_24px_rgba(14,165,233,0.24)]';
-    inactiveIconClass = 'text-slate-100';
-    activeIconClass = 'text-sky-800';
+    inactiveIconClass = 'text-slate-700';
+    activeIconClass = 'text-slate-900';
     activeGlowClass = 'drop-shadow-[0_0_12px_rgba(2,132,199,0.4)]';
     addButtonClass = 'bg-sky-600 text-white shadow-[0_8px_24px_rgba(2,132,199,0.4)]';
     profileAvatarShellClass = 'border border-white/70 shadow-[0_0_0_1px_rgba(255,255,255,0.42),_0_0_10px_rgba(37,99,235,0.24),_0_0_10px_rgba(239,68,68,0.22)]';
@@ -200,7 +200,7 @@ export default function FloatingNavbar() {
                     <div className="relative z-10">
                       <motion.div
                         className={`relative p-[1px] rounded-full ${profileAvatarShellClass} ${profileAvatarPulseShadowClass}`}
-                        animate={prefersReducedMotion ? false : { opacity: [AVATAR_PULSE_MIN_OPACITY, AVATAR_PULSE_MAX_OPACITY, AVATAR_PULSE_MIN_OPACITY] }}
+                        animate={prefersReducedMotion ? undefined : { opacity: [AVATAR_PULSE_MIN_OPACITY, AVATAR_PULSE_MAX_OPACITY, AVATAR_PULSE_MIN_OPACITY] }}
                         transition={prefersReducedMotion ? { duration: 0 } : { duration: 2.3, repeat: Infinity, ease: 'easeInOut' }}
                       >
                         <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_20%_25%,rgba(239,68,68,0.38),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.35),transparent_45%)] pointer-events-none" />
