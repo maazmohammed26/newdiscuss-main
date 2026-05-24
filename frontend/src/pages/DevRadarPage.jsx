@@ -290,9 +290,7 @@ export default function DevRadarPage() {
               src="${avatarUrl}"
               alt="${loc.username || 'User'}"
               class="devradar-avatar-image"
-              style="position:absolute;inset:0;display:block;width:100%;height:100%;min-width:100%;min-height:100%;max-width:none;max-height:none;object-fit:cover;object-position:center center;"
-              onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}';this.style.width='100%';this.style.height='100%';this.style.minWidth='100%';this.style.minHeight='100%';this.style.maxWidth='none';this.style.maxHeight='none';this.style.objectFit='cover';this.style.objectPosition='center center';"
-              onload="this.style.width='100%';this.style.height='100%';this.style.minWidth='100%';this.style.minHeight='100%';this.style.maxWidth='none';this.style.maxHeight='none';this.style.objectFit='cover';this.style.objectPosition='center center';"
+              onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${loc.username}'"
             />
           </div>
           <span class="devradar-status-dot ${dotClass}"></span>
@@ -925,16 +923,16 @@ export default function DevRadarPage() {
         .devradar-avatar-image {
           position: absolute;
           inset: 0;
-          width: 100%;
-          height: 100%;
-          min-width: 100%;
-          min-height: 100%;
-          max-width: none;
-          max-height: none;
+          width: 100% !important;
+          height: 100% !important;
+          min-width: 100% !important;
+          min-height: 100% !important;
+          max-width: none !important;
+          max-height: none !important;
           display: block;
           border-radius: 9999px;
-          object-fit: cover;
-          object-position: center;
+          object-fit: cover !important;
+          object-position: center center !important;
           image-rendering: auto;
           pointer-events: none;
           transform: translateZ(0);
@@ -958,6 +956,13 @@ export default function DevRadarPage() {
         .devradar-status-dot-online {
           background: #10B981;
           box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+        }
+        .devradar-status-dot-online::after {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          border-radius: inherit;
+          border: 2px solid rgba(16, 185, 129, 0.35);
           animation: devradar-dot-pulse 1.4s ease-in-out infinite;
         }
         .devradar-status-dot-offline {
@@ -968,8 +973,8 @@ export default function DevRadarPage() {
           animation: marker-drop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         @keyframes devradar-dot-pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.12); }
+          0%, 100% { transform: scale(1); opacity: 0.85; }
+          50% { transform: scale(1.25); opacity: 0.45; }
         }
         @keyframes marker-drop {
           0% { transform: translateY(-20px) scale(0.5); opacity: 0; }

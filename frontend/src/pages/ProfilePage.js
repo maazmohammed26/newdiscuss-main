@@ -1117,7 +1117,7 @@ export default function ProfilePage() {
   };
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
-  const adminPreviewText = adminMessage?.message?.trim() || '';
+  const adminPreviewText = typeof adminMessage?.message === 'string' ? adminMessage.message : '';
   const adminMessageNeedsScroll = adminPreviewText.length > ADMIN_MESSAGE_PREVIEW_LENGTH;
 
   const handleAdminPopoverToggle = (open) => {
