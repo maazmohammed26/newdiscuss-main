@@ -47,6 +47,7 @@ import ThemeSelector from '@/components/ThemeSelector';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import VerificationRequestModal from '@/components/VerificationRequestModal';
 import UserAdminMessage from '@/components/UserAdminMessage';
+import LinkifiedText from '@/components/LinkifiedText';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import UserSearchResult from '@/components/UserSearchResult';
 import ProfileShareModal from '@/components/ProfileShareModal';
@@ -1172,9 +1173,9 @@ export default function ProfilePage() {
                       className="max-h-40 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 scrollbar-hide"
                       style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                     >
-                      <p className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
-                        {adminPreviewText}
-                      </p>
+                      <div className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
+                        <LinkifiedText text={adminPreviewText} />
+                      </div>
                     </div>
                     {adminMessageNeedsScroll && (
                       <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">

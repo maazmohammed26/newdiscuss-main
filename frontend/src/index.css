@@ -855,3 +855,20 @@
   z-index: 1;
   background-color: var(--card);
 }
+
+/* Megaphone trigger button style override in discuss-black to fix white-on-white visibility */
+.discuss-black button[title="Admin Message"] {
+  background-color: rgba(255, 0, 127, 0.08) !important;
+  border-color: rgba(255, 0, 127, 0.3) !important;
+  color: #FF007F !important;
+  box-shadow: 0 0 16px rgba(255, 0, 127, 0.15) !important;
+}
+
+.discuss-black button[title="Admin Message"] svg {
+  color: #FF007F !important;
+}
+
+.discuss-black button[title="Admin Message"]:hover {
+  background-color: rgba(255, 0, 127, 0.18) !important;
+  box-shadow: 0 0 24px rgba(255, 0, 127, 0.35) !important;
+}
