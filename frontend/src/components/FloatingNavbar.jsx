@@ -11,12 +11,14 @@ import {
 import GuestAuthModal from '@/components/GuestAuthModal';
 import CreatePostModal from '@/components/CreatePostModal';
 import UserAvatar from '@/components/UserAvatar';
+import ExploreMenuModal from '@/components/ExploreMenuModal';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Plus,
   Home,
   MessageCircle,
   Radar,
+  Compass,
 } from 'lucide-react';
 
 export default function FloatingNavbar() {
@@ -28,6 +30,7 @@ export default function FloatingNavbar() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showExploreModal, setShowExploreModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
   const [hasUnseenAdmin, setHasUnseenAdmin] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
@@ -168,7 +171,7 @@ export default function FloatingNavbar() {
     { key: 'home', to: '/feed', active: currentPath === '/feed', icon: Home, label: 'Home' },
     { key: 'chats', to: '/chat', active: currentPath.startsWith('/chat'), icon: MessageCircle, label: 'Chats' },
     { key: 'add', action: handleOpenCreateModal, active: false, icon: Plus, label: 'Add Post' },
-    { key: 'devradar', to: '/devradar', active: currentPath === '/devradar', icon: Radar, label: 'DevRadar' },
+    { key: 'explore', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs'].includes(currentPath), icon: Compass, label: 'Explore' },
     { key: 'profile', to: '/profile', active: currentPath === '/profile', label: 'Profile' },
   ];
 
@@ -245,6 +248,15 @@ export default function FloatingNavbar() {
                     >
                       <Plus className="w-5 h-5" />
                     </button>
+                  ) : item.action ? (
+                    <button
+                      type="button"
+                      onClick={item.action}
+                      aria-label={item.label}
+                      className="relative z-10 flex h-full w-full items-center justify-center rounded-full"
+                    >
+                      <Icon className={`w-5 h-5 ${baseIconClass}`} />
+                    </button>
                   ) : (
                     Icon && <Icon className={`w-5 h-5 ${baseIconClass}`} />
                   )}
@@ -300,6 +312,11 @@ export default function FloatingNavbar() {
         onClose={() => setShowAuthModal(false)}
       />
 
+      <ExploreMenuModal
+        open={showExploreModal}
+        onClose={() => setShowExploreModal(false)}
+        onRequireAuth={() => setShowAuthModal(true)}
+      />
     </>
   );
 }

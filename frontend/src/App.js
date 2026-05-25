@@ -31,6 +31,10 @@ const GroupInfoPage         = lazy(() => import('@/pages/GroupInfoPage'));
 const JoinRequestsPage      = lazy(() => import('@/pages/JoinRequestsPage'));
 const PulsePage             = lazy(() => import('@/pages/PulsePage'));
 const DevRadarPage          = lazy(() => import('@/pages/DevRadarPage'));
+const NewsPage              = lazy(() => import('@/pages/NewsPage'));
+const NewsDetailPage        = lazy(() => import('@/pages/NewsDetailPage'));
+const JobsPage              = lazy(() => import('@/pages/JobsPage'));
+const JobDetailPage         = lazy(() => import('@/pages/JobDetailPage'));
 
 // Public static pages
 const AboutPage   = lazy(() => import('@/pages/AboutPage'));
@@ -138,6 +142,10 @@ function AppRoutes() {
         <Route path="/profile"                 element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/pulse"                   element={<ProtectedRoute><PulsePage /></ProtectedRoute>} />
         <Route path="/devradar"                element={<ProtectedRoute><DevRadarPage /></ProtectedRoute>} />
+        <Route path="/news"                    element={<NewsPage />} />
+        <Route path="/news/:newsId"            element={<NewsDetailPage />} />
+        <Route path="/jobs"                    element={<JobsPage />} />
+        <Route path="/jobs/:jobId"             element={<JobDetailPage />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -210,7 +218,7 @@ function OnboardingWrapper({ children }) {
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
   const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
 
   return (

@@ -10,7 +10,7 @@ import PostCard from '@/components/PostCard';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
-import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock, ShieldCheck } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 
@@ -186,6 +186,14 @@ export default function UserPostsPage() {
                     @{userData.username}
                     {!profileData?.fullName && userData.verified && <VerifiedBadge size="sm" />}
                   </div>
+
+                  {userId === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
+                        <ShieldCheck className="w-3 h-3" /> Discuss Team
+                      </span>
+                    </div>
+                  )}
                   
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                     <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">

@@ -1,0 +1,291 @@
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { subscribeToNews, deleteNews } from '@/lib/firebaseSixth';
+import Header from '@/components/Header';
+import NewsAdminModal from '@/components/NewsAdminModal';
+import ItemShareModal from '@/components/ItemShareModal';
+import ExpandableText from '@/components/ExpandableText';
+import LinkifiedText from '@/components/LinkifiedText';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search, Plus, Share2, Pencil, Trash2, ShieldCheck, ArrowUp } from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function NewsPage() {
+  const { user } = useAuth();
+  const isDiscussTeam = user?.id === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2';
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const [news, setNews] = useState(() => {
+    try {
+      const cached = localStorage.getItem('discuss_fast_techNews');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isSyncing, setIsSyncing] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // Share modal state
+  const [shareItem, setShareItem] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  // Redirection for legacy query parameter ?id=123
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (id) {
+      navigate(`/news/${id}`, { replace: true });
+    }
+  }, [location, navigate]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    setIsSyncing(true);
+    const unsubscribe = subscribeToNews((data) => {
+      setNews(data);
+      try {
+        localStorage.setItem('discuss_fast_techNews', JSON.stringify(data));
+      } catch (e) {}
+      setIsSyncing(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleEdit = (item) => {
+    setEditData(item);
+    setShowAdminModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this news?')) {
+      try {
+        await deleteNews(id);
+        toast.success('News deleted');
+      } catch (err) {
+        toast.error('Failed to delete news');
+      }
+    }
+  };
+
+  const handleShare = (item) => {
+    setShareItem(item);
+    setShowShareModal(true);
+  };
+
+  const filteredNews = news.filter(item => 
+    item.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+      <Header />
+      
+      {/* Moving Tech Announcement Marquee */}
+      <div className="w-full bg-[#FEF2F2]/60 dark:bg-red-950/20 discuss:bg-[#1E1B1B] border-b border-red-100 dark:border-red-900/30 discuss:border-red-950 py-2.5 overflow-hidden relative select-none z-20">
+        <div className="absolute inset-y-0 left-0 w-8 md:w-20 bg-gradient-to-r from-[#F5F5F7] dark:from-[#0F172A] discuss:from-[#121212] to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-8 md:w-20 bg-gradient-to-l from-[#F5F5F7] dark:from-[#0F172A] discuss:from-[#121212] to-transparent z-10 pointer-events-none" />
+        
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 35s linear infinite;
+          }
+          .animate-marquee:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+        
+        <div className="animate-marquee gap-8">
+          <div className="flex items-center gap-2 text-xs font-mono tracking-tight font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
+            <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
+            <span>This is a beta version which is under development but you can use it in live prod.</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
+            <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+            <span>Currently both sections are handled by the Discuss Team directly.</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
+            <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
+            <span>Companies and organizations can also directly add events and listings!</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs font-mono tracking-tight font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]" aria-hidden="true">
+            <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
+            <span>This is a beta version which is under development but you can use it in live prod.</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
+            <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+            <span>Currently both sections are handled by the Discuss Team directly.</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
+            <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
+            <span>Companies and organizations can also directly add events and listings!</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Micro Techie Syncing Indicator */}
+      {isSyncing && (
+        <div className="w-full bg-[#2563EB]/5 dark:bg-blue-500/10 discuss:bg-red-500/5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#222] py-1.5 flex items-center justify-center gap-2 select-none z-10 transition-all duration-300">
+          <div className="w-3 h-3 border-2 border-[#2563EB] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2563EB] discuss:text-[#EF4444] dark:text-[#94A3B8]">
+            Syncing latest tech news...
+          </span>
+        </div>
+      )}
+
+      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] tracking-tight flex items-center gap-2">
+              Tech News <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider select-none">BETA</span>
+            </h1>
+            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">
+              Latest updates and tech news from the community.
+            </p>
+          </div>
+          <div className="flex w-full md:w-auto items-center gap-3">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+              <Input 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search news..." 
+                className="pl-9 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]"
+              />
+            </div>
+            {isDiscussTeam && (
+              <Button 
+                onClick={() => { setEditData(null); setShowAdminModal(true); }}
+                className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] shrink-0"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add News
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {filteredNews.length === 0 ? (
+            <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                No news found.
+              </p>
+            </div>
+          ) : (
+            filteredNews.map(item => (
+              <div 
+                id={`news-${item.id}`} 
+                key={item.id} 
+                className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group"
+              >
+                {item.image && (
+                  <div className="w-full h-48 md:h-64 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000]">
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="p-5 md:p-6">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                      {item.title}
+                    </h2>
+                    {isDiscussTeam && (
+                      <div className="flex gap-2 shrink-0">
+                        <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
+                      <ShieldCheck className="w-3 h-3" /> Created by Discuss Team
+                    </span>
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                      • {new Date(item.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
+                    <ExpandableText text={item.description} maxLines={5}>
+                      <LinkifiedText text={item.description} />
+                    </ExpandableText>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate(`/news/${item.id}`)}
+                      className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-lg font-bold text-sm"
+                    >
+                      Read Full News
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => handleShare(item)}
+                      className="text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#334155] rounded-lg font-semibold"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" /> Share
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      
+      {showAdminModal && (
+        <NewsAdminModal 
+          open={showAdminModal} 
+          onClose={() => setShowAdminModal(false)} 
+          editData={editData} 
+        />
+      )}
+
+      {showShareModal && shareItem && (
+        <ItemShareModal
+          open={showShareModal}
+          onClose={() => { setShowShareModal(false); setShareItem(null); }}
+          item={shareItem}
+          type="news"
+        />
+      )}
+
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-32 md:bottom-12 right-6 p-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:scale-110 transition-transform z-50 group flex items-center justify-center border border-white/20"
+          title="Scroll to top"
+        >
+          <ArrowUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+        </button>
+      )}
+    </div>
+  );
+}

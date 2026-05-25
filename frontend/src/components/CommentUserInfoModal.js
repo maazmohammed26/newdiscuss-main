@@ -5,7 +5,7 @@ import { getUserProfile } from '@/lib/userProfileDb';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
-import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User, ShieldCheck } from 'lucide-react';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 
 export default function CommentUserInfoModal({ open, onClose, userId, currentUserId }) {
@@ -117,6 +117,14 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                   @{userData.username}
                   {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
                 </p>
+
+                {userId === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && (
+                  <div className="mt-2 flex justify-center">
+                    <span className="flex items-center justify-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
+                      <ShieldCheck className="w-3 h-3" /> Discuss Team
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Profile Info */}

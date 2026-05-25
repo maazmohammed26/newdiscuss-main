@@ -90,6 +90,98 @@ export const subscribeToPublicLocations = (callback) => {
   return () => off(locationsRef);
 };
 
+// --- TECH NEWS CRUD ---
+export const saveNews = async (newsId, newsData) => {
+  if (!isDevRadarDbAvailable()) return null;
+  const newsRef = ref(devRadarDatabase, `techNews/${newsId}`);
+  await set(newsRef, {
+    ...newsData,
+    updatedAt: new Date().toISOString()
+  });
+  return true;
+};
+
+export const getNews = async (newsId) => {
+  if (!isDevRadarDbAvailable()) return null;
+  const newsRef = ref(devRadarDatabase, `techNews/${newsId}`);
+  const snap = await get(newsRef);
+  return snap.exists() ? { id: newsId, ...snap.val() } : null;
+};
+
+export const deleteNews = async (newsId) => {
+  if (!isDevRadarDbAvailable()) return null;
+  const newsRef = ref(devRadarDatabase, `techNews/${newsId}`);
+  await remove(newsRef);
+  return true;
+};
+
+export const subscribeToNews = (callback) => {
+  if (!isDevRadarDbAvailable()) {
+    callback([]);
+    return () => {};
+  }
+  const newsRef = ref(devRadarDatabase, 'techNews');
+  const handleNews = (snapshot) => {
+    if (!snapshot.exists()) {
+      callback([]);
+      return;
+    }
+    const data = snapshot.val();
+    const list = Object.entries(data)
+      .map(([id, item]) => ({ id, ...item }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    callback(list);
+  };
+  onValue(newsRef, handleNews);
+  return () => off(newsRef);
+};
+
+// --- JOBS CRUD ---
+export const saveJob = async (jobId, jobData) => {
+  if (!isDevRadarDbAvailable()) return null;
+  const jobRef = ref(devRadarDatabase, `jobs/${jobId}`);
+  await set(jobRef, {
+    ...jobData,
+    updatedAt: new Date().toISOString()
+  });
+  return true;
+};
+
+export const getJob = async (jobId) => {
+  if (!isDevRadarDbAvailable()) return null;
+  const jobRef = ref(devRadarDatabase, `jobs/${jobId}`);
+  const snap = await get(jobRef);
+  return snap.exists() ? { id: jobId, ...snap.val() } : null;
+};
+
+export const deleteJob = async (jobId) => {
+  if (!isDevRadarDbAvailable()) return null;
+  const jobRef = ref(devRadarDatabase, `jobs/${jobId}`);
+  await remove(jobRef);
+  return true;
+};
+
+export const subscribeToJobs = (callback) => {
+  if (!isDevRadarDbAvailable()) {
+    callback([]);
+    return () => {};
+  }
+  const jobsRef = ref(devRadarDatabase, 'jobs');
+  const handleJobs = (snapshot) => {
+    if (!snapshot.exists()) {
+      callback([]);
+      return;
+    }
+    const data = snapshot.val();
+    const list = Object.entries(data)
+      .map(([id, item]) => ({ id, ...item }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    callback(list);
+  };
+  onValue(jobsRef, handleJobs);
+  return () => off(jobsRef);
+};
+
 export {
   devRadarApp,
   devRadarDatabase,
