@@ -201,8 +201,16 @@ export default function NewsPage() {
                   className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group"
                 >
                   {item.image && (
-                    <div className="w-full h-48 md:h-64 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000]">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    <div className="w-full h-48 md:h-64 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000] relative overflow-hidden flex items-center justify-center">
+                      <img 
+                        src={item.image} 
+                        alt={item.title} 
+                        className="w-full h-full object-contain relative z-10 select-none" 
+                      />
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-30 select-none scale-110 pointer-events-none" 
+                        style={{ backgroundImage: `url(${item.image})` }} 
+                      />
                     </div>
                   )}
                   <div className="p-5 md:p-6">

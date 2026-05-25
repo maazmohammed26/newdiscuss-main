@@ -97,13 +97,16 @@ export default function NewsDetailPage() {
         {/* Dedicated Premium News Card */}
         <article className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-3xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card overflow-hidden">
           {item.image && (
-            <div className="w-full h-64 md:h-[400px] bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000] relative overflow-hidden">
+            <div className="w-full h-64 md:h-[400px] bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000] relative overflow-hidden flex items-center justify-center">
               <img 
                 src={item.image} 
                 alt={item.title} 
-                className="w-full h-full object-cover select-none" 
+                className="w-full h-full object-contain relative z-10 select-none" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <div 
+                className="absolute inset-0 bg-cover bg-center blur-2xl opacity-30 select-none scale-110 pointer-events-none" 
+                style={{ backgroundImage: `url(${item.image})` }} 
+              />
             </div>
           )}
           
