@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "checkJs": false,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["newdiscuss-main/frontend/src/*"]
+    }
+  },
+  "exclude": ["**/node_modules/**", "**/build/**"],
+  "include": ["newdiscuss-main/frontend/src/**/*"]
+}
