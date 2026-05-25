@@ -145,7 +145,7 @@ export default function UserPostsPage() {
             <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-2xl p-5 mb-6">
               <div className="flex items-start gap-4">
                 {/* Profile Picture - Clickable if exists */}
-                {userData.photo_url ? (
+                {userData.photo_url && currentUser ? (
                   <button 
                     onClick={() => setShowImagePreview(true)}
                     className="relative group shrink-0"
@@ -163,8 +163,13 @@ export default function UserPostsPage() {
                     </div>
                   </button>
                 ) : (
-                  <div className="shrink-0">
-                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-14 h-14" />
+                  <div className="shrink-0 flex flex-col items-center">
+                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-14 h-14 opacity-70 grayscale" />
+                    {!currentUser && (
+                      <span className="text-[9px] text-[#EF4444] mt-2 font-medium bg-[#EF4444]/10 rounded px-1.5 py-0.5 border border-[#EF4444]/20 max-w-[80px] text-center leading-tight">
+                        Secured
+                      </span>
+                    )}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -217,7 +222,7 @@ export default function UserPostsPage() {
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6275AF]" />
                   <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile...</span>
                 </div>
-              ) : profileData?.bio && (
+              ) : profileData?.bio && currentUser && (
                 <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                   <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[13px] leading-relaxed whitespace-pre-wrap">
                     {displayBio}
@@ -238,7 +243,7 @@ export default function UserPostsPage() {
               )}
 
               {/* Social Links Section */}
-              {!loadingProfile && profileData?.socialLinks?.length > 0 && (
+              {!loadingProfile && currentUser && profileData?.socialLinks?.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                   <div className="flex flex-wrap gap-2">
                     {profileData.socialLinks.map((link, index) => (
@@ -256,34 +261,44 @@ export default function UserPostsPage() {
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Pulse Videos */}
-            <div className="mb-6">
-              <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
-                <PlayCircle className="w-5 h-5 text-[#EF4444]" /> Pulse Videos
-              </h3>
-              {userPulses.length === 0 ? (
-                <div className="text-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                  <PlayCircle className="w-6 h-6 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-2" />
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]">No Pulse videos yet.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {userPulses.map(pulse => (
-                    <div key={pulse.id} className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all" onClick={() => navigate('/pulse')}>
-                      <video src={pulse.videoUrl} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <PlayCircle className="w-10 h-10 text-white" />
-                      </div>
-                      <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
-                        {pulse.caption || 'Pulse Video'}
-                      </div>
-                    </div>
-                  ))}
+              
+              {!currentUser && !loadingProfile && (
+                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                  <p className="text-[11px] text-[#EF4444] font-medium bg-[#EF4444]/10 rounded-md p-2 border border-[#EF4444]/20 inline-block">
+                    For security reasons, we have blocked profile details and Pulse posts to non-logged-in users.
+                  </p>
                 </div>
               )}
             </div>
+
+            {/* Pulse Videos */}
+            {currentUser && (
+              <div className="mb-6">
+                <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
+                  <PlayCircle className="w-5 h-5 text-[#EF4444]" /> Pulse Videos
+                </h3>
+                {userPulses.length === 0 ? (
+                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                    <PlayCircle className="w-6 h-6 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-2" />
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]">No Pulse videos yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {userPulses.map(pulse => (
+                      <div key={pulse.id} className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all" onClick={() => navigate('/pulse')}>
+                        <video src={pulse.videoUrl} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <PlayCircle className="w-10 h-10 text-white" />
+                        </div>
+                        <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
+                          {pulse.caption || 'Pulse Video'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Posts */}
             <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
