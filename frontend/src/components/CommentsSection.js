@@ -93,7 +93,7 @@ function CommentReply({ reply, currentUser, postId, commentId, postAuthorId, onD
 }
 
 // Comment with Replies Component
-function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onUserClick }) {
+function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onUserClick, onAuthRequired }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -218,7 +218,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
       {/* Reply Actions */}
       <div className="flex items-center gap-3 mt-2">
         <button 
-          onClick={() => setShowReplyInput(!showReplyInput)}
+          onClick={() => { if (!currentUser) { onAuthRequired?.(); return; } setShowReplyInput(!showReplyInput); }}
           className="flex items-center gap-1 text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] text-[11px] transition-colors"
         >
           <Reply className="w-3.5 h-3.5" />
@@ -290,7 +290,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
   );
 }
 
-export default function CommentsSection({ postId, postAuthorId, currentUser, onBadgeClear }) {
+export default function CommentsSection({ postId, postAuthorId, currentUser, onBadgeClear, onAuthRequired }) {
   const [oldComments, setOldComments] = useState([]);
   const [newComments, setNewComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -426,23 +426,25 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
               postId={postId}
               onDelete={setDeleteTarget}
               onUserClick={setUserInfoModal}
+              onAuthRequired={onAuthRequired}
             />
           ))
         )}
         
         {/* Comment Input */}
         <form onSubmit={handleSubmit} className="space-y-2">
-          <div className="relative">
+          <div className="relative" onClick={(e) => { if (!currentUser) { e.preventDefault(); onAuthRequired?.(); } }}>
             <Textarea 
               value={newComment} 
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment... (URLs will be clickable)"
+              onChange={(e) => { if (currentUser) setNewComment(e.target.value); }}
+              placeholder={currentUser ? "Write a comment... (URLs will be clickable)" : "Sign in to write a comment..."}
               rows={2}
-              className="w-full bg-white dark:bg-[#0F172A] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:border-[#2563EB] discuss:focus:border-[#EF4444] rounded-xl text-[13px] resize-none pr-12"
+              readOnly={!currentUser}
+              className="w-full bg-white dark:bg-[#0F172A] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:border-[#2563EB] discuss:focus:border-[#EF4444] rounded-xl text-[13px] resize-none pr-12 cursor-text"
             />
             <Button 
-              type="submit" 
-              disabled={submitting || !newComment.trim() || isOverLimit}
+              type={currentUser ? "submit" : "button"} 
+              disabled={submitting || (currentUser && (!newComment.trim() || isOverLimit))}
               className="absolute right-2 bottom-2 bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] rounded-lg px-3 py-1.5 h-auto shadow-sm"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

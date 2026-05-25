@@ -221,7 +221,7 @@ export default function FeedPage() {
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Signal Stories Row */}
-        <SignalStoriesRow />
+        {user && <SignalStoriesRow />}
 
         {/* Tabs */}
         <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
@@ -249,14 +249,16 @@ export default function FeedPage() {
             <FolderGit2 className="w-4 h-4" />
             Project Posts
           </button>
-          <button
-            data-testid="tab-pulse"
-            onClick={() => navigate('/pulse')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]`}
-          >
-            <PlayCircle className="w-4 h-4 text-[#EF4444]" />
-            Pulse
-          </button>
+          {user && (
+            <button
+              data-testid="tab-pulse"
+              onClick={() => navigate('/pulse')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]`}
+            >
+              <PlayCircle className="w-4 h-4 text-[#EF4444]" />
+              Pulse
+            </button>
+          )}
         </div>
 
         {/* Search bar */}

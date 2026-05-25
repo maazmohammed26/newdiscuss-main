@@ -8,6 +8,7 @@ import {
   AVATAR_PULSE_MIN_OPACITY,
   AVATAR_PULSE_MAX_OPACITY,
 } from '@/lib/uiConstants';
+import GuestAuthModal from '@/components/GuestAuthModal';
 import CreatePostModal from '@/components/CreatePostModal';
 import UserAvatar from '@/components/UserAvatar';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -26,6 +27,7 @@ export default function FloatingNavbar() {
   const prefersReducedMotion = useReducedMotion();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
   const [hasUnseenAdmin, setHasUnseenAdmin] = useState(false);
 
@@ -55,9 +57,6 @@ export default function FloatingNavbar() {
     };
   }, [user?.id]);
 
-  // Only render for logged-in users
-  if (!user) return null;
-
   const currentPath = location.pathname;
   const pathParts = currentPath.split('/').filter(Boolean);
   
@@ -75,6 +74,10 @@ export default function FloatingNavbar() {
   }
 
   const handleOpenCreateModal = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     setShowCreateModal(true);
   };
 
@@ -206,9 +209,9 @@ export default function FloatingNavbar() {
                         <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_20%_25%,rgba(239,68,68,0.38),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.35),transparent_45%)] pointer-events-none" />
                         <div className={`relative rounded-full overflow-hidden ${profileAvatarInnerClass}`}>
                           <UserAvatar
-                            src={user.photo_url || null}
-                            username={user.username}
-                            alt={user.username}
+                            src={user?.photo_url || null}
+                            username={user?.username || 'Guest'}
+                            alt={user?.username || 'Guest'}
                             className="h-7 w-7 rounded-full"
                           />
                         </div>
@@ -245,7 +248,14 @@ export default function FloatingNavbar() {
                   <Link
                     key={item.key}
                     to={item.to}
-                    onClick={item.key === 'profile' ? handleProfileClick : undefined}
+                    onClick={(e) => {
+                      if (!user && ['chats', 'devradar', 'profile'].includes(item.key)) {
+                        e.preventDefault();
+                        setShowAuthModal(true);
+                        return;
+                      }
+                      if (item.key === 'profile') handleProfileClick();
+                    }}
                     aria-label={item.label}
                     className="relative h-full w-full flex items-center justify-center"
                   >
@@ -269,6 +279,11 @@ export default function FloatingNavbar() {
         onClose={() => setShowCreateModal(false)}
         initialType="discussion"
         onCreated={() => setShowCreateModal(false)}
+      />
+
+      <GuestAuthModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
 
     </>

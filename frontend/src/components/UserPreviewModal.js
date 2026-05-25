@@ -78,7 +78,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
             <>
               <div className="bg-gradient-to-b from-[#2563EB]/10 to-transparent dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 pt-8 pb-4 px-6 text-center">
                 {/* Profile Picture - Clickable if exists */}
-                {userData.photo_url ? (
+                {userData.photo_url && currentUserId ? (
                   <div className="relative group mx-auto mb-3 block">
                     <UserAvatar
                       userId={userId}
@@ -94,7 +94,12 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
                   </div>
                 ) : (
                   <div className="mx-auto mb-3">
-                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto" />
+                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto opacity-70 grayscale" />
+                    {!currentUserId && (
+                      <p className="text-[10px] text-[#EF4444] mt-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
+                        For security reasons, we have blocked profile details to non-logged-in users.
+                      </p>
+                    )}
                   </div>
                 )}
                 
@@ -141,7 +146,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
                 )}
 
                 {/* Social Links */}
-                {!loadingProfile && profileData?.socialLinks?.length > 0 && (
+                {!loadingProfile && currentUserId && profileData?.socialLinks?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 justify-center">
                     {profileData.socialLinks.slice(0, 4).map((link, index) => (
                       <a

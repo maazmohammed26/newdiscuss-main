@@ -85,7 +85,9 @@ function AppRoutes() {
     const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
-    if (isPublicRoute || !user) {
+    const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+
+    if (isPublicRoute || (!user && !isAppRoute)) {
       // Force default light theme (remove all active theme selectors)
       root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black');
       root.style.setProperty('--splash-bg', '#F5F5F7');
@@ -124,10 +126,10 @@ function AppRoutes() {
         <Route path="/login"    element={<AuthRedirect><LoginPage /></AuthRedirect>} />
         <Route path="/register" element={<AuthRedirect><RegisterPage /></AuthRedirect>} />
 
-        {/* Protected */}
-        <Route path="/feed"                    element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
-        <Route path="/post/:postId"            element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
-        <Route path="/user/:userId"            element={<ProtectedRoute><UserPostsPage /></ProtectedRoute>} />
+        {/* Guest Allowed (Public but customized inside) */}
+        <Route path="/feed"                    element={<FeedPage />} />
+        <Route path="/post/:postId"            element={<PostDetailPage />} />
+        <Route path="/user/:userId"            element={<UserPostsPage />} />
         <Route path="/chat"                    element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/chat/:otherUserId"       element={<ProtectedRoute><ChatConversationPage /></ProtectedRoute>} />
         <Route path="/group/:groupId"          element={<ProtectedRoute><GroupConversationPage /></ProtectedRoute>} />
@@ -208,7 +210,8 @@ function OnboardingWrapper({ children }) {
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  const showNavbar = user && !loading && !isPublicRoute;
+  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+  const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
 
   return (
     <>

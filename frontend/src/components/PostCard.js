@@ -11,6 +11,7 @@ import UrlPreviewCard, { extractFirstUrl } from '@/components/UrlPreviewCard';
 import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import GuestAuthModal from '@/components/GuestAuthModal';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -113,6 +114,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [showLangPrompt, setShowLangPrompt] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const isAuthor = currentUser?.id === post.author_id;
   const isProject = post.type === 'project';
@@ -165,6 +167,10 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   };
 
   const handleVote = async (voteType) => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
     if (voting) return;
     setVoting(true);
     try {
@@ -263,6 +269,14 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0"><span>{timeAgo(post.timestamp)}</span></span>
           </div>
           <div className="flex items-center shrink-0">
+            {!currentUser && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setShowAuthModal(true); }}
+                className="mr-2 px-3 py-1 text-[11px] font-bold tracking-wide uppercase bg-[#0f172a] dark:bg-[#1e293b] discuss:bg-[#1e3a8a] text-white rounded-md shadow-sm hover:opacity-90 transition-opacity"
+              >
+                Join Now
+              </button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button onClick={(e) => e.stopPropagation()} aria-label={translating ? 'Translating…' : 'Post options'} className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
@@ -453,7 +467,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         </button>
       </div>
 
-      {showComments && <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} />}
+      {showComments && <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} onAuthRequired={() => setShowAuthModal(true)} />}
       <ShareModal open={showShare} onClose={() => setShowShare(false)} post={post} />
       <EditPostModal open={showEditModal} onClose={() => setShowEditModal(false)} post={post} currentUser={currentUser} onUpdated={onUpdated} />
 
@@ -517,6 +531,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </button>
         </DialogContent>
       </Dialog>
+      
+      <GuestAuthModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }

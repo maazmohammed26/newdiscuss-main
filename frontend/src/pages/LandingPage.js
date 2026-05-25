@@ -155,6 +155,7 @@ const NAV = [
 const HEADER_NAV = [
   { label: 'About', to: '/about' },
   { label: 'Login', to: '/login' },
+  { label: 'Sign Up', to: '/register' },
 ];
 
 // ── Feature Cards Data ────────────────────────────────────────
@@ -370,10 +371,10 @@ export default function LandingPage() {
                 <motion.div
                   initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.7, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>
-                  <Link to="/register"
+                  <Link to="/feed"
                     className="group inline-flex items-center gap-1.5 hover:gap-3 transition-all duration-300 rounded-full pl-4 sm:pl-5 pr-1 py-1 sm:py-1.5 shadow-xl"
                     style={{ background: '#DEDBC8' }}>
-                    <span className="text-black font-semibold text-sm sm:text-base whitespace-nowrap">Get Started</span>
+                    <span className="text-black font-semibold text-sm sm:text-base whitespace-nowrap">View Posts</span>
                     <span className="bg-black rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                       <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: '#DEDBC8' }} />
                     </span>
