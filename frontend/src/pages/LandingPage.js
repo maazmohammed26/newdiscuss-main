@@ -534,15 +534,8 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="shining-red-blue-text font-black hover:underline"
             >
-              &lt;mma/&gt;
-            </a>{' '}
-            in collaboration with{' '}
-            <Link
-              to="/about#digitalclink"
-              className="shining-purple-text font-black hover:underline"
-            >
-              DigitalClink
-            </Link>
+              &lt;mm/&gt;
+            </a>
           </div>
         </div>
       </footer>
