@@ -121,38 +121,20 @@ export default function AboutPage() {
                 rel="noopener noreferrer" 
                 className="shining-red-blue-text font-black hover:underline transition-all"
               >
-                Mohammed Maaz A (&lt;mma/&gt;)
+                Mohammed Maaz A (&lt;mm/&gt;)
               </a>
               , a solo developer and AI engineer passionate about performant web architectures. What started as an academic undertaking has evolved into a production-grade infrastructure aiming to set a gold standard for clean, responsive application design.
             </p>
-            <p id="digitalclink" className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
-              We are proud to have collaborated with{' '}
-              <a 
-                href="https://roohifida.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="shining-purple-text font-black hover:underline"
-              >
-                DigitalClink
-              </a>{' '}
-              company, which is managed by{' '}
-              <a 
-                href="https://roohifida.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="font-extrabold hover:underline text-[#3182CE]"
-              >
-                Roohi Fida A
-              </a>
-              . Feel free to explore the company and portfolio at{' '}
-              <a 
-                href="https://roohifida.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="font-bold underline text-neutral-400 hover:text-white"
-              >
-                roohifida.com
-              </a>.
+            <p id="hackathon" className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
+              This idea was developed by me, but during the hackathon I started developing it to production level during this hackathon{' '}
+              <span className="shining-purple-text font-black">
+                OpenAI x Outskill | AI Builders Hackathon
+              </span>
+              {' '}which was started by{' '}
+              <span className="font-extrabold text-[#3182CE]">
+                25th May 2026
+              </span>
+              .
             </p>
           </section>
 

@@ -19,7 +19,7 @@ export default function BlogsPage() {
   const blogs = [
     {
       title: "Building the Platform: A Developer-Focused Ecosystem",
-      date: "April 02, 2024",
+      date: "27th May 2026",
       category: "Architecture",
       author: "Mohammed Maaz",
       readTime: "5 min read",
@@ -34,7 +34,7 @@ export default function BlogsPage() {
     },
     {
       title: "Architecting Real-Time Chat & Group Infrastructure",
-      date: "March 18, 2024",
+      date: "27th May 2026",
       category: "Backend",
       author: "Mohammed Maaz",
       readTime: "8 min read",
@@ -49,7 +49,7 @@ export default function BlogsPage() {
     },
     {
       title: "The Power of PWA: Why We Didn't Build an APK",
-      date: "February 27, 2024",
+      date: "27th May 2026",
       category: "Frontend",
       author: "Mohammed Maaz",
       readTime: "6 min read",

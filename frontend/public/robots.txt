@@ -63,7 +63,7 @@ User-agent: GPTBot
 Allow: /
 Allow: /about
 Allow: /careers
-Allow: /blog
+Allow: /blogs
 Allow: /contact
 Disallow: /feed
 Disallow: /profile
@@ -75,18 +75,62 @@ Disallow: /api/
 User-agent: Google-Extended
 Allow: /
 Allow: /about
+Allow: /careers
+Allow: /blogs
+Allow: /contact
 Disallow: /feed
 Disallow: /post/
 Disallow: /api/
 
 User-agent: anthropic-ai
-Disallow: /
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blogs
+Allow: /contact
+Disallow: /feed
+Disallow: /post/
+Disallow: /api/
 
 User-agent: Claude-Web
-Disallow: /
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blogs
+Allow: /contact
+Disallow: /feed
+Disallow: /post/
+Disallow: /api/
 
 User-agent: CCBot
-Disallow: /
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blogs
+Allow: /contact
+Disallow: /feed
+Disallow: /post/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blogs
+Allow: /contact
+Disallow: /feed
+Disallow: /post/
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Allow: /about
+Allow: /careers
+Allow: /blogs
+Allow: /contact
+Disallow: /feed
+Disallow: /post/
+Disallow: /api/
 
 # ── Sitemap ──────────────────────────────────────────────────
 Sitemap: https://discussit.in/sitemap.xml

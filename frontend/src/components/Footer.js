@@ -41,16 +41,10 @@ export default function Footer() {
         {/* Right Side: Copyright */}
         <div className="text-xs text-neutral-500 text-center lg:text-right" style={{ color: 'rgba(225,224,204,0.4)' }}>
           <div className="mb-1 text-[11px] lg:text-xs">
-            Collaborated with{' '}
-            <a
-              href="https://roohifida.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shining-purple-text font-black hover:underline"
-            >
-              DigitalClink
-            </a>{' '}
-            company
+            Developed by{' '}
+            <span className="shining-purple-text font-black">
+              &lt;mm/&gt;
+            </span>
           </div>
           &copy; {new Date().getFullYear()} Discuss. Built for developers.<br />
           <span className="opacity-70 mt-1 inline-block">All rights reserved.</span>
