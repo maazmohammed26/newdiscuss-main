@@ -262,16 +262,6 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={googleLoading}
-                  className="w-full bg-[#181818] border border-white/5 text-[#E1E0CC] hover:bg-[#202020] rounded-xl py-2.5 h-11 font-bold flex items-center justify-center gap-2.5 mb-5">
-                  {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
-                </Button>
-
-                <div className="relative mb-5">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
-                  <div className="relative flex justify-center text-[10px]"><span className="bg-[#101010] px-3 text-gray-500 uppercase tracking-widest font-bold">Or sign up with email</span></div>
-                </div>
-
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Username */}
                   <div>
@@ -279,7 +269,7 @@ export default function RegisterPage() {
                       <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Username</label>
                       {statusIcon(usernameStatus)}
                     </div>
-                    <Input data-testid="register-username-input" id="username" name="username" autocomplete="username" value={username} onChange={(e) => setUsername(e.target.value)}
+                    <Input data-testid="register-username-input" id="username" name="username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)}
                       placeholder="Choose a username"
                       className={`mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 ${statusColor(usernameStatus)}`} />
                     {usernameStatus?.msg && (
@@ -295,7 +285,7 @@ export default function RegisterPage() {
                       <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email</label>
                       {statusIcon(emailStatus)}
                     </div>
-                    <Input data-testid="register-email-input" type="email" id="email" name="email" autocomplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    <Input data-testid="register-email-input" type="email" id="email" name="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@example.com"
                       className={`mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 ${statusColor(emailStatus)}`} />
                     {emailStatus?.msg && (
@@ -309,7 +299,7 @@ export default function RegisterPage() {
                   <div>
                     <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
                     <div className="relative mt-1">
-                      <Input data-testid="register-password-input" type={showPw ? 'text' : 'password'} id="password" name="password" autocomplete="new-password" value={password}
+                      <Input data-testid="register-password-input" type={showPw ? 'text' : 'password'} id="password" name="password" autoComplete="new-password" value={password}
                         onChange={(e) => setPassword(e.target.value)} placeholder="6+ characters"
                         className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
                       <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
@@ -321,7 +311,7 @@ export default function RegisterPage() {
                   {/* Confirm Password */}
                   <div>
                     <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Confirm Password</label>
-                    <Input data-testid="register-confirm-password-input" type="password" id="confirm-password" name="confirm-password" autocomplete="new-password" value={confirmPw}
+                    <Input data-testid="register-confirm-password-input" type="password" id="confirm-password" name="confirm-password" autoComplete="new-password" value={confirmPw}
                       onChange={(e) => setConfirmPw(e.target.value)} placeholder="Repeat password"
                       className="mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11" />
                     {confirmPw && password !== confirmPw && (
@@ -398,6 +388,16 @@ export default function RegisterPage() {
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>
                 </form>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
+                  <div className="relative flex justify-center text-[10px]"><span className="bg-[#101010] px-3 text-gray-500 uppercase tracking-widest font-bold">Or continue with</span></div>
+                </div>
+
+                <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={googleLoading}
+                  className="w-full bg-[#181818] border border-white/5 text-[#E1E0CC] hover:bg-[#202020] rounded-xl py-2.5 h-11 font-bold flex items-center justify-center gap-2.5 mb-5">
+                  {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
+                </Button>
 
                 <p className="text-center text-gray-500 text-[13px] mt-6 font-medium">
                   Already have an account?{' '}

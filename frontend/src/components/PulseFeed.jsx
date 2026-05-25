@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IoHeart, IoHeartOutline, IoChatbubbleOutline, IoShareSocialOutline, IoVolumeHigh, IoVolumeMute } from 'react-icons/io5';
-import { MoreVertical, X, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { MoreVertical, X, Maximize2, Minimize2, Loader2, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getOptimizedVideoUrl } from '@/lib/imagekit';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,9 +13,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import LinkifiedText from './LinkifiedText';
+import ReportModal from './ReportModal';
+import { hasUserReportedTarget } from '@/lib/reportService';
 import './PulseFeed.css';
 
 const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
+  const { user: currentUser } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(pulse.likesCount || 0);
   const [playing, setPlaying] = useState(false);
@@ -36,6 +39,12 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editCaptionText, setEditCaptionText] = useState(pulse.caption || '');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedLocally, setReportedLocally] = useState(false);
+
+  useEffect(() => {
+    setReportedLocally(hasUserReportedTarget(pulse.id));
+  }, [pulse.id]);
 
   const videoRef = useRef(null);
   const navigate = useNavigate();
@@ -175,6 +184,18 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
     return <LinkifiedText text={text} />;
   };
 
+  const handleReportClick = () => {
+    if (!userId) {
+      toast.error('You must be logged in to report.');
+      return;
+    }
+    if (reportedLocally) {
+      toast.warning('You have already submitted a report for this pulse.');
+      return;
+    }
+    setShowReportModal(true);
+  };
+
   const handleProfileClick = (e) => {
     e.stopPropagation();
     if (isOwner) {
@@ -228,19 +249,26 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
               <IoShareSocialOutline size={28} />
               <span>Soon</span>
             </div>
-            {isOwner && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="action-item" onClick={(e) => e.stopPropagation()}>
-                    <MoreVertical size={24} />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-40 p-1 bg-[#0F172A] border-neutral-800" sideOffset={8} align="end">
-                  <button onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-sm">Edit Caption</button>
-                  <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-white/10 rounded-sm">Delete</button>
-                </PopoverContent>
-              </Popover>
-            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="action-item" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical size={24} />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-40 p-1 bg-[#0F172A] border-neutral-850" sideOffset={8} align="end">
+                {isOwner ? (
+                  <>
+                    <button onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-sm">Edit Caption</button>
+                    <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-white/10 rounded-sm">Delete</button>
+                  </>
+                ) : (
+                  <button onClick={(e) => { e.stopPropagation(); handleReportClick(); }} className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-sm flex items-center gap-1.5 font-semibold">
+                    <Flag size={14} className={reportedLocally ? 'text-red-500 fill-current animate-pulse' : 'text-white/70'} />
+                    <span>{reportedLocally ? 'Reported' : 'Report Video'}</span>
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
             <div className="action-item" onClick={(e) => { e.stopPropagation(); setPureMode(true); }}>
               <Maximize2 size={24} />
             </div>
@@ -361,6 +389,17 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
           </div>
         </div>
       )}
+
+      <ReportModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="pulse"
+        targetId={pulse.id}
+        targetTitleOrName={pulse.caption || 'Pulse Video'}
+        targetOwnerId={pulse.authorId}
+        currentUser={currentUser}
+        onReportSuccess={() => setReportedLocally(true)}
+      />
     </div>
   );
 };

@@ -33,6 +33,10 @@ const DialogContent = React.forwardRef(({ className, children, hideClose = false
         className
       )}
       {...props}>
+      {/* Safe visually hidden fallbacks for screen reader accessibility validation */}
+      <DialogPrimitive.Title className="sr-only">Dialog Window</DialogPrimitive.Title>
+      <DialogPrimitive.Description className="sr-only">Dialog detail description screen reader container</DialogPrimitive.Description>
+      
       {children}
       {!hideClose && (
         <DialogPrimitive.Close

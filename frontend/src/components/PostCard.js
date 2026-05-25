@@ -24,10 +24,12 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaCarousel from '@/components/MediaCarousel';
 import FullscreenMedia from '@/components/FullscreenMedia';
+import ReportModal from '@/components/ReportModal';
+import { hasUserReportedTarget } from '@/lib/reportService';
 
 const TRANSLATE_LANGUAGES = [
   { code: 'kn', label: 'Kannada' },
@@ -115,6 +117,12 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedLocally, setReportedLocally] = useState(false);
+
+  useEffect(() => {
+    setReportedLocally(hasUserReportedTarget(post.id));
+  }, [post.id]);
 
   const isAuthor = currentUser?.id === post.author_id;
   const isProject = post.type === 'project';
@@ -233,6 +241,18 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     }
   };
 
+  const handleReportClick = () => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (reportedLocally) {
+      toast.warning('You have already submitted a report for this post.');
+      return;
+    }
+    setShowReportModal(true);
+  };
+
   const handleLangPromptSelect = (code) => {
     setPreferredLang(code);
     setPreferredLangState(code);
@@ -309,6 +329,15 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
                       <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {!isAuthor && (
+                  <>
+                    <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleReportClick(); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs font-semibold">
+                      <Flag className={`w-3.5 h-3.5 ${reportedLocally ? 'text-red-500 fill-current' : ''}`} />
+                      <span>{reportedLocally ? 'Reported' : 'Report Post'}</span>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -484,7 +513,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       )}
 
       {previewUser && (
-        <UserPreviewModal open={true} onClose={() => setPreviewUser(null)} userId={previewUser} currentUserId={currentUser?.id} />
+        <UserPreviewModal open={true} onClose={() => setPreviewUser(null)} userId={previewUser} currentUserId={currentUser?.id} currentUser={currentUser} />
       )}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
@@ -535,6 +564,17 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       <GuestAuthModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+      
+      <ReportModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType={post.type}
+        targetId={post.id}
+        targetTitleOrName={post.title || post.content}
+        targetOwnerId={post.author_id}
+        currentUser={currentUser}
+        onReportSuccess={() => setReportedLocally(true)}
       />
     </div>
   );

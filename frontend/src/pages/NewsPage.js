@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { subscribeToNews, deleteNews } from '@/lib/firebaseSixth';
@@ -9,8 +9,104 @@ import ExpandableText from '@/components/ExpandableText';
 import LinkifiedText from '@/components/LinkifiedText';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Share2, Pencil, Trash2, ShieldCheck, ArrowUp } from 'lucide-react';
+import { Search, Plus, Share2, Pencil, Trash2, ShieldCheck, ArrowUp, Newspaper } from 'lucide-react';
 import { toast } from 'sonner';
+
+/* ─── Shimmer skeleton primitives ─────────────────────────────────────────── */
+const Shimmer = ({ className = '' }) => (
+  <div className={`animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#2a2a2a] ${className}`} />
+);
+
+function NewsCardSkeleton() {
+  return (
+    <div className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] overflow-hidden relative">
+      {/* shimmer overlay */}
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent pointer-events-none z-20" />
+      
+      {/* Image placeholder block */}
+      <Shimmer className="w-full h-48 md:h-64 rounded-none rounded-t-3xl" />
+      
+      <div className="p-5 md:p-6 space-y-4">
+        {/* title row */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <Shimmer className="h-7 w-3/4" />
+            <Shimmer className="h-4 w-1/3" />
+          </div>
+        </div>
+        
+        {/* badges and meta row */}
+        <div className="flex items-center gap-2">
+          <Shimmer className="h-5 w-24" />
+          <Shimmer className="h-4 w-16" />
+        </div>
+        
+        {/* description lines */}
+        <div className="space-y-2">
+          <Shimmer className="h-3.5 w-full" />
+          <Shimmer className="h-3.5 w-5/6" />
+          <Shimmer className="h-3.5 w-4/6" />
+        </div>
+        
+        {/* footer buttons */}
+        <div className="flex justify-between items-center pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+          <Shimmer className="h-9 w-28 rounded-xl" />
+          <Shimmer className="h-9 w-20 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Marquee (isolated to avoid re-renders) ─────────────────────────────── */
+const MarqueeBar = () => (
+  <div className="w-full bg-[#FEF2F2]/60 dark:bg-red-950/20 discuss:bg-[#1E1B1B] border-b border-red-100 dark:border-red-900/30 discuss:border-red-950 py-2.5 overflow-hidden relative select-none z-20">
+    <div className="absolute inset-y-0 left-0 w-8 md:w-20 bg-gradient-to-r from-[#F5F5F7] dark:from-[#0F172A] discuss:from-[#121212] to-transparent z-10 pointer-events-none" />
+    <div className="absolute inset-y-0 right-0 w-8 md:w-20 bg-gradient-to-l from-[#F5F5F7] dark:from-[#0F172A] discuss:from-[#121212] to-transparent z-10 pointer-events-none" />
+    
+    <style>{`
+      @keyframes marquee {
+        0% { transform: translateX(0%); }
+        100% { transform: translateX(-50%); }
+      }
+      @keyframes shimmer {
+        100% { transform: translateX(200%); }
+      }
+      .animate-marquee {
+        display: flex;
+        width: max-content;
+        animation: marquee 35s linear infinite;
+      }
+      .animate-marquee:hover {
+        animation-play-state: paused;
+      }
+    `}</style>
+    
+    <div className="animate-marquee gap-8">
+      <div className="flex items-center gap-2 text-xs font-mono tracking-tight font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
+        <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
+        <span>This is a beta version which is under development but you can use it in live prod.</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
+        <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+        <span>Currently both sections are handled by the Discuss Team directly.</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
+        <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
+        <span>Companies and organizations can also directly add events and listings!</span>
+      </div>
+      
+      <div className="flex items-center gap-2 text-xs font-mono tracking-tight font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]" aria-hidden="true">
+        <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
+        <span>This is a beta version which is under development but you can use it in live prod.</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
+        <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+        <span>Currently both sections are handled by the Discuss Team directly.</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
+        <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
+        <span>Companies and organizations can also directly add events and listings!</span>
+      </div>
+    </div>
+  </div>
+);
 
 export default function NewsPage() {
   const { user } = useAuth();
@@ -28,6 +124,7 @@ export default function NewsPage() {
   });
   const [isSyncing, setIsSyncing] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [editData, setEditData] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -35,6 +132,14 @@ export default function NewsPage() {
   // Share modal state
   const [shareItem, setShareItem] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // First load is active if we are syncing and cache is empty
+  const isFirstLoad = isSyncing && news.length === 0;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Redirection for legacy query parameter ?id=123
   useEffect(() => {
@@ -49,13 +154,13 @@ export default function NewsPage() {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     setIsSyncing(true);
@@ -69,12 +174,12 @@ export default function NewsPage() {
     return () => unsubscribe();
   }, []);
 
-  const handleEdit = (item) => {
+  const handleEdit = useCallback((item) => {
     setEditData(item);
     setShowAdminModal(true);
-  };
+  }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     if (window.confirm('Are you sure you want to delete this news?')) {
       try {
         await deleteNews(id);
@@ -83,69 +188,29 @@ export default function NewsPage() {
         toast.error('Failed to delete news');
       }
     }
-  };
+  }, []);
 
-  const handleShare = (item) => {
+  const handleShare = useCallback((item) => {
     setShareItem(item);
     setShowShareModal(true);
-  };
+  }, []);
 
-  const filteredNews = news.filter(item => 
-    item.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNews = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
+    return news.filter(item => 
+      !q ||
+      item.title?.toLowerCase().includes(q) || 
+      item.description?.toLowerCase().includes(q)
+    );
+  }, [news, debouncedSearch]);
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
       <Header />
-      
-      {/* Moving Tech Announcement Marquee */}
-      <div className="w-full bg-[#FEF2F2]/60 dark:bg-red-950/20 discuss:bg-[#1E1B1B] border-b border-red-100 dark:border-red-900/30 discuss:border-red-950 py-2.5 overflow-hidden relative select-none z-20">
-        <div className="absolute inset-y-0 left-0 w-8 md:w-20 bg-gradient-to-r from-[#F5F5F7] dark:from-[#0F172A] discuss:from-[#121212] to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-y-0 right-0 w-8 md:w-20 bg-gradient-to-l from-[#F5F5F7] dark:from-[#0F172A] discuss:from-[#121212] to-transparent z-10 pointer-events-none" />
-        
-        <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-          }
-          .animate-marquee {
-            display: flex;
-            width: max-content;
-            animation: marquee 35s linear infinite;
-          }
-          .animate-marquee:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
-        
-        <div className="animate-marquee gap-8">
-          <div className="flex items-center gap-2 text-xs font-mono tracking-tight font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
-            <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
-            <span>This is a beta version which is under development but you can use it in live prod.</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
-            <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
-            <span>Currently both sections are handled by the Discuss Team directly.</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
-            <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
-            <span>Companies and organizations can also directly add events and listings!</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-xs font-mono tracking-tight font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]" aria-hidden="true">
-            <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
-            <span>This is a beta version which is under development but you can use it in live prod.</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
-            <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
-            <span>Currently both sections are handled by the Discuss Team directly.</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
-            <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
-            <span>Companies and organizations can also directly add events and listings!</span>
-          </div>
-        </div>
-      </div>
+      <MarqueeBar />
 
-      {/* Micro Techie Syncing Indicator */}
-      {isSyncing && (
+      {/* Syncing Indicator — only after first load (cached data exists) */}
+      {isSyncing && !isFirstLoad && (
         <div className="w-full bg-[#2563EB]/5 dark:bg-blue-500/10 discuss:bg-red-500/5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#222] py-1.5 flex items-center justify-center gap-2 select-none z-10 transition-all duration-300">
           <div className="w-3 h-3 border-2 border-[#2563EB] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin shrink-0" />
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2563EB] discuss:text-[#EF4444] dark:text-[#94A3B8]">
@@ -186,8 +251,11 @@ export default function NewsPage() {
         </div>
 
         <div className="space-y-6">
-          {filteredNews.length === 0 ? (
+          {isFirstLoad ? (
+            Array.from({ length: 3 }).map((_, i) => <NewsCardSkeleton key={i} />)
+          ) : filteredNews.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+              <Newspaper className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
               <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
                 No news found.
               </p>
@@ -215,7 +283,7 @@ export default function NewsPage() {
                   )}
                   <div className="p-5 md:p-6">
                     <div className="flex items-start justify-between gap-4 mb-3">
-                      <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                      <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] leading-tight">
                         {item.title}
                       </h2>
                       {isDiscussTeam && (
@@ -238,13 +306,13 @@ export default function NewsPage() {
                         • {new Date(item.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-
+ 
                     <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
                       <ExpandableText text={item.description} maxLines={5}>
                         <LinkifiedText text={item.description} />
                       </ExpandableText>
                     </div>
-
+ 
                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
                       <Button
                         variant="ghost"
@@ -265,7 +333,7 @@ export default function NewsPage() {
                   </div>
                 </div>
               ))}
-
+ 
               <div className="text-center py-8 mt-6 select-none animate-fade-in">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-2xl shadow-sm">
                   <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-pulse" />
@@ -286,7 +354,7 @@ export default function NewsPage() {
           editData={editData} 
         />
       )}
-
+ 
       {showShareModal && shareItem && (
         <ItemShareModal
           open={showShareModal}
@@ -295,7 +363,7 @@ export default function NewsPage() {
           type="news"
         />
       )}
-
+ 
       {showScrollTop && (
         <button
           onClick={scrollToTop}

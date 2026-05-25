@@ -51,6 +51,7 @@ import {
   syncUserVerificationEverywhere,
 } from '@/lib/db';
 import { syncUserVerificationInCommentsFirestore } from '@/lib/commentsDb';
+import { notifyAdminUserSignup } from '@/lib/telegramService';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fire
@@ -371,6 +372,14 @@ export function AuthProvider({ children }) {
           });
           window.localStorage.setItem('showWelcomeModal_' + firebaseUser.uid, 'true');
           sendWelcomeEmailDirectly(email, username);
+          
+          // Only send Telegram admin alert if NOT already sent by email registration flow
+          // (email registration sets 'adminSignupNotified_<uid>' before calling notifyAdminUserSignup)
+          const alreadyNotified = window.localStorage.getItem('adminSignupNotified_' + firebaseUser.uid);
+          if (!alreadyNotified) {
+            notifyAdminUserSignup(username, firebaseUser.uid, email).catch(err => console.warn('[Telegram Admin Alert failed]', err));
+            window.localStorage.setItem('adminSignupNotified_' + firebaseUser.uid, 'true');
+          }
         } catch (e) {
           console.error('[Auth] createUser error:', e);
           const basicUser = buildBasicUser(firebaseUser);
@@ -699,6 +708,10 @@ export function AuthProvider({ children }) {
       
       // Trigger the welcome email immediately upon successful registration
       sendWelcomeEmailDirectly(email.toLowerCase().trim(), username.trim());
+      
+      // Trigger Telegram notification to Admin (set flag first to prevent duplicate from onAuthStateChanged/syncUser)
+      window.localStorage.setItem('adminSignupNotified_' + credential.user.uid, 'true');
+      notifyAdminUserSignup(username.trim(), credential.user.uid, email.toLowerCase().trim()).catch(err => console.warn('[Telegram Admin Alert failed]', err));
 
       await sendSignInLinkToEmail(auth, email, {
         url: EMAIL_LINK_REDIRECT_URL,

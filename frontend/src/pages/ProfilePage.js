@@ -1231,7 +1231,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Picture Upload/Replace/Remove */}
-          <div className="relative group mx-auto mb-5 w-24 h-24">
+          <div className="relative group mx-auto mb-5 w-24 h-24 overflow-visible">
             <button 
               onClick={() => user?.photo_url ? setShowImagePreview(true) : null}
               className="w-full h-full rounded-full overflow-hidden block discuss:border discuss:border-[#333333] shadow-lg discuss:shadow-none"
@@ -1252,7 +1252,7 @@ export default function ProfilePage() {
             
             <Popover>
               <PopoverTrigger asChild>
-                <button className="absolute bottom-0 right-0 p-1.5 bg-[#2563EB] discuss:bg-[#EF4444] text-white rounded-full shadow-md hover:scale-110 transition-transform">
+                <button className="absolute -bottom-1 -right-1 p-1.5 bg-[#2563EB] discuss:bg-[#EF4444] text-white rounded-full shadow-lg hover:scale-110 transition-transform border-2 border-white dark:border-[#1E293B] discuss:border-[#121212] z-10">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               </PopoverTrigger>

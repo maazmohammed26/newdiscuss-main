@@ -5,16 +5,21 @@ import { getUserProfile } from '@/lib/userProfileDb';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
-import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User, ShieldCheck } from 'lucide-react';
+import ReportModal from '@/components/ReportModal';
+import { hasUserReportedTarget } from '@/lib/reportService';
+import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User, ShieldCheck, Flag } from 'lucide-react';
+import { toast } from 'sonner';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 
-export default function CommentUserInfoModal({ open, onClose, userId, currentUserId }) {
+export default function CommentUserInfoModal({ open, onClose, userId, currentUserId, currentUser }) {
   useSecurityProtection();
   const [userData, setUserData] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedLocally, setReportedLocally] = useState(false);
   const BIO_TRUNCATE_LENGTH = 100;
 
   useEffect(() => {
@@ -22,6 +27,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
       setLoading(true);
       setLoadingProfile(true);
       setBioExpanded(false);
+      setReportedLocally(hasUserReportedTarget(userId));
       
       // Fetch from primary Firebase
       getUser(userId)
@@ -36,6 +42,19 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
         .finally(() => setLoadingProfile(false));
     }
   }, [open, userId]);
+
+  const handleReportClick = (e) => {
+    e.stopPropagation();
+    if (!currentUserId) {
+      toast.error('You must be logged in to report.');
+      return;
+    }
+    if (reportedLocally) {
+      toast.warning('You have already submitted a report for this user.');
+      return;
+    }
+    setShowReportModal(true);
+  };
 
   const joinDate = userData?.created_at
     ? new Date(userData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -67,41 +86,55 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
             </div>
           ) : (
             <>
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-[#F5F5F7] dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors z-10"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {/* Header row: Close (left) + Flag (right) — never overlapping */}
+              <div className="flex items-center justify-between px-3 pt-3">
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg hover:bg-[#F5F5F7] dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                {currentUserId && currentUserId !== userId ? (
+                  <button
+                    onClick={handleReportClick}
+                    title={reportedLocally ? 'Already reported' : 'Report this user'}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      reportedLocally
+                        ? 'text-red-500 bg-red-500/10'
+                        : 'text-[#6275AF] hover:text-red-500 hover:bg-red-500/10'
+                    }`}
+                  >
+                    <Flag className={`w-4 h-4 ${reportedLocally ? 'fill-current' : ''}`} />
+                  </button>
+                ) : (
+                  <div className="w-8" />
+                )}
+              </div>
 
               {/* User Info */}
-              <div className="bg-gradient-to-b from-[#2563EB]/10 dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 to-transparent pt-8 pb-4 px-6 text-center">
-                {/* Profile Picture - Clickable if exists */}
-                {userData.photo_url && currentUserId ? (
-                  <div className="relative group mx-auto mb-3 block">
-                    <UserAvatar
-                      userId={userId}
-                      src={userData.photo_url}
-                      username={userData.username}
-                      className="w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] group-hover:opacity-90 transition-opacity"
-                    />
+              <div className="bg-gradient-to-b from-[#2563EB]/10 dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 to-transparent pt-4 pb-4 px-6 text-center">
+                {/* Profile Picture */}
+                <div className="relative group mx-auto mb-3 inline-block">
+                  <UserAvatar
+                    userId={userId}
+                    src={userData.photo_url || null}
+                    username={userData.username}
+                    className={`w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] transition-opacity ${!currentUserId ? 'opacity-70 grayscale' : 'group-hover:opacity-90'}`}
+                  />
+                  {currentUserId && userData.photo_url && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full pointer-events-none">
                       <div className="bg-black/50 rounded-full p-1.5">
                         <User className="w-3.5 h-3.5 text-white" />
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="mx-auto mb-3">
-                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto opacity-70 grayscale" />
-                    {!currentUserId && (
-                      <p className="text-[10px] text-[#EF4444] mt-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
-                        For security reasons, we have blocked profile details to non-logged-in users.
-                      </p>
-                    )}
-                  </div>
+                  )}
+                </div>
+                {/* Restricted message ONLY for non-logged-in users */}
+                {!currentUserId && (
+                  <p className="text-[10px] text-[#EF4444] mb-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
+                    For security reasons, we have blocked profile details to non-logged-in users.
+                  </p>
                 )}
                 
                 {/* Full Name */}
@@ -196,6 +229,20 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Report Modal */}
+      {showReportModal && userData && (
+        <ReportModal
+          open={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          targetType="user"
+          targetId={userId}
+          targetTitleOrName={userData.username || 'Unknown User'}
+          targetOwnerId={userId}
+          currentUser={currentUser}
+          onReportSuccess={() => setReportedLocally(true)}
+        />
+      )}
     </>
   );
 }

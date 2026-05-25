@@ -12,6 +12,7 @@ import {
   query,
   orderByChild
 } from './firebase';
+import { onChildAdded, onChildChanged, onChildRemoved } from 'firebase/database';
 import { 
   secondaryDatabase, 
   ref as secondaryRef, 
@@ -701,49 +702,123 @@ export const getUserStats = async (userId) => {
 // ==================== REALTIME LISTENERS ====================
 
 export const subscribeToPostsRealtime = (callback) => {
+  let localPosts = [];
+
+  // Fetch initial posts list first for instant hydration
+  getPosts().then((posts) => {
+    localPosts = posts;
+    callback([...localPosts]);
+  }).catch((e) => console.error('[subscribeToPostsRealtime] Initial fetch failed:', e));
+
   const postsRef = ref(database, 'posts');
   const votesRef = ref(database, 'votes');
   const commentsRef = ref(database, 'comments');
-  
-  let secondCommentsRef = null;
-  let secondaryListenerActive = false;
-  
-  const updatePosts = async () => {
-    try {
-      const posts = await getPosts();
-      callback(posts);
-    } catch (e) {
-      console.warn('Error updating posts:', e);
-    }
+
+  // Incremental post added
+  const handlePostAdded = (snapshot) => {
+    const postId = snapshot.key;
+    const postData = snapshot.val();
+    if (!postData) return;
+
+    // Check if it already exists to avoid duplication on initial fetch
+    if (localPosts.some(p => p.id === postId)) return;
+
+    const post = {
+      id: postId,
+      ...postData,
+      upvote_count: 0,
+      downvote_count: 0,
+      comment_count: 0,
+      votes: {}
+    };
+    
+    localPosts.push(post);
+    localPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    callback([...localPosts]);
   };
-  
-  onValue(postsRef, updatePosts);
-  onValue(votesRef, updatePosts);
-  onValue(commentsRef, updatePosts);
-  
-  // Try to listen to secondary database comments (optional - don't block if fails)
-  try {
-    secondCommentsRef = secondaryRef(secondaryDatabase, 'comments');
-    secondaryOnValue(secondCommentsRef, updatePosts, (error) => {
-      console.warn('Secondary database listener error (non-blocking):', error.message);
+
+  // Incremental post updated (e.g. description edit)
+  const handlePostChanged = (snapshot) => {
+    const postId = snapshot.key;
+    const postData = snapshot.val();
+    if (!postData) return;
+
+    localPosts = localPosts.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          ...postData
+        };
+      }
+      return p;
     });
-    secondaryListenerActive = true;
-  } catch (e) {
-    console.warn('Failed to setup secondary database listener (non-blocking):', e.message);
-  }
-  
+    callback([...localPosts]);
+  };
+
+  // Incremental post removed
+  const handlePostRemoved = (snapshot) => {
+    const postId = snapshot.key;
+    localPosts = localPosts.filter(p => p.id !== postId);
+    callback([...localPosts]);
+  };
+
+  // Incremental votes change for a specific post (O(1) differential update!)
+  const handleVoteChanged = (snapshot) => {
+    const postId = snapshot.key;
+    const postVotes = snapshot.val() || {};
+
+    localPosts = localPosts.map(p => {
+      if (p.id === postId) {
+        const upvotes = Object.values(postVotes).filter(v => v === 'up').length;
+        const downvotes = Object.values(postVotes).filter(v => v === 'down').length;
+        return {
+          ...p,
+          upvote_count: upvotes,
+          downvote_count: downvotes,
+          votes: postVotes
+        };
+      }
+      return p;
+    });
+    callback([...localPosts]);
+  };
+
+  // Incremental comments change for a specific post (O(1) differential update!)
+  const handleCommentsChanged = (snapshot) => {
+    const postId = snapshot.key;
+    const postComments = snapshot.val() || {};
+    const count = Object.keys(postComments).length;
+
+    localPosts = localPosts.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          comment_count: count
+        };
+      }
+      return p;
+    });
+    callback([...localPosts]);
+  };
+
+  // Listen to granular children updates instead of downloading the whole database
+  onChildAdded(postsRef, handlePostAdded);
+  onChildChanged(postsRef, handlePostChanged);
+  onChildRemoved(postsRef, handlePostRemoved);
+
+  onChildAdded(votesRef, handleVoteChanged);
+  onChildChanged(votesRef, handleVoteChanged);
+  onChildRemoved(votesRef, handleVoteChanged);
+
+  onChildAdded(commentsRef, handleCommentsChanged);
+  onChildChanged(commentsRef, handleCommentsChanged);
+  onChildRemoved(commentsRef, handleCommentsChanged);
+
   // Return unsubscribe function
   return () => {
     off(postsRef);
     off(votesRef);
     off(commentsRef);
-    if (secondaryListenerActive && secondCommentsRef) {
-      try {
-        secondaryOff(secondCommentsRef);
-      } catch (e) {
-        // Ignore errors when unsubscribing
-      }
-    }
   };
 };
 

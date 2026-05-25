@@ -7,10 +7,13 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
-import { User, FileText, Calendar, ArrowRight, Loader2, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import ReportModal from '@/components/ReportModal';
+import { hasUserReportedTarget } from '@/lib/reportService';
+import { User, FileText, Calendar, ArrowRight, Loader2, ExternalLink, ChevronDown, ChevronUp, Flag, X } from 'lucide-react';
+import { toast } from 'sonner';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 
-export default function UserPreviewModal({ open, onClose, userId, currentUserId }) {
+export default function UserPreviewModal({ open, onClose, userId, currentUserId, currentUser }) {
   useSecurityProtection();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,6 +23,8 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedLocally, setReportedLocally] = useState(false);
 
   const BIO_TRUNCATE_LENGTH = 80;
 
@@ -28,6 +33,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
       setLoading(true);
       setLoadingProfile(true);
       setBioExpanded(false);
+      setReportedLocally(hasUserReportedTarget(userId));
       
       // Fetch from primary Firebase
       Promise.all([getUser(userId), getPostsByUser(userId)])
@@ -45,6 +51,19 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
         .finally(() => setLoadingProfile(false));
     }
   }, [open, userId]);
+
+  const handleReportClick = (e) => {
+    e.stopPropagation();
+    if (!currentUserId) {
+      toast.error('You must be logged in to report.');
+      return;
+    }
+    if (reportedLocally) {
+      toast.warning('You have already submitted a report for this user.');
+      return;
+    }
+    setShowReportModal(true);
+  };
 
   const handleViewPosts = () => {
     onClose();
@@ -65,7 +84,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-        <DialogContent aria-describedby={undefined} className="sm:max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] dark:border-[#334155] discuss:border-[#333333] p-0 overflow-hidden">
+        <DialogContent aria-describedby={undefined} hideClose={true} className="sm:max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] dark:border-[#334155] discuss:border-[#333333] p-0 overflow-hidden">
           <DialogTitle className="sr-only">User Profile Preview</DialogTitle>
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -77,31 +96,54 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
             </div>
           ) : (
             <>
-              <div className="bg-gradient-to-b from-[#2563EB]/10 to-transparent dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 pt-8 pb-4 px-6 text-center">
-                {/* Profile Picture - Clickable if exists */}
-                {userData.photo_url && currentUserId ? (
-                  <div className="relative group mx-auto mb-3 block">
-                    <UserAvatar
-                      userId={userId}
-                      src={userData.photo_url}
-                      username={userData.username}
-                      className="w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] group-hover:opacity-90 transition-opacity"
-                    />
+              {/* Header row: Close (left) + Flag (right) — never overlapping */}
+              <div className="flex items-center justify-between px-3 pt-3">
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                {currentUserId && currentUserId !== userId ? (
+                  <button
+                    onClick={handleReportClick}
+                    title={reportedLocally ? 'Already reported' : 'Report this user'}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      reportedLocally
+                        ? 'text-red-500 bg-red-500/10'
+                        : 'text-neutral-400 hover:text-red-500 hover:bg-red-500/10'
+                    }`}
+                  >
+                    <Flag className={`w-4 h-4 ${reportedLocally ? 'fill-current' : ''}`} />
+                  </button>
+                ) : (
+                  <div className="w-8" />
+                )}
+              </div>
+
+              <div className="bg-gradient-to-b from-[#2563EB]/10 to-transparent dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 pt-4 pb-4 px-6 text-center">
+                {/* Profile Picture */}
+                <div className="relative group mx-auto mb-3 inline-block">
+                  <UserAvatar
+                    userId={userId}
+                    src={userData.photo_url || null}
+                    username={userData.username}
+                    className={`w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] transition-opacity ${!currentUserId ? 'opacity-70 grayscale' : 'group-hover:opacity-90'}`}
+                  />
+                  {currentUserId && userData.photo_url && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full pointer-events-none">
                       <div className="bg-black/50 rounded-full p-1.5">
                         <User className="w-3.5 h-3.5 text-white" />
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="mx-auto mb-3">
-                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto opacity-70 grayscale" />
-                    {!currentUserId && (
-                      <p className="text-[10px] text-[#EF4444] mt-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
-                        For security reasons, we have blocked profile details to non-logged-in users.
-                      </p>
-                    )}
-                  </div>
+                  )}
+                </div>
+                {/* Restricted message ONLY for non-logged-in users */}
+                {!currentUserId && (
+                  <p className="text-[10px] text-[#EF4444] mb-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
+                    For security reasons, we have blocked profile details to non-logged-in users.
+                  </p>
                 )}
                 
                 {/* Full Name */}
@@ -205,6 +247,20 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Report Modal */}
+      {showReportModal && userData && (
+        <ReportModal
+          open={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          targetType="user"
+          targetId={userId}
+          targetTitleOrName={userData.username || 'Unknown User'}
+          targetOwnerId={userId}
+          currentUser={currentUser}
+          onReportSuccess={() => setReportedLocally(true)}
+        />
+      )}
     </>
   );
 }

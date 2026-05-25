@@ -15,6 +15,11 @@ export const APP_URL = 'https://discussit.in/';
 
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
+// ─── Admin Telegram Bot Config ───────────────────────────────────────────────
+const ADMIN_BOT_TOKEN = process.env.REACT_APP_TELEGRAM_ADMIN_BOT_TOKEN || '';
+const ADMIN_CHAT_ID   = process.env.REACT_APP_TELEGRAM_ADMIN_CHAT_ID   || '';
+const ADMIN_TELEGRAM_API = `https://api.telegram.org/bot${ADMIN_BOT_TOKEN}`;
+
 // ─── Firebase helpers ─────────────────────────────────────────────────────────
 
 /**
@@ -297,6 +302,88 @@ export const notifyTelegramGroupJoinAccepted = async (recipientUserId, groupName
   await sendTelegramMessage(chatId, text, { reply_markup: appKeyboard('✅ Open Group') });
 };
 
+export const notifyAdminUserSignup = async (username, userId, email) => {
+  if (!ADMIN_BOT_TOKEN || !ADMIN_CHAT_ID) return;
+
+  const title = `<b>${SYM.HEADER} NEW USER SIGNUP</b>`;
+  const formattedTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+
+  const text = `${title}\n\n` +
+    `◈ <b>Username:</b> @${escapeHTML(username)}\n` +
+    `◈ <b>User ID:</b> <code>${escapeHTML(userId)}</code>\n` +
+    `◈ <b>Email:</b> ${escapeHTML(email)}\n` +
+    `◈ <b>Date & Time:</b> ${escapeHTML(formattedTime)}`;
+
+  await sendAdminTelegramMessage(text);
+};
+
+export const notifyAdminReport = async ({
+  reporterUsername,
+  reporterId,
+  reporterEmail,
+  targetType,
+  targetId,
+  targetOwnerUsername,
+  targetOwnerId,
+  targetOwnerEmail,
+  comment
+}) => {
+  if (!ADMIN_BOT_TOKEN || !ADMIN_CHAT_ID) return;
+
+  const title = `<b>🚨 ${SYM.HEADER} NEW COMMUNITY REPORT 🚨</b>`;
+  const formattedTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+
+  const text = `${title}\n\n` +
+    `<b>👥 Reporter Profile:</b>\n` +
+    `◈ <b>Username:</b> @${escapeHTML(reporterUsername)}\n` +
+    `◈ <b>User ID:</b> <code>${escapeHTML(reporterId)}</code>\n` +
+    `◈ <b>Email:</b> ${escapeHTML(reporterEmail || 'N/A')}\n\n` +
+    `<b>🎯 Reported Content:</b>\n` +
+    `◈ <b>Type:</b> <code>${escapeHTML(targetType.toUpperCase())}</code>\n` +
+    `◈ <b>Content ID:</b> <code>${escapeHTML(targetId)}</code>\n\n` +
+    `<b>👤 Content Owner:</b>\n` +
+    `◈ <b>Username:</b> @${escapeHTML(targetOwnerUsername)}\n` +
+    `◈ <b>User ID:</b> <code>${escapeHTML(targetOwnerId)}</code>\n` +
+    `◈ <b>Email:</b> ${escapeHTML(targetOwnerEmail || 'N/A')}\n\n` +
+    `<b>💬 Comment by Reporter:</b>\n` +
+    `<i>"${escapeHTML(comment || '(No comment)')}"</i>\n\n` +
+    `<b>📅 Reported At:</b> ${escapeHTML(formattedTime)}`;
+
+  await sendAdminTelegramMessage(text);
+};
+
+const sendAdminTelegramMessage = async (text, extra = {}) => {
+  if (!ADMIN_BOT_TOKEN || !ADMIN_CHAT_ID) {
+    console.warn('[Telegram Admin] Missing config — BOT_TOKEN:', !!ADMIN_BOT_TOKEN, 'CHAT_ID:', !!ADMIN_CHAT_ID);
+    return false;
+  }
+
+  try {
+    console.log('[Telegram Admin] Sending message to chat:', ADMIN_CHAT_ID);
+    const res = await fetch(`${ADMIN_TELEGRAM_API}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: ADMIN_CHAT_ID,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+        ...extra,
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      console.error('[Telegram Admin] API error:', data.description, '| error_code:', data.error_code);
+    } else {
+      console.log('[Telegram Admin] Message sent successfully!');
+    }
+    return data.ok === true;
+  } catch (err) {
+    console.warn('[Telegram Admin] Failed to send message:', err.message);
+    return false;
+  }
+};
+
 export default {
   saveTelegramChatId,
   getTelegramChatId,
@@ -312,5 +399,7 @@ export default {
   notifyTelegramComment,
   notifyTelegramReply,
   notifyTelegramLike,
+  notifyAdminUserSignup,
+  notifyAdminReport,
 };
 

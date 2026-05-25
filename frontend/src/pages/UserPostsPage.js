@@ -1,5 +1,6 @@
 import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUser, getPostsByUser } from '@/lib/db';
@@ -10,9 +11,11 @@ import PostCard from '@/components/PostCard';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
-import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock, ShieldCheck, Flag } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
+import ReportModal from '@/components/ReportModal';
+import { hasUserReportedTarget } from '@/lib/reportService';
 
 export default function UserPostsPage() {
   useSecurityProtection();
@@ -29,6 +32,14 @@ export default function UserPostsPage() {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [presenceData, setPresenceData] = useState({ isOnline: false, lastSeen: 0 });
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedLocally, setReportedLocally] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      setReportedLocally(hasUserReportedTarget(userId));
+    }
+  }, [userId]);
 
   // Max characters before truncation
   const BIO_TRUNCATE_LENGTH = 150;
@@ -102,6 +113,18 @@ export default function UserPostsPage() {
   const handleVoteChanged = (postId, voteData) => setPosts(prev =>
     prev.map(p => p.id === postId ? { ...p, upvote_count: voteData.upvote_count, downvote_count: voteData.downvote_count, votes: voteData.votes } : p)
   );
+
+  const handleReportClick = () => {
+    if (!currentUser) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    if (reportedLocally) {
+      toast.warning('You have already submitted a report for this user.');
+      return;
+    }
+    setShowReportModal(true);
+  };
 
   const joinDate = userData?.created_at
     ? new Date(userData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -212,13 +235,24 @@ export default function UserPostsPage() {
 
                   {/* Friend Request Button - Show if not viewing own profile */}
                   {currentUser && currentUser.id !== userId && (
-                    <div className="mt-3">
+                    <div className="mt-3 flex items-center gap-2">
                       <FriendRequestButton
                         targetUserId={userId}
                         targetUsername={userData.username}
                         size="sm"
                         showChat={true}
                       />
+                      <button
+                        onClick={handleReportClick}
+                        className={`p-2 rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm ${
+                          reportedLocally 
+                            ? 'bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444] shadow-[#EF4444]/10' 
+                            : 'bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 border-neutral-200 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] discuss:text-[#9CA3AF]'
+                        }`}
+                        title={reportedLocally ? 'Already Reported' : 'Report User'}
+                      >
+                        <Flag className={`w-4 h-4 ${reportedLocally ? 'fill-current animate-pulse' : ''}`} />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -342,6 +376,17 @@ export default function UserPostsPage() {
         onClose={() => setShowImagePreview(false)}
         imageUrl={userData?.photo_url}
         altText={userData?.username}
+      />
+
+      <ReportModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="user"
+        targetId={userId}
+        targetTitleOrName={userData?.username}
+        targetOwnerId={userId}
+        currentUser={currentUser}
+        onReportSuccess={() => setReportedLocally(true)}
       />
     </div>
   );
