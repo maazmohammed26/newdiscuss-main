@@ -257,145 +257,156 @@ export default function JobsPage() {
               </p>
             </div>
           ) : (
-            filteredJobs.map(item => {
-              const active = isJobActive(item);
-              
-              return (
-                <div 
-                  id={`job-${item.id}`} 
-                  key={item.id} 
-                  className={`bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group ${!active ? 'opacity-75' : ''}`}
-                >
-                  <div className="p-5 md:p-6">
-                    <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          {active ? (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> ACTIVE
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> CLOSED
-                            </span>
-                          )}
-                          
-                          {item.jobType === 'Hackathon' ? (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> 
-                              {item.hackathonPlatform && item.hackathonPlatform !== 'Others' 
-                                ? `HACKATHON BY ${item.hackathonPlatform}` 
-                                : 'HACKATHON'}
-                            </span>
-                          ) : item.jobType === 'Internship' ? (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
-                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" /> INTERNSHIP
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /> JOB
-                            </span>
-                          )}
+            <>
+              {filteredJobs.map(item => {
+                const active = isJobActive(item);
+                
+                return (
+                  <div 
+                    id={`job-${item.id}`} 
+                    key={item.id} 
+                    className={`bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group ${!active ? 'opacity-75' : ''}`}
+                  >
+                    <div className="p-5 md:p-6">
+                      <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            {active ? (
+                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> ACTIVE
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> CLOSED
+                              </span>
+                            )}
+                            
+                            {item.jobType === 'Hackathon' ? (
+                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> 
+                                {item.hackathonPlatform && item.hackathonPlatform !== 'Others' 
+                                  ? `HACKATHON BY ${item.hackathonPlatform}` 
+                                  : 'HACKATHON'}
+                              </span>
+                            ) : item.jobType === 'Internship' ? (
+                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" /> INTERNSHIP
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /> JOB
+                              </span>
+                            )}
 
-                          <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-neutral-100 text-neutral-600 dark:bg-neutral-900/60 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600" /> {item.applyPlatform || 'Discuss'}
-                          </span>
+                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 bg-neutral-100 text-neutral-600 dark:bg-neutral-900/60 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 rounded-md uppercase tracking-wider flex items-center gap-1.5 shadow-sm select-none">
+                              <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600" /> {item.applyPlatform || 'Discuss'}
+                            </span>
+                          </div>
+                          <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] leading-tight">
+                            {item.title}
+                          </h2>
+                          <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-2 font-medium">
+                            <Building className="w-4 h-4" /> {item.companyName}
+                          </div>
                         </div>
-                        <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] leading-tight">
-                          {item.title}
-                        </h2>
-                        <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-2 font-medium">
-                          <Building className="w-4 h-4" /> {item.companyName}
+
+                        <div className="flex gap-2 shrink-0 w-full md:w-auto">
+                          <Button 
+                            onClick={() => handleApply(item)}
+                            disabled={!active}
+                            className="flex-1 md:flex-none bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] font-semibold"
+                          >
+                            {active ? 'Apply Now' : 'Closed'}
+                          </Button>
+                          
+                          {isDiscussTeam && (
+                            <div className="flex gap-2">
+                              <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="flex gap-2 shrink-0 w-full md:w-auto">
-                        <Button 
-                          onClick={() => handleApply(item)}
-                          disabled={!active}
-                          className="flex-1 md:flex-none bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] font-semibold"
-                        >
-                          {active ? 'Apply Now' : 'Closed'}
-                        </Button>
-                        
-                        {isDiscussTeam && (
-                          <div className="flex gap-2">
-                            <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                      <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+                        <div className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
+                          <Briefcase className="w-4 h-4 text-neutral-400" />
+                          <span className="font-medium">Experience:</span> {item.experienceType || 'Not specified'}
+                        </div>
+                        {item.location && (
+                          <div className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
+                            <MapPin className="w-4 h-4 text-neutral-400" />
+                            <span className="font-medium">Location:</span> {item.location}
                           </div>
                         )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
-                      <div className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
-                        <Briefcase className="w-4 h-4 text-neutral-400" />
-                        <span className="font-medium">Experience:</span> {item.experienceType || 'Not specified'}
-                      </div>
-                      {item.location && (
                         <div className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
-                          <MapPin className="w-4 h-4 text-neutral-400" />
-                          <span className="font-medium">Location:</span> {item.location}
+                          <Calendar className="w-4 h-4 text-neutral-400" />
+                          <span className="font-medium">Posted:</span> {new Date(item.createdAt).toLocaleDateString()}
                         </div>
-                      )}
-                      <div className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
-                        <Calendar className="w-4 h-4 text-neutral-400" />
-                        <span className="font-medium">Posted:</span> {new Date(item.createdAt).toLocaleDateString()}
-                      </div>
-                      <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm select-none">
-                        <ShieldCheck className="w-3 h-3" /> Created by Discuss Team
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-2">
-                          Job Description
-                        </h3>
-                        <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
-                          <ExpandableText text={item.description} maxLines={5}>
-                            <LinkifiedText text={item.description} />
-                          </ExpandableText>
-                        </div>
-                      </div>
-
-                      {/* About company section completely removed from list card feed to reduce clutter, visible in full details view only */}
-                    </div>
-
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333] flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          onClick={() => handleApply(item)}
-                          disabled={!active}
-                          className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] font-bold rounded-xl"
-                        >
-                          {active ? (item.jobType === 'Hackathon' ? 'Register Now' : 'Apply Now') : 'Application Closed'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          onClick={() => navigate(`/jobs/${item.id}`)}
-                          className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-xl font-bold text-sm"
-                        >
-                          Read Full Details
-                        </Button>
+                        <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm select-none">
+                          <ShieldCheck className="w-3 h-3" /> Created by Discuss Team
+                        </span>
                       </div>
                       
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleShare(item)}
-                        className="text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#334155] rounded-xl font-semibold"
-                      >
-                        <Share2 className="w-4 h-4 mr-2" /> Share
-                      </Button>
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-2">
+                            Job Description
+                          </h3>
+                          <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
+                            <ExpandableText text={item.description} maxLines={5}>
+                              <LinkifiedText text={item.description} />
+                            </ExpandableText>
+                          </div>
+                        </div>
+
+                        {/* About company section completely removed from list card feed to reduce clutter, visible in full details view only */}
+                      </div>
+
+                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333] flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            onClick={() => handleApply(item)}
+                            disabled={!active}
+                            className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] font-bold rounded-xl"
+                          >
+                            {active ? (item.jobType === 'Hackathon' ? 'Register Now' : 'Apply Now') : 'Application Closed'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => navigate(`/jobs/${item.id}`)}
+                            className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-xl font-bold text-sm"
+                          >
+                            Read Full Details
+                          </Button>
+                        </div>
+                        
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleShare(item)}
+                          className="text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#334155] rounded-xl font-semibold"
+                        >
+                          <Share2 className="w-4 h-4 mr-2" /> Share
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+
+              <div className="text-center py-8 mt-6 select-none animate-fade-in">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-2xl shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-pulse" />
+                  <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                    You've reached the end! No more jobs or listings.
+                  </span>
                 </div>
-              );
-            })
+              </div>
+            </>
           )}
         </div>
       </div>

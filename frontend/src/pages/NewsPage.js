@@ -193,69 +193,80 @@ export default function NewsPage() {
               </p>
             </div>
           ) : (
-            filteredNews.map(item => (
-              <div 
-                id={`news-${item.id}`} 
-                key={item.id} 
-                className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group"
-              >
-                {item.image && (
-                  <div className="w-full h-48 md:h-64 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000]">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="p-5 md:p-6">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
-                      {item.title}
-                    </h2>
-                    {isDiscussTeam && (
-                      <div className="flex gap-2 shrink-0">
-                        <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
-                      <ShieldCheck className="w-3 h-3" /> Created by Discuss Team
-                    </span>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
-                      • {new Date(item.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
-                    <ExpandableText text={item.description} maxLines={5}>
-                      <LinkifiedText text={item.description} />
-                    </ExpandableText>
-                  </div>
-
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
-                    <Button
-                      variant="ghost"
-                      onClick={() => navigate(`/news/${item.id}`)}
-                      className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-lg font-bold text-sm"
-                    >
-                      Read Full News
-                    </Button>
+            <>
+              {filteredNews.map(item => (
+                <div 
+                  id={`news-${item.id}`} 
+                  key={item.id} 
+                  className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group"
+                >
+                  {item.image && (
+                    <div className="w-full h-48 md:h-64 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000]">
+                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="p-5 md:p-6">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                        {item.title}
+                      </h2>
+                      {isDiscussTeam && (
+                        <div className="flex gap-2 shrink-0">
+                          <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => handleShare(item)}
-                      className="text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#334155] rounded-lg font-semibold"
-                    >
-                      <Share2 className="w-4 h-4 mr-2" /> Share
-                    </Button>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
+                        <ShieldCheck className="w-3 h-3" /> Created by Discuss Team
+                      </span>
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                        • {new Date(item.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
+                      <ExpandableText text={item.description} maxLines={5}>
+                        <LinkifiedText text={item.description} />
+                      </ExpandableText>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+                      <Button
+                        variant="ghost"
+                        onClick={() => navigate(`/news/${item.id}`)}
+                        className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-lg font-bold text-sm"
+                      >
+                        Read Full News
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleShare(item)}
+                        className="text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#334155] rounded-lg font-semibold"
+                      >
+                        <Share2 className="w-4 h-4 mr-2" /> Share
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              ))}
+
+              <div className="text-center py-8 mt-6 select-none animate-fade-in">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-2xl shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600 animate-pulse" />
+                  <span className="text-xs font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                    You've caught up! No more news updates.
+                  </span>
+                </div>
               </div>
-            ))
+            </>
           )}
         </div>
       </div>
