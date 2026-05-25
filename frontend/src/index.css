@@ -807,6 +807,22 @@
   pointer-events: none;
 }
 
+/* Security Hardening Classes */
+.no-copy {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.no-drag {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
 /* Theme overrides */
 /* discuss-black theme gets glowing Hot Pink + Purple portal effect */
 .discuss-black .story-shining-portal-ring {

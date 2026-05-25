@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import { User, FileText, Calendar, ArrowRight, Loader2, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
-
+import useSecurityProtection from '@/hooks/useSecurityProtection';
 
 export default function UserPreviewModal({ open, onClose, userId, currentUserId }) {
+  useSecurityProtection();
   const navigate = useNavigate();
   const location = useLocation();
   const [userData, setUserData] = useState(null);
@@ -105,14 +106,14 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
                 
                 {/* Full Name */}
                 {profileData?.fullName && (
-                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px] flex items-center justify-center gap-1">
+                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px] flex items-center justify-center gap-1 no-copy">
                     {profileData.fullName}
                     {userData.verified && <VerifiedBadge size="xs" />}
                   </h3>
                 )}
                 
                 {/* Username */}
-                <p data-testid="user-preview-name" className={`flex items-center justify-center gap-1 ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px]'}`}>
+                <p data-testid="user-preview-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px]'}`}>
                   @{userData.username}
                   {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
                 </p>
@@ -126,7 +127,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId 
                     <span className="text-[#6275AF] text-xs">Loading...</span>
                   </div>
                 ) : profileData?.bio && (
-                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3">
+                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 no-copy">
                     <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[11px] leading-relaxed whitespace-pre-wrap">
                       {displayBio}
                     </p>

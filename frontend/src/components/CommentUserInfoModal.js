@@ -6,8 +6,10 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import { Calendar, Loader2, X, ExternalLink, ChevronDown, ChevronUp, User } from 'lucide-react';
+import useSecurityProtection from '@/hooks/useSecurityProtection';
 
 export default function CommentUserInfoModal({ open, onClose, userId, currentUserId }) {
+  useSecurityProtection();
   const [userData, setUserData] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
               {/* User Info */}
               <div className="bg-gradient-to-b from-[#2563EB]/10 dark:from-[#2563EB]/20 discuss:from-[#EF4444]/10 to-transparent pt-8 pb-4 px-6 text-center">
                 {/* Profile Picture - Clickable if exists */}
-                {userData.photo_url ? (
+                {userData.photo_url && currentUserId ? (
                   <div className="relative group mx-auto mb-3 block">
                     <UserAvatar
                       userId={userId}
@@ -93,20 +95,25 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                   </div>
                 ) : (
                   <div className="mx-auto mb-3">
-                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto" />
+                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-16 h-16 mx-auto opacity-70 grayscale" />
+                    {!currentUserId && (
+                      <p className="text-[10px] text-[#EF4444] mt-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
+                        For security reasons, we have blocked profile details to non-logged-in users.
+                      </p>
+                    )}
                   </div>
                 )}
                 
                 {/* Full Name */}
                 {profileData?.fullName && (
-                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px] flex items-center justify-center gap-1">
+                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px] flex items-center justify-center gap-1 no-copy">
                     {profileData.fullName}
                     {userData.verified && <VerifiedBadge size="xs" />}
                   </h3>
                 )}
                 
                 {/* Username */}
-                <p data-testid="comment-user-info-name" className={`flex items-center justify-center gap-1 ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px]'}`}>
+                <p data-testid="comment-user-info-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px]'}`}>
                   @{userData.username}
                   {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
                 </p>
@@ -121,7 +128,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                     <span className="text-[#6275AF] text-xs">Loading...</span>
                   </div>
                 ) : profileData?.bio && (
-                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3">
+                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 no-copy">
                     <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[12px] leading-relaxed whitespace-pre-wrap">
                       {displayBio}
                     </p>
@@ -141,7 +148,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                 )}
 
                 {/* Social Links */}
-                {!loadingProfile && profileData?.socialLinks?.length > 0 && (
+                {!loadingProfile && currentUserId && profileData?.socialLinks?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 justify-center">
                     {profileData.socialLinks.map((link, index) => (
                       <a

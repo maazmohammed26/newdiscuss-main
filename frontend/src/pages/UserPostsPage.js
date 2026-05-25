@@ -12,10 +12,10 @@ import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
-
-
+import useSecurityProtection from '@/hooks/useSecurityProtection';
 
 export default function UserPostsPage() {
+  useSecurityProtection();
   const { userId } = useParams();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -175,14 +175,14 @@ export default function UserPostsPage() {
                 <div className="flex-1 min-w-0">
                   {/* Full Name (if available) */}
                   {profileData?.fullName && (
-                    <h1 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[18px] flex items-center gap-1">
+                    <h1 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[18px] flex items-center gap-1 no-copy">
                       {profileData.fullName}
                       {userData.verified && <VerifiedBadge size="sm" />}
                     </h1>
                   )}
                   
                   {/* Username */}
-                  <div data-testid="user-posts-username" className={`flex items-center gap-1 ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[14px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[18px]'}`}>
+                  <div data-testid="user-posts-username" className={`flex items-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[14px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[18px]'}`}>
                     @{userData.username}
                     {!profileData?.fullName && userData.verified && <VerifiedBadge size="sm" />}
                   </div>
@@ -223,7 +223,7 @@ export default function UserPostsPage() {
                   <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile...</span>
                 </div>
               ) : profileData?.bio && currentUser && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] no-copy">
                   <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[13px] leading-relaxed whitespace-pre-wrap">
                     {displayBio}
                   </p>

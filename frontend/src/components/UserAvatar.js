@@ -18,6 +18,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import SignalStoryViewer from '@/components/SignalStoryViewer';
 import { Zap, User as UserIcon, ExternalLink, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 /**
  * @param {string}  src          — image URL (photo_url / photoURL)
@@ -83,12 +84,19 @@ export default function UserAvatar({
     <img
       src={src}
       alt={altText}
-      className={`${className} rounded-full object-cover flex-shrink-0 story-shining-avatar`}
+      className={`${className} rounded-full object-cover flex-shrink-0 story-shining-avatar no-drag`}
       style={style}
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
       loading="lazy"
       decoding="async"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        toast.error("Action restricted by security policy.");
+      }}
+      onDragStart={(e) => {
+        e.preventDefault();
+      }}
     />
   ) : (
     <div

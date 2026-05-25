@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ZoomIn } from 'lucide-react';
+import useSecurityProtection from '@/hooks/useSecurityProtection';
+import { toast } from 'sonner';
 
 export default function ImagePreviewModal({ open, onClose, imageUrl, altText = 'Profile picture' }) {
+  useSecurityProtection();
+
   // Prevent page scroll when preview is active
   useEffect(() => {
     if (open) {
@@ -68,8 +72,23 @@ export default function ImagePreviewModal({ open, onClose, imageUrl, altText = '
           <img 
             src={imageUrl} 
             alt={altText}
-            className="w-full h-full object-contain select-none animate-in zoom-in-95 duration-200"
+            className="w-full h-full object-contain select-none animate-in zoom-in-95 duration-200 no-drag"
             draggable={false}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              toast.error("Action restricted by security policy.");
+            }}
+          />
+          {/* Transparent security overlay to block direct interaction */}
+          <div 
+            className="absolute inset-0 z-10" 
+            onContextMenu={(e) => {
+              e.preventDefault();
+              toast.error("Action restricted by security policy.");
+            }}
+            onDragStart={(e) => {
+              e.preventDefault();
+            }}
           />
         </div>
       </div>
