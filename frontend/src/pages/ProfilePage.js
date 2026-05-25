@@ -1131,7 +1131,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
       <Header />
-      <div className="max-w-xl mx-auto px-4 py-6 md:py-10 pb-32">
+      <div className="w-full max-w-5xl mx-auto px-4 py-6 md:py-10 pb-32">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] text-[13px] font-medium mb-4 transition-colors"

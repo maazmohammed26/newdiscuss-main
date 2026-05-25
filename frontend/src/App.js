@@ -215,7 +215,9 @@ function OnboardingWrapper({ children }) {
 
   return (
     <>
-      {children}
+      <div className={showNavbar ? "md:pl-[100px] transition-all duration-300 min-h-screen w-full flex flex-col" : "min-h-screen w-full flex flex-col"}>
+        {children}
+      </div>
       <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
       {showNavbar && <FloatingNavbar />}
     </>

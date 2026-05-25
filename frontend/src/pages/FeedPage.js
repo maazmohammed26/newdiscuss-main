@@ -219,7 +219,7 @@ export default function FeedPage() {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
+      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Signal Stories Row */}
         {user && <SignalStoriesRow />}
 

@@ -30,6 +30,13 @@ export default function FloatingNavbar() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
   const [hasUnseenAdmin, setHasUnseenAdmin] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Check for DOM loading screens/animations dynamically to hide navbar
   useEffect(() => {
@@ -168,18 +175,25 @@ export default function FloatingNavbar() {
   return (
     <>
       <motion.div
-        className="floating-navbar-container fixed left-1/2 z-50 w-[92%] max-w-[420px] select-none pointer-events-auto"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+        className={`floating-navbar-container fixed z-50 pointer-events-auto select-none ${
+          isDesktop 
+            ? 'left-6 top-1/2 w-[72px] md:w-[80px]'
+            : 'left-1/2 w-[92%] max-w-[420px]'
+        }`}
+        style={isDesktop ? {} : { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
         initial={false}
-        animate={{ x: '-50%', y: 0, scale: 1, opacity: 1 }}
+        animate={isDesktop 
+          ? { x: 0, y: '-50%', scale: 1, opacity: 1 } 
+          : { x: '-50%', y: 0, scale: 1, opacity: 1 }
+        }
         transition={prefersReducedMotion ? { type: 'tween', duration: 0 } : { type: 'spring', stiffness: 260, damping: 28, mass: 0.84 }}
       >
-        <div className={`relative h-[74px] rounded-full px-2 backdrop-blur-[26px] overflow-hidden ${dockContainerClass}`}>
-          <div className={`absolute inset-[1px] rounded-full ring-1 ${glassBorderGlowClass} pointer-events-none`} />
-          <div className={`absolute inset-x-8 top-[2px] h-[1px] bg-gradient-to-r from-transparent ${glassReflectionClass} pointer-events-none`} />
-          <div className="absolute -top-5 -left-10 w-40 h-14 bg-white/25 blur-xl rotate-[-8deg] pointer-events-none" />
-          <div className="absolute -bottom-6 right-[-18%] w-36 h-12 bg-sky-300/10 blur-2xl pointer-events-none" />
-          <div className="grid grid-cols-5 h-full items-center justify-items-center relative">
+        <div className={`relative rounded-[36px] backdrop-blur-[26px] overflow-hidden ${dockContainerClass} ${isDesktop ? 'h-[75vh] max-h-[500px] w-full py-4 px-1' : 'h-[74px] w-full px-2'}`}>
+          <div className={`absolute inset-[1px] rounded-[36px] ring-1 ${glassBorderGlowClass} pointer-events-none`} />
+          <div className={`absolute pointer-events-none ${isDesktop ? 'inset-y-8 left-[2px] w-[1px] bg-gradient-to-b' : 'inset-x-8 top-[2px] h-[1px] bg-gradient-to-r'} from-transparent ${glassReflectionClass}`} />
+          <div className={`absolute pointer-events-none ${isDesktop ? '-top-10 -left-5 w-20 h-40 bg-white/25 blur-xl rotate-[-8deg]' : '-top-5 -left-10 w-40 h-14 bg-white/25 blur-xl rotate-[-8deg]'}`} />
+          <div className={`absolute pointer-events-none ${isDesktop ? '-bottom-10 right-[-18%] w-24 h-36 bg-sky-300/10 blur-2xl' : '-bottom-6 right-[-18%] w-36 h-12 bg-sky-300/10 blur-2xl'}`} />
+          <div className={`relative items-center justify-items-center h-full w-full ${isDesktop ? 'flex flex-col justify-evenly' : 'grid grid-cols-5'}`}>
             {navItems.map((item) => {
               const isActive = item.active;
               const Icon = item.icon;
@@ -188,7 +202,7 @@ export default function FloatingNavbar() {
               }`;
 
               const content = (
-                <div className="relative flex h-12 w-full items-center justify-center rounded-full">
+                <div className={`relative flex items-center justify-center rounded-full ${isDesktop ? 'h-12 w-12' : 'h-12 w-full'}`}>
                   <AnimatePresence>
                     {isActive && (
                       <motion.span

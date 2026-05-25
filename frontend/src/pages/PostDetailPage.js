@@ -177,7 +177,7 @@ export default function PostDetailPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] pb-28">
       <Header />
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 pb-32">
+      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Back button */}
         <button
           data-testid="post-detail-back"
