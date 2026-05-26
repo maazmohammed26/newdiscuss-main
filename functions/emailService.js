@@ -417,6 +417,113 @@ async function sendBrevoEmail(toEmail, displayName, subject, htmlContent, apiKey
 }
 
 /**
+ * Generates the premium HTML email verification template.
+ * @param {string} name - The user's name or username.
+ * @param {string} link - The verification redirection link.
+ * @returns {string} The fully compiled HTML template.
+ */
+function getVerificationEmailHtml(name, link) {
+  const sanitizedName = name || 'Discuss Member';
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email - Discuss</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #F3F4F6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #374151;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    a {
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #374151;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F3F4F6; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card Container -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 580px; background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+          <!-- Top Accent Line -->
+          <tr>
+            <td height="4" style="height: 4px; background: linear-gradient(90deg, #DC2626 0%, #2563EB 100%);"></td>
+          </tr>
+          <!-- Header/Logo Area -->
+          <tr>
+            <td align="center" style="padding: 40px 40px 20px 40px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="font-size: 28px; font-weight: 800; letter-spacing: 0.05em; color: #111827;">
+                    <span style="color: #DC2626;">D</span>ISCUS<span style="color: #2563EB;">S</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em; color: #9CA3AF; font-weight: 700; padding-top: 6px;">
+                    Verification Gateway
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Content Body -->
+          <tr>
+            <td style="padding: 20px 40px 30px 40px; text-align: center;">
+              <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 16px 0; text-align: center;">
+                Verify your email address
+              </h1>
+              
+              <p style="font-size: 15px; line-height: 1.6; color: #4B5563; margin: 0 0 28px 0; font-weight: 500;">
+                Hey ${sanitizedName}, thanks for creating an account on Discuss! Please verify your email address to active your account and connect with other builders.
+              </p>
+              
+              <!-- Verify CTA Button -->
+              <div style="margin: 32px 0;">
+                <a href="${link}" target="_blank" style="display: inline-block; padding: 14px 28px; background: linear-gradient(90deg, #DC2626 0%, #2563EB 100%); border-radius: 12px; font-size: 14px; font-weight: 700; color: #FFFFFF; text-decoration: none; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.25);">
+                  Verify Email Address
+                </a>
+              </div>
+              
+              <p style="font-size: 13px; color: #9CA3AF; margin: 28px 0 0 0; line-height: 1.5;">
+                Or copy and paste this URL into your browser:<br>
+                <a href="${link}" target="_blank" style="color: #2563EB; word-break: break-all; font-size: 12px; font-weight: 600;">${link}</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Footer Divider -->
+          <tr>
+            <td style="padding: 0 40px;"><div style="border-top: 1px solid #E5E7EB; height: 1px;"></div></td>
+          </tr>
+          <!-- Footer Content -->
+          <tr>
+            <td align="center" style="padding: 30px 40px 40px 40px;">
+              <p style="font-size: 11px; line-height: 1.6; color: #6B7280; margin: 0 0 16px 0; max-width: 440px;">
+                You received this email because you created an account on Discuss. If you did not register, please ignore this email.
+              </p>
+              
+              <!-- Linked Portfolio Signature -->
+              <p style="font-size: 12px; font-weight: 700; color: #4B5563; margin: 0;">
+                Developed by <a href="https://www.maazportfolio.site/" target="_blank" style="color: #4B5563; text-decoration: none; font-weight: 800; background: linear-gradient(120deg, #DC2626 0%, #2563EB 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt;mma/&gt;</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+/**
  * Sends a welcome transactional email via Brevo's API.
  */
 async function sendWelcomeEmail(toEmail, displayName, apiKey) {
@@ -432,9 +539,19 @@ async function sendEngagementEmail(toEmail, displayName, subject, apiKey) {
   return sendBrevoEmail(toEmail, displayName, subject || 'Share Your Insights on Discuss!', htmlContent, apiKey);
 }
 
+/**
+ * Sends a branded verification link email via Brevo's API.
+ */
+async function sendVerificationEmail(toEmail, displayName, verificationLink, apiKey) {
+  const htmlContent = getVerificationEmailHtml(displayName, verificationLink);
+  return sendBrevoEmail(toEmail, displayName, 'Verify Your Email Address - Discuss', htmlContent, apiKey);
+}
+
 module.exports = {
   sendWelcomeEmail,
   sendEngagementEmail,
+  sendVerificationEmail,
   getWelcomeEmailHtml,
-  getEngagementEmailHtml
+  getEngagementEmailHtml,
+  getVerificationEmailHtml
 };

@@ -251,17 +251,11 @@ export const checkUsernameAvailable = async (username) => {
 };
 
 export const checkEmailAvailable = async (email) => {
-  const usersRef = ref(database, 'users');
-  const snapshot = await get(usersRef);
-  if (snapshot.exists()) {
-    const users = snapshot.val();
-    for (const user of Object.values(users)) {
-      if (user.email?.toLowerCase() === email.toLowerCase()) {
-        return false;
-      }
-    }
-  }
-  return true;
+  if (!email) return false;
+  const emailKey = email.toLowerCase().replace(/\./g, ',');
+  const indexRef = ref(database, `userEmails/${emailKey}`);
+  const snapshot = await get(indexRef);
+  return !snapshot.exists();
 };
 
 export const updateUser = async (userId, updates) => {

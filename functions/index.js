@@ -44,7 +44,7 @@ admin.initializeApp();
 
 const functions = require('firebase-functions');
 const { onRequest } = require('firebase-functions/v2/https');
-const { sendWelcomeEmail, sendEngagementEmail } = require('./emailService');
+const { sendWelcomeEmail, sendEngagementEmail, sendVerificationEmail } = require('./emailService');
 
 
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_BOT_TOKEN');
@@ -205,42 +205,42 @@ exports.telegramWebhook = onRequest(
   }
 );
 
-// ─── Welcome Email Auth Trigger ────────────────────────────────────────────────
-exports.sendWelcomeEmailOnSignUp = functions
-  .auth.user()
-  .onCreate(async (user) => {
-    const email = user.email;
-    if (!email) {
-      console.log('[AuthTrigger] User has no email. Skipping welcome email.');
-      return;
-    }
-
-    let displayName = user.displayName;
-
-    // If displayName is not present directly, fetch the username from RTDB /users/{uid}
-    if (!displayName && user.uid) {
-      try {
-        const dbRef = admin.database().ref(`users/${user.uid}`);
-        const snapshot = await dbRef.once('value');
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          displayName = userData.username;
-        }
-      } catch (err) {
-        console.warn(`[AuthTrigger] Error fetching username from RTDB for ${user.uid}:`, err.message);
-      }
-    }
-
-    // Fallback: use local part of email address
-    if (!displayName) {
-      displayName = email.split('@')[0] || 'Discuss Member';
-    }
-
-    const apiKey = process.env.BREVO_API_KEY;
-    console.log(`[AuthTrigger] Welcome email trigger initiated for ${user.uid} (${email}) with name: "${displayName}"`);
-    
-    await sendWelcomeEmail(email, displayName, apiKey);
-  });
+// ─── Welcome Email Auth Trigger (Commented out to send only after successful email verification) ───
+// exports.sendWelcomeEmailOnSignUp = functions
+//   .auth.user()
+//   .onCreate(async (user) => {
+//     const email = user.email;
+//     if (!email) {
+//       console.log('[AuthTrigger] User has no email. Skipping welcome email.');
+//       return;
+//     }
+// 
+//     let displayName = user.displayName;
+// 
+//     // If displayName is not present directly, fetch the username from RTDB /users/{uid}
+//     if (!displayName && user.uid) {
+//       try {
+//         const dbRef = admin.database().ref(`users/${user.uid}`);
+//         const snapshot = await dbRef.once('value');
+//         if (snapshot.exists()) {
+//           const userData = snapshot.val();
+//           displayName = userData.username;
+//         }
+//       } catch (err) {
+//         console.warn(`[AuthTrigger] Error fetching username from RTDB for ${user.uid}:`, err.message);
+//       }
+//     }
+// 
+//     // Fallback: use local part of email address
+//     if (!displayName) {
+//       displayName = email.split('@')[0] || 'Discuss Member';
+//     }
+// 
+//     const apiKey = process.env.BREVO_API_KEY;
+//     console.log(`[AuthTrigger] Welcome email trigger initiated for ${user.uid} (${email}) with name: "${displayName}"`);
+//     
+//     await sendWelcomeEmail(email, displayName, apiKey);
+//   });
 
 // ─── Broadcast Email Database Trigger ──────────────────────────────────────────
 exports.onAdminBroadcastTrigger = functions.database
@@ -351,4 +351,107 @@ exports.onAdminBroadcastTrigger = functions.database
       });
     }
   });
+
+
+// ─── Programmatic Email Verification Trigger via Brevo SMTP API ────────────────
+exports.sendVerificationEmail = onRequest(
+  async (req, res) => {
+    // Enable CORS for cross-domain browser requests
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Methods', 'POST');
+      res.set('Access-Control-Allow-Headers', 'Content-Type');
+      res.status(204).send('');
+      return;
+    }
+    
+    // Only accept POST requests
+    if (req.method !== 'POST') {
+      res.status(405).send({ success: false, error: 'Method Not Allowed' });
+      return;
+    }
+
+    const { email, username } = req.body;
+    if (!email) {
+      res.status(400).send({ success: false, error: 'Email is required' });
+      return;
+    }
+
+    console.log(`[VerificationTrigger] Generating verification link for ${email}...`);
+
+    try {
+      const actionCodeSettings = {
+        url: `${APP_URL}verify-email`,
+        handleCodeInApp: true,
+      };
+      
+      // 1. Generate the standard Firebase email verification action link securely using the Admin SDK
+      const link = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+      
+      console.log(`[VerificationTrigger] Verification link successfully generated: ${link}`);
+      
+      // 2. Dispatch the verification email via Brevo SMTP API
+      const apiKey = process.env.BREVO_API_KEY;
+      const success = await sendVerificationEmail(email, username || 'Discuss Member', link, apiKey);
+      
+      if (success) {
+        res.status(200).send({ success: true });
+      } else {
+        res.status(500).send({ success: false, error: 'Failed to deliver email through Brevo SMTP API' });
+      }
+    } catch (err) {
+      console.error(`[VerificationTrigger] Error:`, err.message);
+      res.status(500).send({ success: false, error: err.message });
+    }
+  }
+);
+
+
+// ─── Send Welcome Email Securely on Database Verification Status Update ────────
+exports.onUserEmailVerified = functions.database
+  .ref('/users/{uid}/emailVerified')
+  .onWrite(async (change, context) => {
+    const verified = change.after.val();
+    const uid = context.params.uid;
+    
+    // Only proceed if emailVerified has transitioned to true
+    if (verified !== true) {
+      return null;
+    }
+    
+    console.log(`[EmailVerifiedTrigger] User ${uid} verified! Preparing welcome email...`);
+    
+    try {
+      const userRef = admin.database().ref(`users/${uid}`);
+      const userSnapshot = await userRef.once('value');
+      
+      if (!userSnapshot.exists()) {
+        console.warn(`[EmailVerifiedTrigger] User profile not found for ${uid}.`);
+        return null;
+      }
+      
+      const userData = userSnapshot.val();
+      const email = userData.email;
+      const username = userData.username || 'Discuss Member';
+      
+      if (!email) {
+        console.warn(`[EmailVerifiedTrigger] Email not found in profile for ${uid}.`);
+        return null;
+      }
+      
+      const apiKey = process.env.BREVO_API_KEY;
+      if (!apiKey) {
+        console.error('[EmailVerifiedTrigger] BREVO_API_KEY is not defined in functions environment.');
+        return null;
+      }
+      
+      console.log(`[EmailVerifiedTrigger] Sending welcome email to ${email} for user: ${username}`);
+      await sendWelcomeEmail(email, username, apiKey);
+      console.log(`[EmailVerifiedTrigger] Welcome email successfully sent to ${email}`);
+    } catch (err) {
+      console.error(`[EmailVerifiedTrigger] Trigger error:`, err.message);
+    }
+    return null;
+  });
+
 

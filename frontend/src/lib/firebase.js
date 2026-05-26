@@ -27,7 +27,11 @@ import {
   signInWithEmailLink,
   browserLocalPersistence,
   setPersistence,
+  sendEmailVerification,
+  applyActionCode,
+  checkActionCode,
 } from 'firebase/auth';
+
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -93,6 +97,9 @@ export {
   signInWithEmailLink,
   browserLocalPersistence,
   setPersistence,
+  sendEmailVerification,
+  applyActionCode,
+  checkActionCode,
 };
 
 export default app;

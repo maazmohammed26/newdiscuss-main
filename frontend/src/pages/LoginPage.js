@@ -25,8 +25,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
-  const [captchaInput, setCaptchaInput] = useState('');
-  const [captchaTarget, setCaptchaTarget] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -41,20 +39,6 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const generateCaptcha = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setCaptchaTarget(result);
-    setCaptchaInput('');
-  };
-
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
-
   if (pageLoading) {
     return <LoadingScreen message="Loading login..." />;
   }
@@ -64,10 +48,6 @@ export default function LoginPage() {
     setError('');
     if (!email.trim()) return setError('Email is required');
     if (!password) return setError('Password is required');
-    if (captchaInput !== captchaTarget) {
-      generateCaptcha();
-      return setError('Incorrect CAPTCHA entered');
-    }
     setLoading(true);
     const r = await login(email, password);
     setLoading(false);
@@ -76,10 +56,6 @@ export default function LoginPage() {
   };
 
   const handleGoogle = async () => {
-    if (captchaInput !== captchaTarget) {
-      setError('Please enter the correctly verified CAPTCHA also.');
-      return;
-    }
     setError('');
     setGoogleLoading(true);
     const r = await loginWithGoogle();
@@ -113,6 +89,13 @@ export default function LoginPage() {
             {error && (
               <div data-testid="login-error" className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2 font-medium">
                 <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
+              </div>
+            )}
+
+            {location.state?.verificationMessage && (
+              <div data-testid="verification-success-message" className="bg-[#10B981]/10 border border-[#10B981]/25 rounded-xl p-3 text-[#10B981] text-[13px] mb-4 flex items-start gap-2 font-medium shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                <CheckCircle2 className="w-4.5 h-4.5 shrink-0 mt-0.5 text-[#10B981]" />
+                <span>{location.state.verificationMessage}</span>
               </div>
             )}
 
@@ -157,40 +140,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* CAPTCHA */}
-              <div>
-                <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Security CAPTCHA</label>
-                <div className="flex items-center gap-3 mt-1.5 mb-2">
-                  <div className="relative flex-1 max-w-[140px] bg-[#181818] border border-white/5 rounded-xl h-11 flex items-center justify-center overflow-hidden select-none">
-                    <span className="font-mono text-lg font-black tracking-[0.3em] text-[#DEDBC8]">{captchaTarget}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={generateCaptcha}
-                    title="Refresh CAPTCHA"
-                    className="p-2 text-gray-500 hover:text-white transition-colors rounded-xl bg-[#181818] border border-white/5"
-                  >
-                    <RefreshCw className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="relative">
-                  <Input data-testid="login-captcha-input" type="text" value={captchaInput} onChange={(e) => { setCaptchaInput(e.target.value); setError(''); }}
-                    placeholder="Enter above characters"
-                    className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
-                    {captchaInput.length > 0 && captchaInput === captchaTarget ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : captchaInput.length > 0 ? (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    ) : null}
-                  </div>
-                </div>
-                {captchaInput.length > 0 && captchaInput !== captchaTarget && (
-                   <span className="text-red-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
-                     <XCircle className="w-3 h-3" /><span>CAPTCHA does not match</span>
-                   </span>
-                )}
-              </div>
+
 
               <Button type="submit" data-testid="login-submit-btn" disabled={loading}
                 className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all">

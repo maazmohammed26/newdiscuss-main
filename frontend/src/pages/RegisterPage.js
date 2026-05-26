@@ -18,11 +18,8 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPw, setConfirmPw] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
-  const [captchaInput, setCaptchaInput] = useState('');
-  const [captchaTarget, setCaptchaTarget] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState(null);
@@ -32,13 +29,10 @@ export default function RegisterPage() {
   const [signupEnabled, setSignupEnabled] = useState(true);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState('');
-  const [resending, setResending] = useState(false);
   
   const usernameTimeout = useRef(null);
   const emailTimeout = useRef(null);
-  const { register, loginWithGoogle, resendVerificationEmail } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -54,19 +48,7 @@ export default function RegisterPage() {
     }).catch(() => setSettingsLoading(false));
   }, []);
 
-  const generateCaptcha = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setCaptchaTarget(result);
-    setCaptchaInput('');
-  };
-
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
+  // No captcha generated
 
   useEffect(() => {
     if (usernameTimeout.current) clearTimeout(usernameTimeout.current);
@@ -103,6 +85,14 @@ export default function RegisterPage() {
     }, 500);
   }, [email]);
 
+  const passwordConditions = [
+    { id: 'length', label: 'At least 8 characters', regex: /^.{8,}$/ },
+    { id: 'uppercase', label: 'One uppercase letter (A-Z)', regex: /[A-Z]/ },
+    { id: 'lowercase', label: 'One lowercase letter (a-z)', regex: /[a-z]/ },
+    { id: 'number', label: 'One number (0-9)', regex: /[0-9]/ },
+    { id: 'special', label: 'One special character (@$!%*?&)', regex: /[@$!%*?&#^()_+=\[\]{};':"\\|,.<>\/?~`-]/ },
+  ];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -112,20 +102,21 @@ export default function RegisterPage() {
     if (usernameStatus?.type === 'taken') return setError('Username is already taken');
     if (!email.trim()) return setError('Email is required');
     if (emailStatus?.type === 'taken') return setError('Email is already registered');
-    if (!password || password.length < 6) return setError('Password must be 6+ characters');
-    if (password !== confirmPw) return setError('Passwords do not match');
+    
+    const isPasswordValid = passwordConditions.every(cond => cond.regex.test(password));
+    if (!isPasswordValid) return setError('Password must meet all complexity requirements');
     if (!termsAccepted) return setError('Please accept the Terms and Conditions');
-    if (captchaInput !== captchaTarget) {
-      generateCaptcha();
-      return setError('Incorrect CAPTCHA entered');
-    }
     
     setLoading(true);
     const r = await register(username.trim(), email.trim(), password);
     setLoading(false);
+    
     if (r.success && r.needsVerification) {
-      setVerificationSent(true);
-      setVerificationEmail(email.trim());
+      navigate('/login', { 
+        state: { 
+          verificationMessage: "Account created successfully! We have sent a verification link to your email. Please check your inbox or spam folder (it may take 2 to 3 minutes to arrive)." 
+        } 
+      });
     } else if (r.success) {
       navigate(location.state?.from || '/feed', { replace: true });
     } else {
@@ -133,19 +124,8 @@ export default function RegisterPage() {
     }
   };
 
-  const handleResendVerification = async () => {
-    setResending(true);
-    const r = await resendVerificationEmail(verificationEmail);
-    setResending(false);
-    if (!r.success) setError(r.error);
-  };
-
   const handleGoogle = async () => {
     if (!signupEnabled) return;
-    if (captchaInput !== captchaTarget) {
-      setError('Please enter the correctly verified CAPTCHA also.');
-      return;
-    }
     if (!termsAccepted) {
       setError('Please accept the Terms and Conditions before continuing.');
       return;
@@ -208,42 +188,7 @@ export default function RegisterPage() {
           <div className="relative bg-[#101010] rounded-2xl shadow-2xl p-6 md:p-8 border border-white/5 pt-1.5 overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
-            {verificationSent ? (
-              <div data-testid="verification-sent-message" className="text-center py-4">
-                <div className="w-16 h-16 bg-[#DC2626]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#DC2626]/20">
-                  <Shield className="w-8 h-8 text-[#DC2626]" />
-                </div>
-                <h3 className="text-white font-extrabold text-lg mb-2">Verify Your Email</h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-1 font-medium">
-                  We've sent a verification link to:
-                </p>
-                <p className="text-[#2563EB] font-bold text-[15px] mb-4">{verificationEmail}</p>
-                <div className="bg-[#181818] rounded-xl p-4 text-left space-y-2 mb-6 border border-white/5">
-                  <p className="text-white text-xs font-bold uppercase tracking-wider">Next steps:</p>
-                  <ol className="text-gray-400 text-[13px] space-y-1.5 list-decimal list-inside font-medium">
-                    <li>Open the email from Discuss</li>
-                    <li>Click the verification link</li>
-                    <li>You'll be redirected and signed in automatically</li>
-                  </ol>
-                </div>
-                {error && (
-                  <div className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
-                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
-                  </div>
-                )}
-                <Button
-                  data-testid="resend-verification-btn"
-                  onClick={handleResendVerification}
-                  disabled={resending}
-                  className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-2.5 h-11 mb-3"
-                >
-                  {resending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Resend Verification Email'}
-                </Button>
-                <Link to="/login" className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold text-xs transition-colors">
-                  Back to Login
-                </Link>
-              </div>
-            ) : !signupEnabled ? (
+            {!signupEnabled ? (
               <div data-testid="signup-disabled-message" className="text-center py-8">
                 <div className="w-16 h-16 bg-[#F59E0B]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#F59E0B]/20">
                   <AlertCircle className="w-8 h-8 text-[#F59E0B]" />
@@ -300,24 +245,31 @@ export default function RegisterPage() {
                     <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
                     <div className="relative mt-1">
                       <Input data-testid="register-password-input" type={showPw ? 'text' : 'password'} id="password" name="password" autoComplete="new-password" value={password}
-                        onChange={(e) => setPassword(e.target.value)} placeholder="6+ characters"
+                        onChange={(e) => setPassword(e.target.value)} placeholder="Enter password (8+ characters)"
                         className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
                       <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                         {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                  </div>
 
-                  {/* Confirm Password */}
-                  <div>
-                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Confirm Password</label>
-                    <Input data-testid="register-confirm-password-input" type="password" id="confirm-password" name="confirm-password" autoComplete="new-password" value={confirmPw}
-                      onChange={(e) => setConfirmPw(e.target.value)} placeholder="Repeat password"
-                      className="mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11" />
-                    {confirmPw && password !== confirmPw && (
-                      <span className="text-[#EF4444] text-[11px] mt-1 flex items-center gap-1 font-bold">
-                        <XCircle className="w-3 h-3" />Passwords don't match
-                      </span>
+                    {/* Password Conditions Checklist */}
+                    {password && (
+                      <div className="mt-2.5 p-3 bg-[#181818] border border-white/5 rounded-xl space-y-1.5 animate-fade-in">
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Password Requirements</p>
+                        {passwordConditions.map((cond) => {
+                          const isMet = cond.regex.test(password);
+                          return (
+                            <div key={cond.id} className="flex items-center gap-2 text-xs font-semibold">
+                              {isMet ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+                              ) : (
+                                <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-600 shrink-0" />
+                              )}
+                              <span className={isMet ? 'text-[#10B981]' : 'text-gray-500'}>{cond.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
 
@@ -347,43 +299,8 @@ export default function RegisterPage() {
                     </label>
                   </div>
 
-                  {/* CAPTCHA */}
-                  <div>
-                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Security CAPTCHA</label>
-                    <div className="flex items-center gap-3 mt-1 mb-2">
-                      <div className="relative flex-1 max-w-[140px] bg-[#181818] border border-white/5 rounded-xl h-11 flex items-center justify-center overflow-hidden select-none">
-                        <span className="font-mono text-lg font-black tracking-[0.3em] text-[#DEDBC8]">{captchaTarget}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={generateCaptcha}
-                        title="Refresh CAPTCHA"
-                        className="p-2 text-gray-500 hover:text-white transition-colors rounded-xl bg-[#181818] border border-white/5"
-                      >
-                        <RefreshCw className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <Input data-testid="register-captcha-input" type="text" value={captchaInput} onChange={(e) => { setCaptchaInput(e.target.value); setError(''); }}
-                        placeholder="Enter above characters"
-                        className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
-                        {captchaInput.length > 0 && captchaInput === captchaTarget ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        ) : captchaInput.length > 0 ? (
-                          <XCircle className="w-5 h-5 text-red-500" />
-                        ) : null}
-                      </div>
-                    </div>
-                    {captchaInput.length > 0 && captchaInput !== captchaTarget && (
-                       <span className="text-[#EF4444] text-[11px] mt-1 flex items-center gap-1 font-bold">
-                         <XCircle className="w-3 h-3" />CAPTCHA does not match
-                       </span>
-                    )}
-                  </div>
-
                   <Button type="submit" data-testid="register-submit-btn"
-                    disabled={loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted}
+                    disabled={loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
                     className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all mt-1 disabled:opacity-40 disabled:cursor-not-allowed">
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>
