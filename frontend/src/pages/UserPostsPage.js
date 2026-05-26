@@ -307,7 +307,7 @@ export default function UserPostsPage() {
               {!currentUser && !loadingProfile && (
                 <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
                   <p className="text-[11px] text-[#EF4444] font-medium bg-[#EF4444]/10 rounded-md p-2 border border-[#EF4444]/20 inline-block">
-                    For security reasons, we have blocked profile details and Pulse posts to non-logged-in users.
+                    For security reasons, we have blocked profile pictures, social media links, and Pulse posts for non-logged-in users.
                   </p>
                 </div>
               )}

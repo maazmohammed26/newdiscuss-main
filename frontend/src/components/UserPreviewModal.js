@@ -142,7 +142,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                 {/* Restricted message ONLY for non-logged-in users */}
                 {!currentUserId && (
                   <p className="text-[10px] text-[#EF4444] mb-2 max-w-[200px] mx-auto leading-tight font-medium bg-[#EF4444]/10 rounded-md p-1.5 border border-[#EF4444]/20">
-                    For security reasons, we have blocked profile details to non-logged-in users.
+                    For security reasons, we have blocked the profile picture and social media links for non-logged-in users.
                   </p>
                 )}
                 

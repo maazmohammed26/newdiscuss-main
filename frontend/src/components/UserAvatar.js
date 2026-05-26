@@ -65,6 +65,12 @@ export default function UserAvatar({
   const isOnProfilePage = userId && location.pathname === `/user/${userId}`;
 
   const handleAvatarClick = (e) => {
+    if (!currentUser) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     // If own avatar or no userId provided, let standard click propagation do its job
     if (isSelf || !userId) return;
 
@@ -84,7 +90,7 @@ export default function UserAvatar({
     <img
       src={src}
       alt={altText}
-      className={`${className} rounded-full object-cover flex-shrink-0 story-shining-avatar no-drag`}
+      className={`${className} rounded-full object-cover flex-shrink-0 story-shining-avatar no-drag ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
       style={style}
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
@@ -100,7 +106,7 @@ export default function UserAvatar({
     />
   ) : (
     <div
-      className={`${className} rounded-full flex items-center justify-center flex-shrink-0 select-none font-semibold text-white story-shining-avatar`}
+      className={`${className} rounded-full flex items-center justify-center flex-shrink-0 select-none font-semibold text-white story-shining-avatar ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
       style={{ background: fallbackBg, ...style }}
       aria-label={altText}
       role="img"
