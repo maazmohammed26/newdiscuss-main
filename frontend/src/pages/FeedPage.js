@@ -16,7 +16,7 @@ import UserSearchResult from '@/components/UserSearchResult';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, MessageSquare, FolderGit2, WifiOff, Loader2, Search, X, Hash, TrendingUp, Users, PlayCircle } from 'lucide-react';
+import { Plus, MessageSquare, FolderGit2, WifiOff, Loader2, Search, X, Hash, TrendingUp, Users, PlayCircle, Cpu } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const MemoPostCard = memo(PostCard);
@@ -223,202 +223,298 @@ export default function FeedPage() {
         {/* Signal Stories Row */}
         {user && <SignalStoriesRow />}
 
-        {/* Tabs */}
-        <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
-          <button
-            data-testid="tab-discussion"
-            onClick={() => setActiveTab('discussion')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
-              activeTab === 'discussion'
-                ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Discussions
-          </button>
-          <button
-            data-testid="tab-project"
-            onClick={() => setActiveTab('project')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
-              activeTab === 'project'
-                ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-            }`}
-          >
-            <FolderGit2 className="w-4 h-4" />
-            Project Posts
-          </button>
-          {user && (
-            <button
-              data-testid="tab-pulse"
-              onClick={() => navigate('/pulse')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]`}
-            >
-              <PlayCircle className="w-4 h-4 text-[#EF4444]" />
-              Pulse
-            </button>
-          )}
-        </div>
-
-        {/* Search bar */}
-        <div className="mb-4">
-          {/* Search type toggle */}
-          <div className="flex gap-2 mb-2">
-            <button
-              onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
-                searchType === 'posts'
-                  ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
-                  : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-              }`}
-            >
-              <Hash className="w-3 h-3" />
-              Posts
-            </button>
-            <button
-              onClick={() => setSearchType('users')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
-                searchType === 'users'
-                  ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
-                  : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-              }`}
-            >
-              <Users className="w-3 h-3" />
-              Users
-            </button>
-          </div>
+        {/* 2-Column Responsive Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
-            <Input
-              data-testid="feed-search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={searchType === 'users' ? 'Search users by username...' : `Search ${activeTab === 'discussion' ? 'discussions' : 'projects'}...`}
-              className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] text-[13px] md:text-[15px] h-10"
-            />
-            {searchQuery && (
+          {/* Left Column - Main Feed Content */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Tabs */}
+            <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
               <button
-                type="button"
-                data-testid="feed-search-clear"
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                data-testid="tab-discussion"
+                onClick={() => setActiveTab('discussion')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
+                  activeTab === 'discussion'
+                    ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
+                    : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                }`}
               >
-                <X className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
+                Discussions
               </button>
-            )}
-          </div>
-        </div>
-
-        {/* User Search Results */}
-        {searchType === 'users' && debouncedSearch && (
-          <div className="mb-4">
-            {searchingUsers ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
-              </div>
-            ) : userSearchResults.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs mb-2">
-                  {userSearchResults.length} user{userSearchResults.length !== 1 ? 's' : ''} found
-                </p>
-                {userSearchResults.map((searchUser) => (
-                  <UserSearchResult
-                    key={searchUser.id}
-                    user={searchUser}
-                    currentUserId={user?.id}
-                    onClose={() => {}}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
-                <Users className="w-8 h-8 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-2" />
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
-                  No users found for "{debouncedSearch}"
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Active search indicator for posts */}
-        {searchType === 'posts' && debouncedSearch && (
-          <div data-testid="active-search-badge" className="flex items-center gap-2 mb-4 bg-[#2563EB]/10 dark:bg-[#2563EB]/15 border border-[#2563EB]/20 dark:border-[#2563EB]/30 rounded-[6px] px-3 py-2">
-            <Search className="w-3.5 h-3.5 text-[#2563EB]" />
-            <span className="text-[#2563EB] text-[13px] font-medium">
-              {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''} for "{debouncedSearch}" in {activeTab === 'discussion' ? 'Discussions' : 'Projects'}
-            </span>
-            <button onClick={handleClearSearch} className="ml-auto text-[#2563EB] hover:text-[#1D4ED8]">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* Trending hashtags - only show when not searching users */}
-        {searchType === 'posts' && trendingTags.length > 0 && !debouncedSearch && (
-          <div data-testid="trending-tags" className="mb-5">
-            <div className="flex items-center gap-1.5 mb-2">
-              <TrendingUp className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]" />
-              <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs font-semibold uppercase tracking-wider">Trending</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {trendingTags.slice(0, 4).map((t) => (
+              <button
+                data-testid="tab-project"
+                onClick={() => setActiveTab('project')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
+                  activeTab === 'project'
+                    ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
+                    : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                }`}
+              >
+                <FolderGit2 className="w-4 h-4" />
+                Project Posts
+              </button>
+              {user && (
                 <button
-                  key={t.tag}
-                  data-testid={`trending-tag-${t.tag}`}
-                  onClick={() => handleTagClick(t.tag)}
-                  className="inline-flex items-center gap-1 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:border-[#2563EB]/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 rounded-[6px] px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-[#2563EB] transition-all shadow-card"
+                  data-testid="tab-pulse"
+                  onClick={() => navigate('/pulse')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]`}
                 >
-                  <Hash className="w-3 h-3" />
-                  {t.tag}
-                  <span className="text-[10px] opacity-60">({t.count})</span>
+                  <PlayCircle className="w-4 h-4 text-[#EF4444]" />
+                  Pulse
                 </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Posts - only show when not searching users */}
-        {searchType === 'posts' && (
-          loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading posts...</p>
-          </div>
-        ) : filteredPosts.length === 0 ? (
-          <div data-testid="empty-feed" className="text-center py-20">
-            <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] flex items-center justify-center mx-auto mb-4">
-              {activeTab === 'discussion' ? (
-                <MessageSquare className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
-              ) : (
-                <FolderGit2 className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
               )}
             </div>
-            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-1">
-              {debouncedSearch ? 'No results found' : `No ${activeTab === 'discussion' ? 'discussions' : 'projects'} yet`}
-            </h3>
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[13px] md:text-[15px]">
-              {debouncedSearch ? `Try a different search term` : `Be the first to start a ${activeTab === 'discussion' ? 'discussion' : 'project post'}!`}
-            </p>
+
+            {/* Search bar */}
+            <div className="mb-4">
+              {/* Search type toggle */}
+              <div className="flex gap-2 mb-2">
+                <button
+                  onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
+                    searchType === 'posts'
+                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
+                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                  }`}
+                >
+                  <Hash className="w-3 h-3" />
+                  Posts
+                </button>
+                <button
+                  onClick={() => setSearchType('users')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
+                    searchType === 'users'
+                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
+                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                  }`}
+                >
+                  <Users className="w-3 h-3" />
+                  Users
+                </button>
+              </div>
+              
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+                <Input
+                  data-testid="feed-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={searchType === 'users' ? 'Search users by username...' : `Search ${activeTab === 'discussion' ? 'discussions' : 'projects'}...`}
+                  className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] text-[13px] md:text-[15px] h-10"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    data-testid="feed-search-clear"
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* User Search Results */}
+            {searchType === 'users' && debouncedSearch && (
+              <div className="mb-4">
+                {searchingUsers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+                  </div>
+                ) : userSearchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs mb-2">
+                      {userSearchResults.length} user{userSearchResults.length !== 1 ? 's' : ''} found
+                    </p>
+                    {userSearchResults.map((searchUser) => (
+                      <UserSearchResult
+                        key={searchUser.id}
+                        user={searchUser}
+                        currentUserId={user?.id}
+                        onClose={() => {}}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+                    <Users className="w-8 h-8 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-2" />
+                    <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+                      No users found for "{debouncedSearch}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Active search indicator for posts */}
+            {searchType === 'posts' && debouncedSearch && (
+              <div data-testid="active-search-badge" className="flex items-center gap-2 mb-4 bg-[#2563EB]/10 dark:bg-[#2563EB]/15 border border-[#2563EB]/20 dark:border-[#2563EB]/30 rounded-[6px] px-3 py-2">
+                <Search className="w-3.5 h-3.5 text-[#2563EB]" />
+                <span className="text-[#2563EB] text-[13px] font-medium">
+                  {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''} for "{debouncedSearch}" in {activeTab === 'discussion' ? 'Discussions' : 'Projects'}
+                </span>
+                <button onClick={handleClearSearch} className="ml-auto text-[#2563EB] hover:text-[#1D4ED8]">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Trending hashtags - only show when not searching users (Responsive: hidden on desktop, visible on mobile) */}
+            {searchType === 'posts' && trendingTags.length > 0 && !debouncedSearch && (
+              <div data-testid="trending-tags" className="mb-5 lg:hidden animate-fade-in">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]" />
+                  <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs font-semibold uppercase tracking-wider">Trending</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {trendingTags.slice(0, 4).map((t) => (
+                    <button
+                      key={t.tag}
+                      data-testid={`trending-tag-${t.tag}`}
+                      onClick={() => handleTagClick(t.tag)}
+                      className="inline-flex items-center gap-1 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:border-[#2563EB]/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 rounded-[6px] px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-[#2563EB] transition-all shadow-card"
+                    >
+                      <Hash className="w-3 h-3" />
+                      {t.tag}
+                      <span className="text-[10px] opacity-60">({t.count})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Posts - only show when not searching users */}
+            {searchType === 'posts' && (
+              loading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
+                  <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading posts...</p>
+                </div>
+              ) : filteredPosts.length === 0 ? (
+                <div data-testid="empty-feed" className="text-center py-20">
+                  <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] flex items-center justify-center mx-auto mb-4">
+                    {activeTab === 'discussion' ? (
+                      <MessageSquare className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+                    ) : (
+                      <FolderGit2 className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+                    )}
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-1">
+                    {debouncedSearch ? 'No results found' : `No ${activeTab === 'discussion' ? 'discussions' : 'projects'} yet`}
+                  </h3>
+                  <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[13px] md:text-[15px]">
+                    {debouncedSearch ? `Try a different search term` : `Be the first to start a ${activeTab === 'discussion' ? 'discussion' : 'project post'}!`}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredPosts.map((post) => (
+                    <MemoPostCard
+                      key={post.id}
+                      post={post}
+                      currentUser={user}
+                      onDeleted={handlePostDeleted}
+                      onUpdated={handlePostUpdated}
+                      onVoteChanged={handleVoteChanged}
+                      onTagClick={handleTagClick}
+                    />
+                  ))}
+                </div>
+              )
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredPosts.map((post) => (
-              <MemoPostCard
-                key={post.id}
-                post={post}
-                currentUser={user}
-                onDeleted={handlePostDeleted}
-                onUpdated={handlePostUpdated}
-                onVoteChanged={handleVoteChanged}
-                onTagClick={handleTagClick}
-              />
-            ))}
+
+          {/* Right Column - Desktop Sidebar (Sticky) */}
+          <div className="hidden lg:block lg:col-span-4">
+            <div className="sticky top-20 space-y-6 animate-fade-in">
+              
+              {/* Trending Card */}
+              {trendingTags.length > 0 && (
+                <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
+                    <TrendingUp className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+                      Trending Hashtags
+                    </h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {trendingTags.slice(0, 6).map((t) => (
+                      <button
+                        key={t.tag}
+                        onClick={() => handleTagClick(t.tag)}
+                        className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 discuss:bg-black/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 border border-transparent hover:border-[#2563EB]/20 text-[13px] font-medium text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-all duration-150"
+                      >
+                        <span className="flex items-center gap-1.5 truncate">
+                          <Hash className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                          <span className="truncate">{t.tag}</span>
+                        </span>
+                        <span className="text-xs bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] px-2 py-0.5 rounded-md opacity-70 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shrink-0 font-mono">
+                          {t.count} posts
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Platform Status Card */}
+              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
+                  <Cpu className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+                    System Status
+                  </h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Pulsing Status indicator */}
+                  <div className="flex items-center gap-2 bg-green-500/5 border border-green-500/10 rounded-lg p-2.5">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    <span className="text-[12px] font-mono font-bold text-green-600 dark:text-green-400">
+                      discuss_network: active
+                    </span>
+                  </div>
+
+                  {/* Tech Metrics */}
+                  <div className="space-y-2 text-xs font-mono border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] pb-4">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400 dark:text-neutral-500">Uptime:</span>
+                      <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold">99.98%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400 dark:text-neutral-500">Latency:</span>
+                      <span className="text-green-600 dark:text-green-400 font-semibold">12ms (api_edge)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400 dark:text-neutral-500">Active Nodes:</span>
+                      <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold font-mono">4 [Stable]</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400 dark:text-neutral-500">Gateways:</span>
+                      <span className="text-[#2563EB] discuss:text-[#EF4444] font-semibold">Firebase, Brevo</span>
+                    </div>
+                  </div>
+
+                  {/* Developer Logs Guidelines */}
+                  <div className="space-y-1.5 bg-neutral-50 dark:bg-neutral-900/50 discuss:bg-black/35 border border-neutral-100 dark:border-neutral-800/60 discuss:border-[#262626] rounded-lg p-3 text-[11px] font-mono text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]">
+                    <div className="text-neutral-500 dark:text-neutral-600 font-bold select-none mb-1">◈ SYSTEM_LOGS:</div>
+                    <div>// keep discussion constructive</div>
+                    <div>// flag violations via CPU menu</div>
+                    <div>// share builds under #project</div>
+                    <div className="text-[#2563EB] discuss:text-[#EF4444]/80">// discuss_version: v2.4-stable</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
-        )
-        )}
+
+        </div>
       </div>
 
       <CreatePostModal
