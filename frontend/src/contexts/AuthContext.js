@@ -581,14 +581,7 @@ export function AuthProvider({ children }) {
       window.localStorage.setItem('adminSignupNotified_' + uid, 'true');
       notifyAdminUserSignup(username.trim(), uid, email.toLowerCase().trim()).catch(err => console.warn('[Telegram Admin Alert failed]', err));
 
-      // 1. Generate and save the secure 6-digit OTP in Realtime Database (5 minutes validity)
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      await savePendingOTP(uid, email, username, otp);
-
-      // 2. Dispatch the custom styled HTML verification email via Brevo SMTP API
-      await sendVerificationOTPDirectly(email.toLowerCase().trim(), username.trim(), otp);
-
-      // 3. Keep standard native Firebase Email Verification link as backup redirect
+      // Standard Firebase Email Verification link as the default redirect
       const actionCodeSettings = {
         url: `${window.location.origin}/verify-email`,
         handleCodeInApp: true,
@@ -639,27 +632,23 @@ export function AuthProvider({ children }) {
         window.localStorage.setItem('verifyEmail', email.toLowerCase().trim());
         window.localStorage.setItem('verifyUsername', username);
 
-        // Automatically resend a fresh native Firebase verification link and a new 6-digit OTP!
+        // Automatically resend a fresh native Firebase verification link!
         try {
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-          await savePendingOTP(uid, email, username, otp);
-          await sendVerificationOTPDirectly(email.toLowerCase().trim(), username, otp);
-
           const actionCodeSettings = {
             url: `${window.location.origin}/verify-email`,
             handleCodeInApp: true,
           };
           await sendEmailVerification(credential.user, actionCodeSettings);
-          console.log('[Auth] Automatically resent native link + new custom OTP email to unverified user.');
+          console.log('[Auth] Automatically resent native verification link to unverified user.');
         } catch (resendErr) {
-          console.error('[Auth] Failed to automatically resend verification links:', resendErr);
+          console.error('[Auth] Failed to automatically resend verification link:', resendErr);
         }
         
         await firebaseSignOut(auth);
         setUser(null);
         return { 
           success: false, 
-          error: 'Your email address is not verified yet. We have automatically sent a fresh verification link and security OTP to your email. Please check your inbox or spam folder (it may take 2 to 3 minutes to arrive).' 
+          error: 'Your email address is not verified yet. We have automatically resent a fresh verification link to your email. Please check your inbox or spam folder (it may take 2 to 3 minutes to arrive).' 
         };
       }
 

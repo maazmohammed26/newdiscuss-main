@@ -5,7 +5,7 @@ import { getUserByEmail, updateUser, getPendingOTP, deletePendingOTP, savePendin
 import { Button } from '@/components/ui/button';
 import DiscussLogo from '@/components/DiscussLogo';
 import LoadingScreen from '@/components/LoadingScreen';
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, KeyRound, RefreshCw, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, KeyRound, ShieldAlert, Sparkles, Send } from 'lucide-react';
 import { sendVerificationOTPDirectly, sendWelcomeEmailDirectly } from '@/lib/emailService';
 
 export default function VerifyEmailPage() {
@@ -15,14 +15,15 @@ export default function VerifyEmailPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [countdown, setCountdown] = useState(5);
   
-  // OTP input states
+  // OTP input and sending states
   const [otpValues, setOtpValues] = useState(Array(6).fill(''));
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   
-  // Resend OTP countdown states
-  const [resendCountdown, setResendCountdown] = useState(120); // 2 minutes in seconds
-  const [canResend, setCanResend] = useState(false);
-  const [resending, setResending] = useState(false);
+  // Resend/Send OTP countdown states
+  const [resendCountdown, setResendCountdown] = useState(120); // 2 minutes countdown
+  const [canSendOtp, setCanSendOtp] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
   
   // Stored metadata refs
   const [emailAddress, setEmailAddress] = useState('');
@@ -52,17 +53,17 @@ export default function VerifyEmailPage() {
     }
   }, [mode, oobCode]);
 
-  // Resend OTP countdown timer
+  // Resend countdown timer for manual Send OTP button
   useEffect(() => {
     if (status !== 'otp-entry' || resendCountdown <= 0) {
-      if (resendCountdown <= 0) setCanResend(true);
+      if (resendCountdown <= 0) setCanSendOtp(true);
       return;
     }
 
     const timer = setInterval(() => {
       setResendCountdown(prev => {
         if (prev <= 1) {
-          setCanResend(true);
+          setCanSendOtp(true);
           clearInterval(timer);
           return 0;
         }
@@ -73,7 +74,7 @@ export default function VerifyEmailPage() {
     return () => clearInterval(timer);
   }, [status, resendCountdown]);
 
-  // Countdown timer for automatic redirect to login on success
+  // Countdown timer for automatic redirect on success
   useEffect(() => {
     if (status !== 'success') return;
 
@@ -161,6 +162,41 @@ export default function VerifyEmailPage() {
     inputRefs.current[5]?.focus();
   };
 
+  // Handle manual OTP trigger when Send OTP button is clicked
+  const handleTriggerOtp = async () => {
+    if (!canSendOtp || sendingOtp || otpSent || !emailAddress || !verifyUid) return;
+
+    setSendingOtp(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      // 1. Generate new 6-digit OTP
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // 2. Save in database (5 minutes validity)
+      await savePendingOTP(verifyUid, emailAddress, username || 'Discuss Member', newOtp);
+
+      // 3. Dispatch styled Brevo OTP HTML email
+      const success = await sendVerificationOTPDirectly(emailAddress, username || 'Discuss Member', newOtp);
+      if (!success) throw new Error('Failed to send verification code. Please try again.');
+
+      // 4. Update state to permanently disable the button and show OTP entry fields
+      setOtpSent(true);
+      setSuccessMessage('A secure 6-digit verification code has been sent successfully. Please check your email.');
+      
+      // Focus first input field after brief mount timeout
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    } catch (err) {
+      console.error('[VerifyEmail] Manual OTP dispatch failed:', err);
+      setErrorMessage(err.message || 'Failed to dispatch verification code.');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
   // Handle OTP Submission and Validation
   const handleOtpSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -168,13 +204,11 @@ export default function VerifyEmailPage() {
     
     if (fullOtp.length !== 6) {
       setErrorMessage('Please enter all 6 digits of the verification code.');
-      setStatus('otp-entry');
       return;
     }
 
     if (!verifyUid) {
       setErrorMessage('No active verification session found. Please register or attempt to log in first.');
-      setStatus('otp-entry');
       return;
     }
 
@@ -192,7 +226,7 @@ export default function VerifyEmailPage() {
       // 2. Enforce 5-minute expiry limit
       if (Date.now() > otpData.expiresAt) {
         await deletePendingOTP(verifyUid); // Cleanup expired code
-        throw new Error('This verification code has expired (valid for 5 minutes). Please click the resend button below.');
+        throw new Error('This verification code has expired (valid for 5 minutes).');
       }
 
       // 3. Match entered code against stored OTP
@@ -225,38 +259,6 @@ export default function VerifyEmailPage() {
       setErrorMessage(err.message || 'OTP verification failed.');
     } finally {
       setVerifyingOtp(false);
-    }
-  };
-
-  // Resend 6-digit OTP and Native Link (with 2-minute countdown reset)
-  const handleResendOtp = async () => {
-    if (!canResend || resending || !emailAddress || !verifyUid) return;
-
-    setResending(true);
-    setErrorMessage('');
-    setSuccessMessage('');
-
-    try {
-      // 1. Generate new OTP and save in DB
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      await savePendingOTP(verifyUid, emailAddress, username || 'Discuss Member', newOtp);
-
-      // 2. Send custom OTP HTML email via Brevo
-      const success = await sendVerificationOTPDirectly(emailAddress, username || 'Discuss Member', newOtp);
-      if (!success) throw new Error('Failed to send verification code. Please try again.');
-
-      // 3. Reset resend timer and block resends for 2 minutes
-      setResendCountdown(120);
-      setCanResend(false);
-      setOtpValues(Array(6).fill('')); // Clear inputs
-      inputRefs.current[0]?.focus(); // Refocus first field
-
-      setSuccessMessage('A fresh verification code and link have been successfully resent to your email address.');
-    } catch (err) {
-      console.error('[VerifyEmail] OTP resend failed:', err);
-      setErrorMessage(err.message || 'Failed to resend verification code.');
-    } finally {
-      setResending(false);
     }
   };
 
@@ -352,7 +354,7 @@ export default function VerifyEmailPage() {
                     onClick={() => { setStatus('otp-entry'); setErrorMessage(''); }}
                     className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#2563EB]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all"
                   >
-                    Enter Code Manually
+                    Go Back to Verification Screen
                   </Button>
                   
                   <Link 
@@ -364,74 +366,100 @@ export default function VerifyEmailPage() {
                 </div>
               </div>
             ) : (
-              /* OTP Code Input Screen */
+              /* Verification Screen */
               <div className="space-y-6 py-4 animate-fade-in">
                 <div className="w-14 h-14 bg-[#2563EB]/10 rounded-2xl flex items-center justify-center mx-auto border border-[#2563EB]/25 mb-2">
-                  <KeyRound className="w-6 h-6 text-[#2563EB]" />
+                  <Mail className="w-6 h-6 text-[#2563EB]" />
                 </div>
 
                 <div>
-                  <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2">Enter Verification Code</h2>
+                  <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2">Activate Your Account</h2>
                   {emailAddress ? (
                     <p className="text-gray-400 text-xs font-semibold leading-relaxed max-w-xs mx-auto">
-                      We have sent a security OTP to your email: <br />
-                      <span className="text-white font-bold">{emailAddress}</span>
+                      We have sent a verification link natively via Firebase to your email:<br />
+                      <span className="text-white font-bold">{emailAddress}</span><br />
+                      Click that link in your inbox to verify instantly.
                     </p>
                   ) : (
                     <p className="text-gray-400 text-xs font-semibold max-w-xs mx-auto">
-                      Please enter the 6-digit security code sent to your registered email address.
+                      Please check your inbox or spam folder for the default Firebase verification link.
                     </p>
                   )}
                 </div>
 
-                {/* 6-Digit OTP Form */}
-                <form onSubmit={handleOtpSubmit} className="space-y-6">
-                  <div className="flex justify-center gap-2 md:gap-3" onPaste={handlePaste}>
-                    {otpValues.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={el => inputRefs.current[index] = el}
-                        type="text"
-                        maxLength="1"
-                        value={digit}
-                        onChange={e => handleOtpChange(index, e.target.value)}
-                        onKeyDown={e => handleKeyDown(index, e)}
-                        className="w-11 h-12 md:w-12 md:h-14 bg-[#181818] border border-white/5 text-[#E1E0CC] font-bold text-lg md:text-xl text-center rounded-xl focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 transition-all outline-none"
-                      />
-                    ))}
-                  </div>
+                {/* Dynamic OTP Inputs Reveal - Shown ONLY if OTP has been requested and sent */}
+                {otpSent ? (
+                  <div className="space-y-5 py-2 border-t border-b border-white/5 animate-fade-in">
+                    <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#10B981] bg-[#10B981]/5 border border-[#10B981]/15 rounded-xl p-3">
+                      <KeyRound className="w-4 h-4" />
+                      <span>Enter the 6-digit code sent to your email below:</span>
+                    </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={verifyingOtp || otpValues.some(val => !val)}
-                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Activate Account'}
-                  </Button>
-                </form>
+                    <form onSubmit={handleOtpSubmit} className="space-y-4">
+                      <div className="flex justify-center gap-2 md:gap-3" onPaste={handlePaste}>
+                        {otpValues.map((digit, index) => (
+                          <input
+                            key={index}
+                            ref={el => inputRefs.current[index] = el}
+                            type="text"
+                            maxLength="1"
+                            value={digit}
+                            onChange={e => handleOtpChange(index, e.target.value)}
+                            onKeyDown={e => handleKeyDown(index, e)}
+                            className="w-11 h-12 md:w-12 md:h-14 bg-[#181818] border border-white/5 text-[#E1E0CC] font-bold text-lg md:text-xl text-center rounded-xl focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 transition-all outline-none"
+                          />
+                        ))}
+                      </div>
 
-                {/* Persist Resend Timer Card */}
-                <div className="pt-2 border-t border-white/5">
-                  <div className="flex items-center justify-between text-xs font-bold text-gray-500 bg-[#141414] rounded-xl p-3 border border-white/5">
-                    <span className="flex items-center gap-1.5">
-                      <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin text-[#2563EB]' : ''}`} />
-                      <span>Didn't receive code?</span>
-                    </span>
-                    
-                    {canResend ? (
-                      <button
-                        onClick={handleResendOtp}
-                        disabled={resending}
-                        className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-extrabold transition-colors disabled:opacity-50"
+                      <Button 
+                        type="submit" 
+                        disabled={verifyingOtp || otpValues.some(val => !val)}
+                        className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        Resend Code
-                      </button>
-                    ) : (
-                      <span className="text-gray-400 font-extrabold">
-                        Resend in {formatTime(resendCountdown)}
-                      </span>
-                    )}
+                        {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Confirm Code & Activate'}
+                      </Button>
+                    </form>
                   </div>
+                ) : (
+                  /* Initial Info State (before OTP is sent) */
+                  <div className="bg-[#141414] border border-white/5 rounded-2xl p-4 text-xs font-semibold text-gray-500 text-left space-y-2 leading-relaxed">
+                    <p className="text-white font-bold">Standard Verification:</p>
+                    <p>Check your email for the native verification link sent by Firebase. Clicking that link is the easiest way to activate your account.</p>
+                    <p className="text-white font-bold pt-1">Backup OTP Verification:</p>
+                    <p>If you didn't receive the native link, you can request a secure 6-digit OTP code below after the 2-minute cooldown timer expires.</p>
+                  </div>
+                )}
+
+                {/* Send OTP Manual Button Section */}
+                <div className="pt-2 border-t border-white/5">
+                  {otpSent ? (
+                    /* Permanently Disabled After Sending - ONLY ONCE SEND IS ALLOWED */
+                    <div className="flex items-center justify-center gap-2 text-xs font-bold text-gray-400 bg-[#141414] rounded-xl p-3.5 border border-white/5">
+                      <Send className="w-3.5 h-3.5 text-[#10B981]" />
+                      <span>OTP Code Sent to Email Successfully (One-time only)</span>
+                    </div>
+                  ) : (
+                    /* Initial Countdown/Send Button */
+                    <Button
+                      onClick={handleTriggerOtp}
+                      disabled={!canSendOtp || sendingOtp}
+                      className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[14px] hover:border-[#2563EB]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {sendingOtp ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : !canSendOtp ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Request backup OTP in {formatTime(resendCountdown)}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-[#2563EB]" />
+                          <span>Send OTP to Email</span>
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
 
                 {/* Monospace Security Warning */}
