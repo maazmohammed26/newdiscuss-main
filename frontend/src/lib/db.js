@@ -901,9 +901,6 @@ export const syncUserVerificationInComments = async (userId, verified) => {
   }
 };
 
-/**
- * Sync verification status across all user's posts and comments
- */
 export const syncUserVerificationEverywhere = async (userId, verified) => {
   console.log(`Syncing verification status (${verified}) for user ${userId}`);
   await Promise.all([
@@ -912,3 +909,39 @@ export const syncUserVerificationEverywhere = async (userId, verified) => {
   ]);
   console.log('Verification sync complete');
 };
+
+// ==================== CUSTOM OTP OPERATIONS ====================
+
+/**
+ * Saves a pending 6-digit verification code (OTP) for a user
+ */
+export const savePendingOTP = async (uid, email, username, otp) => {
+  const otpRef = ref(database, `pendingVerifications/${uid}`);
+  const payload = {
+    otp: otp.trim(),
+    email: email.toLowerCase().trim(),
+    username: username.trim(),
+    expiresAt: Date.now() + 5 * 60 * 1000, // Valid for exactly 5 minutes
+    createdAt: Date.now()
+  };
+  await set(otpRef, payload);
+  return payload;
+};
+
+/**
+ * Retrieves the pending OTP details for a user
+ */
+export const getPendingOTP = async (uid) => {
+  const otpRef = ref(database, `pendingVerifications/${uid}`);
+  const snapshot = await get(otpRef);
+  return snapshot.exists() ? snapshot.val() : null;
+};
+
+/**
+ * Deletes the pending OTP once verified
+ */
+export const deletePendingOTP = async (uid) => {
+  const otpRef = ref(database, `pendingVerifications/${uid}`);
+  await remove(otpRef);
+};
+

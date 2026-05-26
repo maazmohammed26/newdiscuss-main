@@ -137,3 +137,109 @@ export async function sendWelcomeEmailDirectly(toEmail, username) {
     console.error('[EmailService] Network error triggering welcome email directly:', err.message);
   }
 }
+
+/**
+ * Send 6-digit Verification OTP Email Directly via Frontend using Brevo API
+ */
+export async function sendVerificationOTPDirectly(toEmail, username, otp) {
+  const normalizedEmail = toEmail?.toLowerCase().trim();
+  if (!normalizedEmail || !otp) return;
+
+  const apiKey = process.env.REACT_APP_BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn('[EmailService] REACT_APP_BREVO_API_KEY is not defined in env.');
+    return;
+  }
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Account</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #374151;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F3F4F6; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 580px; background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+          <tr><td height="4" style="height: 4px; background: linear-gradient(90deg, #DC2626 0%, #2563EB 100%);"></td></tr>
+          <tr>
+            <td align="center" style="padding: 40px 40px 20px 40px;">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr><td align="center" style="font-size: 28px; font-weight: 800; letter-spacing: 0.05em; color: #111827;"><span style="color: #DC2626;">D</span>ISCUS<span style="color: #2563EB;">S</span></td></tr>
+                <tr><td align="center" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em; color: #9CA3AF; font-weight: 700; padding-top: 6px;">Verification Gateway</td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 40px 30px 40px; text-align: center;">
+              <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 16px 0;">Verify your email address</h1>
+              <p style="font-size: 15px; line-height: 1.6; color: #4B5563; margin: 0 0 28px 0; font-weight: 500;">
+                Hello ${username || 'Discuss Member'}, thank you for registering with Discuss. Use the security verification code below to activate your account. This code is valid for exactly 5 minutes.
+              </p>
+              
+              <!-- OTP Display Area -->
+              <div style="margin: 32px 0;">
+                <span style="font-size: 38px; letter-spacing: 8px; font-weight: 800; font-family: monospace; color: #111827; background-color: #F9FAFB; padding: 16px 28px; border-radius: 12px; border: 1px solid #E5E7EB; display: inline-block; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">${otp}</span>
+              </div>
+              
+              <!-- Warning Banner -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px; background-color: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 12px; padding: 16px; text-align: left;">
+                <tr>
+                  <td>
+                    <p style="font-size: 12px; line-height: 1.6; color: #991B1B; font-weight: 700; margin: 0;">
+                      SECURITY WARNING: Do not share this verification code with anyone. Discuss support staff will never ask for your verification code. If you did not request this code, please immediately contact support@discussit.in to secure your account.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr><td style="padding: 0 40px;"><div style="border-top: 1px solid #E5E7EB; height: 1px;"></div></td></tr>
+          <tr>
+            <td align="center" style="padding: 30px 40px 40px 40px;">
+              <p style="font-size: 11px; line-height: 1.6; color: #6B7280; margin: 0 0 16px 0; max-width: 440px;">
+                You received this email because you created an account on Discuss. If you did not register, please ignore this email.
+              </p>
+              <p style="font-size: 12px; font-weight: 700; color: #4B5563; margin: 0;">
+                Developed by <a href="https://www.maazportfolio.site/" target="_blank" style="color: #4B5563; text-decoration: none; font-weight: 800; background: linear-gradient(120deg, #DC2626 0%, #2563EB 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt;mma/&gt;</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: '<Discuss/>', email: 'support@discussit.in' },
+        to: [{ email: toEmail, name: username || 'Discuss Member' }],
+        subject: `${otp} is your Discuss verification code`,
+        htmlContent: htmlContent
+      })
+    });
+    if (response.ok) {
+      console.log(`[EmailService] Verification OTP email successfully triggered to ${toEmail}`);
+      return true;
+    } else {
+      const data = await response.text();
+      console.error('[EmailService] Failed to trigger OTP email directly:', data);
+      return false;
+    }
+  } catch (err) {
+    console.error('[EmailService] Network error triggering OTP email directly:', err.message);
+    return false;
+  }
+}
+

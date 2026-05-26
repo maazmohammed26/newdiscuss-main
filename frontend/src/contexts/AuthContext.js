@@ -50,9 +50,11 @@ import {
   checkUsernameAvailable,
   updateUser,
   syncUserVerificationEverywhere,
+  savePendingOTP,
 } from '@/lib/db';
 import { syncUserVerificationInCommentsFirestore } from '@/lib/commentsDb';
 import { notifyAdminUserSignup } from '@/lib/telegramService';
+import { sendVerificationOTPDirectly } from '@/lib/emailService';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fire
@@ -557,24 +559,36 @@ export function AuthProvider({ children }) {
       window.localStorage.setItem('pendingVerification', 'true');
       window.localStorage.setItem('verifyUsername_' + email.toLowerCase().trim(), username.trim());
       window.localStorage.setItem('emailForSignIn', email);
-
+      
       const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = credential.user.uid;
+      
+      window.localStorage.setItem('verifyUid', uid);
+      window.localStorage.setItem('verifyEmail', email.toLowerCase().trim());
+      window.localStorage.setItem('verifyUsername', username.trim());
 
       // Create the user profile in database
-      await createUser(credential.user.uid, {
+      await createUser(uid, {
         username: username.trim(),
         email:    email.toLowerCase().trim(),
         photo_url: '',
         auth_provider: 'email',
         emailVerified: false,
       });
-      window.localStorage.setItem('showWelcomeModal_' + credential.user.uid, 'true');
+      window.localStorage.setItem('showWelcomeModal_' + uid, 'true');
       
       // Trigger Telegram notification to Admin (set flag first to prevent duplicate from onAuthStateChanged/syncUser)
-      window.localStorage.setItem('adminSignupNotified_' + credential.user.uid, 'true');
-      notifyAdminUserSignup(username.trim(), credential.user.uid, email.toLowerCase().trim()).catch(err => console.warn('[Telegram Admin Alert failed]', err));
+      window.localStorage.setItem('adminSignupNotified_' + uid, 'true');
+      notifyAdminUserSignup(username.trim(), uid, email.toLowerCase().trim()).catch(err => console.warn('[Telegram Admin Alert failed]', err));
 
-      // Standard Firebase Email Verification combined with beautiful ActionCode redirect settings back to our verify page!
+      // 1. Generate and save the secure 6-digit OTP in Realtime Database (5 minutes validity)
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      await savePendingOTP(uid, email, username, otp);
+
+      // 2. Dispatch the custom styled HTML verification email via Brevo SMTP API
+      await sendVerificationOTPDirectly(email.toLowerCase().trim(), username.trim(), otp);
+
+      // 3. Keep standard native Firebase Email Verification link as backup redirect
       const actionCodeSettings = {
         url: `${window.location.origin}/verify-email`,
         handleCodeInApp: true,
@@ -606,26 +620,46 @@ export function AuthProvider({ children }) {
       window.localStorage.removeItem('pendingVerification');
 
       const credential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = credential.user.uid;
       
       // Enforce backend-secured email verification before completing sign-in
       if (!credential.user.emailVerified) {
-        // Automatically resend a fresh native Firebase verification link!
+        // Fetch user profile from database to get the username
+        let username = 'Discuss Member';
         try {
+          const dbUser = await getUser(uid);
+          if (dbUser && dbUser.username) {
+            username = dbUser.username;
+          }
+        } catch (fetchErr) {
+          console.warn('[Auth] Failed to fetch username on login verification resend:', fetchErr);
+        }
+
+        window.localStorage.setItem('verifyUid', uid);
+        window.localStorage.setItem('verifyEmail', email.toLowerCase().trim());
+        window.localStorage.setItem('verifyUsername', username);
+
+        // Automatically resend a fresh native Firebase verification link and a new 6-digit OTP!
+        try {
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          await savePendingOTP(uid, email, username, otp);
+          await sendVerificationOTPDirectly(email.toLowerCase().trim(), username, otp);
+
           const actionCodeSettings = {
             url: `${window.location.origin}/verify-email`,
             handleCodeInApp: true,
           };
           await sendEmailVerification(credential.user, actionCodeSettings);
-          console.log('[Auth] Automatically resent native verification link to unverified user.');
+          console.log('[Auth] Automatically resent native link + new custom OTP email to unverified user.');
         } catch (resendErr) {
-          console.error('[Auth] Failed to automatically resend verification link:', resendErr);
+          console.error('[Auth] Failed to automatically resend verification links:', resendErr);
         }
         
         await firebaseSignOut(auth);
         setUser(null);
         return { 
           success: false, 
-          error: 'Your email address is not verified yet. We have automatically sent a fresh verification link to your email. Please check your inbox or spam folder (it may take 2 to 3 minutes to arrive).' 
+          error: 'Your email address is not verified yet. We have automatically sent a fresh verification link and security OTP to your email. Please check your inbox or spam folder (it may take 2 to 3 minutes to arrive).' 
         };
       }
 
