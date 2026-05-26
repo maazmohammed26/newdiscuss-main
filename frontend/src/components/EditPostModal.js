@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
 import { IoClose } from 'react-icons/io5';
@@ -132,6 +132,14 @@ export default function EditPostModal({ open, onClose, post, currentUser, onUpda
             <Label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[13px] md:text-[15px] font-medium flex items-center gap-2">
               <ImageIcon className="w-4 h-4 text-[#2563EB]" /> <span>Media</span>
             </Label>
+            {post?.type !== 'pulse' && (
+              <div className="mt-1 flex items-start gap-2 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 p-2.5 rounded-lg select-none">
+                <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
+                  Visibility Notice: Uploaded images will be public and visible to anyone viewing this post. Please ensure you have the appropriate rights to share this media.
+                </p>
+              </div>
+            )}
             <div className="mt-1.5">
               <MediaUpload 
                 type={post?.type === 'pulse' ? 'video' : 'image'} 

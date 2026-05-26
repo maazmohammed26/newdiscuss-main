@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MessageSquare, FolderGit2, Loader2, Hash, X, PlayCircle, Camera, Image as ImageIcon, Check } from 'lucide-react';
+import { MessageSquare, FolderGit2, Loader2, Hash, X, PlayCircle, Camera, Image as ImageIcon, Check, AlertCircle } from 'lucide-react';
 import { IoVideocam } from 'react-icons/io5';
 import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
@@ -169,6 +169,14 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 </>
               )}
             </Label>
+            {postType !== 'pulse' && (
+              <div className="mt-1 flex items-start gap-2 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 p-2.5 rounded-lg select-none">
+                <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed text-blue-800 dark:text-blue-300 font-medium">
+                  Visibility Notice: Uploaded images will be public and visible to anyone viewing this post. Please ensure you have the appropriate rights to share this media.
+                </p>
+              </div>
+            )}
             <MediaUpload 
               type={postType === 'pulse' ? 'video' : 'image'} 
               folder={postType === 'pulse' ? 'pulse' : 'posts'}

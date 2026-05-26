@@ -10,6 +10,8 @@ import ExpandableText from '@/components/ExpandableText';
 import UrlPreviewCard, { extractFirstUrl } from '@/components/UrlPreviewCard';
 import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
+import MediaCarousel from '@/components/MediaCarousel';
+import FullscreenMedia from '@/components/FullscreenMedia';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +55,8 @@ export default function PostDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [externalLink, setExternalLink] = useState(null);
   const [previewUser, setPreviewUser] = useState(null);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
   useEffect(() => {
     if (postId) {
@@ -245,6 +249,19 @@ export default function PostDetailPage() {
                   </ExpandableText>
                 </div>
 
+                {/* Media Carousel */}
+                {post.media && post.media.length > 0 && (
+                  <div className="mt-3">
+                    <MediaCarousel 
+                      media={post.media} 
+                      onMediaClick={(item, index) => {
+                        setSelectedMediaIndex(index);
+                        setShowFullscreen(true);
+                      }}
+                    />
+                  </div>
+                )}
+
                 {/* URL Preview Card */}
                 {extractFirstUrl(post.content) && (
                   <div className="mt-3">
@@ -313,6 +330,14 @@ export default function PostDetailPage() {
       <ShareModal open={showShare} onClose={() => setShowShare(false)} post={post} />
       {externalLink && <ExternalLinkModal open={true} onClose={() => setExternalLink(null)} url={externalLink.url} isHttp={externalLink.isHttp} />}
       {previewUser && <UserPreviewModal open={true} onClose={() => setPreviewUser(null)} userId={previewUser} />}
+
+      {showFullscreen && (
+        <FullscreenMedia 
+          media={post.media} 
+          initialIndex={selectedMediaIndex} 
+          onClose={() => setShowFullscreen(false)} 
+        />
+      )}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155]">
