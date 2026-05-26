@@ -634,10 +634,13 @@ export function AuthProvider({ children }) {
       return { success: true };
     } catch (error) {
       console.error('[Auth] Login error:', error);
-      if (error.code === 'auth/user-not-found')
-        return { success: false, error: 'No account found with this email' };
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')
-        return { success: false, error: 'Incorrect password' };
+      if (
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-credential'
+      ) {
+        return { success: false, error: 'Incorrect email or password' };
+      }
       if (error.code === 'auth/invalid-email')
         return { success: false, error: 'Invalid email address' };
       if (error.code === 'auth/too-many-requests')
