@@ -12,6 +12,7 @@ import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
 import MediaCarousel from '@/components/MediaCarousel';
 import FullscreenMedia from '@/components/FullscreenMedia';
+import GuestAuthModal from '@/components/GuestAuthModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,6 +58,7 @@ export default function PostDetailPage() {
   const [previewUser, setPreviewUser] = useState(null);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     if (postId) {
@@ -86,6 +88,10 @@ export default function PostDetailPage() {
   };
 
   const handleVote = async (voteType) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     if (voting || !post) return;
     setVoting(true);
     try {
@@ -323,13 +329,19 @@ export default function PostDetailPage() {
           )}
 
           {/* Comments always visible on detail page */}
-          <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={user} />
+          <CommentsSection 
+            postId={post.id} 
+            postAuthorId={post.author_id} 
+            currentUser={user} 
+            onAuthRequired={() => setShowAuthModal(true)} 
+          />
         </div>
       </div>
 
       <ShareModal open={showShare} onClose={() => setShowShare(false)} post={post} />
       {externalLink && <ExternalLinkModal open={true} onClose={() => setExternalLink(null)} url={externalLink.url} isHttp={externalLink.isHttp} />}
       {previewUser && <UserPreviewModal open={true} onClose={() => setPreviewUser(null)} userId={previewUser} />}
+      <GuestAuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
       {showFullscreen && (
         <FullscreenMedia 
