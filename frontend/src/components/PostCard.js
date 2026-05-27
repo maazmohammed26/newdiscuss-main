@@ -433,7 +433,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
 
           {/* Media Carousel */}
           {post.media && post.media.length > 0 && (
-            <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-3" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
               <MediaCarousel 
                 media={post.media} 
                 onMediaClick={(item, index) => {
@@ -482,7 +482,10 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       </div>
 
       {/* Actions bar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+      <div 
+        onPointerDown={(e) => e.stopPropagation()}
+        className="flex items-center gap-2 px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+      >
         <button 
           data-testid={`post-upvote-btn-${post.id}`} 
           onClick={() => handleVote('up')} 
@@ -567,7 +570,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         </button>
       </div>
 
-      {showComments && <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} onAuthRequired={() => setShowAuthModal(true)} />}
+      {showComments && (
+        <div onPointerDown={(e) => e.stopPropagation()}>
+          <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} onAuthRequired={() => setShowAuthModal(true)} />
+        </div>
+      )}
       <ShareModal open={showShare} onClose={() => setShowShare(false)} post={post} />
       <EditPostModal open={showEditModal} onClose={() => setShowEditModal(false)} post={post} currentUser={currentUser} onUpdated={onUpdated} />
 
