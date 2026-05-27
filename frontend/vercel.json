@@ -20,7 +20,7 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!__/auth/).*)",
       "headers": [
         {
           "key": "Strict-Transport-Security",
@@ -61,19 +61,6 @@
         {
           "key": "X-DNS-Prefetch-Control",
           "value": "off"
-        }
-      ]
-    },
-    {
-      "source": "/__/auth/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "SAMEORIGIN"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; style-src 'self' 'unsafe-inline' https: http:; font-src 'self' https: http: data:; img-src * data: blob:; media-src * data: blob:; connect-src * data: blob:; frame-src *; frame-ancestors 'self' https://discuss-13fbc.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         }
       ]
     },
