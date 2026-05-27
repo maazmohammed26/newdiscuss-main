@@ -585,9 +585,17 @@ export default function FeedPage() {
                   ) : (
                     /* Swipeable Deck container */
                     <div className="space-y-4">
-                      {/* Navigation Guideline Note */}
-                      <div className="flex items-center gap-2 justify-center mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] py-2.5 px-4 text-[11px] md:text-[12px] font-mono text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] select-none text-center leading-normal max-w-xl mx-auto shadow-card">
-                        <span>💡 <b>Swipe RIGHT</b> or click <b>Skip</b> for next post | <b>Swipe LEFT</b> or click <b>Prev</b> for previous post</span>
+                      {/* High-Fidelity Monospace System Navigation Tutorial Note */}
+                      <div className="flex items-start sm:items-center gap-3.5 justify-center mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-2xl p-4 shadow-card select-none max-w-xl mx-auto border-l-4 border-l-[#2563EB] discuss:border-l-[#EF4444]">
+                        <div className="p-2 rounded-xl bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] shrink-0 flex items-center justify-center">
+                          <Cpu className="w-4 h-4 animate-pulse" />
+                        </div>
+                        <div className="text-[11.5px] md:text-[12.5px] font-mono text-neutral-600 dark:text-neutral-300 discuss:text-[#E5E7EB] leading-relaxed flex-1">
+                          <span className="font-extrabold uppercase tracking-widest text-[#2563EB] discuss:text-[#EF4444] block mb-0.5 select-none">
+                            ◈ DECK_NAVIGATION_ACTIVE
+                          </span>
+                          Swipe card <span className="font-extrabold text-[#10B981]">RIGHT</span> or tap <b>Skip</b> for next post | Swipe <span className="font-extrabold text-[#EF4444]">LEFT</span> or tap <b>Prev</b> to return
+                        </div>
                       </div>
 
                       <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6">
