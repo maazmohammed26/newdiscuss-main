@@ -53,50 +53,76 @@ export default function NotificationToggle({ compact = false }) {
   const handleToggle = async () => {
     if (toggling) return;
     
-    if (isIOS() && !isPWAInstalled()) {
-      setShowIOSHelp(true);
-      toast.error('Install the app first', {
-        description: 'Add Discuss to your Home Screen to enable notifications'
-      });
-      return;
-    }
+    const isAndroidAppWrapper = window.median !== undefined || navigator.userAgent.includes('Android');
     
-    if (isIOS() && getIOSVersion() < 16.4) {
-      toast.error('iOS 16.4+ required', {
-        description: 'Update your iOS to enable push notifications'
-      });
-      return;
-    }
-    
-    if (!isPushSupported()) {
-      toast.error('Not supported', {
-        description: 'Push notifications are not supported on this browser'
-      });
-      return;
+    if (!isAndroidAppWrapper) {
+      if (isIOS() && !isPWAInstalled()) {
+        setShowIOSHelp(true);
+        toast.error('Install the app first', {
+          description: 'Add Discuss to your Home Screen to enable notifications'
+        });
+        return;
+      }
+      
+      if (isIOS() && getIOSVersion() < 16.4) {
+        toast.error('iOS 16.4+ required', {
+          description: 'Update your iOS to enable push notifications'
+        });
+        return;
+      }
+      
+      if (!isPushSupported()) {
+        toast.error('Not supported', {
+          description: 'Push notifications are not supported on this browser'
+        });
+        return;
+      }
     }
     
     setToggling(true);
     
     try {
       if (!enabled) {
-        const subscription = await registerPushSubscription();
-        if (subscription) {
+        if (isAndroidAppWrapper) {
+          // Inside Android APK - simply save preferences locally and sync
+          localStorage.setItem('discuss_notifications_enabled', 'true');
           setEnabled(true);
           toast.success('Notifications enabled! 🔔');
+          
+          // Request native permissions via Median bridge if OneSignal is initialized
+          if (window.median && window.median.onesignal) {
+            try {
+              window.median.onesignal.register();
+            } catch (e) {
+              console.warn('[OneSignal] Native permission register call failed:', e.message);
+            }
+          }
         } else {
-          const permission = getPermissionStatus();
-          if (permission === 'denied') {
-            toast.error('Permission denied', {
-              description: 'Please enable notifications in your browser settings'
-            });
+          const subscription = await registerPushSubscription();
+          if (subscription) {
+            setEnabled(true);
+            toast.success('Notifications enabled! 🔔');
           } else {
-            toast.error('Could not enable notifications');
+            const permission = getPermissionStatus();
+            if (permission === 'denied') {
+              toast.error('Permission denied', {
+                description: 'Please enable notifications in your browser settings'
+              });
+            } else {
+              toast.error('Could not enable notifications');
+            }
           }
         }
       } else {
-        await unsubscribePush();
-        setEnabled(false);
-        toast.success('Notifications disabled');
+        if (isAndroidAppWrapper) {
+          localStorage.setItem('discuss_notifications_enabled', 'false');
+          setEnabled(false);
+          toast.success('Notifications disabled');
+        } else {
+          await unsubscribePush();
+          setEnabled(false);
+          toast.success('Notifications disabled');
+        }
       }
     } catch (error) {
       console.error('Error toggling notifications:', error);

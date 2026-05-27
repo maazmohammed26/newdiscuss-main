@@ -31,16 +31,20 @@ export function urlBase64ToUint8Array(base64String) {
 
 // Check if push notifications are supported
 export const isPushSupported = () => {
-  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+    return true; // Supported natively via OneSignal in Android APK
+  }
+  return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 };
 
 // Check if iOS
 export const isIOS = () => {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  return typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 };
 
 // Check if app is installed as PWA
 export const isPWAInstalled = () => {
+  if (typeof window === 'undefined') return false;
   return window.matchMedia('(display-mode: standalone)').matches ||
          window.navigator.standalone === true ||
          document.referrer.includes('android-app://');
@@ -48,6 +52,7 @@ export const isPWAInstalled = () => {
 
 // Check iOS version
 export const getIOSVersion = () => {
+  if (typeof window === 'undefined') return 0;
   const match = navigator.userAgent.match(/OS (\d+)_(\d+)/);
   if (match) {
     return parseFloat(`${match[1]}.${match[2]}`);
@@ -57,6 +62,9 @@ export const getIOSVersion = () => {
 
 // Check if push is available on this device
 export const canUsePush = () => {
+  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+    return true;
+  }
   if (!isPushSupported()) return false;
   if (isIOS()) {
     return isPWAInstalled() && getIOSVersion() >= 16.4;
@@ -66,15 +74,23 @@ export const canUsePush = () => {
 
 // Get current permission status
 export const getPermissionStatus = () => {
+  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+    return 'granted';
+  }
   if (!isPushSupported()) return 'unsupported';
-  return Notification.permission;
+  return 'Notification' in window ? Notification.permission : 'denied';
 };
 
 // ============ LOCAL STORAGE HELPERS ============
 
 // Check if notifications are enabled for user
 export const isNotificationsEnabled = () => {
-  return localStorage.getItem(NOTIFICATION_ENABLED_KEY) === 'true' && 
+  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+    return localStorage.getItem(NOTIFICATION_ENABLED_KEY) === 'true';
+  }
+  return typeof window !== 'undefined' && 
+         localStorage.getItem(NOTIFICATION_ENABLED_KEY) === 'true' && 
+         'Notification' in window && 
          Notification.permission === 'granted';
 };
 
@@ -298,7 +314,7 @@ export const unsubscribePush = async () => {
 
 // Show notification via service worker
 export const showNotification = async (title, options = {}) => {
-  if (Notification.permission !== 'granted') return false;
+  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return false;
   
   try {
     const registration = await navigator.serviceWorker.ready;
@@ -313,8 +329,11 @@ export const showNotification = async (title, options = {}) => {
   } catch (error) {
     // Fallback to regular notification
     try {
-      new Notification(title, options);
-      return true;
+      if ('Notification' in window) {
+        new Notification(title, options);
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
