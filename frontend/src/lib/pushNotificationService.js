@@ -6,6 +6,7 @@ export const VAPID_PUBLIC_KEY = 'BD3rYWCGmkrNvyQ8t2GzPdnUySdy4WnEZwm51t_LLIApOK5
 
 // Local storage keys
 const NOTIFICATION_ENABLED_KEY = 'discuss_notifications_enabled';
+const NOTIFICATION_PREVIEW_KEY = 'discuss_notification_preview_enabled';
 const CHAT_COOLDOWN_KEY = 'discuss_chat_cooldowns';
 const SENT_NOTIFICATIONS_KEY = 'discuss_sent_notifications';
 
@@ -82,6 +83,24 @@ export const setNotificationsEnabled = (enabled) => {
   localStorage.setItem(NOTIFICATION_ENABLED_KEY, enabled ? 'true' : 'false');
 };
 
+// Check if notification details/previews are enabled
+export const isNotificationPreviewEnabled = () => {
+  return localStorage.getItem(NOTIFICATION_PREVIEW_KEY) !== 'false';
+};
+
+// Set notification preview enabled status (persisted locally and synced with RTDB)
+export const setNotificationPreviewEnabled = async (enabled, uid = null) => {
+  localStorage.setItem(NOTIFICATION_PREVIEW_KEY, enabled ? 'true' : 'false');
+  if (uid) {
+    try {
+      const { updateUser } = await import('./db');
+      await updateUser(uid, { notificationPreviewEnabled: enabled });
+    } catch (e) {
+      console.warn('[OneSignal] Failed to sync notification preview preference with database:', e.message);
+    }
+  }
+};
+
 // Check chat cooldown (4 hours)
 export const canSendChatNotification = (chatId) => {
   try {
@@ -124,6 +143,89 @@ export const markNotificationSent = (type, id) => {
     }
     localStorage.setItem(SENT_NOTIFICATIONS_KEY, JSON.stringify(sent));
   } catch {}
+};
+
+// ============ ONESIGNAL MULTI-PLATFORM BRIDGE SETUPS ============
+
+// Synchronize logged-in user session with OneSignal Native Android/iOS Wrapper
+export const syncOneSignalUser = (uid, username) => {
+  if (window.median && window.median.onesignal) {
+    try {
+      window.median.onesignal.login(uid);
+      window.median.onesignal.tags.set({
+        "is_android": "true",
+        "username": username || "user"
+      });
+      console.log(`[OneSignal] Logged in successfully: uid=${uid}, username=${username}`);
+    } catch (e) {
+      console.warn('[OneSignal] Failed to sync user identity through Median Bridge:', e.message);
+    }
+  }
+};
+
+// Terminate OneSignal identity session on user logout
+export const logoutOneSignalUser = () => {
+  if (window.median && window.median.onesignal) {
+    try {
+      window.median.onesignal.logout();
+      console.log('[OneSignal] Logged out successfully.');
+    } catch (e) {
+      console.warn('[OneSignal] Failed to logout through Median Bridge:', e.message);
+    }
+  }
+};
+
+// Deliver OneSignal Push Notification directly from sender's client-side using REST API
+export const sendOneSignalNotification = async (targetUserId, title, bodyText, data = {}) => {
+  const apiKey = process.env.REACT_APP_ONESIGNAL_REST_API_KEY || 'os_v2_app_xxxxxxxxxxxxxxxx';
+  const appId = '280791b6-7711-4b32-8897-449efe155f2b';
+
+  // If the secret key hasn't been set by the developer yet, we exit gracefully
+  if (!apiKey || apiKey.startsWith('os_v2_app_xxx')) {
+    console.warn('[OneSignal] REST API key is missing. Skipping direct mobile push alert delivery.');
+    return false;
+  }
+
+  // Respect the privacy settings of the receiver from their database profile
+  let isPreview = true;
+  try {
+    const { getUser } = await import('./db');
+    const receiverProfile = await getUser(targetUserId);
+    if (receiverProfile && receiverProfile.notificationPreviewEnabled !== undefined) {
+      isPreview = receiverProfile.notificationPreviewEnabled;
+    }
+  } catch (err) {
+    console.warn('[OneSignal] Failed to fetch receiver privacy settings, falling back to sender default:', err.message);
+    isPreview = isNotificationPreviewEnabled();
+  }
+  
+  const maskedBody = isPreview ? bodyText : "New secure alert received. Open app to view.";
+
+  try {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${apiKey}`
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        include_aliases: {
+          external_id: [targetUserId]
+        },
+        target_channel: "push",
+        headings: { en: title },
+        contents: { en: maskedBody },
+        data: data
+      })
+    });
+    const result = await response.json();
+    console.log('[OneSignal] Direct push notification result:', result);
+    return result.id !== undefined;
+  } catch (error) {
+    console.error('[OneSignal] Direct push send error:', error);
+    return false;
+  }
 };
 
 // ============ PERMISSION & REGISTRATION ============
@@ -226,10 +328,13 @@ export const notifyNewPost = async (post) => {
   if (!isNotificationsEnabled()) return;
   if (wasNotificationSent('post', post.id)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview 
+    ? (post.type === 'project' ? `New project: ${(post.title || '').substring(0, 50) || 'Check it out!'}` : `New discussion: ${(post.content || '').substring(0, 50) || 'Join the conversation!'}`)
+    : "A new post has been published.";
+
   await showNotification('New on Discuss', {
-    body: post.type === 'project'
-      ? `New project: ${(post.title || '').substring(0, 50) || 'Check it out!'}`
-      : `New discussion: ${(post.content || '').substring(0, 50) || 'Join the conversation!'}`,
+    body: bodyText,
     tag: `post-${post.id}`,
     data: { url: `/post/${post.id}`, type: 'post' }
   });
@@ -242,8 +347,13 @@ export const notifyChatMessage = async (chatId, senderName) => {
   if (!isNotificationsEnabled()) return;
   if (!canSendChatNotification(chatId)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? (senderName ? `${senderName} sent you a message` : 'You have a new message')
+    : "You received a new direct message.";
+
   await showNotification('New message in your chat', {
-    body: senderName ? `${senderName} sent you a message` : 'You have a new message',
+    body: bodyText,
     tag: `chat-${chatId}`,
     data: { url: `/chat/${chatId}`, type: 'chat' }
   });
@@ -256,8 +366,13 @@ export const notifyFriendRequest = async (fromUserId, fromUsername) => {
   if (!isNotificationsEnabled()) return;
   if (wasNotificationSent('friend_request', fromUserId)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? `${fromUsername || 'Someone'} wants to connect with you`
+    : "You have received a new friend request.";
+
   await showNotification('New Friend Request', {
-    body: `${fromUsername || 'Someone'} wants to connect with you`,
+    body: bodyText,
     tag: `friend-request-${fromUserId}`,
     data: { url: '/profile', type: 'friend' }
   });
@@ -270,8 +385,13 @@ export const notifyFriendAccepted = async (fromUserId, fromUsername) => {
   if (!isNotificationsEnabled()) return;
   if (wasNotificationSent('friend_accepted', fromUserId)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? `${fromUsername || 'Someone'} accepted your friend request`
+    : "Your friend request has been approved.";
+
   await showNotification('Friend Request Accepted', {
-    body: `${fromUsername || 'Someone'} accepted your friend request`,
+    body: bodyText,
     tag: `friend-accepted-${fromUserId}`,
     data: { url: `/user/${fromUserId}`, type: 'friend' }
   });
@@ -284,8 +404,13 @@ export const notifyGroupMessage = async (groupId, groupName, senderName) => {
   if (!isNotificationsEnabled()) return;
   if (!canSendChatNotification(groupId)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? (senderName ? `${senderName} sent a message` : 'You have a new group message')
+    : `New message posted in ${groupName || 'group'}.`;
+
   await showNotification(`New message in ${groupName || 'group'}`, {
-    body: senderName ? `${senderName} sent a message` : 'You have a new group message',
+    body: bodyText,
     tag: `group-chat-${groupId}`,
     data: { url: `/group/${groupId}`, type: 'group_chat' }
   });
@@ -298,8 +423,13 @@ export const notifyGroupJoinRequest = async (groupId, groupName, fromUsername) =
   if (!isNotificationsEnabled()) return;
   if (wasNotificationSent(`group_request_${groupId}`, fromUsername)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? `${fromUsername || 'Someone'} requested to join ${groupName || 'your group'}`
+    : "A new user has requested to join your group.";
+
   await showNotification('New Group Join Request', {
-    body: `${fromUsername || 'Someone'} requested to join ${groupName || 'your group'}`,
+    body: bodyText,
     tag: `group-request-${groupId}-${fromUsername}`,
     data: { url: `/join-requests`, type: 'group_request' }
   });
@@ -312,8 +442,13 @@ export const notifyGroupRequestAccepted = async (groupId, groupName) => {
   if (!isNotificationsEnabled()) return;
   if (wasNotificationSent('group_accepted', groupId)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? `Your request to join ${groupName || 'the group'} was accepted`
+    : "Your group join request has been approved.";
+
   await showNotification('Group Request Accepted', {
-    body: `Your request to join ${groupName || 'the group'} was accepted`,
+    body: bodyText,
     tag: `group-accepted-${groupId}`,
     data: { url: `/group/${groupId}`, type: 'group' }
   });
@@ -326,8 +461,13 @@ export const notifyNewComment = async (postId, fromUsername) => {
   if (!isNotificationsEnabled()) return;
   if (wasNotificationSent('comment', postId)) return;
   
+  const isPreview = isNotificationPreviewEnabled();
+  const bodyText = isPreview
+    ? `${fromUsername || 'Someone'} commented on your post`
+    : "A new comment was posted on your discussion.";
+
   await showNotification('New Comment', {
-    body: `${fromUsername || 'Someone'} commented on your post`,
+    body: bodyText,
     tag: `comment-${postId}`,
     data: { url: `/post/${postId}`, type: 'comment' }
   });
@@ -342,6 +482,8 @@ export default {
   canUsePush,
   getPermissionStatus,
   isNotificationsEnabled,
+  isNotificationPreviewEnabled,
+  setNotificationPreviewEnabled,
   requestPermission,
   registerPushSubscription,
   unsubscribePush,
@@ -349,5 +491,8 @@ export default {
   notifyNewPost,
   notifyChatMessage,
   notifyFriendRequest,
-  notifyFriendAccepted
+  notifyFriendAccepted,
+  syncOneSignalUser,
+  logoutOneSignalUser,
+  sendOneSignalNotification
 };

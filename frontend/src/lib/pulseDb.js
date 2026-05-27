@@ -125,6 +125,15 @@ export const togglePulseLike = async (pulseId, userId) => {
           const likerUsername = userSnap.exists() ? (userSnap.val().username || 'Someone') : 'Someone';
           notifyTelegramLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Telegram]', e));
           notifyDiscordLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Discord]', e));
+          
+          import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
+            sendOneSignalNotification(
+              pulseData.authorId,
+              `New Like on Your Pulse`,
+              `@${likerUsername} liked your pulse video.`,
+              { url: `/pulse`, type: 'pulse_like' }
+            );
+          }).catch(e => console.warn('[OneSignal] Pulse like alert failed:', e.message));
         }
       } catch (e) {
         console.error('Error sending pulse like notification:', e);

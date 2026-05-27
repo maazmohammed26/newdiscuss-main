@@ -547,6 +547,15 @@ export const toggleVote = async (postId, voteType, userId) => {
           const likerUsername = userSnap.val()?.username || 'Someone';
           notifyTelegramLike(authorId, likerUsername, 'post').catch(e => console.error('[Telegram]', e));
           notifyDiscordLike(authorId, likerUsername, 'post').catch(e => console.error('[Discord]', e));
+          
+          import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
+            sendOneSignalNotification(
+              authorId,
+              `New Like on Your Post`,
+              `@${likerUsername} liked your post.`,
+              { url: `/post/${postId}`, type: 'like' }
+            );
+          }).catch(e => console.warn('[OneSignal] Like alert failed:', e.message));
         }
       } catch (e) {
         console.error('Error sending like notification:', e);

@@ -341,15 +341,31 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
     const lastMsgText = (text || '').trim() || (location ? '📍 Location' : (media?.length > 0 ? '📷 Media' : ''));
     await update(groupRef, { lastMessage: { text: lastMsgText, sender: senderId, timestamp } });
     
+    let senderUsername = 'Someone';
+    try {
+      const senderProfile = await getUser(senderId);
+      if (senderProfile?.username) senderUsername = senderProfile.username;
+    } catch {}
+
     const membersSnap = await get(ref(fourthDatabase, `groups/${groupId}/members`));
     if (membersSnap.exists()) {
       const members = membersSnap.val();
+      const groupName = groupSnap.exists() ? (groupSnap.val().name || 'group') : 'group';
       for (const userId of Object.keys(members)) {
         const userGroupRef = ref(fourthDatabase, `userGroups/${userId}/${groupId}`);
         if (userId !== senderId) {
           const userGroupSnap = await get(userGroupRef);
           const currentUnread = userGroupSnap.exists() ? (userGroupSnap.val().unreadCount || 0) : 0;
           await update(userGroupRef, { lastMessage: lastMsgText, lastMessageTime: timestamp, unreadCount: currentUnread + 1 });
+          
+          import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
+            sendOneSignalNotification(
+              userId,
+              `New in ${groupName}`,
+              `@${senderUsername}: "${lastMsgText.substring(0, 60)}"`,
+              { url: `/group/${groupId}`, type: 'group_chat' }
+            );
+          }).catch(() => {});
         } else {
           await update(userGroupRef, { lastMessage: lastMsgText, lastMessageTime: timestamp, unreadCount: 0 });
         }
@@ -793,6 +809,23 @@ export const acceptJoinRequest = async (groupId, userId, acceptedBy) => {
     const requestRef = ref(fourthDatabase, `groups/${groupId}/joinRequests/${userId}`);
     await update(requestRef, { status: REQUEST_STATUS.ACCEPTED, acceptedAt: new Date().toISOString(), acceptedBy });
     await addMemberToGroup(groupId, userId, MEMBER_ROLE.MEMBER, acceptedBy);
+    
+    // Get group info to display the group name in push notification (fire-and-forget)
+    try {
+      const groupSnap = await get(ref(fourthDatabase, `groups/${groupId}`));
+      if (groupSnap.exists()) {
+        const groupName = groupSnap.val().name || 'group';
+        import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
+          sendOneSignalNotification(
+            userId,
+            `Group Join Request Approved`,
+            `Your request to join "${groupName}" was accepted! 🎉`,
+            { url: `/group/${groupId}`, type: 'group' }
+          );
+        }).catch(() => {});
+      }
+    } catch {}
+
     return { success: true };
   } catch (error) {
     console.error('Error accepting join request:', error);

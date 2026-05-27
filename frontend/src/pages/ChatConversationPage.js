@@ -530,6 +530,16 @@ export default function ChatConversationPage() {
         notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
         notifyDiscordDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
         
+        // Trigger OneSignal Push Notification (native mobile push)
+        import('@/lib/pushNotificationService').then(({ sendOneSignalNotification }) => {
+          sendOneSignalNotification(
+            otherUserId,
+            `New message from @${user?.username || 'user'}`,
+            messageText || (isImage ? "📷 Sent an image" : "Sent a message"),
+            { url: `/chat/${chatId}`, type: 'chat' }
+          );
+        }).catch(err => console.error('[OneSignal] Push trigger failed:', err));
+        
         // Remove from optimistic list since it's successfully written
         setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
       } catch (error) {

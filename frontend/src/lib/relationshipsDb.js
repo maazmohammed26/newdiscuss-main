@@ -125,6 +125,15 @@ export const sendFriendRequest = async (fromUserId, toUserId, fromUsername = nul
     notifyTelegramFriendRequest(toUserId, fromUsername).catch(e => console.error('[Telegram]', e));
     notifyDiscordFriendRequest(toUserId, fromUsername).catch(e => console.error('[Discord]', e));
     
+    import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
+      sendOneSignalNotification(
+        toUserId,
+        `New Friend Request`,
+        `@${fromUsername || 'Someone'} sent you a friend request.`,
+        { url: '/profile', type: 'friend' }
+      );
+    }).catch(e => console.warn('[OneSignal] Friend request alert failed:', e.message));
+    
     return { success: true };
   } catch (error) {
     console.error('Error sending friend request:', error);
@@ -167,6 +176,15 @@ export const acceptFriendRequest = async (currentUserId, fromUserId, currentUser
     // Notify (fire-and-forget)
     notifyTelegramFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Telegram]', e));
     notifyDiscordFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Discord]', e));
+    
+    import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
+      sendOneSignalNotification(
+        fromUserId,
+        `Friend Request Accepted`,
+        `@${currentUsername || 'Someone'} accepted your friend request.`,
+        { url: `/user/${currentUserId}`, type: 'friend' }
+      );
+    }).catch(e => console.warn('[OneSignal] Friend acceptance alert failed:', e.message));
     
     return { success: true };
   } catch (error) {

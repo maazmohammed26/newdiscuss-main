@@ -147,6 +147,15 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
       if (comment.author_id && currentUser?.id !== comment.author_id) {
         notifyTelegramReply(comment.author_id, currentUser?.username, text).catch(() => {});
         notifyDiscordReply(comment.author_id, currentUser?.username, text).catch(() => {});
+        
+        import('@/lib/pushNotificationService').then(({ sendOneSignalNotification }) => {
+          sendOneSignalNotification(
+            comment.author_id,
+            `New Reply on Your Comment`,
+            `@${currentUser?.username || 'Someone'} replied: "${text.substring(0, 60)}"`,
+            { url: `/post/${postId}`, type: 'comment_reply' }
+          );
+        }).catch(() => {});
       }
     } catch (err) {
       toast.error('Failed to add reply');
@@ -374,6 +383,15 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
       if (postAuthorId && currentUser?.id !== postAuthorId) {
         notifyTelegramComment(postAuthorId, currentUser?.username, text).catch(() => {});
         notifyDiscordComment(postAuthorId, currentUser?.username, text).catch(() => {});
+        
+        import('@/lib/pushNotificationService').then(({ sendOneSignalNotification }) => {
+          sendOneSignalNotification(
+            postAuthorId,
+            `New Comment on Your Post`,
+            `@${currentUser?.username || 'Someone'} commented: "${text.substring(0, 60)}"`,
+            { url: `/post/${postId}`, type: 'comment' }
+          );
+        }).catch(() => {});
       }
     } catch (err) {
       toast.error(err.message || 'Failed to add comment');

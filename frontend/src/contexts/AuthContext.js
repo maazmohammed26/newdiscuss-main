@@ -754,6 +754,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // ── Sync OneSignal user session on auth status changes ──────────────────────
+  useEffect(() => {
+    if (user?.id) {
+      // User is logged in
+      import('@/lib/pushNotificationService').then(({ syncOneSignalUser }) => {
+        syncOneSignalUser(user.id, user.username);
+      }).catch(err => console.error('[Auth] Failed to load pushNotificationService for OneSignal:', err));
+    } else if (user === null) {
+      // User is logged out
+      import('@/lib/pushNotificationService').then(({ logoutOneSignalUser }) => {
+        logoutOneSignalUser();
+      }).catch(err => console.error('[Auth] Failed to load pushNotificationService for OneSignal logout:', err));
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
