@@ -30,7 +30,7 @@ const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
   };
 
   return (
-    <div className="fullscreen-overlay" onClick={onClose}>
+    <div className="fullscreen-overlay" onClick={onClose} onPointerDown={(e) => e.stopPropagation()}>
       <div className="fullscreen-header">
         <span className="media-count">
           {Array.isArray(media) ? `${currentIndex + 1} / ${media.length}` : ''}
