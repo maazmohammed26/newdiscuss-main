@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { Radar, Newspaper, Briefcase, ChevronRight, Code } from 'lucide-react';
+import { Radar, Newspaper, Briefcase, ChevronRight, Code, Bookmark } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
@@ -53,6 +53,15 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
       requiresAuth: false,
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10'
+    },
+    {
+      title: 'Bookmarks',
+      description: 'Your saved developer posts',
+      icon: Bookmark,
+      path: '/bookmarks',
+      requiresAuth: true,
+      color: 'text-yellow-500',
+      bg: 'bg-yellow-500/10'
     }
   ];
 

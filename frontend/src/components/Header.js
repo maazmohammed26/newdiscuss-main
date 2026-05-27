@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
-import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code } from 'lucide-react';
+import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -198,6 +198,33 @@ export default function Header() {
                         </h4>
                         <p className="text-[10px] text-neutral-400 font-medium font-sans">
                           Run and edit code
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Bookmarks */}
+                  <button
+                    onClick={() => {
+                      setShowDrawer(false);
+                      if (!user) {
+                        navigate('/login');
+                      } else {
+                        navigate('/bookmarks');
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-yellow-500/5 hover:bg-yellow-500/10 border border-yellow-500/10 text-left transition-all duration-200 group active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-yellow-500/10 text-yellow-500 group-hover:scale-110 transition-transform">
+                        <Bookmark className="w-4.5 h-4.5 animate-pulse-subtle" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[13.5px] text-neutral-800 dark:text-neutral-100 discuss:text-neutral-100 font-mono">
+                          Bookmarks
+                        </h4>
+                        <p className="text-[10px] text-neutral-400 font-medium font-sans">
+                          Your saved developer posts
                         </p>
                       </div>
                     </div>

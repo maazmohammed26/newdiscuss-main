@@ -16,8 +16,9 @@ import UserSearchResult from '@/components/UserSearchResult';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, MessageSquare, FolderGit2, WifiOff, Loader2, Search, X, Hash, TrendingUp, Users, PlayCircle, Cpu } from 'lucide-react';
+import { Plus, MessageSquare, FolderGit2, WifiOff, Loader2, Search, X, Hash, TrendingUp, Users, PlayCircle, Cpu, Layers, RotateCcw, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const MemoPostCard = memo(PostCard);
 
@@ -38,6 +39,74 @@ export default function FeedPage() {
   const [userSearchResults, setUserSearchResults] = useState([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [loadedFromCache, setLoadedFromCache] = useState(false);
+
+  // Tinder-style slide view deck states
+  const [viewMode, setViewMode] = useState(() => {
+    return sessionStorage.getItem('discuss_feed_view_mode') || 'list';
+  });
+  
+  const [slideIndex, setSlideIndex] = useState(() => {
+    const saved = sessionStorage.getItem(`discuss_slide_index_${activeTab}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  // Track page reload to reset stack indices back to 0
+  useEffect(() => {
+    const perf = window.performance?.getEntriesByType('navigation')[0];
+    if (perf?.type === 'reload') {
+      sessionStorage.removeItem('discuss_slide_index_discussion');
+      sessionStorage.removeItem('discuss_slide_index_project');
+      setSlideIndex(0);
+    }
+  }, []);
+
+  // Save viewMode preference to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('discuss_feed_view_mode', viewMode);
+  }, [viewMode]);
+
+  // Save slideIndex preference to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(`discuss_slide_index_${activeTab}`, slideIndex);
+  }, [slideIndex, activeTab]);
+
+  // Reset slideIndex state dynamically when switching tabs
+  useEffect(() => {
+    const saved = sessionStorage.getItem(`discuss_slide_index_${activeTab}`);
+    setSlideIndex(saved ? parseInt(saved, 10) : 0);
+  }, [activeTab]);
+
+  const [swipeDirection, setSwipeDirection] = useState('right');
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-25, 25]);
+  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0.5, 1, 1, 1, 0.5]);
+
+  const handleNext = () => {
+    if (slideIndex < filteredPosts.length) {
+      setSlideIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (slideIndex > 0) {
+      setSlideIndex(prev => prev - 1);
+    }
+  };
+
+  const handleStartOver = () => {
+    setSlideIndex(0);
+  };
+
+  const handleDragEnd = (event, info) => {
+    const threshold = 120;
+    if (info.offset.x > threshold) {
+      setSwipeDirection('right');
+      handleNext();
+    } else if (info.offset.x < -threshold) {
+      setSwipeDirection('left');
+      handleNext();
+    }
+  };
 
   // Load cached posts first for instant display, then fetch fresh data
   useEffect(() => {
@@ -266,54 +335,92 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Search bar */}
-            <div className="mb-4">
-              {/* Search type toggle */}
-              <div className="flex gap-2 mb-2">
-                <button
-                  onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
-                    searchType === 'posts'
-                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
-                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-                  }`}
-                >
-                  <Hash className="w-3 h-3" />
-                  Posts
-                </button>
-                <button
-                  onClick={() => setSearchType('users')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all ${
-                    searchType === 'users'
-                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
-                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-                  }`}
-                >
-                  <Users className="w-3 h-3" />
-                  Users
-                </button>
-              </div>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
-                <Input
-                  data-testid="feed-search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={searchType === 'users' ? 'Search users by username...' : `Search ${activeTab === 'discussion' ? 'discussions' : 'projects'}...`}
-                  className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] text-[13px] md:text-[15px] h-10"
-                />
-                {searchQuery && (
+            {/* Search bar and View Mode Segment Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 mb-6">
+              {/* Search Pane */}
+              <div className="flex-1 flex flex-col">
+                {/* Search type toggle */}
+                <div className="flex gap-2 mb-2">
                   <button
-                    type="button"
-                    data-testid="feed-search-clear"
-                    onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                    onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all ${
+                      searchType === 'posts'
+                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
+                        : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                    }`}
                   >
-                    <X className="w-4 h-4" />
+                    <Hash className="w-3 h-3" />
+                    Posts
                   </button>
-                )}
+                  <button
+                    onClick={() => setSearchType('users')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all ${
+                      searchType === 'users'
+                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
+                        : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                    }`}
+                  >
+                    <Users className="w-3 h-3" />
+                    Users
+                  </button>
+                </div>
+                
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+                  <Input
+                    data-testid="feed-search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={searchType === 'users' ? 'Search users by username...' : `Search ${activeTab === 'discussion' ? 'discussions' : 'projects'}...`}
+                    className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] text-[13px] md:text-[15px] h-10 shadow-card"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      data-testid="feed-search-clear"
+                      onClick={handleClearSearch}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* View Mode Segment Switcher (List Feed vs Swipe Deck) */}
+              {searchType === 'posts' && (
+                <div className="flex items-center bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] p-1 shadow-card h-10 shrink-0 self-stretch sm:self-end">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`h-full px-3 rounded-[8px] text-[12.5px] font-bold transition-all flex items-center gap-1.5 ${
+                      viewMode === 'list'
+                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white discuss:text-[#9CA3AF] discuss:hover:text-white'
+                    }`}
+                    title="List Feed"
+                  >
+                    <Layers className="w-3.5 h-3.5 rotate-90" />
+                    <span>List View</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setViewMode('slide');
+                      // Sync index
+                      const saved = sessionStorage.getItem(`discuss_slide_index_${activeTab}`);
+                      setSlideIndex(saved ? parseInt(saved, 10) : 0);
+                    }}
+                    className={`h-full px-3 rounded-[8px] text-[12.5px] font-bold transition-all flex items-center gap-1.5 ${
+                      viewMode === 'slide'
+                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white discuss:text-[#9CA3AF] discuss:hover:text-white'
+                    }`}
+                    title="Slide View"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Slide View</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* User Search Results */}
@@ -408,7 +515,132 @@ export default function FeedPage() {
                     {debouncedSearch ? `Try a different search term` : `Be the first to start a ${activeTab === 'discussion' ? 'discussion' : 'project post'}!`}
                   </p>
                 </div>
+              ) : viewMode === 'slide' ? (
+                /* Slide View (Tinder-style deck) */
+                <div className="space-y-6">
+                  {slideIndex >= filteredPosts.length ? (
+                    /* End of Feed Card */
+                    <div className="w-full max-w-xl mx-auto bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-8 shadow-card text-center animate-fade-in">
+                      <div className="w-20 h-20 rounded-full bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-6 relative">
+                        <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-[#2563EB]/30 discuss:bg-[#EF4444]/30 opacity-75"></span>
+                        <Layers className="w-8 h-8 text-[#2563EB] discuss:text-[#EF4444]" />
+                      </div>
+
+                      <h3 className="text-lg font-black text-neutral-900 dark:text-neutral-50 discuss:text-white mb-2 uppercase tracking-wide">
+                        End of Feed Reached
+                      </h3>
+                      
+                      <p className="text-[13px] md:text-[14px] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] max-w-sm mx-auto mb-8 font-medium">
+                        You've caught up with all {activeTab === 'discussion' ? 'discussions' : 'project posts'} for now. Swipe back or explore active developer tools!
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <Button
+                          onClick={handleStartOver}
+                          className="w-full sm:w-auto h-10 px-5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white font-bold text-[13px] gap-1.5"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span>Start Over</span>
+                        </Button>
+
+                        <Button
+                          onClick={() => setViewMode('list')}
+                          variant="outline"
+                          className="w-full sm:w-auto h-10 px-5 rounded-xl border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] font-bold text-[13px] gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]"
+                        >
+                          <span>Switch to List View</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Swipeable Deck container */
+                    <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6">
+                      {/* Underneath Card 2 (Deck depth) */}
+                      {slideIndex + 2 < filteredPosts.length && (
+                        <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
+                      )}
+                      
+                      {/* Underneath Card 1 (Deck depth) */}
+                      {slideIndex + 1 < filteredPosts.length && (
+                        <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
+                      )}
+
+                      <AnimatePresence mode="popLayout">
+                        <motion.div
+                          key={filteredPosts[slideIndex].id}
+                          drag="x"
+                          dragConstraints={{ left: 0, right: 0 }}
+                          onDragEnd={handleDragEnd}
+                          style={{ x, rotate, opacity }}
+                          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                          animate={{ scale: 1, opacity: 1, y: 0 }}
+                          exit={{ 
+                            x: swipeDirection === 'left' ? -400 : 400, 
+                            opacity: 0, 
+                            rotate: swipeDirection === 'left' ? -30 : 30,
+                            transition: { duration: 0.3 }
+                          }}
+                          whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                          className="w-full relative z-10"
+                        >
+                          <MemoPostCard
+                            post={filteredPosts[slideIndex]}
+                            currentUser={user}
+                            onDeleted={handlePostDeleted}
+                            onUpdated={handlePostUpdated}
+                            onVoteChanged={handleVoteChanged}
+                            onTagClick={handleTagClick}
+                          />
+                        </motion.div>
+                      </AnimatePresence>
+
+                      {/* Controls bar below active deck card */}
+                      <div className="flex items-center justify-between mt-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-3 shadow-card animate-fade-in relative z-20">
+                        <Button
+                          onClick={handleStartOver}
+                          variant="outline"
+                          className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF]"
+                          title="Start Over"
+                        >
+                          <RotateCcw className="w-4 h-4 text-neutral-500 discuss:text-[#9CA3AF]" />
+                          <span className="hidden sm:inline">Start Over</span>
+                        </Button>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={handlePrev}
+                            disabled={slideIndex === 0}
+                            variant="outline"
+                            className="h-10 w-10 p-0 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] disabled:opacity-40 text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF]"
+                            title="Previous Post"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </Button>
+
+                          <span className="text-[12.5px] font-bold font-mono text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] px-2 select-none shrink-0">
+                            {slideIndex + 1} / {filteredPosts.length}
+                          </span>
+
+                          <Button
+                            onClick={() => {
+                              setSwipeDirection('right');
+                              handleNext();
+                            }}
+                            variant="outline"
+                            className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF]"
+                            title="Skip Post"
+                          >
+                            <span>Skip</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
+                /* List View (Standard scroll list) */
                 <div className="space-y-4">
                   {filteredPosts.map((post) => (
                     <MemoPostCard

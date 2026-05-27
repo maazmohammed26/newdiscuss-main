@@ -24,7 +24,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag, Bookmark } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaCarousel from '@/components/MediaCarousel';
 import FullscreenMedia from '@/components/FullscreenMedia';
@@ -98,8 +98,51 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVoteChanged, onTagClick }) {
+export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVoteChanged, onTagClick, isSelectable = false, isSelected = false, onSelectToggle }) {
   const navigate = useNavigate();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setIsBookmarked(false);
+      return;
+    }
+    const checkBookmark = () => {
+      try {
+        const bookmarks = JSON.parse(localStorage.getItem(`discuss_bookmarks_${currentUser.id}`) || '[]');
+        setIsBookmarked(bookmarks.includes(post.id));
+      } catch (e) {
+        setIsBookmarked(false);
+      }
+    };
+    checkBookmark();
+    window.addEventListener('discuss_bookmarks_updated', checkBookmark);
+    return () => window.removeEventListener('discuss_bookmarks_updated', checkBookmark);
+  }, [post.id, currentUser?.id]);
+
+  const handleBookmarkClick = (e) => {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    try {
+      const key = `discuss_bookmarks_${currentUser.id}`;
+      let bookmarks = JSON.parse(localStorage.getItem(key) || '[]');
+      if (bookmarks.includes(post.id)) {
+        bookmarks = bookmarks.filter(id => id !== post.id);
+        toast.success('Removed from bookmarks');
+      } else {
+        bookmarks.push(post.id);
+        toast.success('Saved to bookmarks');
+      }
+      localStorage.setItem(key, JSON.stringify(bookmarks));
+      setIsBookmarked(bookmarks.includes(post.id));
+      window.dispatchEvent(new Event('discuss_bookmarks_updated'));
+    } catch (err) {
+      toast.error('Failed to update bookmark');
+    }
+  };
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -265,9 +308,24 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   };
 
   return (
-    <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden">
-      {/* Content area */}
-      <div className="p-4 md:p-5">
+    <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden flex">
+      {isSelectable && (
+        <div 
+          onClick={(e) => { e.stopPropagation(); onSelectToggle?.(post.id); }}
+          className="flex items-center justify-center px-4 bg-neutral-50/50 dark:bg-neutral-800/40 discuss:bg-black/20 border-r border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 cursor-pointer hover:bg-neutral-100/50 dark:hover:bg-neutral-800/80 discuss:hover:bg-black/40 transition-colors shrink-0"
+        >
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => {}} // Controlled by parent container click
+            className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 text-[#2563EB] discuss:text-[#EF4444] focus:ring-[#2563EB]/20 dark:bg-neutral-900 cursor-pointer"
+          />
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Content area */}
+        <div className="p-4 md:p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -494,6 +552,19 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             {translatedContent ? 'Original' : 'Translate'}
           </span>
         </button>
+
+        {/* Dynamic O(1) Local Storage Auth-Guarded Bookmark Button */}
+        <button
+          onClick={handleBookmarkClick}
+          className={`flex items-center justify-center p-2 rounded-xl transition-all duration-200 active:scale-90 hover:scale-105 border ml-auto focus:outline-none
+            ${isBookmarked
+              ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.15)] animate-pulse-subtle'
+              : 'bg-white/5 border-white/10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] hover:border-white/20'
+            }`}
+          title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Post'}
+        >
+          <Bookmark className="w-4.5 h-4.5" fill={isBookmarked ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       {showComments && <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} onAuthRequired={() => setShowAuthModal(true)} />}
@@ -576,6 +647,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         currentUser={currentUser}
         onReportSuccess={() => setReportedLocally(true)}
       />
+    </div>
     </div>
   );
 }

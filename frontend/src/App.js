@@ -36,6 +36,7 @@ const NewsDetailPage        = lazy(() => import('@/pages/NewsDetailPage'));
 const JobsPage              = lazy(() => import('@/pages/JobsPage'));
 const JobDetailPage         = lazy(() => import('@/pages/JobDetailPage'));
 const EditorPage            = lazy(() => import('@/pages/EditorPage'));
+const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
 
 // Public static pages
 const AboutPage   = lazy(() => import('@/pages/AboutPage'));
@@ -150,6 +151,7 @@ function AppRoutes() {
         <Route path="/jobs"                    element={<JobsPage />} />
         <Route path="/jobs/:jobId"             element={<JobDetailPage />} />
         <Route path="/editor"                  element={<EditorPage />} />
+        <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
