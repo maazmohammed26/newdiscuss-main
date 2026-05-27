@@ -584,58 +584,44 @@ export default function FeedPage() {
                     </div>
                   ) : (
                     /* Swipeable Deck container */
-                    <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6 px-12 md:px-0">
-                      {/* Underneath Card 2 (Deck depth) */}
-                      {slideIndex + 2 < filteredPosts.length && (
-                        <div className="absolute inset-x-12 md:inset-x-0 inset-y-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
-                      )}
-                      
-                      {/* Underneath Card 1 (Deck depth) */}
-                      {slideIndex + 1 < filteredPosts.length && (
-                        <div className="absolute inset-x-12 md:inset-x-0 inset-y-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
-                      )}
+                    <div className="space-y-4">
+                      {/* Navigation Guideline Note */}
+                      <div className="flex items-center gap-2 justify-center mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] py-2.5 px-4 text-[11px] md:text-[12px] font-mono text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] select-none text-center leading-normal max-w-xl mx-auto shadow-card">
+                        <span>💡 <b>Swipe RIGHT</b> or click <b>Skip</b> for next post | <b>Swipe LEFT</b> or click <b>Prev</b> for previous post</span>
+                      </div>
 
-                      {/* Floating Side Action Arrows */}
-                      {slideIndex > 0 && (
-                        <button
-                          onClick={() => {
-                            setSwipeDirection('left');
-                            handlePrev();
-                          }}
-                          className="absolute left-1 md:-left-16 top-[40%] -translate-y-1/2 w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/95 dark:bg-neutral-800/95 discuss:bg-[#1a1a1a]/95 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-md hover:shadow-lg hover:scale-110 active:scale-95 flex items-center justify-center text-neutral-500 hover:text-[#2563EB] dark:text-neutral-400 dark:hover:text-blue-400 discuss:text-[#9CA3AF] discuss:hover:text-[#EF4444] hover:border-[#2563EB]/25 discuss:hover:border-[#EF4444]/25 backdrop-blur-md transition-all duration-200 z-30"
-                          title="Slide Left (Previous)"
-                        >
-                          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-                        </button>
-                      )}
+                      <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6">
+                        {/* Underneath Card 2 (Deck depth) */}
+                        {slideIndex + 2 < filteredPosts.length && (
+                          <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
+                        )}
+                        
+                        {/* Underneath Card 1 (Deck depth) */}
+                        {slideIndex + 1 < filteredPosts.length && (
+                          <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
+                        )}
 
-                      <button
-                        onClick={() => {
-                          setSwipeDirection('right');
-                          handleNext();
-                        }}
-                        className="absolute right-1 md:-right-16 top-[40%] -translate-y-1/2 w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/95 dark:bg-neutral-800/95 discuss:bg-[#1a1a1a]/95 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-md hover:shadow-lg hover:scale-110 active:scale-95 flex items-center justify-center text-neutral-500 hover:text-[#2563EB] dark:text-neutral-400 dark:hover:text-blue-400 discuss:text-[#9CA3AF] discuss:hover:text-[#EF4444] hover:border-[#2563EB]/25 discuss:hover:border-[#EF4444]/25 backdrop-blur-md transition-all duration-200 z-30"
-                        title="Slide Right (Next)"
-                      >
-                        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-                      </button>
-
-                      <AnimatePresence mode="popLayout">
-                        <SwipeableCardWrapper
-                          key={filteredPosts[slideIndex].id}
-                          post={filteredPosts[slideIndex]}
-                          currentUser={user}
-                          onDeleted={handlePostDeleted}
-                          onUpdated={handlePostUpdated}
-                          onVoteChanged={handleVoteChanged}
-                          onTagClick={handleTagClick}
-                          onSwipe={(direction) => {
-                            setSwipeDirection(direction);
-                            handleNext();
-                          }}
-                          swipeDirection={swipeDirection}
-                        />
-                      </AnimatePresence>
+                        <AnimatePresence mode="popLayout">
+                          <SwipeableCardWrapper
+                            key={filteredPosts[slideIndex].id}
+                            post={filteredPosts[slideIndex]}
+                            currentUser={user}
+                            onDeleted={handlePostDeleted}
+                            onUpdated={handlePostUpdated}
+                            onVoteChanged={handleVoteChanged}
+                            onTagClick={handleTagClick}
+                            onSwipe={(direction) => {
+                              setSwipeDirection(direction);
+                              if (direction === 'right') {
+                                handleNext();
+                              } else {
+                                handlePrev();
+                              }
+                            }}
+                            swipeDirection={swipeDirection}
+                          />
+                        </AnimatePresence>
+                      </div>
 
                       {/* Controls bar below active deck card */}
                       <div className="flex items-center justify-between mt-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-3 shadow-card animate-fade-in relative z-20">
