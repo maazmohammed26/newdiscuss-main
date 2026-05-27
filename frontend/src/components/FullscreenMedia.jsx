@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { IoClose, IoChevronBack, IoChevronForward, IoDownload } from 'react-icons/io5';
 import './FullscreenMedia.css';
 
@@ -29,7 +30,7 @@ const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
     document.body.removeChild(link);
   };
 
-  return (
+  return createPortal(
     <div className="fullscreen-overlay" onClick={onClose} onPointerDown={(e) => e.stopPropagation()}>
       <div className="fullscreen-header">
         <span className="media-count">
@@ -72,7 +73,8 @@ const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
           <p className="media-caption">{currentItem.caption}</p>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
