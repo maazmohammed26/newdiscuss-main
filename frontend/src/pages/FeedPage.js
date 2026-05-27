@@ -22,6 +22,50 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 
 const MemoPostCard = memo(PostCard);
 
+function SwipeableCardWrapper({ post, currentUser, onDeleted, onUpdated, onVoteChanged, onTagClick, onSwipe, swipeDirection }) {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-15, 15]);
+  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0.6, 1, 1, 1, 0.6]);
+
+  const handleDragEnd = (event, info) => {
+    const threshold = 100;
+    if (info.offset.x > threshold) {
+      onSwipe('right');
+    } else if (info.offset.x < -threshold) {
+      onSwipe('left');
+    }
+  };
+
+  return (
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={handleDragEnd}
+      style={{ x, rotate, opacity }}
+      initial={{ scale: 0.95, opacity: 0, y: 10 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ 
+        x: swipeDirection === 'left' ? -450 : 450, 
+        opacity: 0, 
+        rotate: swipeDirection === 'left' ? -20 : 20,
+        transition: { duration: 0.25 }
+      }}
+      whileDrag={{ scale: 1.01, cursor: 'grabbing' }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      className="w-full relative z-10"
+    >
+      <MemoPostCard
+        post={post}
+        currentUser={currentUser}
+        onDeleted={onDeleted}
+        onUpdated={onUpdated}
+        onVoteChanged={onVoteChanged}
+        onTagClick={onTagClick}
+      />
+    </motion.div>
+  );
+}
+
 export default function FeedPage() {
   const { user } = useAuth();
   const location = useLocation();
@@ -77,9 +121,6 @@ export default function FeedPage() {
   }, [activeTab]);
 
   const [swipeDirection, setSwipeDirection] = useState('right');
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0.5, 1, 1, 1, 0.5]);
 
   const handleNext = () => {
     if (slideIndex < filteredPosts.length) {
@@ -95,17 +136,6 @@ export default function FeedPage() {
 
   const handleStartOver = () => {
     setSlideIndex(0);
-  };
-
-  const handleDragEnd = (event, info) => {
-    const threshold = 120;
-    if (info.offset.x > threshold) {
-      setSwipeDirection('right');
-      handleNext();
-    } else if (info.offset.x < -threshold) {
-      setSwipeDirection('left');
-      handleNext();
-    }
   };
 
   // Load cached posts first for instant display, then fetch fresh data
@@ -389,10 +419,10 @@ export default function FeedPage() {
 
               {/* View Mode Segment Switcher (List Feed vs Swipe Deck) */}
               {searchType === 'posts' && (
-                <div className="flex items-center bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] p-1 shadow-card h-10 shrink-0 self-stretch sm:self-end">
+                <div className="flex items-center w-full sm:w-[260px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] p-1 shadow-card h-10 shrink-0 self-stretch sm:self-end">
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`h-full px-3 rounded-[8px] text-[12.5px] font-bold transition-all flex items-center gap-1.5 ${
+                    className={`flex-1 h-full rounded-[8px] text-[12.5px] font-bold transition-all flex items-center justify-center gap-1.5 ${
                       viewMode === 'list'
                         ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white discuss:text-[#9CA3AF] discuss:hover:text-white'
@@ -409,7 +439,7 @@ export default function FeedPage() {
                       const saved = sessionStorage.getItem(`discuss_slide_index_${activeTab}`);
                       setSlideIndex(saved ? parseInt(saved, 10) : 0);
                     }}
-                    className={`h-full px-3 rounded-[8px] text-[12.5px] font-bold transition-all flex items-center gap-1.5 ${
+                    className={`flex-1 h-full rounded-[8px] text-[12.5px] font-bold transition-all flex items-center justify-center gap-1.5 ${
                       viewMode === 'slide'
                         ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white discuss:text-[#9CA3AF] discuss:hover:text-white'
@@ -554,45 +584,57 @@ export default function FeedPage() {
                     </div>
                   ) : (
                     /* Swipeable Deck container */
-                    <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6">
+                    <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6 px-12 md:px-0">
                       {/* Underneath Card 2 (Deck depth) */}
                       {slideIndex + 2 < filteredPosts.length && (
-                        <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
+                        <div className="absolute inset-x-12 md:inset-x-0 inset-y-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
                       )}
                       
                       {/* Underneath Card 1 (Deck depth) */}
                       {slideIndex + 1 < filteredPosts.length && (
-                        <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
+                        <div className="absolute inset-x-12 md:inset-x-0 inset-y-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
                       )}
 
-                      <AnimatePresence mode="popLayout">
-                        <motion.div
-                          key={filteredPosts[slideIndex].id}
-                          drag="x"
-                          dragConstraints={{ left: 0, right: 0 }}
-                          onDragEnd={handleDragEnd}
-                          style={{ x, rotate, opacity }}
-                          initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                          animate={{ scale: 1, opacity: 1, y: 0 }}
-                          exit={{ 
-                            x: swipeDirection === 'left' ? -400 : 400, 
-                            opacity: 0, 
-                            rotate: swipeDirection === 'left' ? -30 : 30,
-                            transition: { duration: 0.3 }
+                      {/* Floating Side Action Arrows */}
+                      {slideIndex > 0 && (
+                        <button
+                          onClick={() => {
+                            setSwipeDirection('left');
+                            handlePrev();
                           }}
-                          whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
-                          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                          className="w-full relative z-10"
+                          className="absolute left-1 md:-left-16 top-[40%] -translate-y-1/2 w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/95 dark:bg-neutral-800/95 discuss:bg-[#1a1a1a]/95 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-md hover:shadow-lg hover:scale-110 active:scale-95 flex items-center justify-center text-neutral-500 hover:text-[#2563EB] dark:text-neutral-400 dark:hover:text-blue-400 discuss:text-[#9CA3AF] discuss:hover:text-[#EF4444] hover:border-[#2563EB]/25 discuss:hover:border-[#EF4444]/25 backdrop-blur-md transition-all duration-200 z-30"
+                          title="Slide Left (Previous)"
                         >
-                          <MemoPostCard
-                            post={filteredPosts[slideIndex]}
-                            currentUser={user}
-                            onDeleted={handlePostDeleted}
-                            onUpdated={handlePostUpdated}
-                            onVoteChanged={handleVoteChanged}
-                            onTagClick={handleTagClick}
-                          />
-                        </motion.div>
+                          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setSwipeDirection('right');
+                          handleNext();
+                        }}
+                        className="absolute right-1 md:-right-16 top-[40%] -translate-y-1/2 w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/95 dark:bg-neutral-800/95 discuss:bg-[#1a1a1a]/95 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-md hover:shadow-lg hover:scale-110 active:scale-95 flex items-center justify-center text-neutral-500 hover:text-[#2563EB] dark:text-neutral-400 dark:hover:text-blue-400 discuss:text-[#9CA3AF] discuss:hover:text-[#EF4444] hover:border-[#2563EB]/25 discuss:hover:border-[#EF4444]/25 backdrop-blur-md transition-all duration-200 z-30"
+                        title="Slide Right (Next)"
+                      >
+                        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                      </button>
+
+                      <AnimatePresence mode="popLayout">
+                        <SwipeableCardWrapper
+                          key={filteredPosts[slideIndex].id}
+                          post={filteredPosts[slideIndex]}
+                          currentUser={user}
+                          onDeleted={handlePostDeleted}
+                          onUpdated={handlePostUpdated}
+                          onVoteChanged={handleVoteChanged}
+                          onTagClick={handleTagClick}
+                          onSwipe={(direction) => {
+                            setSwipeDirection(direction);
+                            handleNext();
+                          }}
+                          swipeDirection={swipeDirection}
+                        />
                       </AnimatePresence>
 
                       {/* Controls bar below active deck card */}

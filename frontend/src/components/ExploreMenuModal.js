@@ -87,7 +87,7 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[430px] rounded-3xl bg-white/95 dark:bg-[#0c0c12]/95 discuss:bg-[#0c0c12]/95 backdrop-blur-xl border border-neutral-200/80 dark:border-neutral-800/80 discuss:border-white/5 p-0 overflow-hidden shadow-2xl relative animate-fade-in">
+      <DialogContent className="sm:max-w-[430px] rounded-3xl bg-white/95 dark:bg-[#0c0c12]/95 discuss:bg-[#0c0c12]/95 backdrop-blur-xl border border-neutral-200/80 dark:border-neutral-800/80 discuss:border-white/5 p-0 overflow-hidden shadow-2xl animate-fade-in">
         {/* Glowing high-tech top accent line */}
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#2563EB] via-[#8B5CF6] to-[#EF4444]" />
 
