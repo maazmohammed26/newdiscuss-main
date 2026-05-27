@@ -342,13 +342,14 @@ export function AuthProvider({ children }) {
       // If the component unmounted while we were waiting, bail out.
       if (!mounted) return;
 
-      // Handle sign-in redirect (only in browser tab mode)
+      const isAndroidApp = window.median !== undefined || navigator.userAgent.includes('Android');
+
       const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true ||
         document.referrer.includes('android-app://');
 
-      if (!isStandalone) {
+      if (!isStandalone || isAndroidApp) {
         withTimeout(getRedirectResult(auth), REDIRECT_RESULT_MS, null)
           .then(async (result) => {
             if (result?.user && mounted) {
@@ -674,7 +675,10 @@ export function AuthProvider({ children }) {
 
   const loginWithGoogle = async () => {
     try {
-      googleProvider.setCustomParameters({ prompt: 'select_account' });
+      // Force account picker and override UA hint so Google doesn't block the WebView
+      googleProvider.setCustomParameters({
+        prompt: 'select_account',
+      });
       window.localStorage.removeItem('pendingVerification');
       setPendingVerification(false);
 
@@ -685,6 +689,9 @@ export function AuthProvider({ children }) {
       );
 
       if (isMobileApp) {
+        // For mobile WebView apps, use redirect flow.
+        // IMPORTANT: In Median.co settings, you must add accounts.google.com 
+        // to "External URLs" to open in Chrome Custom Tabs (real browser).
         await signInWithRedirect(auth, googleProvider);
         return { success: true };
       }
