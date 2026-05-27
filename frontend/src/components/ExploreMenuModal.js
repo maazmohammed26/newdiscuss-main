@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { Radar, Newspaper, Briefcase, ChevronRight } from 'lucide-react';
+import { Radar, Newspaper, Briefcase, ChevronRight, Code } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
@@ -44,6 +44,15 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
       requiresAuth: false,
       color: 'text-purple-500',
       bg: 'bg-purple-500/10'
+    },
+    {
+      title: 'Code Playground',
+      description: 'Real-time developer code editor',
+      icon: Code,
+      path: '/editor',
+      requiresAuth: false,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10'
     }
   ];
 

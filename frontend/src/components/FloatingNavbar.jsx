@@ -18,7 +18,7 @@ import {
   Home,
   MessageCircle,
   Radar,
-  Compass,
+  MoreHorizontal,
 } from 'lucide-react';
 
 export default function FloatingNavbar() {
@@ -171,7 +171,7 @@ export default function FloatingNavbar() {
     { key: 'home', to: '/feed', active: currentPath === '/feed', icon: Home, label: 'Home' },
     { key: 'chats', to: '/chat', active: currentPath.startsWith('/chat'), icon: MessageCircle, label: 'Chats' },
     { key: 'add', action: handleOpenCreateModal, active: false, icon: Plus, label: 'Add Post' },
-    { key: 'explore', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs'].includes(currentPath), icon: Compass, label: 'Explore' },
+    { key: 'explore', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs', '/editor'].includes(currentPath), icon: MoreHorizontal, label: 'More' },
     { key: 'profile', to: '/profile', active: currentPath === '/profile', label: 'Profile' },
   ];
 
