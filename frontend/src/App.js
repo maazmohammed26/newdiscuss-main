@@ -82,9 +82,17 @@ function AuthRedirect({ children }) {
 
 // ── AppRoutes ─────────────────────────────────────────────────────────────────
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [minLoading, setMinLoading] = useState(true);
   const location = useLocation();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -117,6 +125,10 @@ function AppRoutes() {
       }
     }
   }, [location.pathname, user, theme]);
+
+  if (loading || minLoading) {
+    return <LoadingScreen message="Checking authentication…" />;
+  }
 
   return (
     <Suspense fallback={<PageRouteSkeleton />}>

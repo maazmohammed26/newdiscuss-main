@@ -815,7 +815,7 @@ export default function ChatConversationPage() {
         <Header />
         {/* Skeleton Top Bar */}
         <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] animate-pulse rounded" />
               <div className="flex items-center gap-3">
@@ -830,7 +830,7 @@ export default function ChatConversationPage() {
         </div>
         {/* Skeleton Messages Area */}
         <div className="flex-1 overflow-y-auto px-4 py-4" style={{ maxHeight: `calc(100vh - 140px)` }}>
-          <div className="max-w-2xl mx-auto space-y-4">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto space-y-4">
             <div className="space-y-3 py-2" aria-hidden>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
@@ -848,7 +848,7 @@ export default function ChatConversationPage() {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
         <Header />
-        <div className="max-w-2xl mx-auto px-4 py-20 text-center">
+        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto py-20 text-center">
           <User className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-2">
             User not found
@@ -865,7 +865,7 @@ export default function ChatConversationPage() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] flex flex-col">
       {/* Header */}
       <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/chat')}
@@ -943,7 +943,7 @@ export default function ChatConversationPage() {
       {/* Auto-delete banner */}
       {autoDeleteEnabled && (
         <div className="bg-[#F59E0B]/10 border-b border-[#F59E0B]/20 px-4 py-2">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#92400E] dark:text-[#FCD34D] discuss:text-[#FCD34D]">
               <Clock className="w-4 h-4" />
               <span className="text-xs font-medium">
@@ -963,7 +963,7 @@ export default function ChatConversationPage() {
       {/* Reply preview */}
       {replyTo && (
         <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-2">
-          <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center gap-3">
             <div className="w-1 h-10 bg-[#2563EB] discuss:bg-[#EF4444] rounded-full" />
             <div className="flex-1 min-w-0">
               <p className="text-[#2563EB] discuss:text-[#EF4444] text-xs font-semibold">
@@ -991,7 +991,7 @@ export default function ChatConversationPage() {
         className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide"
         style={{ maxHeight: `calc(100vh - ${autoDeleteEnabled ? 176 : (replyTo ? 180 : 140)}px)` }}
       >
-        <div className="max-w-2xl mx-auto space-y-4">
+        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto space-y-4">
           {loadingOld && (
             <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm animate-pulse">
               <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
@@ -1220,7 +1220,7 @@ export default function ChatConversationPage() {
       {/* Chat disabled message */}
       {!chatEnabled && (
         <div className="bg-[#FEF3C7] dark:bg-[#F59E0B]/20 discuss:bg-[#F59E0B]/10 border-t border-[#F59E0B]/30 px-4 py-3">
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
             <div className="flex items-center gap-3">
               <Lock className="w-5 h-5 text-[#F59E0B] shrink-0" />
               <div className="flex-1">
@@ -1254,7 +1254,7 @@ export default function ChatConversationPage() {
       {/* Message input */}
       {chatEnabled && (
         <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3 sticky bottom-0">
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
             {replyTo && (
               <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] p-2 rounded-[8px] border-l-2 border-[#2563EB] discuss:border-[#EF4444]">
                 <div className="flex items-center justify-between">

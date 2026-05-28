@@ -72,10 +72,16 @@ export default function FeedPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [allPosts, setAllPosts] = useState(() => {
+    if (typeof window !== 'undefined' && window.__discuss_feed_cache) {
+      return window.__discuss_feed_cache;
+    }
     const fast = fastCacheLoad('posts', Number.MAX_SAFE_INTEGER);
     return fast?.data || [];
   });
   const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && window.__discuss_feed_cache && window.__discuss_feed_cache.length > 0) {
+      return false;
+    }
     const fast = fastCacheLoad('posts', Number.MAX_SAFE_INTEGER);
     return !(fast?.data?.length > 0);
   });
@@ -89,6 +95,13 @@ export default function FeedPage() {
   const [userSearchResults, setUserSearchResults] = useState([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [loadedFromCache, setLoadedFromCache] = useState(false);
+
+  // Sync state changes with in-memory cache for instant subsequent loads
+  useEffect(() => {
+    if (allPosts && allPosts.length > 0 && typeof window !== 'undefined') {
+      window.__discuss_feed_cache = allPosts;
+    }
+  }, [allPosts]);
 
   // Tinder-style slide view deck states
   const [viewMode, setViewMode] = useState(() => {
@@ -235,9 +248,10 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
-    fetchPosts();
+    // fetchPosts() is not needed on mount since subscribeToPostsRealtime handles initial fetch and hydration.
+    // This halves RTDB read calls on feed mount!
     fetchTrendingTags();
-  }, [fetchPosts, fetchTrendingTags]);
+  }, [fetchTrendingTags]);
 
   // Firebase real-time listener
   useEffect(() => {

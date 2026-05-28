@@ -58,21 +58,33 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const { pendingGroupRequests } = useHighlights();
   const [chats, setChats] = useState(() => {
+    if (typeof window !== 'undefined' && window.__discuss_chats_cache) {
+      return window.__discuss_chats_cache;
+    }
     if (!user?.id) return [];
     const fast = fastCacheLoad(`chats_${user.id}`, Number.MAX_SAFE_INTEGER);
     return fast?.data || [];
   });
   const [friends, setFriends] = useState(() => {
+    if (typeof window !== 'undefined' && window.__discuss_friends_cache) {
+      return window.__discuss_friends_cache;
+    }
     if (!user?.id) return [];
     const fast = fastCacheLoad(`friends_${user.id}`, Number.MAX_SAFE_INTEGER);
     return fast?.data || [];
   });
   const [groups, setGroups] = useState(() => {
+    if (typeof window !== 'undefined' && window.__discuss_groups_cache) {
+      return window.__discuss_groups_cache;
+    }
     if (!user?.id) return [];
     const fast = fastCacheLoad(`groups_${user.id}`, Number.MAX_SAFE_INTEGER);
     return fast?.data || [];
   });
   const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined' && (window.__discuss_chats_cache?.length > 0 || window.__discuss_friends_cache?.length > 0 || window.__discuss_groups_cache?.length > 0)) {
+      return false;
+    }
     if (!user?.id) return true;
     const c = fastCacheLoad(`chats_${user.id}`, Number.MAX_SAFE_INTEGER);
     const f = fastCacheLoad(`friends_${user.id}`, Number.MAX_SAFE_INTEGER);
@@ -90,6 +102,25 @@ export default function ChatPage() {
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [searchingGroups, setSearchingGroups] = useState(false);
   const [groupRequestStatus, setGroupRequestStatus] = useState({});
+
+  // Sync state changes with in-memory cache for instant subsequent loads
+  useEffect(() => {
+    if (chats && chats.length > 0 && typeof window !== 'undefined') {
+      window.__discuss_chats_cache = chats;
+    }
+  }, [chats]);
+
+  useEffect(() => {
+    if (friends && friends.length > 0 && typeof window !== 'undefined') {
+      window.__discuss_friends_cache = friends;
+    }
+  }, [friends]);
+
+  useEffect(() => {
+    if (groups && groups.length > 0 && typeof window !== 'undefined') {
+      window.__discuss_groups_cache = groups;
+    }
+  }, [groups]);
 
   // Load chats, groups and friends with user details inline - with caching
   useEffect(() => {
@@ -121,60 +152,10 @@ export default function ChatPage() {
           setLoading(false);
         }
 
-        // Get raw chats first
-        const rawChats = await getUserChats(user.id);
-        
-        // Fetch user details for each chat
-        const chatsWithDetails = await Promise.all(
-          rawChats.map(async (chat) => {
-            try {
-              if (!chat.otherUser) return null;
-              
-              const userData = await getUser(chat.otherUser);
-              
-              if (!userData || !userData.username) {
-                console.warn('Skipping chat with invalid user:', chat.otherUser);
-                return null;
-              }
-              
-              // Get chat settings for auto-delete indicator
-              const settings = await getChatSettings(chat.chatId);
-              if (settings?.autoDelete) {
-                setChatSettings(prev => ({ ...prev, [chat.chatId]: settings }));
-              }
-              
-              return {
-                ...chat,
-                otherUserDetails: {
-                  id: chat.otherUser,
-                  username: userData.username,
-                  email: userData.email || '',
-                  photo_url: userData.photo_url || '',
-                  verified: userData.verified || false
-                }
-              };
-            } catch (err) {
-              console.error('Error fetching user:', err);
-              return null;
-            }
-          })
-        );
-        
-        // Filter out null values (invalid chats)
-        const validChats = chatsWithDetails.filter(chat => chat !== null && chat.otherUserDetails !== null);
-        
-        setChats(validChats);
-        await cacheChats(user.id, validChats);
-        
-        // Load friends
+        // Load friends (only manual database fetch needed since chats and groups have subscriptions!)
         const friendsData = await getFriendsWithDetails(user.id);
         setFriends(friendsData);
         await cacheFriends(user.id, friendsData);
-        
-        // Load groups
-        const groupsData = await getUserGroups(user.id);
-        setGroups(groupsData);
-        await cacheGroups(user.id, groupsData);
         
       } catch (error) {
         console.error('Error loading chat data:', error);
@@ -196,6 +177,12 @@ export default function ChatPage() {
             
             if (!userData || !userData.username) {
               return null;
+            }
+            
+            // Get chat settings for auto-delete indicator in real-time
+            const settings = await getChatSettings(chat.chatId);
+            if (settings?.autoDelete) {
+              setChatSettings(prev => ({ ...prev, [chat.chatId]: settings }));
             }
             
             return {

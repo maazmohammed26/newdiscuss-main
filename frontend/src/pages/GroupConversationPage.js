@@ -750,7 +750,7 @@ export default function GroupConversationPage() {
       <Header />
       
       <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/chat')} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] transition-colors">
               <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
@@ -783,7 +783,7 @@ export default function GroupConversationPage() {
         className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide" 
         style={{ maxHeight: 'calc(100vh - 180px)' }}
       >
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
           {loadingOld && (
             <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm animate-pulse">
               <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
@@ -861,7 +861,7 @@ export default function GroupConversationPage() {
 
       {canSendMessages ? (
         <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
             {replyTo && (
               <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] p-2 rounded-[8px] border-l-2 border-[#2563EB] discuss:border-[#EF4444]">
                 <div className="flex items-center justify-between">
@@ -974,7 +974,7 @@ export default function GroupConversationPage() {
         </div>
       ) : (
         <div className="bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
-          <div className="max-w-2xl mx-auto text-center">
+          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto text-center">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{isAdminOnlyMode ? 'Only admins can send messages in this group' : 'You cannot send messages in this group'}</p>
           </div>
         </div>
