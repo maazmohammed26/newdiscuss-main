@@ -86,7 +86,7 @@ export default function DownloadPage() {
               
               <div className="text-center px-2">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Downloads</p>
-                <p className="text-sm font-bold mt-0.5">10K+</p>
+                <p className="text-sm font-bold mt-0.5">20+ installs</p>
               </div>
               <div className="w-[1px] h-7 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
 
