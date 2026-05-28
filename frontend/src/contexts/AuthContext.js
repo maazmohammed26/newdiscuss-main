@@ -342,28 +342,19 @@ export function AuthProvider({ children }) {
       // If the component unmounted while we were waiting, bail out.
       if (!mounted) return;
 
-      const isAndroidApp = window.median !== undefined || navigator.userAgent.includes('Android');
-
-      const isStandalone =
-        window.matchMedia('(display-mode: standalone)').matches ||
-        window.navigator.standalone === true ||
-        document.referrer.includes('android-app://');
-
-      if (!isStandalone || isAndroidApp) {
-        withTimeout(getRedirectResult(auth), REDIRECT_RESULT_MS, null)
-          .then(async (result) => {
-            if (result?.user && mounted) {
-              window.localStorage.removeItem('pendingVerification');
-              setPendingVerification(false);
-              await syncUser(result.user);
-              resolve();
-            }
-          })
-          .catch((err) => {
-            // Non-critical — Google redirect just didn't happen
-            console.warn('[Auth] getRedirectResult (non-critical):', err?.code || err?.message);
-          });
-      }
+      withTimeout(getRedirectResult(auth), REDIRECT_RESULT_MS, null)
+        .then(async (result) => {
+          if (result?.user && mounted) {
+            window.localStorage.removeItem('pendingVerification');
+            setPendingVerification(false);
+            await syncUser(result.user);
+            resolve();
+          }
+        })
+        .catch((err) => {
+          // Non-critical — Google redirect just didn't happen
+          console.warn('[Auth] getRedirectResult (non-critical):', err?.code || err?.message);
+        });
 
       // Subscribe to auth state
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
