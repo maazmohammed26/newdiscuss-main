@@ -508,8 +508,7 @@ export default function AppInstallBanner() {
               <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 mb-5 max-h-[110px] overflow-y-auto scrollbar-none">
                 <h4 className="text-[10px] font-mono text-red-400 mb-1.5 uppercase font-bold tracking-wider">// PLATFORM_SPECS:</h4>
                 <p className="text-[11.5px] text-neutral-300 leading-relaxed font-sans font-medium">
-                  Discuss is a premium developer ecosystem built to share projects, exchange innovative ideas, and build the future of tech. 
-                  The official client deploys inside a sandboxed mobile workspace featuring hidden scrollbars, responsive navigation columns, optimized touch layouts, and native background notifications.
+                  Discuss is a modern social discussion platform where users can share ideas, create posts, explore communities, and connect with people through real-time interactions, comments, and engaging discussions.
                 </p>
               </div>
 
