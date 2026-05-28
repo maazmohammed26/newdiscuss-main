@@ -101,6 +101,11 @@ export default function AppInstallBanner() {
 
   // Trigger PWA Installation Flow
   const handlePWAInstall = async () => {
+    // Save dismissed state in localStorage on interaction
+    localStorage.setItem('discuss_install_widget_dismissed', 'true');
+    setIsDismissed(true);
+    setMinimized(true);
+
     if (!deferredPrompt) {
       toast.info('PWA Installation ready. Tap your browser settings (3 dots) and select "Add to Home Screen" or "Install App".');
       return;
@@ -111,12 +116,16 @@ export default function AppInstallBanner() {
     if (outcome === 'accepted') {
       toast.success('Welcome to the standalone Discuss app experience!');
       setDeferredPrompt(null);
-      setMinimized(true);
     }
   };
 
   // Direct APK Download Trigger
   const handleAPKDownload = () => {
+    // Save dismissed state in localStorage on interaction
+    localStorage.setItem('discuss_install_widget_dismissed', 'true');
+    setIsDismissed(true);
+    setMinimized(true);
+
     toast.success('Initiating high-speed direct APK download...');
     window.location.href = 'https://www.discussit.in/app/discussit.apk';
   };
