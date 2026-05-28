@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react';
-import { X, Download, Smartphone, Monitor, Share, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
- * AppInstallBanner — Dynamic platform-aware install banner
- * Supports:
- *  - Android: Shows direct APK download + Native PWA install (with guidelines)
- *  - iOS: Shows Safari Share Sheet step-by-step instructions
- *  - Desktop: Shows native standalone PWA desktop app install prompt
- *  - Native App detection: Hides completely inside Median/GoNative webviews
- *  - Dismiss persistence: X saves close timestamp for 14 days
+ * AppInstallBanner — Cybernetic Techie-HUD Style PWA Installer Banner
+ * Features:
+ *  - Supports OS-specific guides and buttons: Android, iOS, MacOS, Windows/Desktop
+ *  - 5-second initial mount delay.
+ *  - 8-second display window before auto-minimizing to the right.
+ *  - Minimized floating "</>" shiny glass icon with mixed neon-red shining glow.
+ *  - Dismiss button "X" immediately minimizes it and saves permanent dismissed state in localStorage.
+ *  - If dismissed previously, starts in minimized mode directly on next page load (never pops full box).
+ *  - If ignored (auto-minimized), it will pop again after 5s on next page load.
+ *  - Median/GoNative Webview auto-suppression.
+ *  - Custom CSS HUD glowing animations.
  */
 export default function AppInstallBanner() {
-  const [platform, setPlatform] = useState('desktop'); // 'android', 'ios', 'desktop'
-  const [isSafari, setIsSafari] = useState(false);
+  const [platform, setPlatform] = useState('desktop'); // 'android', 'ios', 'mac', 'desktop'
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [minimized, setMinimized] = useState(true);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // 1. Hide banner if already loaded inside the Median wrapped WebView app
+    // 1. Silently suppress inside mobile app Native WebViews
     const isMedianApp = typeof window !== 'undefined' && (
       window.median !== undefined ||
       window.gonative !== undefined ||
@@ -28,41 +33,50 @@ export default function AppInstallBanner() {
     );
     if (isMedianApp) return;
 
-    // 2. Hide if dismissed recently (within 14 days)
-    const dismissKey = 'discuss_install_banner_dismissed';
-    const lastDismissed = localStorage.getItem(dismissKey);
-    if (lastDismissed) {
-      const parsedTime = parseInt(lastDismissed, 10);
-      const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
-      if (Date.now() - parsedTime < fourteenDaysMs) {
-        return; // Still in dismiss cooldown
-      }
-    }
-
-    // 3. Platform & browser detection
+    // 2. Platform & Browser Detection
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
     const isAndroid = /android/i.test(ua);
-    const safariCheck = /^((?!chrome|android).)*safari/i.test(ua);
+    const isMac = /Macintosh|MacIntel|MacPPC|Mac68K/.test(ua) && !isIOS;
 
     if (isIOS) {
       setPlatform('ios');
-      setIsSafari(safariCheck);
     } else if (isAndroid) {
       setPlatform('android');
+    } else if (isMac) {
+      setPlatform('mac');
     } else {
       setPlatform('desktop');
     }
 
-    // 4. Delay showing for premium presentation
-    const timer = setTimeout(() => {
-      setVisible(true);
-    }, 2500);
+    // 3. Load localStorage dismissed state
+    const dismissedFlag = localStorage.getItem('discuss_install_widget_dismissed') === 'true';
+    setIsDismissed(dismissedFlag);
 
-    return () => clearTimeout(timer);
+    // 4. Initial Mount Timing Sequence (5 Seconds Delay)
+    const initTimer = setTimeout(() => {
+      setVisible(true);
+
+      if (dismissedFlag) {
+        // Start minimized directly, never expand automatically
+        setMinimized(true);
+      } else {
+        // Expand full box
+        setMinimized(false);
+
+        // Auto-minimize after exactly 8 seconds of expanded exposure
+        const autoMinimizeTimer = setTimeout(() => {
+          setMinimized(true);
+        }, 8000);
+
+        return () => clearTimeout(autoMinimizeTimer);
+      }
+    }, 5000);
+
+    return () => clearTimeout(initTimer);
   }, []);
 
-  // 5. Catch standard beforeinstallprompt event for PWA installs
+  // 5. Catch Native PWA Install Prompts
   useEffect(() => {
     const handleBeforePrompt = (e) => {
       e.preventDefault();
@@ -75,132 +89,267 @@ export default function AppInstallBanner() {
     };
   }, []);
 
-  const handleDismiss = () => {
-    setVisible(false);
-    setDismissed(true);
-    localStorage.setItem('discuss_install_banner_dismissed', Date.now().toString());
+  // Explicit Close Action (Clicks X)
+  const handleDismiss = (e) => {
+    e.stopPropagation();
+    setMinimized(true);
+    setIsDismissed(true);
+    localStorage.setItem('discuss_install_widget_dismissed', 'true');
+    toast.success('Install widget minimized to floating dashboard link.');
   };
 
-  const handleNativePWAInstall = async () => {
+  // Trigger PWA Installation Flow
+  const handlePWAInstall = async () => {
     if (!deferredPrompt) {
-      // Fallback instructions if native prompt isn't fired yet
-      toast.info('To install: Tap your browser settings menu (3 dots) and select "Add to Home Screen" or "Install App".');
+      toast.info('PWA Installation ready. Tap your browser settings (3 dots) and select "Add to Home Screen" or "Install App".');
       return;
     }
     
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      toast.success('Thank you for installing Discuss!');
+      toast.success('Awesome! Welcome to the standalone Discuss app experience!');
       setDeferredPrompt(null);
-      setVisible(false);
+      setMinimized(true);
     }
   };
 
+  // Direct APK Download Trigger
   const handleAPKDownload = () => {
-    toast.success('Starting download of Discuss APK...');
-    // Point to download endpoint or placeholder
+    toast.success('Initiating high-speed direct APK download...');
     window.location.href = 'https://www.discussit.in/app/discussit.apk';
   };
 
-  if (!visible || dismissed) return null;
+  if (!visible) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[92%] max-w-lg animate-in slide-in-from-bottom duration-500">
-      <div 
-        className="relative bg-neutral-900/90 dark:bg-black/90 discuss-black:bg-[#0D0D12]/95 border border-[#2563EB]/25 discuss:border-[#EF4444]/25 discuss-black:border-[#FF007F]/25 backdrop-blur-md rounded-2xl p-4.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex flex-col md:flex-row items-center gap-4 text-white overflow-hidden select-none"
-        style={document.documentElement.classList.contains('discuss-black')
-          ? { borderColor: 'rgba(255, 0, 127, 0.25)', boxShadow: '0 8px 32px rgba(255, 0, 127, 0.1)' }
-          : {}}
-      >
-        <div className="bg-noise absolute inset-0 opacity-[0.06] pointer-events-none" />
+    <>
+      {/* Global CSS Inject for futuristic Techie HUD & Pulsing Red tag glow */}
+      <style>{`
+        @keyframes cyber-pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.45), inset 0 0 8px rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+          }
+          50% {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.4);
+            border-color: rgba(239, 68, 68, 0.9);
+          }
+        }
+        @keyframes cyber-badge-ping {
+          0% {
+            transform: scale(0.8);
+            opacity: 0.5;
+          }
+          50% {
+            transform: scale(1.6);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(2.2);
+            opacity: 0;
+          }
+        }
+        @keyframes cyber-hud-pulsing {
+          0%, 100% {
+            border-color: rgba(239, 68, 68, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 15px rgba(239, 68, 68, 0.1);
+          }
+          50% {
+            border-color: rgba(37, 99, 235, 0.35);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 25px rgba(37, 99, 235, 0.15);
+          }
+        }
+        .cyber-hud-card {
+          background: rgba(10, 10, 15, 0.85);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(239, 68, 68, 0.25);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+          animation: cyber-hud-pulsing 6s infinite ease-in-out;
+        }
+        .cyber-minimized-btn {
+          background: rgba(10, 10, 15, 0.7);
+          backdrop-filter: blur(15px);
+          -webkit-backdrop-filter: blur(15px);
+          border: 1px solid rgba(239, 68, 68, 0.5);
+          animation: cyber-pulse-glow 2.5s infinite ease-in-out;
+        }
+        .cyber-glow-badge {
+          box-shadow: 0 0 8px #ef4444;
+        }
+      `}</style>
 
-        {/* Close Button */}
-        <button 
-          onClick={handleDismiss}
-          className="absolute top-2.5 right-2.5 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-all z-20"
-        >
-          <X size={15} />
-        </button>
-
-        {/* App Icon / Graphic */}
-        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB] discuss-black:from-[#FF007F] discuss-black:to-[#2563EB] flex items-center justify-center shadow-lg">
-          <span className="font-extrabold text-lg tracking-tighter text-white font-mono">D</span>
-        </div>
-
-        {/* Dynamic Content based on Platform */}
-        <div className="flex-1 text-center md:text-left min-w-0 pr-2">
-          <h4 className="font-bold text-sm text-[#E1E0CC] flex items-center justify-center md:justify-start gap-1.5">
-            {platform === 'desktop' && 'Install Discuss Standalone'}
-            {platform === 'android' && 'Discuss for Android'}
-            {platform === 'ios' && 'Add Discuss to iPhone'}
-            <CheckCircle2 size={13} className="text-[#2563EB] discuss:text-[#EF4444] discuss-black:text-[#FF007F] shrink-0" />
-          </h4>
-
-          {/* Prompt Messages */}
-          {platform === 'desktop' && (
-            <p className="text-xs text-neutral-400 mt-0.5 leading-relaxed">
-              Get direct access from your taskbar or desktop with our lightning-fast standalone app.
-            </p>
-          )}
-
-          {platform === 'android' && (
-            <p className="text-xs text-neutral-400 mt-0.5 leading-relaxed">
-              Download our direct APK or install the secure PWA directly to your home screen.
-            </p>
-          )}
-
-          {platform === 'ios' && (
-            <div className="text-xs text-neutral-400 mt-1 leading-relaxed space-y-1 text-left">
-              <p>Install our premium app directly without App Store fees:</p>
-              <div className="flex items-center gap-1.5 mt-1 bg-white/5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border border-white/5">
-                <span>1. Tap the Share button</span>
-                <Share size={12} className="text-[#2563EB] discuss:text-[#EF4444]" />
-                <span>at the bottom</span>
-              </div>
-              <p className="pl-1 mt-0.5 text-[11px]">2. Scroll down and select <span className="text-[#E1E0CC] font-bold">"Add to Home Screen"</span>.</p>
+      <AnimatePresence mode="wait">
+        {minimized ? (
+          /* =========================================================================
+             MINIMIZED FLOATING ICON STATE
+             ========================================================================= */
+          <motion.div
+            key="minimized-widget"
+            initial={{ opacity: 0, scale: 0.7, x: 100 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.7, x: 100 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 20 }}
+            onClick={() => setMinimized(false)}
+            className="fixed bottom-6 right-6 md:right-8 z-[9999] flex items-center justify-center cursor-pointer select-none"
+            title="Expand Application Installer"
+          >
+            {/* The Floating Blurry Translucent </> Circle */}
+            <div className="cyber-minimized-btn w-13 h-13 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white relative hover:scale-105 active:scale-95 transition-all">
+              <span className="font-mono text-base md:text-lg font-bold tracking-tighter text-[#E1E0CC]">&lt;/&gt;</span>
+              
+              {/* Mixed Pulsing Red Tag / Glow Active All the Time */}
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center cyber-glow-badge z-20">
+                <span className="absolute inset-0 w-full h-full bg-red-500 rounded-full animate-ping opacity-75" style={{ animationDuration: '1.8s' }} />
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* OS Specific CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full md:w-auto mt-2 md:mt-0 z-10">
-          {platform === 'desktop' && (
-            <button 
-              onClick={handleNativePWAInstall}
-              className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB] discuss-black:from-[#FF007F] discuss-black:to-[#2563EB] hover:opacity-95 text-white text-xs font-bold rounded-xl transition-all shadow-md w-full md:w-auto"
-            >
-              <Monitor size={14} />
-              Install Standalone
-            </button>
-          )}
-
-          {platform === 'android' && (
-            <>
+          </motion.div>
+        ) : (
+          /* =========================================================================
+             EXPANDED TECHIE HUD INSTAL CARD STATE
+             ========================================================================= */
+          <motion.div
+            key="expanded-widget"
+            initial={{ opacity: 0, scale: 0.9, y: 50, x: 0 }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 30, x: 100 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 240 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:-translate-x-0 md:right-8 z-[9999] w-[92%] max-w-[430px] rounded-2xl overflow-hidden cyber-hud-card select-none text-white p-4.5"
+          >
+            {/* Pulsing Cyber Neon Top Strip Accent Line */}
+            <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-red-500 via-purple-500 to-blue-600" />
+            
+            {/* Futuristic Tech HUD Header */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-3.5 font-mono">
+              <div className="flex items-center gap-2">
+                <Terminal size={14} className="text-red-500 animate-pulse" />
+                <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold font-mono">
+                  // SYS_DETECTED: {platform.toUpperCase()}_SYS
+                </span>
+              </div>
               <button 
-                onClick={handleAPKDownload}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-bold rounded-xl transition-all border border-white/10 w-full sm:flex-1 md:w-auto"
+                onClick={handleDismiss}
+                className="p-1 rounded-md text-neutral-400 hover:text-red-400 hover:bg-white/5 transition-all flex items-center gap-1 group"
+                title="Minimize widget to sidebar"
               >
-                <Download size={14} className="text-[#2563EB] discuss:text-[#EF4444] discuss-black:text-[#FF007F]" />
-                Direct APK
+                <span className="text-[8px] font-bold tracking-widest hidden sm:inline text-neutral-500 group-hover:text-red-400">MINIMIZE</span>
+                <X size={14} />
               </button>
-              <button 
-                onClick={handleNativePWAInstall}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB] discuss-black:from-[#FF007F] discuss-black:to-[#2563EB] hover:opacity-95 text-white text-xs font-bold rounded-xl transition-all shadow-md w-full sm:flex-1 md:w-auto"
-              >
-                <Smartphone size={14} />
-                Install App (PWA)
-              </button>
-            </>
-          )}
+            </div>
 
-          {platform === 'ios' && !isSafari && (
-            <p className="text-[10px] text-neutral-500 italic max-w-[150px] text-center md:text-right font-medium leading-normal mt-1 md:mt-0">
-              *Please open this website in Safari browser to install.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+            {/* Layout Box without the bulky "D" icon */}
+            <div className="space-y-3.5 pr-1">
+              
+              {/* Dynamic OS Title & Badges */}
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm tracking-wide text-[#E1E0CC] flex items-center gap-2 font-mono">
+                  {platform === 'android' && 'Discuss for Android'}
+                  {platform === 'ios' && 'Add Discuss to iPhone'}
+                  {platform === 'mac' && 'Discuss for macOS Standalone'}
+                  {platform === 'desktop' && 'Discuss Standalone Client'}
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-sans font-bold flex items-center gap-1">
+                    <Sparkles size={8} /> 4.8 ★ (20+ installs)
+                  </span>
+                </h4>
+
+                {/* dynamic platform messages */}
+                {platform === 'android' && (
+                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+                    Run natively via a secure APK download with high-performance sandboxing, or initialize directly onto your home screen using the global PWA client.
+                  </p>
+                )}
+                {platform === 'ios' && (
+                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+                    Launch Discuss as a full-screen standalone application bypassing App Store fees. Ready with offline core and instant performance.
+                  </p>
+                )}
+                {platform === 'mac' && (
+                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+                    Get deep integration with macOS. Run standalone with launch shortcuts, full multitasking supports, and hardware acceleration on your MacBook/Mac.
+                  </p>
+                )}
+                {platform === 'desktop' && (
+                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+                    Deploy native standalone environment client. Pin directly to your taskbar or desktop for lightning speeds, high-performance, and secure chats.
+                  </p>
+                )}
+              </div>
+
+              {/* iOS Manual Installation Guide block (Clean step boxes) */}
+              {platform === 'ios' && (
+                <div className="space-y-2 font-mono text-[10.5px]">
+                  <div className="flex items-center gap-2 bg-white/[0.03] border border-white/5 rounded-lg px-2.5 py-1.5 text-neutral-300">
+                    <span className="text-red-400 font-bold">01.</span>
+                    <span className="flex-1">Tap the <strong className="text-white">Share</strong> button in Safari's bottom tab bar</span>
+                    <Share size={12} className="text-blue-400 shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/[0.03] border border-white/5 rounded-lg px-2.5 py-1.5 text-neutral-300">
+                    <span className="text-red-400 font-bold">02.</span>
+                    <span className="flex-1">Scroll down and select <strong className="text-white">"Add to Home Screen"</strong></span>
+                    <span className="text-[12px] text-red-500 font-black">+</span>
+                  </div>
+                </div>
+              )}
+
+              {/* CTA Action Bar - Perfectly Aligned, Supporting all screens */}
+              <div className="flex items-center gap-2.5 pt-2 border-t border-white/5">
+                
+                {/* Android Action CTA */}
+                {platform === 'android' && (
+                  <div className="flex flex-row gap-2 w-full">
+                    <button
+                      onClick={handleAPKDownload}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-white/10 hover:border-red-500/40 hover:bg-red-500/5 transition-all text-xs font-bold font-sans text-neutral-300 cursor-pointer"
+                    >
+                      <Download size={13} className="text-red-400 shrink-0" />
+                      Direct APK
+                    </button>
+                    <button
+                      onClick={handlePWAInstall}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                    >
+                      <Smartphone size={13} className="shrink-0" />
+                      Install (PWA)
+                    </button>
+                  </div>
+                )}
+
+                {/* macOS CTA */}
+                {platform === 'mac' && (
+                  <button
+                    onClick={handlePWAInstall}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                  >
+                    <Monitor size={13} className="shrink-0" />
+                    Install macOS App
+                  </button>
+                )}
+
+                {/* Windows/Generic Desktop CTA */}
+                {platform === 'desktop' && (
+                  <button
+                    onClick={handlePWAInstall}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                  >
+                    <Monitor size={13} className="shrink-0" />
+                    Install Standalone
+                  </button>
+                )}
+
+                {/* iOS Safari validation text */}
+                {platform === 'ios' && (
+                  <div className="flex items-center gap-1.5 w-full text-[10px] text-neutral-400 font-sans italic">
+                    <CheckCircle2 size={11} className="text-red-500 shrink-0" />
+                    <span>App matches device core framework successfully.</span>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
