@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
+import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
- * AppInstallBanner — Cybernetic Techie-HUD Style PWA Installer Banner
+ * AppInstallBanner — Premium Cybernetic HUD Style PWA Installer
  * Features:
- *  - Supports OS-specific guides and buttons: Android, iOS, MacOS, Windows/Desktop
  *  - 5-second initial mount delay.
- *  - 8-second display window before auto-minimizing to the right.
- *  - Minimized floating "</>" shiny glass icon with mixed neon-red shining glow.
- *  - Dismiss button "X" immediately minimizes it and saves permanent dismissed state in localStorage.
- *  - If dismissed previously, starts in minimized mode directly on next page load (never pops full box).
- *  - If ignored (auto-minimized), it will pop again after 5s on next page load.
- *  - Median/GoNative Webview auto-suppression.
- *  - Custom CSS HUD glowing animations.
+ *  - 8-second expanded banner window before auto-minimizing.
+ *  - Minimized state: Positioned directly on the right edge of the screen, sliding 50% off-screen
+ *    ("out of screen" style) to show only a single "<" tag, preventing float pollution.
+ *  - Premium rotating conic-gradient shining border sweep animation wrapping the circle perfectly.
+ *  - Top-left visible notification dot that pings constantly to capture developer attention.
+ *  - Close (X) button triggers instant minimization and sets permanent dismissed state in localStorage.
+ *  - Suppressed inside mobile WebView wrappers.
  */
 export default function AppInstallBanner() {
   const [platform, setPlatform] = useState('desktop'); // 'android', 'ios', 'mac', 'desktop'
@@ -95,7 +94,7 @@ export default function AppInstallBanner() {
     setMinimized(true);
     setIsDismissed(true);
     localStorage.setItem('discuss_install_widget_dismissed', 'true');
-    toast.success('Install widget minimized to floating dashboard link.');
+    toast.success('Install widget minimized to right edge of page.');
   };
 
   // Trigger PWA Installation Flow
@@ -108,7 +107,7 @@ export default function AppInstallBanner() {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      toast.success('Awesome! Welcome to the standalone Discuss app experience!');
+      toast.success('Welcome to the standalone Discuss app experience!');
       setDeferredPrompt(null);
       setMinimized(true);
     }
@@ -124,30 +123,11 @@ export default function AppInstallBanner() {
 
   return (
     <>
-      {/* Global CSS Inject for futuristic Techie HUD & Pulsing Red tag glow */}
+      {/* Global CSS Inject for perfect rotating border shine & HUD pulsing */}
       <style>{`
-        @keyframes cyber-pulse-glow {
-          0%, 100% {
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.45), inset 0 0 8px rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.5);
-          }
-          50% {
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 15px rgba(239, 68, 68, 0.4);
-            border-color: rgba(239, 68, 68, 0.9);
-          }
-        }
-        @keyframes cyber-badge-ping {
-          0% {
-            transform: scale(0.8);
-            opacity: 0.5;
-          }
-          50% {
-            transform: scale(1.6);
-            opacity: 1;
-          }
+        @keyframes cyber-border-spin {
           100% {
-            transform: scale(2.2);
-            opacity: 0;
+            transform: rotate(360deg);
           }
         }
         @keyframes cyber-hud-pulsing {
@@ -160,6 +140,54 @@ export default function AppInstallBanner() {
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 25px rgba(37, 99, 235, 0.15);
           }
         }
+        
+        /* The Conic Gradient Border Sweep */
+        .cyber-spin-border-wrap {
+          position: relative;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          padding: 1.5px; /* Exact premium border width */
+          overflow: hidden;
+          background: transparent;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+        }
+        .cyber-spin-border-wrap::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: conic-gradient(
+            from 0deg,
+            transparent 15%,
+            #ef4444 50%,
+            transparent 65%,
+            #2563eb 85%,
+            transparent 100%
+          );
+          animation: cyber-border-spin 2.6s linear infinite;
+          z-index: 1;
+        }
+        .cyber-spin-border-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          background: rgba(8, 8, 12, 0.9);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: 50%;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          padding-left: 9px; /* Aligns "<" perfectly centered inside the visible left half of the circle */
+        }
+        
         .cyber-hud-card {
           background: rgba(10, 10, 15, 0.85);
           backdrop-filter: blur(20px);
@@ -167,13 +195,6 @@ export default function AppInstallBanner() {
           border: 1px solid rgba(239, 68, 68, 0.25);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
           animation: cyber-hud-pulsing 6s infinite ease-in-out;
-        }
-        .cyber-minimized-btn {
-          background: rgba(10, 10, 15, 0.7);
-          backdrop-filter: blur(15px);
-          -webkit-backdrop-filter: blur(15px);
-          border: 1px solid rgba(239, 68, 68, 0.5);
-          animation: cyber-pulse-glow 2.5s infinite ease-in-out;
         }
         .cyber-glow-badge {
           box-shadow: 0 0 8px #ef4444;
@@ -183,25 +204,29 @@ export default function AppInstallBanner() {
       <AnimatePresence mode="wait">
         {minimized ? (
           /* =========================================================================
-             MINIMIZED FLOATING ICON STATE
+             MINIMIZED EDGE-DOCK TAB STATE (ONLY SHOWS "<" TAG WITH SWEEP SHINE)
              ========================================================================= */
           <motion.div
             key="minimized-widget"
-            initial={{ opacity: 0, scale: 0.7, x: 100 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.7, x: 100 }}
-            transition={{ type: 'spring', stiffness: 220, damping: 20 }}
+            initial={{ opacity: 0, scale: 0.8, x: 50 }}
+            animate={{ opacity: 1, scale: 1, x: 20 }} /* Translated 20px off-screen */
+            whileHover={{ x: 8 }} /* Slides out slightly on hover */
+            exit={{ opacity: 0, scale: 0.8, x: 50 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 22 }}
             onClick={() => setMinimized(false)}
-            className="fixed bottom-6 right-6 md:right-8 z-[9999] flex items-center justify-center cursor-pointer select-none"
-            title="Expand Application Installer"
+            className="fixed bottom-28 right-0 z-[9999] flex items-center justify-center cursor-pointer select-none"
+            title="Expand App Installer"
           >
-            {/* The Floating Blurry Translucent </> Circle */}
-            <div className="cyber-minimized-btn w-13 h-13 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white relative hover:scale-105 active:scale-95 transition-all">
-              <span className="font-mono text-base md:text-lg font-bold tracking-tighter text-[#E1E0CC]">&lt;/&gt;</span>
+            {/* The Conic-Gradient Spin Outer Wrapper */}
+            <div className="cyber-spin-border-wrap">
+              {/* Dark Glass Core displaying only "<" perfectly centered on the visible edge */}
+              <div className="cyber-spin-border-inner">
+                <span className="font-mono text-lg font-black tracking-widest text-[#E1E0CC]">&lt;</span>
+              </div>
               
-              {/* Mixed Pulsing Red Tag / Glow Active All the Time */}
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center cyber-glow-badge z-20">
-                <span className="absolute inset-0 w-full h-full bg-red-500 rounded-full animate-ping opacity-75" style={{ animationDuration: '1.8s' }} />
+              {/* Mixed Pulsing Red Tag - Positioned at top-left to stay fully visible */}
+              <span className="absolute top-0 left-0 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center cyber-glow-badge z-20">
+                <span className="absolute inset-0 w-full h-full bg-red-500 rounded-full animate-ping opacity-75" style={{ animationDuration: '1.6s' }} />
               </span>
             </div>
           </motion.div>
@@ -231,14 +256,14 @@ export default function AppInstallBanner() {
               <button 
                 onClick={handleDismiss}
                 className="p-1 rounded-md text-neutral-400 hover:text-red-400 hover:bg-white/5 transition-all flex items-center gap-1 group"
-                title="Minimize widget to sidebar"
+                title="Minimize widget"
               >
                 <span className="text-[8px] font-bold tracking-widest hidden sm:inline text-neutral-500 group-hover:text-red-400">MINIMIZE</span>
                 <X size={14} />
               </button>
             </div>
 
-            {/* Layout Box without the bulky "D" icon */}
+            {/* Content Details */}
             <div className="space-y-3.5 pr-1">
               
               {/* Dynamic OS Title & Badges */}
@@ -292,7 +317,7 @@ export default function AppInstallBanner() {
                 </div>
               )}
 
-              {/* CTA Action Bar - Perfectly Aligned, Supporting all screens */}
+              {/* CTA Action Bar */}
               <div className="flex items-center gap-2.5 pt-2 border-t border-white/5">
                 
                 {/* Android Action CTA */}
