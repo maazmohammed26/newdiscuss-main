@@ -15,6 +15,20 @@ const CHAT_NOTIFICATION_COOLDOWN = 2 * 60 * 60 * 1000;
 
 // ============ HELPERS ============
 
+// Formats the notification body text based on preview preferences and cuts off at max 6 lines
+export const formatBodyForPreview = (bodyText, isPreview) => {
+  if (!isPreview) {
+    return "New secure alert received. Open app to view.";
+  }
+  if (!bodyText) return "";
+  const lines = bodyText.split('\n');
+  if (lines.length > 6) {
+    return lines.slice(0, 6).join('\n') + '\n... open in app';
+  }
+  return bodyText;
+};
+
+
 // Convert VAPID key to Uint8Array
 export function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -215,7 +229,7 @@ export const sendOneSignalNotification = async (targetUserId, title, bodyText, d
     isPreview = isNotificationPreviewEnabled();
   }
   
-  const maskedBody = isPreview ? bodyText : "New secure alert received. Open app to view.";
+  const maskedBody = formatBodyForPreview(bodyText, isPreview);
 
   try {
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
@@ -349,11 +363,11 @@ export const notifyNewPost = async (post) => {
   
   const isPreview = isNotificationPreviewEnabled();
   const bodyText = isPreview 
-    ? (post.type === 'project' ? `New project: ${(post.title || '').substring(0, 50) || 'Check it out!'}` : `New discussion: ${(post.content || '').substring(0, 50) || 'Join the conversation!'}`)
+    ? (post.type === 'project' ? `New project: ${post.title || 'Check it out!'}` : `New discussion: ${post.content || 'Join the conversation!'}`)
     : "A new post has been published.";
 
   await showNotification('New on Discuss', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `post-${post.id}`,
     data: { url: `/post/${post.id}`, type: 'post' }
   });
@@ -372,7 +386,7 @@ export const notifyChatMessage = async (chatId, senderName) => {
     : "You received a new direct message.";
 
   await showNotification('New message in your chat', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `chat-${chatId}`,
     data: { url: `/chat/${chatId}`, type: 'chat' }
   });
@@ -391,7 +405,7 @@ export const notifyFriendRequest = async (fromUserId, fromUsername) => {
     : "You have received a new friend request.";
 
   await showNotification('New Friend Request', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `friend-request-${fromUserId}`,
     data: { url: '/profile', type: 'friend' }
   });
@@ -410,7 +424,7 @@ export const notifyFriendAccepted = async (fromUserId, fromUsername) => {
     : "Your friend request has been approved.";
 
   await showNotification('Friend Request Accepted', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `friend-accepted-${fromUserId}`,
     data: { url: `/user/${fromUserId}`, type: 'friend' }
   });
@@ -429,7 +443,7 @@ export const notifyGroupMessage = async (groupId, groupName, senderName) => {
     : `New message posted in ${groupName || 'group'}.`;
 
   await showNotification(`New message in ${groupName || 'group'}`, {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `group-chat-${groupId}`,
     data: { url: `/group/${groupId}`, type: 'group_chat' }
   });
@@ -448,7 +462,7 @@ export const notifyGroupJoinRequest = async (groupId, groupName, fromUsername) =
     : "A new user has requested to join your group.";
 
   await showNotification('New Group Join Request', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `group-request-${groupId}-${fromUsername}`,
     data: { url: `/join-requests`, type: 'group_request' }
   });
@@ -467,7 +481,7 @@ export const notifyGroupRequestAccepted = async (groupId, groupName) => {
     : "Your group join request has been approved.";
 
   await showNotification('Group Request Accepted', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `group-accepted-${groupId}`,
     data: { url: `/group/${groupId}`, type: 'group' }
   });
@@ -486,7 +500,7 @@ export const notifyNewComment = async (postId, fromUsername) => {
     : "A new comment was posted on your discussion.";
 
   await showNotification('New Comment', {
-    body: bodyText,
+    body: formatBodyForPreview(bodyText, isPreview),
     tag: `comment-${postId}`,
     data: { url: `/post/${postId}`, type: 'comment' }
   });

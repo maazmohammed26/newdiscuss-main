@@ -152,7 +152,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
           sendOneSignalNotification(
             comment.author_id,
             `New Reply on Your Comment`,
-            `@${currentUser?.username || 'Someone'} replied: "${text.substring(0, 60)}"`,
+            `@${currentUser?.username || 'Someone'} replied: "${text}"`,
             { url: `/post/${postId}`, type: 'comment_reply' }
           );
         }).catch(() => {});
@@ -388,7 +388,7 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
           sendOneSignalNotification(
             postAuthorId,
             `New Comment on Your Post`,
-            `@${currentUser?.username || 'Someone'} commented: "${text.substring(0, 60)}"`,
+            `@${currentUser?.username || 'Someone'} commented: "${text}"`,
             { url: `/post/${postId}`, type: 'comment' }
           );
         }).catch(() => {});

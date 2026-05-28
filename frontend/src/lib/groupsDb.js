@@ -362,7 +362,7 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
             sendOneSignalNotification(
               userId,
               `New in ${groupName}`,
-              `@${senderUsername}: "${lastMsgText.substring(0, 60)}"`,
+              `@${senderUsername}: ${lastMsgText}`,
               { url: `/group/${groupId}`, type: 'group_chat' }
             );
           }).catch(() => {});

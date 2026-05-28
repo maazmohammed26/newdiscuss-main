@@ -40,7 +40,7 @@ import {
   signInWithEmailLink,
   sendEmailVerification,
 } from '@/lib/firebase';
-import { database, ref, onValue, get } from '@/lib/firebase';
+import { database, ref, onValue, get, set, off } from '@/lib/firebase';
 import { update, onDisconnect } from 'firebase/database';
 import { isDevRadarDbAvailable, devRadarDatabase } from '@/lib/firebaseSixth';
 import {
@@ -673,6 +673,70 @@ export function AuthProvider({ children }) {
       window.localStorage.removeItem('pendingVerification');
       setPendingVerification(false);
 
+      // Detect if running inside the Median.co wrapped mobile app
+      const isMedianApp = typeof window !== 'undefined' && (
+        window.median !== undefined ||
+        window.gonative !== undefined ||
+        navigator.userAgent.includes('Median') ||
+        navigator.userAgent.includes('GoNative')
+      );
+
+      if (isMedianApp) {
+        // WebView auth bridge flow specifically for Median.co WebView APK
+        const flowId = `flow_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+        window.localStorage.setItem('median_auth_flow_id', flowId);
+        
+        // 1. Write the pending status to RTDB
+        const bridgeRef = ref(database, `webViewAuth/${flowId}`);
+        await set(bridgeRef, {
+          status: 'pending',
+          timestamp: Date.now()
+        });
+
+        // 2. Open the system browser (Chrome Custom Tab / External Browser)
+        const bridgeUrl = `${window.location.origin}/login-bridge?flowId=${flowId}`;
+        if (window.median?.window?.open) {
+          window.median.window.open(bridgeUrl, 'external');
+        } else if (window.gonative?.window?.open) {
+          window.gonative.window.open(bridgeUrl, 'external');
+        } else {
+          window.open(bridgeUrl, '_blank');
+        }
+
+        // 3. Set up Realtime Database listener to wait for completion
+        return new Promise((resolve) => {
+          onValue(bridgeRef, async (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.status === 'success' && data.googleIdToken) {
+              // Unsubscribe from database updates
+              off(bridgeRef);
+              
+              // Clean up the database node
+              await set(bridgeRef, null);
+              
+              try {
+                // Re-create the Google credential and sign in securely!
+                const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+                const credential = GoogleAuthProvider.credential(data.googleIdToken, data.googleAccessToken || undefined);
+                const result = await signInWithCredential(auth, credential);
+                await syncUser(result.user);
+                window.localStorage.removeItem('median_auth_flow_id');
+                
+                // Return success
+                resolve({ success: true });
+                
+                // Full reload to establish state and load caches instantly
+                window.location.reload();
+              } catch (signInErr) {
+                console.error('[AuthBridge] Sign-in with credential failed:', signInErr);
+                resolve({ success: false, error: signInErr.message || 'Credential sign-in failed' });
+              }
+            }
+          });
+        });
+      }
+
+      // Standard desktop / mobile PWA flow
       try {
         const result = await signInWithPopup(auth, googleProvider);
         await syncUser(result.user);

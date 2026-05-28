@@ -44,6 +44,7 @@ const CareersPage = lazy(() => import('@/pages/CareersPage'));
 const BlogsPage   = lazy(() => import('@/pages/BlogsPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
+const LoginBridgePage = lazy(() => import('@/pages/LoginBridgePage'));
 
 // ── ProtectedRoute ────────────────────────────────────────────────────────────
 // Gate for authenticated routes. Shows a loading screen while auth resolves.
@@ -89,7 +90,7 @@ function AppRoutes() {
     const root = document.documentElement;
     
     // Public routes that should always render in default light theme
-    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email'];
+    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
@@ -133,6 +134,7 @@ function AppRoutes() {
         <Route path="/login"    element={<AuthRedirect><LoginPage /></AuthRedirect>} />
         <Route path="/register" element={<AuthRedirect><RegisterPage /></AuthRedirect>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/login-bridge" element={<LoginBridgePage />} />
 
         {/* Guest Allowed (Public but customized inside) */}
         <Route path="/feed"                    element={<FeedPage />} />
@@ -222,7 +224,7 @@ function OnboardingWrapper({ children }) {
     setShowModal(false);
   };
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email'];
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
   const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
