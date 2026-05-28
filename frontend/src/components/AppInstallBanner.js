@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2, ShieldCheck, Cpu } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -8,13 +8,14 @@ import { toast } from 'sonner';
  * Features:
  *  - 5-second initial mount delay.
  *  - 8-second expanded banner window before auto-minimizing.
- *  - Fixed mobile cutoff layout by using left-4 right-4 md:left-auto md:right-8 (no translate-x clashing).
+ *  - Fixed mobile cutoff layout by using left-4 right-4 md:left-auto md:right-8 md:w-[390px] (no translate-x clashing).
  *  - Highly professional status-HUD layout with minimal text and clean developer accents.
  *  - Minimized state: Positioned directly on the right edge of the screen, sliding 50% off-screen
  *    to show only a single "<" tag, preventing float pollution.
  *  - Premium rotating conic-gradient shining border sweep animation wrapping the circle perfectly.
- *  - Top-left visible notification dot that pings constantly to capture developer attention.
- *  - Close (X) button triggers instant minimization and saves permanent dismissed state in localStorage.
+ *  - Direct APK download triggers a gorgeous dedicated pop-up modal showing "Official Discuss APP",
+ *    rating stats, v2.0.0 specs, scrollable hidden-scrollbar description, and a 3-second animated download loading sequence.
+ *  - Interaction (APK modal or PWA install click) auto-dismisses the expanded widget to the docked tab forever.
  *  - Suppressed inside mobile WebView wrappers.
  */
 export default function AppInstallBanner() {
@@ -23,6 +24,11 @@ export default function AppInstallBanner() {
   const [visible, setVisible] = useState(false);
   const [minimized, setMinimized] = useState(true);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // APK Pop-up Modal States
+  const [showAPKModal, setShowAPKModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   useEffect(() => {
     // 1. Silently suppress inside mobile app Native WebViews
@@ -119,15 +125,48 @@ export default function AppInstallBanner() {
     }
   };
 
-  // Direct APK Download Trigger
-  const handleAPKDownload = () => {
-    // Save dismissed state in localStorage on interaction
+  // Direct APK Click -> Opens High-Fidelity Custom Download Pop-up Modal
+  const handleAPKClick = () => {
+    // Save dismissed state in localStorage immediately, auto-minimize widget in the background
     localStorage.setItem('discuss_install_widget_dismissed', 'true');
     setIsDismissed(true);
     setMinimized(true);
 
-    toast.success('Initiating high-speed direct APK download...');
-    window.location.href = 'https://www.discussit.in/app/discussit.apk';
+    // Open premium custom download popup
+    setShowAPKModal(true);
+  };
+
+  // Modal Download Button Sequence (3 Seconds Loading Progress animation)
+  const startSecureDownload = () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    setDownloadProgress(0);
+
+    // Increment progress dynamically over 3000ms (3 seconds)
+    const intervalTime = 30; // ms per update
+    const totalSteps = 3000 / intervalTime; // 100 steps
+    let currentStep = 0;
+
+    const progressTimer = setInterval(() => {
+      currentStep++;
+      const percent = Math.min(Math.round((currentStep / totalSteps) * 100), 100);
+      setDownloadProgress(percent);
+
+      if (currentStep >= totalSteps) {
+        clearInterval(progressTimer);
+        
+        // Complete download & trigger file fetch
+        toast.success('Download successfully initialized. Storing Discuss APK.');
+        window.location.href = 'https://www.discussit.in/app/discussit.apk';
+        
+        // Delayed modal close for premium presentation
+        setTimeout(() => {
+          setShowAPKModal(false);
+          setIsDownloading(false);
+          setDownloadProgress(0);
+        }, 800);
+      }
+    }, intervalTime);
   };
 
   if (!visible) return null;
@@ -138,7 +177,7 @@ export default function AppInstallBanner() {
       case 'android':
         return {
           title: 'Discuss for Android',
-          desc: 'Deploy native Android package. Available via direct APK download (4.8 ★) or sandboxed PWA shell.',
+          desc: 'Deploy native Android package. Available via direct APK download (4.4 ★) or secure standalone PWA container.',
           badge: 'APK + PWA Client',
         };
       case 'ios':
@@ -167,7 +206,7 @@ export default function AppInstallBanner() {
 
   return (
     <>
-      {/* Global CSS Inject for perfect rotating border shine & HUD pulsing */}
+      {/* Global CSS Inject for perfect rotating border shine, hidden scrollbars, & HUD pulsing */}
       <style>{`
         @keyframes cyber-border-spin {
           100% {
@@ -243,6 +282,15 @@ export default function AppInstallBanner() {
         .cyber-glow-badge {
           box-shadow: 0 0 8px #ef4444;
         }
+
+        /* Premium Hidden Scrollbar utility */
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
       `}</style>
 
       <AnimatePresence mode="wait">
@@ -276,7 +324,7 @@ export default function AppInstallBanner() {
           </motion.div>
         ) : (
           /* =========================================================================
-             EXPANDED TECHIE HUD INSTAL CARD STATE (COMPACT, PROFESSIONAL DESIGN)
+             EXPANDED TECHIE HUD INSTAL CARD STATE
              ========================================================================= */
           <motion.div
             key="expanded-widget"
@@ -347,7 +395,7 @@ export default function AppInstallBanner() {
                 {platform === 'android' && (
                   <div className="flex flex-row gap-2 w-full">
                     <button
-                      onClick={handleAPKDownload}
+                      onClick={handleAPKClick}
                       className="flex-1 flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl border border-white/10 hover:border-red-500/40 hover:bg-red-500/5 transition-all text-xs font-bold font-sans text-neutral-300 cursor-pointer"
                     >
                       <Download size={12} className="text-red-400 shrink-0" />
@@ -396,6 +444,110 @@ export default function AppInstallBanner() {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+         OFFICIAL DISCUSS APK DOWNLOAD POP-UP MODAL (HIGH FIDELITY)
+         ========================================================================= */}
+      <AnimatePresence>
+        {showAPKModal && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="relative w-full max-w-sm rounded-2xl overflow-hidden text-white p-6 cyber-hud-card font-sans"
+            >
+              {/* Premium Top Strip Glowing Gradient */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-red-500 via-purple-500 to-blue-600" />
+              
+              {/* Modal Close Button */}
+              <button 
+                onClick={() => { if (!isDownloading) setShowAPKModal(false); }}
+                disabled={isDownloading}
+                className="absolute top-4 right-4 p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-white/5 transition-all disabled:opacity-40"
+                title="Close modal"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Title & App Badge */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500 to-blue-600 flex items-center justify-center shadow-lg">
+                  <Terminal size={18} className="text-white animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm tracking-wide text-white">Official Discuss App</h3>
+                  <div className="flex items-center gap-1.5 mt-0.5 text-[9px] font-mono font-bold text-neutral-400">
+                    <span>VERSION: v2.0.0</span>
+                    <span>•</span>
+                    <span className="text-green-400">SECURE_SHA256</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Specs Grid & Ratings */}
+              <div className="grid grid-cols-2 gap-2 mb-4 text-[10px] font-mono">
+                <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2 flex flex-col justify-center">
+                  <span className="text-neutral-500 text-[8px] uppercase">Review Grade</span>
+                  <span className="text-white font-bold mt-0.5 flex items-center gap-1">
+                    <Sparkles size={8} className="text-red-500" /> 4.4 ★ (Non-clickable)
+                  </span>
+                </div>
+                <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2 flex flex-col justify-center">
+                  <span className="text-neutral-500 text-[8px] uppercase">Downloads</span>
+                  <span className="text-white font-bold mt-0.5">20+ Installs</span>
+                </div>
+              </div>
+
+              {/* Scrollable Description with hidden scrollbar */}
+              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 mb-5 max-h-[110px] overflow-y-auto scrollbar-none">
+                <h4 className="text-[10px] font-mono text-red-400 mb-1.5 uppercase font-bold tracking-wider">// INTEGRATION_SPECS:</h4>
+                <p className="text-[11px] text-neutral-400 leading-relaxed font-sans">
+                  The Discuss Android Application deploys directly inside a high-speed sandboxed container. 
+                  Featuring native hidden scrollbars for clean browsing, fully customized immersive viewport ratios, memory-efficient background messaging sync, edge-to-edge screens, and full hardware accelerations. No trackers, no bloatware, secure signatures.
+                </p>
+              </div>
+
+              {/* Downloading Progress Loader or Initiate Button */}
+              <div className="space-y-3.5">
+                {isDownloading ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-neutral-300">
+                      <span className="flex items-center gap-1.5 animate-pulse">
+                        <Cpu size={10} className="text-red-500 spin-infinite" />
+                        <span>DOWNLOADING_SYS_CORE...</span>
+                      </span>
+                      <span className="font-bold text-red-400">{downloadProgress}%</span>
+                    </div>
+                    {/* Animated Loading Bar progress outline */}
+                    <div className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-red-500 to-blue-600 rounded-full transition-all"
+                        style={{ width: `${downloadProgress}%`, transitionDuration: '30ms' }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={startSecureDownload}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                  >
+                    <Download size={13} className="shrink-0" />
+                    Download APK Package
+                  </button>
+                )}
+                
+                <div className="flex items-center justify-center gap-1.5 text-[9px] text-neutral-500 font-mono">
+                  <ShieldCheck size={10} className="text-green-500 shrink-0" />
+                  <span>Verify checksum on download completion.</span>
+                </div>
+              </div>
+
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>
