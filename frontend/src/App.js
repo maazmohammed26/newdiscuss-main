@@ -44,6 +44,7 @@ const AboutPage   = lazy(() => import('@/pages/AboutPage'));
 const CareersPage = lazy(() => import('@/pages/CareersPage'));
 const BlogsPage   = lazy(() => import('@/pages/BlogsPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
+const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
 const LoginBridgePage = lazy(() => import('@/pages/LoginBridgePage'));
 const DownloadPage     = lazy(() => import('@/pages/DownloadPage'));
 
