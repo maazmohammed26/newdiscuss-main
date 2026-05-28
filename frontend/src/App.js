@@ -12,7 +12,6 @@ import LoadingScreen from '@/components/LoadingScreen';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
 import PageRouteSkeleton from '@/components/PageRouteSkeleton';
 import OfflineBanner from '@/components/OfflineBanner';
-import AppInstallBanner from '@/components/AppInstallBanner';
 import '@/App.css';
 
 // ── Lazy-loaded page components ──────────────────────────────────────────────
@@ -192,7 +191,6 @@ function App() {
                     <OfflineBanner />
                     <AppRoutes />
                     <Toaster position="top-right" />
-                    <AppInstallBanner />
                   </OnboardingWrapper>
                 </SecurityWrapper>
               </HighlightsProvider>

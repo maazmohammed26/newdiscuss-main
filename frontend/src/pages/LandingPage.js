@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import LoadingScreen from '@/components/LoadingScreen';
+import AppInstallBanner from '@/components/AppInstallBanner';
 import './LandingPage.css';
 
 // ── Animation Components ─────────────────────────────────────
@@ -449,6 +450,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Premium isolated HUD Install widget */}
+      <AppInstallBanner />
 
 
       <style>{`
