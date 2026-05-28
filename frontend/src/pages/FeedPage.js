@@ -6,7 +6,8 @@ import {
   getCachedPosts, 
   cachePosts, 
   isCacheValid, 
-  CACHE_DURATION 
+  CACHE_DURATION,
+  fastCacheLoad
 } from '@/lib/cacheManager';
 import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
@@ -70,9 +71,14 @@ export default function FeedPage() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [allPosts, setAllPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [allPosts, setAllPosts] = useState(() => {
+    const fast = fastCacheLoad('posts', Number.MAX_SAFE_INTEGER);
+    return fast?.data || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const fast = fastCacheLoad('posts', Number.MAX_SAFE_INTEGER);
+    return !(fast?.data?.length > 0);
+  });
   const [showCreate, setShowCreate] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [searchQuery, setSearchQuery] = useState('');
@@ -178,10 +184,7 @@ export default function FeedPage() {
     loadWithCache();
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setPageLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
+
 
   // Debounce search input
   useEffect(() => {
@@ -303,9 +306,7 @@ export default function FeedPage() {
     );
   }, []);
 
-  if (pageLoading) {
-    return <LoadingScreen message="Loading your feed..." />;
-  }
+
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">

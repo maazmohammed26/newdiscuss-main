@@ -22,7 +22,8 @@ import {
   getCachedFriends, 
   cacheFriends,
   getCachedGroups,
-  cacheGroups
+  cacheGroups,
+  fastCacheLoad
 } from '@/lib/cacheManager';
 import Header from '@/components/Header';
 import VerifiedBadge from '@/components/VerifiedBadge';
@@ -56,10 +57,28 @@ export default function ChatPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pendingGroupRequests } = useHighlights();
-  const [chats, setChats] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [chats, setChats] = useState(() => {
+    if (!user?.id) return [];
+    const fast = fastCacheLoad(`chats_${user.id}`, Number.MAX_SAFE_INTEGER);
+    return fast?.data || [];
+  });
+  const [friends, setFriends] = useState(() => {
+    if (!user?.id) return [];
+    const fast = fastCacheLoad(`friends_${user.id}`, Number.MAX_SAFE_INTEGER);
+    return fast?.data || [];
+  });
+  const [groups, setGroups] = useState(() => {
+    if (!user?.id) return [];
+    const fast = fastCacheLoad(`groups_${user.id}`, Number.MAX_SAFE_INTEGER);
+    return fast?.data || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (!user?.id) return true;
+    const c = fastCacheLoad(`chats_${user.id}`, Number.MAX_SAFE_INTEGER);
+    const f = fastCacheLoad(`friends_${user.id}`, Number.MAX_SAFE_INTEGER);
+    const g = fastCacheLoad(`groups_${user.id}`, Number.MAX_SAFE_INTEGER);
+    return !(c?.data?.length > 0 || f?.data?.length > 0 || g?.data?.length > 0);
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -758,7 +777,7 @@ export default function ChatPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-2 scrollbar-hide" style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
+          <div className="space-y-2">
             {activeTab === 'chats'
               ? displayData.map(item => 
                   item.type === 'group' 

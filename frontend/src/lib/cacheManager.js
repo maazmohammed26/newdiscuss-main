@@ -179,6 +179,7 @@ export const getLastCacheTime = async (key) => {
  */
 export const cachePosts = async (posts) => {
   try {
+    fastCacheSave('posts', posts);
     const db = await getDB();
     const tx = db.transaction('posts', 'readwrite');
     
@@ -202,9 +203,21 @@ export const cachePosts = async (posts) => {
  */
 export const getCachedPosts = async () => {
   try {
+    const fastCache = fastCacheLoad('posts', CACHE_DURATION.POSTS);
+    if (fastCache?.data) {
+      return fastCache.data;
+    }
+
+    const isValid = await isCacheValid('posts', CACHE_DURATION.POSTS);
+    if (!isValid) return null;
+
     const db = await getDB();
     const posts = await db.getAll('posts');
-    return posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const sorted = posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    if (sorted.length > 0) {
+      fastCacheSave('posts', sorted);
+    }
+    return sorted;
   } catch (e) {
     console.warn('Posts cache read failed:', e);
     return null;
@@ -300,6 +313,7 @@ export const updateCachedUser = async (user) => {
  */
 export const cacheFriends = async (userId, friends) => {
   try {
+    fastCacheSave(`friends_${userId}`, friends);
     const db = await getDB();
     await db.put('friends', { id: userId, friends, timestamp: Date.now() });
   } catch (e) {
@@ -312,6 +326,11 @@ export const cacheFriends = async (userId, friends) => {
  */
 export const getCachedFriends = async (userId) => {
   try {
+    const fastCache = fastCacheLoad(`friends_${userId}`, CACHE_DURATION.FRIENDS);
+    if (fastCache?.data) {
+      return fastCache.data;
+    }
+
     const db = await getDB();
     const data = await db.get('friends', userId);
     if (!data) return null;
@@ -321,6 +340,9 @@ export const getCachedFriends = async (userId) => {
       return null; // Expired
     }
     
+    if (data.friends?.length > 0) {
+      fastCacheSave(`friends_${userId}`, data.friends);
+    }
     return data.friends;
   } catch (e) {
     console.warn('Friends cache read failed:', e);
