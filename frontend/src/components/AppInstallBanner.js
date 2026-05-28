@@ -8,11 +8,13 @@ import { toast } from 'sonner';
  * Features:
  *  - 5-second initial mount delay.
  *  - 8-second expanded banner window before auto-minimizing.
+ *  - Fixed mobile cutoff layout by using left-4 right-4 md:left-auto md:right-8 (no translate-x clashing).
+ *  - Highly professional status-HUD layout with minimal text and clean developer accents.
  *  - Minimized state: Positioned directly on the right edge of the screen, sliding 50% off-screen
- *    ("out of screen" style) to show only a single "<" tag, preventing float pollution.
+ *    to show only a single "<" tag, preventing float pollution.
  *  - Premium rotating conic-gradient shining border sweep animation wrapping the circle perfectly.
  *  - Top-left visible notification dot that pings constantly to capture developer attention.
- *  - Close (X) button triggers instant minimization and sets permanent dismissed state in localStorage.
+ *  - Close (X) button triggers instant minimization and saves permanent dismissed state in localStorage.
  *  - Suppressed inside mobile WebView wrappers.
  */
 export default function AppInstallBanner() {
@@ -121,6 +123,39 @@ export default function AppInstallBanner() {
 
   if (!visible) return null;
 
+  // Premium, highly concise platform status details
+  const getPlatformDetails = () => {
+    switch (platform) {
+      case 'android':
+        return {
+          title: 'Discuss for Android',
+          desc: 'Deploy native Android package. Available via direct APK download (4.8 ★) or sandboxed PWA shell.',
+          badge: 'APK + PWA Client',
+        };
+      case 'ios':
+        return {
+          title: 'Discuss for iOS',
+          desc: 'Safari: Tap the share sheet icon and select "Add to Home Screen" to install standalone full-screen client.',
+          badge: 'iOS Client',
+        };
+      case 'mac':
+        return {
+          title: 'Discuss for macOS',
+          desc: 'Launch native sandboxed Darwin desktop client. Support multi-window, launching speed and secure chats.',
+          badge: 'macOS Client',
+        };
+      case 'desktop':
+      default:
+        return {
+          title: 'Discuss Standalone Client',
+          desc: 'Initialize direct standalone client. Pin to taskbar or desktop for lightning speeds and direct launch.',
+          badge: 'Desktop Client',
+        };
+    }
+  };
+
+  const details = getPlatformDetails();
+
   return (
     <>
       {/* Global CSS Inject for perfect rotating border shine & HUD pulsing */}
@@ -190,8 +225,8 @@ export default function AppInstallBanner() {
         
         .cyber-hud-card {
           background: rgba(10, 10, 15, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+          backdrop-filter: blur(25px);
+          -webkit-backdrop-filter: blur(25px);
           border: 1px solid rgba(239, 68, 68, 0.25);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
           animation: cyber-hud-pulsing 6s infinite ease-in-out;
@@ -232,109 +267,88 @@ export default function AppInstallBanner() {
           </motion.div>
         ) : (
           /* =========================================================================
-             EXPANDED TECHIE HUD INSTAL CARD STATE
+             EXPANDED TECHIE HUD INSTAL CARD STATE (COMPACT, PROFESSIONAL DESIGN)
              ========================================================================= */
           <motion.div
             key="expanded-widget"
-            initial={{ opacity: 0, scale: 0.9, y: 50, x: 0 }}
-            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 30, x: 100 }}
+            initial={{ opacity: 0, scale: 0.92, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 26, stiffness: 240 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:-translate-x-0 md:right-8 z-[9999] w-[92%] max-w-[430px] rounded-2xl overflow-hidden cyber-hud-card select-none text-white p-4.5"
+            className="fixed bottom-6 left-4 right-4 md:left-auto md:right-8 md:w-[390px] z-[9999] rounded-2xl overflow-hidden cyber-hud-card select-none text-white p-4"
           >
             {/* Pulsing Cyber Neon Top Strip Accent Line */}
             <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-red-500 via-purple-500 to-blue-600" />
             
             {/* Futuristic Tech HUD Header */}
-            <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-3.5 font-mono">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3 font-mono">
               <div className="flex items-center gap-2">
-                <Terminal size={14} className="text-red-500 animate-pulse" />
+                <Terminal size={13} className="text-red-500 animate-pulse" />
                 <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold font-mono">
-                  // SYS_DETECTED: {platform.toUpperCase()}_SYS
+                  // DEPLOY: {platform.toUpperCase()}_CORE
                 </span>
               </div>
               <button 
                 onClick={handleDismiss}
-                className="p-1 rounded-md text-neutral-400 hover:text-red-400 hover:bg-white/5 transition-all flex items-center gap-1 group"
+                className="p-1 rounded text-neutral-400 hover:text-red-400 hover:bg-white/5 transition-all"
                 title="Minimize widget"
               >
-                <span className="text-[8px] font-bold tracking-widest hidden sm:inline text-neutral-500 group-hover:text-red-400">MINIMIZE</span>
-                <X size={14} />
+                <X size={13} />
               </button>
             </div>
 
             {/* Content Details */}
-            <div className="space-y-3.5 pr-1">
+            <div className="space-y-3 pr-0.5">
               
               {/* Dynamic OS Title & Badges */}
               <div className="space-y-1">
-                <h4 className="font-bold text-sm tracking-wide text-[#E1E0CC] flex items-center gap-2 font-mono">
-                  {platform === 'android' && 'Discuss for Android'}
-                  {platform === 'ios' && 'Add Discuss to iPhone'}
-                  {platform === 'mac' && 'Discuss for macOS Standalone'}
-                  {platform === 'desktop' && 'Discuss Standalone Client'}
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-sans font-bold flex items-center gap-1">
-                    <Sparkles size={8} /> 4.8 ★ (20+ installs)
+                <h4 className="font-bold text-sm tracking-wide text-[#E1E0CC] flex items-center gap-1.5 font-mono">
+                  {details.title}
+                  <span className="text-[8px] px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-sans font-bold flex items-center gap-0.5">
+                    <Sparkles size={8} /> {details.badge}
                   </span>
                 </h4>
 
-                {/* dynamic platform messages */}
-                {platform === 'android' && (
-                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-                    Run natively via a secure APK download with high-performance sandboxing, or initialize directly onto your home screen using the global PWA client.
-                  </p>
-                )}
-                {platform === 'ios' && (
-                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-                    Launch Discuss as a full-screen standalone application bypassing App Store fees. Ready with offline core and instant performance.
-                  </p>
-                )}
-                {platform === 'mac' && (
-                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-                    Get deep integration with macOS. Run standalone with launch shortcuts, full multitasking supports, and hardware acceleration on your MacBook/Mac.
-                  </p>
-                )}
-                {platform === 'desktop' && (
-                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-                    Deploy native standalone environment client. Pin directly to your taskbar or desktop for lightning speeds, high-performance, and secure chats.
-                  </p>
-                )}
+                {/* Highly compact premium description */}
+                <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+                  {details.desc}
+                </p>
               </div>
 
-              {/* iOS Manual Installation Guide block (Clean step boxes) */}
+              {/* iOS Manual Installation steps block inside dark code layout */}
               {platform === 'ios' && (
-                <div className="space-y-2 font-mono text-[10.5px]">
-                  <div className="flex items-center gap-2 bg-white/[0.03] border border-white/5 rounded-lg px-2.5 py-1.5 text-neutral-300">
+                <div className="space-y-1.5 font-mono text-[10px]">
+                  <div className="flex items-center gap-2 bg-white/[0.02] border border-white/5 rounded-lg px-2 py-1 text-neutral-300">
                     <span className="text-red-400 font-bold">01.</span>
-                    <span className="flex-1">Tap the <strong className="text-white">Share</strong> button in Safari's bottom tab bar</span>
-                    <Share size={12} className="text-blue-400 shrink-0" />
+                    <span className="flex-1">Tap <strong className="text-white">Share</strong> in Safari bottom bar</span>
+                    <Share size={11} className="text-blue-400 shrink-0" />
                   </div>
-                  <div className="flex items-center gap-2 bg-white/[0.03] border border-white/5 rounded-lg px-2.5 py-1.5 text-neutral-300">
+                  <div className="flex items-center gap-2 bg-white/[0.02] border border-white/5 rounded-lg px-2 py-1 text-neutral-300">
                     <span className="text-red-400 font-bold">02.</span>
-                    <span className="flex-1">Scroll down and select <strong className="text-white">"Add to Home Screen"</strong></span>
-                    <span className="text-[12px] text-red-500 font-black">+</span>
+                    <span className="flex-1">Select <strong className="text-white">"Add to Home Screen"</strong></span>
+                    <span className="text-red-500 font-bold font-mono">+</span>
                   </div>
                 </div>
               )}
 
               {/* CTA Action Bar */}
-              <div className="flex items-center gap-2.5 pt-2 border-t border-white/5">
+              <div className="flex items-center gap-2 pt-2.5 border-t border-white/5">
                 
                 {/* Android Action CTA */}
                 {platform === 'android' && (
                   <div className="flex flex-row gap-2 w-full">
                     <button
                       onClick={handleAPKDownload}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-white/10 hover:border-red-500/40 hover:bg-red-500/5 transition-all text-xs font-bold font-sans text-neutral-300 cursor-pointer"
+                      className="flex-1 flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl border border-white/10 hover:border-red-500/40 hover:bg-red-500/5 transition-all text-xs font-bold font-sans text-neutral-300 cursor-pointer"
                     >
-                      <Download size={13} className="text-red-400 shrink-0" />
+                      <Download size={12} className="text-red-400 shrink-0" />
                       Direct APK
                     </button>
                     <button
                       onClick={handlePWAInstall}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                      className="flex-1 flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
                     >
-                      <Smartphone size={13} className="shrink-0" />
+                      <Smartphone size={12} className="shrink-0" />
                       Install (PWA)
                     </button>
                   </div>
@@ -344,9 +358,9 @@ export default function AppInstallBanner() {
                 {platform === 'mac' && (
                   <button
                     onClick={handlePWAInstall}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
                   >
-                    <Monitor size={13} className="shrink-0" />
+                    <Monitor size={12} className="shrink-0" />
                     Install macOS App
                   </button>
                 )}
@@ -355,18 +369,18 @@ export default function AppInstallBanner() {
                 {platform === 'desktop' && (
                   <button
                     onClick={handlePWAInstall}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
                   >
-                    <Monitor size={13} className="shrink-0" />
+                    <Monitor size={12} className="shrink-0" />
                     Install Standalone
                   </button>
                 )}
 
                 {/* iOS Safari validation text */}
                 {platform === 'ios' && (
-                  <div className="flex items-center gap-1.5 w-full text-[10px] text-neutral-400 font-sans italic">
+                  <div className="flex items-center gap-1 w-full text-[10px] text-neutral-400 font-sans italic">
                     <CheckCircle2 size={11} className="text-red-500 shrink-0" />
-                    <span>App matches device core framework successfully.</span>
+                    <span>Active profile matches architecture successfully.</span>
                   </div>
                 )}
 
