@@ -34,13 +34,6 @@ import {
 
 
 const getAuthDomain = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // Localhost, local IPs, and private networks should keep using the default firebaseapp authDomain
-    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168.')) {
-      return hostname;
-    }
-  }
   return process.env.REACT_APP_FIREBASE_AUTH_DOMAIN;
 };
 
