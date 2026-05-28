@@ -475,9 +475,11 @@ export default function AppInstallBanner() {
 
               {/* Title & App Badge */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500 to-blue-600 flex items-center justify-center shadow-lg">
-                  <Terminal size={18} className="text-white animate-pulse" />
-                </div>
+                <img 
+                  src="/favicon-new.png" 
+                  alt="Discuss App Logo" 
+                  className="w-11 h-11 rounded-xl object-cover shadow-lg bg-[#0E0E14] border border-white/5"
+                />
                 <div>
                   <h3 className="font-bold text-sm tracking-wide text-white">Official Discuss App</h3>
                   <div className="flex items-center gap-1.5 mt-0.5 text-[9px] font-mono font-bold text-neutral-400">
@@ -493,7 +495,7 @@ export default function AppInstallBanner() {
                 <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2 flex flex-col justify-center">
                   <span className="text-neutral-500 text-[8px] uppercase">Review Grade</span>
                   <span className="text-white font-bold mt-0.5 flex items-center gap-1">
-                    <Sparkles size={8} className="text-red-500" /> 4.4 ★ (Non-clickable)
+                    <Sparkles size={8} className="text-red-500 animate-pulse" /> 4.4 ★
                   </span>
                 </div>
                 <div className="bg-white/[0.02] border border-white/5 rounded-lg p-2 flex flex-col justify-center">
@@ -504,10 +506,10 @@ export default function AppInstallBanner() {
 
               {/* Scrollable Description with hidden scrollbar */}
               <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 mb-5 max-h-[110px] overflow-y-auto scrollbar-none">
-                <h4 className="text-[10px] font-mono text-red-400 mb-1.5 uppercase font-bold tracking-wider">// INTEGRATION_SPECS:</h4>
-                <p className="text-[11px] text-neutral-400 leading-relaxed font-sans">
-                  The Discuss Android Application deploys directly inside a high-speed sandboxed container. 
-                  Featuring native hidden scrollbars for clean browsing, fully customized immersive viewport ratios, memory-efficient background messaging sync, edge-to-edge screens, and full hardware accelerations. No trackers, no bloatware, secure signatures.
+                <h4 className="text-[10px] font-mono text-red-400 mb-1.5 uppercase font-bold tracking-wider">// PLATFORM_SPECS:</h4>
+                <p className="text-[11.5px] text-neutral-300 leading-relaxed font-sans font-medium">
+                  Discuss is a premium developer ecosystem built to share projects, exchange innovative ideas, and build the future of tech. 
+                  The official client deploys inside a sandboxed mobile workspace featuring hidden scrollbars, responsive navigation columns, optimized touch layouts, and native background notifications.
                 </p>
               </div>
 
