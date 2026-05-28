@@ -673,20 +673,6 @@ export function AuthProvider({ children }) {
       window.localStorage.removeItem('pendingVerification');
       setPendingVerification(false);
 
-      const isMobileApp = typeof window !== 'undefined' && (
-        window.median !== undefined || 
-        navigator.userAgent.includes('Android') || 
-        /iPad|iPhone|iPod/.test(navigator.userAgent)
-      );
-
-      if (isMobileApp) {
-        // For mobile WebView apps, use redirect flow.
-        // IMPORTANT: In Median.co settings, you must add accounts.google.com 
-        // to "External URLs" to open in Chrome Custom Tabs (real browser).
-        await signInWithRedirect(auth, googleProvider);
-        return { success: true };
-      }
-
       try {
         const result = await signInWithPopup(auth, googleProvider);
         await syncUser(result.user);
