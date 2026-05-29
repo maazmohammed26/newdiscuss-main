@@ -432,10 +432,10 @@ export default function FeedPage() {
 
               {/* View Switches */}
               {searchType === 'posts' && (
-                <div className="flex items-center bg-neutral-100 dark:bg-neutral-900 discuss:bg-black/30 rounded-full p-0.5 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shadow-inner">
+                <div className="flex items-center bg-neutral-100 dark:bg-neutral-900 discuss:bg-black/30 rounded-full p-0.5 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shadow-inner w-full sm:w-auto">
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`flex-1 sm:flex-initial text-center px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                       viewMode === 'list'
                         ? 'bg-white dark:bg-neutral-800 discuss:bg-[#EF4444] text-neutral-900 dark:text-white discuss:text-white shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
@@ -449,7 +449,7 @@ export default function FeedPage() {
                       const saved = sessionStorage.getItem(`discuss_slide_index_${activeTab}`);
                       setSlideIndex(saved ? parseInt(saved, 10) : 0);
                     }}
-                    className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`flex-1 sm:flex-initial text-center px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                       viewMode === 'slide'
                         ? 'bg-white dark:bg-neutral-800 discuss:bg-[#EF4444] text-neutral-900 dark:text-white discuss:text-white shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
