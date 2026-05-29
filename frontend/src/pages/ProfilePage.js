@@ -1995,16 +1995,7 @@ export default function ProfilePage() {
             {showNotificationSettings && (
               <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
                 {/* Standard Notification Switch */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#2563EB]/10 text-[#2563EB] rounded-lg">
-                      <Bell className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Browser Push Notifications</p>
-                      <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8]">Enable or disable real-time browser notifications</p>
-                    </div>
-                  </div>
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
                   <NotificationToggle />
                 </div>
 
