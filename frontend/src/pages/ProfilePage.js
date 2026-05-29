@@ -75,7 +75,7 @@ import {
   FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
-  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send, MapPin
+  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send, MapPin, Trophy
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
@@ -136,6 +136,7 @@ export default function ProfilePage() {
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
   const [showLocationSettings, setShowLocationSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
 
   // Discussion Achievements badge states
   const [selectedBadge, setSelectedBadge] = useState(null);
@@ -1392,49 +1393,59 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== ACHIEVEMENTS & BADGES ==================== */}
-        <div className="mt-6 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] p-6 rounded-2xl transition-all duration-300">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333]">
-            <div className="text-left">
-              <h2 className="text-lg font-extrabold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center gap-2">
-                🏆 Discussion Achievements
-              </h2>
-              <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">
-                Earn official badges by publishing high-quality technical discussions
-              </p>
+        <div className="mt-6 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+          <button
+            onClick={() => setShowAchievements(!showAchievements)}
+            className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Discussion Achievements</h3>
+                <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
+              </div>
             </div>
-            <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] px-4 py-2 rounded-xl shrink-0 self-start sm:self-center flex items-center gap-2">
-              <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Unlocked:</span>
-              <span className="text-sm font-black text-blue-600 discuss:text-[#EF4444]">{unlockedBadgesCount} / 5</span>
-            </div>
-          </div>
+            {showAchievements ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+          </button>
 
-          {/* Badges Grid */}
-          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-4">
-            {OFFICIAL_BADGES.map((badge) => {
-              const isLocked = eligibleCount < badge.target;
-              return (
-                <button
-                  key={badge.id}
-                  onClick={() => handleBadgeClick(badge)}
-                  className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 discuss:border-white/5 hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
-                >
-                  <div className="relative mb-2 shrink-0">
-                    <BadgeIcon badge={badge} isLocked={isLocked} size="md" className="group-hover:scale-105 transition-transform" />
-                  </div>
-                  <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 discuss:text-neutral-300 text-center line-clamp-1">
-                    {badge.badgeText}
-                  </span>
-                  <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-500 discuss:text-neutral-500 mt-1">
-                    {eligibleCount >= badge.target ? (
-                      <span className="text-emerald-500 font-extrabold uppercase">Unlocked</span>
-                    ) : (
-                      <span>{eligibleCount} / {badge.target}</span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {showAchievements && (
+            <div className="px-6 pb-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300 space-y-5">
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] px-4 py-2 rounded-xl shrink-0 inline-flex items-center gap-2">
+                <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Unlocked:</span>
+                <span className="text-sm font-black text-blue-600 discuss:text-[#EF4444]">{unlockedBadgesCount} / 5</span>
+              </div>
+
+              {/* Badges Grid */}
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-4">
+                {OFFICIAL_BADGES.map((badge) => {
+                  const isLocked = eligibleCount < badge.target;
+                  return (
+                    <button
+                      key={badge.id}
+                      onClick={() => handleBadgeClick(badge)}
+                      className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 discuss:border-white/5 hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
+                    >
+                      <div className="relative mb-2 shrink-0">
+                        <BadgeIcon badge={badge} isLocked={isLocked} size="md" className="group-hover:scale-105 transition-transform" />
+                      </div>
+                      <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 discuss:text-neutral-300 text-center line-clamp-1">
+                        {badge.badgeText}
+                      </span>
+                      <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-500 discuss:text-neutral-500 mt-1">
+                        {eligibleCount >= badge.target ? (
+                          <span className="text-emerald-500 font-extrabold uppercase">Unlocked</span>
+                        ) : (
+                          <span>{eligibleCount} / {badge.target}</span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ==================== SETTINGS CATEGORIES STACK ==================== */}
