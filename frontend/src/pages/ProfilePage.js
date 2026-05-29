@@ -3233,9 +3233,9 @@ export default function ProfilePage() {
                 <div className="mt-4 bg-white dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-[#334155] discuss:border-[#333333] px-4 py-2 rounded-xl shadow-sm">
                   <span className="text-xs text-neutral-500 font-bold">Status: </span>
                   {eligibleCount >= selectedBadge.target ? (
-                    <span className="text-emerald-500 text-xs font-black uppercase tracking-wider">Unlocked 🏆</span>
+                    <span className="text-emerald-500 text-xs font-black uppercase tracking-wider">Unlocked</span>
                   ) : (
-                    <span className="text-amber-500 text-xs font-black uppercase tracking-wider">Locked 🔒 ({eligibleCount}/{selectedBadge.target})</span>
+                    <span className="text-amber-500 text-xs font-black uppercase tracking-wider">Locked ({eligibleCount}/{selectedBadge.target})</span>
                   )}
                 </div>
               </div>

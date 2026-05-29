@@ -173,7 +173,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                         onClick={(e) => {
                           e.stopPropagation();
                           toast.info(
-                            `${badge.name} (${isLocked ? 'Locked 🔒' : 'Unlocked 🏆'})`,
+                            isLocked ? `Locked: ${badge.name}` : `Unlocked: ${badge.name}`,
                             {
                               description: `${badge.description} Progress: ${eligiblePostCount}/${badge.target} eligible posts.`,
                               duration: 4000
