@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Home, MessageCircle, Radar, Briefcase, Newspaper, Bookmark, Code, User } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
 
-export default function Sidebar({ onPostCreated }) {
+export default function Sidebar({ onPostCreated, className = "", topClass = "top-[72px]", maxHeightStyle = "calc(100vh - 96px)" }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
@@ -22,10 +22,10 @@ export default function Sidebar({ onPostCreated }) {
 
   return (
     <>
-      <aside className="hidden lg:block w-[240px] shrink-0 sticky top-[72px] self-start z-30">
+      <aside className={`hidden lg:block w-[240px] shrink-0 sticky ${topClass} self-start z-30 ${className}`}>
         <div 
           className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-5 shadow-card space-y-6 overflow-y-auto scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', maxHeight: 'calc(100vh - 96px)' }}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', maxHeight: maxHeightStyle }}
         >
           {/* Logo in dark text */}
           <div className="flex items-center justify-center py-2 select-none">

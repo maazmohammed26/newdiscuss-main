@@ -453,7 +453,9 @@ export default function DevRadarPage() {
 
   return (
     <div className={`relative flex flex-row w-full h-[100vh] overflow-hidden ${containerClass}`}>
-      <Sidebar />
+      <div className="pt-4 pl-4 pb-4 hidden lg:block shrink-0 h-full">
+        <Sidebar topClass="top-0" maxHeightStyle="calc(100vh - 32px)" />
+      </div>
       <div className="flex-1 flex flex-col relative h-full min-w-0 overflow-hidden">
       
       {/* ── HEADER ───────────────────────────────────────────────────────────── */}
