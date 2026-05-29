@@ -12,6 +12,7 @@ import { hasUserReportedTarget } from '@/lib/reportService';
 import { User, FileText, Calendar, ArrowRight, Loader2, ExternalLink, ChevronDown, ChevronUp, Flag, X } from 'lucide-react';
 import { toast } from 'sonner';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
+import { getEligibleDiscussionsCount, OFFICIAL_BADGES, BadgeIcon } from '@/components/Badges';
 
 export default function UserPreviewModal({ open, onClose, userId, currentUserId, currentUser }) {
   useSecurityProtection();
@@ -20,6 +21,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
   const [userData, setUserData] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [postCount, setPostCount] = useState(0);
+  const [eligiblePostCount, setEligiblePostCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -40,6 +42,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
         .then(([user, posts]) => {
           setUserData(user);
           setPostCount(posts.length);
+          setEligiblePostCount(getEligibleDiscussionsCount(posts));
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -159,6 +162,32 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                   @{userData.username}
                   {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
                 </p>
+
+                {/* Achievements Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-3 pt-2 border-t border-dashed border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333]/50">
+                  {OFFICIAL_BADGES.map((badge) => {
+                    const isLocked = eligiblePostCount < badge.target;
+                    return (
+                      <button
+                        key={badge.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.info(
+                            `${badge.name} (${isLocked ? 'Locked 🔒' : 'Unlocked 🏆'})`,
+                            {
+                              description: `${badge.description} Progress: ${eligiblePostCount}/${badge.target} eligible posts.`,
+                              duration: 4000
+                            }
+                          );
+                        }}
+                        className="transition-transform active:scale-90 hover:scale-105"
+                        title={`${badge.name}: ${eligiblePostCount}/${badge.target}`}
+                      >
+                        <BadgeIcon badge={badge} isLocked={isLocked} size="sm" />
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="px-6 pb-6 space-y-3">

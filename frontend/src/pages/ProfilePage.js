@@ -7,6 +7,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import L from 'leaflet';
 import { getPosts, getUser } from '@/lib/db';
 import { getUserPulses } from '@/lib/pulseDb';
+import { getEligibleDiscussionsCount, OFFICIAL_BADGES, BadgeIcon } from '@/components/Badges';
+
 import {
   getUserProfile, 
   updateFullName, 
@@ -128,6 +130,17 @@ export default function ProfilePage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [pendingProfilePic, setPendingProfilePic] = useState(null);
   const [savingProfilePic, setSavingProfilePic] = useState(false);
+
+  // Collapsible settings categories toggles
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [showSecuritySettings, setShowSecuritySettings] = useState(false);
+  const [showLocationSettings, setShowLocationSettings] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+
+  // Discussion Achievements badge states
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+
 
   // Telegram notification states
   const [telegramChatIdInput, setTelegramChatIdInput] = useState('');
@@ -1130,6 +1143,14 @@ export default function ProfilePage() {
     }
   };
 
+  const eligibleCount = getEligibleDiscussionsCount(userPosts);
+  const unlockedBadgesCount = OFFICIAL_BADGES.filter(b => eligibleCount >= b.target).length;
+
+  const handleBadgeClick = (badge) => {
+    setSelectedBadge(badge);
+    setShowBadgeModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
       <Header />
@@ -1368,715 +1389,835 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* ==================== PROFILE FIELDS ==================== */}
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-left space-y-4">
-            
-            {/* Loading indicator for profile data */}
-            {loadingProfile && (
-              <div className="flex items-center justify-center gap-2 py-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#6275AF]" />
-                <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile...</span>
-              </div>
-            )}
+        </div>
 
-            {/* Full Name Section */}
-            <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-lg discuss:border discuss:border-[#333333]">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  Full Name
-                  <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(optional)</span>
-                </label>
-                {!editingFullName && profileData?.fullName && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                      <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626]">
-                        <Pencil className="w-4 h-4 mr-2" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDeleteFullNameConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444]">
-                        <Trash2 className="w-4 h-4 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-              
-              {editingFullName ? (
-                <div className="flex gap-2">
-                  <Input 
-                    value={fullNameInput} 
-                    onChange={(e) => setFullNameInput(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm"
-                  />
-                  <Button onClick={handleSaveFullName} disabled={savingFullName || !fullNameInput.trim()} size="sm"
-                    className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white">
-                    {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  </Button>
-                  <Button onClick={() => setEditingFullName(false)} size="sm" variant="outline"
-                    className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF]">
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : profileData?.fullName ? (
-                <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm">{profileData.fullName}</p>
-              ) : (
-                <button onClick={() => { setEditingFullName(true); setFullNameInput(''); }}
-                  className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1">
-                  <Plus className="w-3.5 h-3.5" /> Add full name
-                </button>
-              )}
+        {/* ==================== ACHIEVEMENTS & BADGES ==================== */}
+        <div className="mt-6 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] p-6 rounded-2xl transition-all duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333]">
+            <div className="text-left">
+              <h2 className="text-lg font-extrabold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center gap-2">
+                🏆 Discussion Achievements
+              </h2>
+              <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">
+                Earn official badges by publishing high-quality technical discussions
+              </p>
             </div>
-
-            {/* Bio Section */}
-            <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-lg discuss:border discuss:border-[#333333]">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  Bio
-                  <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {BIO_CHAR_LIMIT} chars)</span>
-                </label>
-                {!editingBio && profileData?.bio && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                      <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626]">
-                        <Pencil className="w-4 h-4 mr-2" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDeleteBioConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444]">
-                        <Trash2 className="w-4 h-4 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-              
-              {editingBio ? (
-                <div className="space-y-2">
-                  <Textarea 
-                    value={bioInput} 
-                    onChange={(e) => setBioInput(e.target.value.slice(0, BIO_CHAR_LIMIT))}
-                    placeholder="Tell us about yourself..."
-                    rows={3}
-                    className="w-full bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm resize-none"
-                  />
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs ${bioInput.length >= BIO_CHAR_LIMIT ? 'text-[#EF4444]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>
-                      {bioInput.length}/{BIO_CHAR_LIMIT}
-                    </span>
-                    <div className="flex gap-2">
-                      <Button onClick={handleSaveBio} disabled={savingBio || !bioInput.trim()} size="sm"
-                        className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white">
-                        {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-                      </Button>
-                      <Button onClick={() => setEditingBio(false)} size="sm" variant="outline"
-                        className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF]">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : profileData?.bio ? (
-                <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm whitespace-pre-wrap">{profileData.bio}</p>
-              ) : (
-                <button onClick={() => { setEditingBio(true); setBioInput(''); }}
-                  className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1">
-                  <Plus className="w-3.5 h-3.5" /> Add bio
-                </button>
-              )}
-            </div>
-
-            {/* Social Links Section */}
-            <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-lg discuss:border discuss:border-[#333333]">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium flex items-center gap-2">
-                  <Link2 className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  Social Links
-                  <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {MAX_SOCIAL_LINKS})</span>
-                </label>
-                <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">
-                  {profileData?.socialLinks?.length || 0}/{MAX_SOCIAL_LINKS}
-                </span>
-              </div>
-
-              {/* Existing Links */}
-              {profileData?.socialLinks?.length > 0 && (
-                <div className="space-y-2 mb-3">
-                  {profileData.socialLinks.map((link, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-2 rounded border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                      {editingLinkIndex === index ? (
-                        <>
-                          <Input 
-                            value={editLinkName} 
-                            onChange={(e) => setEditLinkName(e.target.value)}
-                            placeholder="Link name"
-                            className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
-                          />
-                          <Input 
-                            value={editLinkUrl} 
-                            onChange={(e) => setEditLinkUrl(e.target.value)}
-                            placeholder="URL"
-                            className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
-                          />
-                          <Button onClick={() => handleEditLink(index)} disabled={savingLink} size="sm" className="h-7 px-2 bg-[#2563EB] discuss:bg-[#EF4444]">
-                            {savingLink ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                          </Button>
-                          <Button onClick={() => setEditingLinkIndex(null)} size="sm" variant="ghost" className="h-7 px-2">
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <a href={link.url} target="_blank" rel="noopener noreferrer"
-                            className="flex-1 text-[#2563EB] discuss:text-[#60A5FA] hover:underline text-sm flex items-center gap-1">
-                            {link.name}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="p-1 rounded hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] discuss:hover:bg-[#262626] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                              <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626]">
-                                <Pencil className="w-4 h-4 mr-2" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setDeleteLinkConfirm(index)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444]">
-                                <Trash2 className="w-4 h-4 mr-2" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add New Link */}
-              {addingLink ? (
-                <div className="space-y-2 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                  <Input 
-                    value={newLinkName} 
-                    onChange={(e) => setNewLinkName(e.target.value)}
-                    placeholder="Link name (e.g., LinkedIn, GitHub)"
-                    className="w-full text-sm bg-transparent"
-                  />
-                  <Input 
-                    value={newLinkUrl} 
-                    onChange={(e) => setNewLinkUrl(e.target.value)}
-                    placeholder="URL (e.g., https://github.com/username)"
-                    className="w-full text-sm bg-transparent"
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <Button onClick={handleAddLink} disabled={savingLink || !newLinkName.trim() || !newLinkUrl.trim()} size="sm"
-                      className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white">
-                      {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Link'}
-                    </Button>
-                    <Button onClick={() => { setAddingLink(false); setNewLinkName(''); setNewLinkUrl(''); }} size="sm" variant="outline"
-                      className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF]">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : !maxLinksReached ? (
-                <button onClick={() => setAddingLink(true)}
-                  className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1">
-                  <Plus className="w-3.5 h-3.5" /> <span>Add social link</span>
-                </button>
-              ) : (
-                <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs"><span>Maximum links reached</span></p>
-              )}
+            <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] px-4 py-2 rounded-xl shrink-0 self-start sm:self-center flex items-center gap-2">
+              <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Unlocked:</span>
+              <span className="text-sm font-black text-blue-600 discuss:text-[#EF4444]">{unlockedBadgesCount} / 5</span>
             </div>
           </div>
-          {/* ==================== END PROFILE FIELDS ==================== */}
-          {/* ==================== APP SECURITY ==================== */}
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold"><span>App Security</span></span>
-                <button
-                  onClick={() => setShowSecurityInfo(prev => !prev)}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#2563EB] text-white' : 'bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20'}`}
-                  aria-label="Security info"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {remoteSettings?.pin && (
-                <button
-                  onClick={lockNow}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-[#2563EB] discuss:text-[#EF4444] px-3 py-1.5 rounded-lg bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20 transition-all shadow-sm"
-                  title="Lock the app now"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Lock Now</span>
-                </button>
-              )}
-            </div>
-            {/* Info Dropdown */}
-            {showSecurityInfo && (
-              <div className="mb-4 p-4 bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl border border-blue-500/15 animate-in slide-in-from-top-2 duration-300">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-blue-500" />
-                    <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Security Rules</p>
-                  </div>
-                  <button 
-                    onClick={() => setShowSecurityInfo(false)}
-                    className="text-[10px] font-bold text-blue-500 hover:underline"
-                  >
-                    Close
-                  </button>
-                </div>
-                <div className="text-[11px] text-blue-600 dark:text-blue-300 space-y-2 pl-6">
-                  <p><span>• App auto-locks after </span><strong>5 minutes</strong><span> of inactivity</span></p>
-                  <p><span>• Your PIN is </span><strong>synced across all devices</strong></p>
-                  <p><span>• Biometrics (Face/Fingerprint) are </span><strong>device-specific</strong></p>
-                  <p><span>• </span><strong>5 wrong attempts</strong><span> will trigger a 5-minute lockout</span></p>
-                  <p><span>• Disabling the lock will remove your PIN from </span><strong>all devices</strong></p>
-                </div>
-              </div>
-            )}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] discuss:border discuss:border-[#333333] rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${localSettings?.enabled ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>App Lock</span></p>
-                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                      <span>{localSettings?.enabled
-                        ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
-                        : 'Protect with PIN or Biometrics'}</span>
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleToggleSecurity}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.enabled ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
-                >
 
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          {/* Badges Grid */}
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-4">
+            {OFFICIAL_BADGES.map((badge) => {
+              const isLocked = eligibleCount < badge.target;
+              return (
+                <button
+                  key={badge.id}
+                  onClick={() => handleBadgeClick(badge)}
+                  className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 discuss:border-white/5 hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
+                >
+                  <div className="relative mb-2 shrink-0">
+                    <BadgeIcon badge={badge} isLocked={isLocked} size="md" className="group-hover:scale-105 transition-transform" />
+                  </div>
+                  <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 discuss:text-neutral-300 text-center line-clamp-1">
+                    {badge.badgeText}
+                  </span>
+                  <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-500 discuss:text-neutral-500 mt-1">
+                    {eligibleCount >= badge.target ? (
+                      <span className="text-emerald-500 font-extrabold uppercase">Unlocked</span>
+                    ) : (
+                      <span>{eligibleCount} / {badge.target}</span>
+                    )}
+                  </span>
                 </button>
-              </div>
+              );
+            })}
+          </div>
+        </div>
 
-              {localSettings?.enabled && (
-                <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                  {biometricAvailable && (
-                    <div className="flex items-center justify-between border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl p-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${localSettings?.type === 'biometric' ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
-                          <BiometricIcon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>FaceID / Fingerprint</span></p>
-                          <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                            <span>{localSettings?.type === 'biometric' ? 'Active - PIN as fallback' : 'Tap to enable biometric unlock'}</span>
-                          </p>
+        {/* ==================== SETTINGS CATEGORIES STACK ==================== */}
+        <div className="mt-6 space-y-4">
+
+          {/* Category 1: Profile Details */}
+          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+            <button
+              onClick={() => setShowProfileSettings(!showProfileSettings)}
+              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                  <User className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Profile Details</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Manage your display name, bio, social links, and theme</p>
+                </div>
+              </div>
+              {showProfileSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+            </button>
+
+            {showProfileSettings && (
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+                {/* Loading indicator for profile data */}
+                {loadingProfile && (
+                  <div className="flex items-center justify-center gap-2 py-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#6275AF]" />
+                    <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile details...</span>
+                  </div>
+                )}
+
+                {/* Full Name Section */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                      Full Name
+                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(optional)</span>
+                    </label>
+                    {!editingFullName && profileData?.fullName && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl shadow-lg">
+                          <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteFullNameConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                  
+                  {editingFullName ? (
+                    <div className="flex gap-2">
+                      <Input 
+                        value={fullNameInput} 
+                        onChange={(e) => setFullNameInput(e.target.value)}
+                        placeholder="Enter your full name"
+                        className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm rounded-xl"
+                      />
+                      <Button onClick={handleSaveFullName} disabled={savingFullName || !fullNameInput.trim()} size="sm"
+                        className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-xl px-3.5">
+                        {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      </Button>
+                      <Button onClick={() => setEditingFullName(false)} size="sm" variant="outline"
+                        className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] rounded-xl px-3.5">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : profileData?.fullName ? (
+                    <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm pl-6">{profileData.fullName}</p>
+                  ) : (
+                    <button onClick={() => { setEditingFullName(true); setFullNameInput(''); }}
+                      className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
+                      <Plus className="w-4 h-4" /> Add full name
+                    </button>
+                  )}
+                </div>
+
+                {/* Bio Section */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                      Bio
+                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {BIO_CHAR_LIMIT} chars)</span>
+                    </label>
+                    {!editingBio && profileData?.bio && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl shadow-lg">
+                          <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteBioConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                  
+                  {editingBio ? (
+                    <div className="space-y-2">
+                      <Textarea 
+                        value={bioInput} 
+                        onChange={(e) => setBioInput(e.target.value.slice(0, BIO_CHAR_LIMIT))}
+                        placeholder="Tell us about yourself..."
+                        rows={3}
+                        className="w-full bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm resize-none rounded-xl p-3"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs ${bioInput.length >= BIO_CHAR_LIMIT ? 'text-[#EF4444] font-bold' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>
+                          {bioInput.length}/{BIO_CHAR_LIMIT}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button onClick={handleSaveBio} disabled={savingBio || !bioInput.trim()} size="sm"
+                            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-xl px-4">
+                            {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                          </Button>
+                          <Button onClick={() => setEditingBio(false)} size="sm" variant="outline"
+                            className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] rounded-xl px-4">
+                            Cancel
+                          </Button>
                         </div>
                       </div>
-                      <button
-                        onClick={handleBiometricToggle}
-                        disabled={testingBiometric}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.type === 'biometric' ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.type === 'biometric' ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
+                    </div>
+                  ) : profileData?.bio ? (
+                    <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm pl-6 whitespace-pre-wrap leading-relaxed">{profileData.bio}</p>
+                  ) : (
+                    <button onClick={() => { setEditingBio(true); setBioInput(''); }}
+                      className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
+                      <Plus className="w-4 h-4" /> Add bio
+                    </button>
+                  )}
+                </div>
+
+                {/* Social Links Section */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                      Social Links
+                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {MAX_SOCIAL_LINKS})</span>
+                    </label>
+                    <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-bold bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
+                      {profileData?.socialLinks?.length || 0}/{MAX_SOCIAL_LINKS}
+                    </span>
+                  </div>
+
+                  {/* Existing Links */}
+                  {profileData?.socialLinks?.length > 0 && (
+                    <div className="space-y-2 mb-3 pl-6">
+                      {profileData.socialLinks.map((link, index) => (
+                        <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-2 px-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                          {editingLinkIndex === index ? (
+                            <>
+                              <Input 
+                                value={editLinkName} 
+                                onChange={(e) => setEditLinkName(e.target.value)}
+                                placeholder="Link name"
+                                className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
+                              />
+                              <Input 
+                                value={editLinkUrl} 
+                                onChange={(e) => setEditLinkUrl(e.target.value)}
+                                placeholder="URL"
+                                className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
+                              />
+                              <Button onClick={() => handleEditLink(index)} disabled={savingLink} size="sm" className="h-7 px-2.5 bg-[#2563EB] discuss:bg-[#EF4444] rounded-lg">
+                                {savingLink ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                              </Button>
+                              <Button onClick={() => setEditingLinkIndex(null)} size="sm" variant="ghost" className="h-7 px-2.5 rounded-lg">
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <a href={link.url} target="_blank" rel="noopener noreferrer"
+                                className="flex-1 text-[#2563EB] discuss:text-[#60A5FA] hover:underline text-sm font-semibold flex items-center gap-1.5 truncate">
+                                {link.name}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button className="p-1 rounded hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] discuss:hover:bg-[#262626] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl">
+                                  <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                                    <Pencil className="w-4 h-4 mr-2" /> Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setDeleteLinkConfirm(index)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
+                                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
-                  <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-[#6275AF] flex items-center gap-2">
-                    <Key className="w-3.5 h-3.5" />
-                    <span>Change Security PIN</span>
-                  </Button>
-                </div>
-              )}
 
-            </div>
-          </div>
-
-
-          {/* ==================== DEVRADAR LOCATION SETTINGS ==================== */}
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">DevRadar Telemetry Network</span>
-              </div>
-              
-              {/* Dynamic Status Live Pulse Indicator */}
-              {shareLocation ? (
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 ${theme === 'discuss-light' ? 'rounded-none border-black text-black' : 'rounded-full'}`}>
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10B981]" />
-                  <span>Telemetry Broadcast Active</span>
-                </div>
-              ) : (
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-500 border border-neutral-500/25 ${theme === 'discuss-light' ? 'rounded-none border-black text-black' : 'rounded-full'}`}>
-                  <span className="w-1.5 h-1.5 bg-neutral-400 dark:bg-neutral-600 rounded-full" />
-                  <span>Telemetry Offline</span>
-                </div>
-              )}
-            </div>
-
-            {/* Premium Theme-Tailored Glass/Border Panel */}
-            <div className={`p-5 transition-all duration-300 ${
-              theme === 'discuss-black'
-                ? 'border border-[#FF007F]/20 bg-[#13131A]/90 hover:border-[#FF007F]/35 shadow-[0_4px_25px_rgba(255,0,127,0.06),_0_0_12px_rgba(255,0,127,0.03)] rounded-2xl'
-                : theme === 'discuss-light'
-                ? 'border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none'
-                : theme === 'dark'
-                ? 'border border-white/10 bg-slate-950/40 shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md rounded-2xl'
-                : 'border border-slate-200 bg-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] backdrop-blur-md rounded-2xl'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className={`p-2.5 rounded-xl transition-all duration-300 ${
-                    shareLocation 
-                      ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] discuss-black:text-[#FF007F] discuss-black:bg-[#FF007F]/10' 
-                      : 'bg-neutral-500/10 text-neutral-400 dark:text-neutral-500'
-                  }`}>
-                    <MapPin className="w-5 h-5 animate-pulse" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-extrabold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] discuss:text-black discuss-black:text-[#F5F5F5]">
-                      Geospatial Telemetry Broadcast
-                    </p>
-                    <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5 leading-relaxed max-w-[220px]">
-                      {updatingLocation ? (
-                        <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#2563EB] discuss:text-[#EF4444]" /> Synchronizing coordinates...</span>
-                      ) : shareLocation ? (
-                        <span>Your node specification is broadcasted publicly on the interactive map.</span>
-                      ) : (
-                        <span>Activate coordinate tracking to become discoverable to nearby developers and community nodes.</span>
-                      )}
-                    </p>
+                  {/* Add New Link */}
+                  <div className="pl-6">
+                    {addingLink ? (
+                      <div className="space-y-2 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                        <Input 
+                          value={newLinkName} 
+                          onChange={(e) => setNewLinkName(e.target.value)}
+                          placeholder="Link name (e.g., LinkedIn, GitHub)"
+                          className="w-full text-xs bg-transparent rounded-lg"
+                        />
+                        <Input 
+                          value={newLinkUrl} 
+                          onChange={(e) => setNewLinkUrl(e.target.value)}
+                          placeholder="URL (e.g., https://github.com/username)"
+                          className="w-full text-xs bg-transparent rounded-lg"
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button onClick={handleAddLink} disabled={savingLink || !newLinkName.trim() || !newLinkUrl.trim()} size="sm"
+                            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-lg px-3">
+                            {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Link'}
+                          </Button>
+                          <Button onClick={() => { setAddingLink(false); setNewLinkName(''); setNewLinkUrl(''); }} size="sm" variant="outline"
+                            className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] rounded-lg px-3">
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : !maxLinksReached ? (
+                      <button onClick={() => setAddingLink(true)}
+                        className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 font-medium">
+                        <Plus className="w-4 h-4" /> <span>Add social link</span>
+                      </button>
+                    ) : (
+                      <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-bold"><span>Maximum links reached</span></p>
+                    )}
                   </div>
                 </div>
 
-                <button
-                  onClick={handleToggleLocationSharing}
-                  disabled={updatingLocation}
-                  className={`relative inline-flex h-6 w-11 items-center transition-all duration-300 focus:outline-none ${
-                    theme === 'discuss-light' ? 'rounded-none border border-black' : 'rounded-full'
-                  } ${
-                    shareLocation 
-                      ? theme === 'discuss-black'
-                        ? 'bg-[#FF007F] shadow-[0_0_10px_rgba(255,0,127,0.5)]'
-                        : theme === 'discuss-light'
-                        ? 'bg-[#EF4444]'
-                        : 'bg-[#2563EB]'
-                      : 'bg-neutral-200 dark:bg-neutral-700'
-                  }`}
-                >
-                  <span className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                    theme === 'discuss-light' ? 'rounded-none border-r border-black' : 'rounded-full'
-                  } ${shareLocation ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-              </div>
-
-              <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
-                theme === 'discuss-black' 
-                  ? 'border-[#FF007F]/10' 
-                  : theme === 'discuss-light' 
-                  ? 'border-black' 
-                  : 'border-[#E2E8F0] dark:border-white/5'
-              }`}>
-                <Button
-                  onClick={() => {
-                    setLocationUpdateError('');
-                    setLocationUpdateStatus('idle');
-                    setShowLocationUpdateModal(true);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className={`w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all ${
-                    theme === 'discuss-black'
-                      ? 'text-[#FF007F] border-[#FF007F]/30 bg-[#FF007F]/5 hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50 rounded-xl'
-                      : theme === 'discuss-light'
-                      ? 'text-black border-black bg-white hover:bg-neutral-100 rounded-none border-2'
-                      : 'text-[#2563EB] border-[#2563EB] bg-[#2563EB]/5 hover:bg-[#2563EB]/10 rounded-xl'
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Update Current Location</span>
-                </Button>
-
-                {shareLocation && locationCoords && (
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Node Coordinates:</span>
-                      <span className={`font-mono font-bold ${theme === 'discuss-black' ? 'text-[#FF007F]' : theme === 'discuss-light' ? 'text-black' : 'text-[#2563EB]'}`}>
-                        {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
-                      </span>
-                    </div>
-                    <Button
-                      onClick={handleOpenAdjustModal}
-                      variant="outline"
-                      size="sm"
-                      className={`w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 ${
-                        theme === 'discuss-black'
-                          ? 'text-[#FF007F] border-[#FF007F]/30 bg-[#FF007F]/5 hover:bg-[#FF007F]/10 hover:border-[#FF007F]/50 rounded-xl'
-                          : theme === 'discuss-light'
-                          ? 'text-black border-black bg-white hover:bg-neutral-100 rounded-none border-2'
-                          : 'text-[#2563EB] border-[#2563EB] bg-[#2563EB]/5 hover:bg-[#2563EB]/10 rounded-xl'
-                      }`}
-                    >
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span>Calibrate Precision Node Pin</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium"><span>Theme</span></span>
-            </div>
-            <ThemeSelector />
-          </div>
-
-          {/* Notification Settings */}
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <div className="flex items-center gap-2 mb-3">
-              <Bell className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-              <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-medium"><span>Notifications</span></span>
-            </div>
-            <NotificationToggle />
-          </div>
-
-          {/* ==================== TELEGRAM NOTIFICATIONS (PREMIUM UI) ==================== */}
-          <div className="mt-8 pt-2">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
-                  <Send className="w-5 h-5 text-[#229ED9]" />
-                </div>
-                <div>
-                  <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Telegram Alerts</span></h3>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
-                      {telegramConnected ? <span>Verified & Encrypted</span> : <span>Disconnected</span>}
+                {/* Display Theme Selector */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                      🎨 Application Theme
                     </span>
                   </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowTelegramInstructions(v => !v)}
-                className={`p-2 rounded-lg transition-all ${showTelegramInstructions ? 'bg-[#229ED9] text-white shadow-lg shadow-[#229ED9]/20' : 'bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20'}`}
-              >
-                <Info className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Instructions panel */}
-            {showTelegramInstructions && (
-              <div className="mb-4 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center gap-2 text-[#229ED9]">
-                  <MessageSquare className="w-4 h-4" />
-                  <p className="text-sm font-bold"><span>Bot Connectivity Guide</span></p>
-                </div>
-                
-                <p className="text-[12px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
-                  <span>Discuss uses an </span><strong>Automated Delivery Agent</strong><span> on Telegram to bypass browser push limitations. Connect your account in seconds:</span>
-                </p>
-
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1"><span>1. AUTHENTICATE WITH BOT</span></p>
-                    <p className="text-[11px] text-[#6275AF] mb-3"><span>Send </span><span className="font-semibold text-[#229ED9]">/start</span><span> to our official bot to retrieve your secure Chat ID.</span></p>
-                    <a href="https://t.me/DiscussNotifications_bot" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-[#229ED9] hover:bg-[#1c80b0] text-white text-xs font-bold py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-[#229ED9]/20">
-                      <span>Open Telegram Bot</span> <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-
-                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-amber-500 mb-1"><span>ALTERNATIVE: GET ID INSTANTLY</span></p>
-                    <p className="text-[11px] text-[#6275AF] mb-3"><span>If you don't get the ID from our bot, open </span><a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@userinfobot</a><span> or </span><a href="https://t.me/RawDataBot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@RawDataBot</a><span> on Telegram and send a message. It will immediately give you your numeric User ID!</span></p>
-                  </div>
-
-                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1"><span>2. LINK CHAT ID</span></p>
-                    <p className="text-[11px] text-[#6275AF]"><span>Paste your numeric Telegram ID into the input field below and click </span><span className="font-semibold">Connect</span>.</p>
+                  <div className="pl-6">
+                    <ThemeSelector />
                   </div>
                 </div>
               </div>
             )}
+          </div>
 
-            {/* User ID input + action */}
-            {loadingTelegram ? (
-              <div className="flex items-center justify-center py-6 bg-[#F8FAFC] dark:bg-[#0F172A] rounded-2xl border border-dashed border-[#CBD5E1]">
-                <Loader2 className="w-5 h-5 animate-spin text-[#229ED9]" />
-              </div>
-            ) : telegramConnected ? (
-              <div className="space-y-4">
-                <div className="bg-[#10B981]/5 border border-[#10B981]/15 rounded-2xl p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#10B981]/10 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-[#10B981]" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider"><span>Active Link</span></p>
-                      <p className="text-[13px] font-mono text-[#475569] dark:text-[#94A3B8]"><span>{telegramChatIdInput}</span></p>
-                    </div>
-                  </div>
-                  <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+          {/* Category 2: App Security */}
+          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+            <button
+              onClick={() => setShowSecuritySettings(!showSecuritySettings)}
+              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                  <Shield className="w-5 h-5" />
                 </div>
+                <div className="text-left">
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">App Security</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
+                </div>
+              </div>
+              {showSecuritySettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+            </button>
 
-                {/* Privacy Card */}
-                <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
-                        {telegramPrivacy ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </div>
-                      <span className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9]"><span>Message Previews</span></span>
-                    </div>
+            {showSecuritySettings && (
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">App Lock Protection</span>
                     <button
-                      onClick={handleToggleTelegramPrivacy}
-                      disabled={savingTelegram}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${telegramPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-[#10B981]'}`}
+                      onClick={() => setShowSecurityInfo(prev => !prev)}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#2563EB] text-white shadow' : 'bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20'}`}
+                      aria-label="Security info"
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-1' : 'translate-x-6'}`} />
+                      <Info className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
-                    {telegramPrivacy 
-                      ? <span>Incognito Mode: Only notifies you of the message source. Full content is only visible inside the Discuss app.</span> 
-                      : <span>Real-time Delivery: Pushes complete message text and image previews directly to your Telegram chat.</span>}
-                  </p>
+                  {remoteSettings?.pin && (
+                    <button
+                      onClick={lockNow}
+                      className="flex items-center gap-1.5 text-[11px] font-bold text-[#2563EB] discuss:text-[#EF4444] px-3 py-1.5 rounded-xl bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20 transition-all shadow-sm active:scale-95"
+                      title="Lock the app now"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Lock Now</span>
+                    </button>
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl focus-within:border-[#229ED9] discuss:focus-within:border-[#EF4444] discuss-black:focus-within:border-[#FF007F] transition-all">
-                  <Input
-                    value={telegramChatIdInput}
-                    onChange={e => {
-                      const v = e.target.value;
-                      if (v === '' || /^-?\d+$/.test(v)) setTelegramChatIdInput(v);
-                    }}
-                    placeholder="Telegram Chat ID (e.g. 872125...)"
-                    className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm font-mono"
-                  />
-                  <Button
-                    onClick={handleSaveTelegram}
-                    disabled={savingTelegram || !telegramChatIdInput.trim()}
-                    className="bg-[#229ED9] hover:bg-[#1c80b0] discuss:bg-[#EF4444] discuss:hover:bg-[#d93838] discuss-black:bg-[#FF007F] discuss-black:hover:bg-[#e0006f] text-white font-bold px-5 rounded-xl transition-all shadow-md shadow-[#229ED9]/20 discuss:shadow-[#EF4444]/20 discuss-black:shadow-[#FF007F]/20"
-                  >
-                    {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
-                  </Button>
+
+                {/* Info Dropdown */}
+                {showSecurityInfo && (
+                  <div className="p-4 bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl border border-blue-500/15 animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-blue-500" />
+                        <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Security Rules</p>
+                      </div>
+                      <button 
+                        onClick={() => setShowSecurityInfo(false)}
+                        className="text-[10px] font-bold text-blue-500 hover:underline"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="text-[11px] text-blue-600 dark:text-blue-300 space-y-2 pl-6">
+                      <p><span>• App auto-locks after </span><strong>5 minutes</strong><span> of inactivity</span></p>
+                      <p><span>• Your PIN is </span><strong>synced across all devices</strong></p>
+                      <p><span>• Biometrics (Face/Fingerprint) are </span><strong>device-specific</strong></p>
+                      <p><span>• </span><strong>5 wrong attempts</strong><span> will trigger a 5-minute lockout</span></p>
+                      <p><span>• Disabling the lock will remove your PIN from </span><strong>all devices</strong></p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-xl ${localSettings?.enabled ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
+                        <Smartphone className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">PIN Lock Status</p>
+                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">
+                          <span>{localSettings?.enabled
+                            ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
+                            : 'Protect app access with a secure PIN'}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleToggleSecurity}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.enabled ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  {localSettings?.enabled && (
+                    <div className="space-y-3 pl-2 animate-in slide-in-from-top-2 duration-300">
+                      {biometricAvailable && (
+                        <div className="flex items-center justify-between border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] rounded-xl p-4 bg-[#F8FAFC] dark:bg-slate-950/20">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2.5 rounded-xl ${localSettings?.type === 'biometric' ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
+                              <BiometricIcon className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">FaceID / Fingerprint</p>
+                              <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">
+                                <span>{localSettings?.type === 'biometric' ? 'Active - PIN as backup fallback' : 'Tap to register biometric scanner'}</span>
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleBiometricToggle}
+                            disabled={testingBiometric}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.type === 'biometric' ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.type === 'biometric' ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
+                      )}
+                      <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-[#6275AF] flex items-center justify-center gap-2 rounded-xl py-4 hover:bg-neutral-50 border-neutral-200 dark:border-white/5">
+                        <Key className="w-4 h-4" />
+                        <span>Change Security PIN Code</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <p className="text-center text-[11px] text-[#6275AF] font-medium italic">
-                   <span>Note: Telegram notifications use industry-standard encryption for privacy.</span>
-                </p>
               </div>
             )}
           </div>
-          {/* ==================== END TELEGRAM NOTIFICATIONS ==================== */}
 
-
-
-          {/* ==================== DISCORD NOTIFICATIONS (PREMIUM UI) ==================== */}
-          <div className="mt-8 pt-6 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <div className="flex items-center justify-between mb-4">
+          {/* Category 3: DevRadar Telemetry */}
+          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+            <button
+              onClick={() => setShowLocationSettings(!showLocationSettings)}
+              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+            >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
-                  <svg className="w-6 h-6 text-[#5865F2]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.054-.108.001-.23-.106-.271a12.978 12.978 0 0 1-1.883-.894.083.083 0 0 1-.006-.139c.156-.117.311-.235.459-.356a.075.075 0 0 1 .079-.011c3.923 1.793 8.18 1.793 12.061 0a.075.075 0 0 1 .079.011c.148.121.303.239.459.356a.083.083 0 0 1-.006.139 13.06 13.06 0 0 1-1.883.894.083.083 0 0 0-.106.271c.352.699.764 1.365 1.226 1.994.053.072.03.1.084.028a19.839 19.839 0 0 0 6.002-3.03.085.085 0 0 0 .032-.057c.492-5.156-.844-9.626-3.59-13.66a.065.065 0 0 0-.032-.027zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.947 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
-                  </svg>
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                  <MapPin className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Discord Alerts</span></h3>
-                    <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md border border-neutral-200 dark:border-neutral-700">Coming Soon</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full bg-neutral-300`}></span>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
-                      <span>Disconnected</span>
-                    </span>
-                  </div>
+                <div className="text-left">
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">DevRadar Telemetry</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowDiscordInstructions(v => !v)}
-                className={`p-2 rounded-lg transition-all ${showDiscordInstructions ? 'bg-[#5865F2] text-white shadow-lg shadow-[#5865F2]/20' : 'bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20'}`}
-              >
-                <Info className="w-4 h-4" />
-              </button>
-            </div>
+              {showLocationSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+            </button>
 
-            {/* Instructions panel */}
-            {showDiscordInstructions && (
-              <div className="mb-4 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center gap-2 text-[#5865F2]">
-                  <ShieldCheck className="w-4 h-4" />
-                  <p className="text-sm font-bold">Privacy & Security Protocol</p>
+            {showLocationSettings && (
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">DevRadar Telemetry Network</span>
+                  </div>
+                  
+                  {/* Dynamic Status Live Pulse Indicator */}
+                  {shareLocation ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10B981]" />
+                      <span>Telemetry Broadcast Active</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-500 border border-neutral-500/25 rounded-full">
+                      <span className="w-1.5 h-1.5 bg-neutral-400 dark:bg-neutral-600 rounded-full" />
+                      <span>Telemetry Offline</span>
+                    </div>
+                  )}
                 </div>
-                
-                <p className="text-[12px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
-                  To maintain end-to-end privacy, Discuss uses an <strong>Encrypted Notification Bridge</strong>. For your security, Discord requires a mutual server connection before allowing encrypted DMs.
-                </p>
 
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. JOIN OFFICIAL SERVER <span className="text-red-500 font-black">(REQUIRED)</span></p>
-                    <p className="text-[11px] text-[#6275AF] mb-3">A shared server connection is mandatory for the bot to verify your identity and send private alerts.</p>
-                    <a href="https://discord.gg/FNhRA5EK" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-[#5865F2] hover:bg-[#4752c4] text-white text-xs font-bold py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-[#5865F2]/20">
-                      Join Discuss Community <ExternalLink className="w-3 h-3" />
-                    </a>
+                {/* Theme-Tailored Premium Layout Panel */}
+                <div className={`p-5 transition-all duration-300 ${
+                  theme === 'discuss-black'
+                    ? 'border border-[#FF007F]/20 bg-[#13131A]/90 hover:border-[#FF007F]/35 shadow-[0_4px_25px_rgba(255,0,127,0.06)] rounded-2xl'
+                    : theme === 'discuss-light'
+                    ? 'border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none'
+                    : theme === 'dark'
+                    ? 'border border-white/10 bg-slate-950/40 shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md rounded-2xl'
+                    : 'border border-slate-200 bg-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] backdrop-blur-md rounded-2xl'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3.5">
+                      <div className={`p-2.5 rounded-xl transition-all duration-300 ${
+                        shareLocation 
+                          ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' 
+                          : 'bg-neutral-500/10 text-neutral-400 dark:text-neutral-500'
+                      }`}>
+                        <MapPin className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-extrabold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                          Geospatial Broadcast State
+                        </p>
+                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5 leading-relaxed max-w-[220px]">
+                          {updatingLocation ? (
+                            <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#2563EB] discuss:text-[#EF4444]" /> Synchronizing coordinates...</span>
+                          ) : shareLocation ? (
+                            <span>Your node specification is broadcasted publicly on the interactive map.</span>
+                          ) : (
+                            <span>Activate coordinate tracking to become discoverable to nearby developers and community nodes.</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleToggleLocationSharing}
+                      disabled={updatingLocation}
+                      className={`relative inline-flex h-6 w-11 items-center transition-all duration-300 focus:outline-none rounded-full ${
+                        shareLocation 
+                          ? theme === 'discuss-black'
+                            ? 'bg-[#FF007F]'
+                            : 'bg-[#EF4444]'
+                          : 'bg-neutral-200 dark:bg-neutral-700'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform bg-white transition-transform rounded-full ${shareLocation ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
                   </div>
 
-                  <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] p-3 rounded-xl">
-                    <p className="text-[11px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">2. CONFIGURE USER ID</p>
-                    <p className="text-[11px] text-[#6275AF]">Enable <span className="font-semibold italic">Developer Mode</span> in Discord settings, right-click your profile, and select <span className="font-semibold text-[#5865F2]">Copy User ID</span>.</p>
+                  <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
+                    theme === 'discuss-light' ? 'border-black' : 'border-[#E2E8F0] dark:border-white/5'
+                  }`}>
+                    <Button
+                      onClick={() => {
+                        setLocationUpdateError('');
+                        setLocationUpdateStatus('idle');
+                        setShowLocationUpdateModal(true);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all rounded-xl py-3 border-[#2563EB] text-[#2563EB] hover:bg-[#2563EB]/10"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>Update Current Coordinates</span>
+                    </Button>
+
+                    {shareLocation && locationCoords && (
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex justify-between items-center text-xs px-1">
+                          <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Node Coordinates:</span>
+                          <span className="font-mono font-bold text-blue-600 discuss:text-[#EF4444]">
+                            {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
+                          </span>
+                        </div>
+                        <Button
+                          onClick={handleOpenAdjustModal}
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 rounded-xl py-3 border-[#2563EB] text-[#2563EB] hover:bg-[#2563EB]/10"
+                        >
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>Calibrate Precise Node Pin</span>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             )}
-                {/* User ID input + action (Consolidated Disabled State for Coming Soon) */}
-            <div className="opacity-50 pointer-events-none select-none">
-              <div className="space-y-3">
-                <div className="flex gap-2 p-1.5 bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] rounded-2xl">
-                  <Input
-                    disabled
-                    placeholder="Discord User ID (e.g. 123456789...)"
-                    className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm font-mono"
-                  />
-                  <Button
-                    disabled
-                    className="bg-[#5865F2] text-white font-bold px-5 rounded-xl transition-all"
-                  >
-                    <span>Connect</span>
-                  </Button>
-                </div>
-                <p className="text-center text-[11px] text-[#6275AF] font-medium italic">
-                   <span>Note: Discord notifications are currently under development.</span>
-                </p>
-              </div>
-            </div>
           </div>
-          {/* ==================== END DISCORD NOTIFICATIONS ==================== */}
 
-          <Button data-testid="profile-logout-btn" onClick={handleLogout} disabled={loggingOut}
-            className="w-full bg-[#2563EB]/10 hover:bg-[#2563EB]/20 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444]/20 discuss:text-[#EF4444] font-semibold py-3 h-12 mt-5 transition-all">
-            {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="flex items-center justify-center gap-2"><LogOut className="w-4 h-4" /> <span>Logout</span></span>}
+          {/* Category 4: Notifications & Integrations */}
+          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+            <button
+              onClick={() => setShowNotificationSettings(!showNotificationSettings)}
+              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Notifications & Integrations</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
+                </div>
+              </div>
+              {showNotificationSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+            </button>
+
+            {showNotificationSettings && (
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+                {/* Standard Notification Switch */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#2563EB]/10 text-[#2563EB] rounded-lg">
+                      <Bell className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Browser Push Notifications</p>
+                      <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8]">Enable or disable real-time browser notifications</p>
+                    </div>
+                  </div>
+                  <NotificationToggle />
+                </div>
+
+                {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
+                        <Send className="w-5 h-5 text-[#229ED9]" />
+                      </div>
+                      <div>
+                        <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Telegram Alerts</h3>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
+                            {telegramConnected ? <span>Active & Verified</span> : <span>Disconnected</span>}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowTelegramInstructions(v => !v)}
+                      className={`p-2 rounded-lg transition-all ${showTelegramInstructions ? 'bg-[#229ED9] text-white shadow-lg shadow-[#229ED9]/20' : 'bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20'}`}
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Instructions panel */}
+                  {showTelegramInstructions && (
+                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-2 text-[#229ED9]">
+                        <MessageSquare className="w-4 h-4" />
+                        <p className="text-xs font-bold">Bot Connectivity Guide</p>
+                      </div>
+                      
+                      <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                        <span>Discuss uses an automated delivery bot on Telegram to bypass browser push limitations. Link your chat in seconds:</span>
+                      </p>
+
+                      <div className="grid grid-cols-1 gap-2.5">
+                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
+                          <p className="text-[10px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. AUTHENTICATE WITH BOT</p>
+                          <p className="text-[10px] text-[#6275AF] mb-2">Send <span className="font-semibold text-[#229ED9]">/start</span> to retrieve your secure Chat ID.</p>
+                          <a href="https://t.me/DiscussNotifications_bot" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 bg-[#229ED9] hover:bg-[#1c80b0] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm">
+                            <span>Launch Telegram Bot</span> <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+
+                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
+                          <p className="text-[10px] font-bold text-amber-500 mb-1">ALTERNATIVE: GET ID INSTANTLY</p>
+                          <p className="text-[10px] text-[#6275AF]">Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@userinfobot</a> on Telegram and send a message. It returns your numeric ID immediately!</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Telegram inputs */}
+                  {loadingTelegram ? (
+                    <div className="flex items-center justify-center py-4 bg-white dark:bg-[#1E293B] rounded-xl border border-dashed border-[#CBD5E1]">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#229ED9]" />
+                    </div>
+                  ) : telegramConnected ? (
+                    <div className="space-y-3">
+                      <div className="bg-white dark:bg-[#1E293B] border border-neutral-200 dark:border-white/5 rounded-xl p-3.5 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center">
+                            <Check className="w-4 h-4 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Active Link</p>
+                            <p className="text-[12px] font-mono font-bold text-[#475569] dark:text-[#94A3B8]">{telegramChatIdInput}</p>
+                          </div>
+                        </div>
+                        <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Privacy Card */}
+                      <div className="bg-white dark:bg-[#1E293B] border border-neutral-200 dark:border-white/5 rounded-xl p-3.5 shadow-sm">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
+                              {telegramPrivacy ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </div>
+                            <span className="text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9]">Message Previews</span>
+                          </div>
+                          <button
+                            onClick={handleToggleTelegramPrivacy}
+                            disabled={savingTelegram}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${telegramPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-green-500'}`}
+                          >
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-0.5' : 'translate-x-4.5'}`} />
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
+                          {telegramPrivacy 
+                            ? <span>Incognito Mode: Only notifies you of the message source. Full content is only visible inside the Discuss app.</span> 
+                            : <span>Real-time Delivery: Pushes complete message text and image previews directly to your Telegram chat.</span>}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl focus-within:border-[#229ED9] transition-all">
+                        <Input
+                          value={telegramChatIdInput}
+                          onChange={e => {
+                            const v = e.target.value;
+                            if (v === '' || /^-?\d+$/.test(v)) setTelegramChatIdInput(v);
+                          }}
+                          placeholder="Telegram Chat ID (e.g. 872125...)"
+                          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
+                        />
+                        <Button
+                          onClick={handleSaveTelegram}
+                          disabled={savingTelegram || !telegramChatIdInput.trim()}
+                          className="bg-[#229ED9] hover:bg-[#1c80b0] text-white font-bold px-4 h-9 rounded-lg transition-all"
+                        >
+                          {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
+                        </Button>
+                      </div>
+                      <p className="text-center text-[10px] text-[#6275AF] font-semibold italic">
+                         <span>Note: Telegram notifications use industry-standard encryption for privacy.</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* ==================== DISCORD NOTIFICATIONS ==================== */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
+                        <svg className="w-5 h-5 text-[#5865F2]" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.054-.108.001-.23-.106-.271a12.978 12.978 0 0 1-1.883-.894.083.083 0 0 1-.006-.139c.156-.117.311-.235.459-.356a.075.075 0 0 1 .079-.011c3.923 1.793 8.18 1.793 12.061 0a.075.075 0 0 1 .079.011c.148.121.303.239.459.356a.083.083 0 0 1-.006.139 13.06 13.06 0 0 1-1.883.894.083.083 0 0 0-.106.271c.352.699.764 1.365 1.226 1.994.053.072.03.1.084.028a19.839 19.839 0 0 0 6.002-3.03.085.085 0 0 0 .032-.057c.492-5.156-.844-9.626-3.59-13.66a.065.065 0 0 0-.032-.027zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.947 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Discord Alerts</h3>
+                          <span className="bg-neutral-200 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md">Coming Soon</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Disconnected</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowDiscordInstructions(v => !v)}
+                      className={`p-2 rounded-lg transition-all ${showDiscordInstructions ? 'bg-[#5865F2] text-white shadow-lg shadow-[#5865F2]/20' : 'bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20'}`}
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Instructions panel */}
+                  {showDiscordInstructions && (
+                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-2 text-[#5865F2]">
+                        <ShieldCheck className="w-4 h-4" />
+                        <p className="text-xs font-bold">Privacy & Security Protocol</p>
+                      </div>
+                      
+                      <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                        To maintain privacy, Discuss uses an encrypted notification bridge. Discord requires a mutual server connection before allowing encrypted DMs:
+                      </p>
+
+                      <div className="grid grid-cols-1 gap-2.5">
+                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
+                          <p className="text-[10px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. JOIN OFFICIAL SERVER <span className="text-red-500 font-bold">(REQUIRED)</span></p>
+                          <p className="text-[10px] text-[#6275AF] mb-2">A shared server connection is mandatory for the bot to verify your identity.</p>
+                          <a href="https://discord.gg/FNhRA5EK" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 bg-[#5865F2] hover:bg-[#4752c4] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm">
+                            <span>Join Discuss Server</span> <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+
+                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
+                          <p className="text-[10px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">2. CONFIGURE USER ID</p>
+                          <p className="text-[10px] text-[#6275AF]">Enable Developer Mode in Discord settings, right-click your profile, and select <span className="font-semibold text-[#5865F2]">Copy User ID</span>.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Discord input */}
+                  <div className="opacity-50 pointer-events-none select-none">
+                    <div className="space-y-3">
+                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl">
+                        <Input
+                          disabled
+                          placeholder="Discord User ID (e.g. 123456789...)"
+                          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
+                        />
+                        <Button
+                          disabled
+                          className="bg-[#5865F2] text-white font-bold px-4 h-9 rounded-lg"
+                        >
+                          <span>Connect</span>
+                        </Button>
+                      </div>
+                      <p className="text-center text-[10px] text-[#6275AF] font-semibold italic">
+                         <span>Note: Discord notifications are currently under development.</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* ==================== GLOBAL USER LOGOUT ==================== */}
+        <div className="mt-6">
+          <Button 
+            data-testid="profile-logout-btn" 
+            onClick={handleLogout} 
+            disabled={loggingOut}
+            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-4 h-14 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-[#EF4444]/10 hover:border-[#EF4444]/25"
+          >
+            {loggingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <><LogOut className="w-5 h-5" /> <span>Logout from Discuss</span></>}
           </Button>
         </div>
 
@@ -3049,6 +3190,85 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Badge Detail Dialog Modal */}
+      <AlertDialog open={showBadgeModal} onOpenChange={setShowBadgeModal}>
+        <AlertDialogContent className="max-w-md bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-2xl shadow-2xl p-6">
+          {selectedBadge && (
+            <div className="space-y-6 text-left">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-black text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] uppercase tracking-tight flex items-center gap-2">
+                  🏅 Badge Details
+                </h3>
+                <button
+                  onClick={() => setShowBadgeModal(false)}
+                  className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 border border-neutral-100 dark:border-white/5 discuss:border-white/5">
+                <div className="relative mb-4">
+                  <BadgeIcon badge={selectedBadge} isLocked={eligibleCount < selectedBadge.target} size="lg" />
+                </div>
+                <h4 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                  {selectedBadge.name}
+                </h4>
+                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-2 px-4 leading-relaxed font-semibold">
+                  {selectedBadge.description}
+                </p>
+                
+                <div className="mt-4 bg-white dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-[#334155] discuss:border-[#333333] px-4 py-2 rounded-xl shadow-sm">
+                  <span className="text-xs text-neutral-500 font-bold">Status: </span>
+                  {eligibleCount >= selectedBadge.target ? (
+                    <span className="text-emerald-500 text-xs font-black uppercase tracking-wider">Unlocked 🏆</span>
+                  ) : (
+                    <span className="text-amber-500 text-xs font-black uppercase tracking-wider">Locked 🔒 ({eligibleCount}/{selectedBadge.target})</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Rules section */}
+              <div className="space-y-2.5">
+                <h5 className="text-xs font-black uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  How to achieve:
+                </h5>
+                <div className="bg-[#EF4444]/5 dark:bg-[#EF4444]/10 discuss:bg-[#EF4444]/5 border border-[#EF4444]/10 rounded-2xl p-4">
+                  <p className="text-xs text-[#b91c1c] dark:text-[#EF4444] discuss:text-[#F87171] leading-relaxed font-semibold">
+                    {selectedBadge.rules}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-neutral-500">Discussions count progress:</span>
+                  <span className="text-neutral-800 dark:text-neutral-200">{eligibleCount} / {selectedBadge.target}</span>
+                </div>
+                <div className="w-full h-2.5 bg-neutral-100 dark:bg-neutral-800 discuss:bg-neutral-800 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-500 rounded-full ${
+                      eligibleCount >= selectedBadge.target 
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500' 
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-500 discuss:from-red-500 discuss:to-orange-500'
+                    }`}
+                    style={{ width: `${Math.min(100, (eligibleCount / selectedBadge.target) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setShowBadgeModal(false)}
+                className="w-full bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white font-bold py-3 rounded-xl text-xs uppercase"
+              >
+                Got It
+              </Button>
+            </div>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
