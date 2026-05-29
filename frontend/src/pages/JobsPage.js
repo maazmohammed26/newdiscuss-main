@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { subscribeToJobs, deleteJob } from '@/lib/firebaseSixth';
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import JobAdminModal from '@/components/JobAdminModal';
 import ItemShareModal from '@/components/ItemShareModal';
 import GuestApplyPopup from '@/components/GuestApplyPopup';
@@ -208,7 +209,10 @@ export default function JobsPage() {
         </div>
       )}
 
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
+      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+          <Sidebar />
+          <div className="min-w-0 flex-1">
         {/* Header row */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <div>
@@ -380,6 +384,8 @@ export default function JobsPage() {
               </div>
             </>
           )}
+        </div>
+          </div>
         </div>
       </div>
 

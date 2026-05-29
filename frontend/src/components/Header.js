@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
-import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
+import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark, HelpCircle, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -23,7 +25,7 @@ export default function Header() {
   const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
 
   const headerClass = `sticky top-0 z-40 bg-black/75 backdrop-blur-md border-b border-white/10 select-none transition-all duration-300 ${
-    hasNavbar ? 'md:fixed md:top-0 md:left-0 md:w-full md:pl-[100px] md:z-40' : 'w-full'
+    hasNavbar ? 'md:fixed md:top-0 md:left-0 md:w-full md:pl-[100px] lg:pl-0 md:z-40' : 'w-full'
   }`;
 
   return (
@@ -32,16 +34,14 @@ export default function Header() {
         {/* Top red-and-blue thick accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between w-full relative">
-          {/* Left spacing/placeholder only visible on desktop to keep logo centered */}
+        {/* Mobile/Tablet Header (hidden on desktop) */}
+        <div className="lg:hidden max-w-5xl mx-auto px-4 h-14 flex items-center justify-between w-full relative">
           <div className="hidden md:block w-8 h-8 md:w-10 md:h-10" />
 
-          {/* Logo: Left-aligned on mobile, absolute-centered on desktop */}
           <Link to="/" className="flex items-center md:absolute md:left-1/2 md:-translate-x-1/2" data-testid="header-logo">
             <DiscussLogo size="md" />
           </Link>
 
-          {/* Pulsing Small Techie CPU Icon for Desktop only */}
           <button
             onClick={() => setShowGuidelines(true)}
             className="hidden md:block p-1.5 md:p-2 rounded-xl bg-white/5 border border-white/10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
@@ -50,7 +50,6 @@ export default function Header() {
             <Cpu className="w-4.5 h-4.5 md:w-[18px] md:h-[18px] animate-pulse text-[#2563EB] discuss:text-[#EF4444]" />
           </button>
 
-          {/* Unique Techie Hamburger Menu Button for Mobile only */}
           <motion.button
             onClick={() => setShowDrawer(!showDrawer)}
             className="block md:hidden p-2 rounded-xl border transition-all duration-200 active:scale-90 shadow-sm
@@ -66,6 +65,81 @@ export default function Header() {
               {showDrawer ? <X className="w-5 h-5 text-red-500" /> : <Menu className="w-5 h-5 text-neutral-300" />}
             </motion.div>
           </motion.button>
+        </div>
+
+        {/* Desktop Header (hidden on mobile/tablet) */}
+        <div className="hidden lg:flex w-full px-8 h-14 items-center justify-between relative bg-[#0D0D12]">
+          {/* Logo (Left-aligned) */}
+          <Link to="/feed" className="flex items-center gap-1">
+            <span className="font-heading font-black italic select-none tracking-tight text-2xl">
+              <span className="text-[#E53E3E] font-black">&lt;</span>
+              <span className="text-white font-extrabold tracking-tight">discuss</span>
+              <span className="text-[#3182CE] font-black">&gt;</span>
+            </span>
+          </Link>
+
+          {/* Right Side Icons & Profile Dropdown */}
+          <div className="flex items-center gap-6">
+            {/* Help/Guidelines icon */}
+            <button
+              onClick={() => setShowGuidelines(true)}
+              className="p-1.5 rounded-full hover:bg-white/10 text-neutral-300 transition-colors focus:outline-none cursor-pointer"
+              title="Help & Guidelines"
+            >
+              <HelpCircle className="w-5.5 h-5.5 text-white" />
+            </button>
+            
+            {/* User Dropdown */}
+            <div className="relative">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 focus:outline-none group cursor-pointer select-none">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 group-hover:border-white/40 transition-colors">
+                      <UserAvatar src={user?.photo_url || null} username={user?.username || 'Guest'} className="w-full h-full object-cover" />
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-white transition-colors" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-[#1a1a1a] border-[#333333] text-white">
+                  {user ? (
+                    <>
+                      <div className="px-3 py-2 border-b border-[#333333]">
+                        <p className="text-xs text-neutral-400">Signed in as</p>
+                        <p className="text-sm font-semibold truncate">{user.username}</p>
+                      </div>
+                      <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer hover:bg-[#262626] text-xs">
+                        Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/editor')} className="cursor-pointer hover:bg-[#262626] text-xs">
+                        Code Tools
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/bookmarks')} className="cursor-pointer hover:bg-[#262626] text-xs">
+                        Bookmarks
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-[#333333]" />
+                      <DropdownMenuItem onClick={() => {
+                        const { signOutUser } = require('@/lib/db');
+                        signOutUser().then(() => {
+                          navigate('/login');
+                        });
+                      }} className="cursor-pointer text-red-400 hover:bg-[#262626] hover:text-red-300 text-xs">
+                        Sign Out
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/login')} className="cursor-pointer hover:bg-[#262626] text-xs">
+                        Sign In
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/register')} className="cursor-pointer hover:bg-[#262626] text-xs">
+                        Register
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </header>
 

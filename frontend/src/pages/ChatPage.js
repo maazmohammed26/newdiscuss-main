@@ -26,6 +26,7 @@ import {
   fastCacheLoad
 } from '@/lib/cacheManager';
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import { Button } from '@/components/ui/button';
@@ -586,7 +587,10 @@ export default function ChatPage() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
       <Header />
       
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
+      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+          <Sidebar />
+          <div className="min-w-0 flex-1">
         {/* Header with three-dot menu */}
         <div className="flex items-center gap-3 mb-4">
           <button
@@ -775,6 +779,8 @@ export default function ChatPage() {
             }
           </div>
         )}
+          </div>
+        </div>
       </div>
 
       {/* Create Group Modal */}

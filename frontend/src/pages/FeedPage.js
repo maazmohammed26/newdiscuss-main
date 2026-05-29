@@ -12,13 +12,14 @@ import {
 import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
+import Sidebar from '@/components/Sidebar';
 import LoadingScreen from '@/components/LoadingScreen';
 import UserSearchResult from '@/components/UserSearchResult';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, MessageSquare, FolderGit2, WifiOff, Loader2, Search, X, Hash, TrendingUp, Users, PlayCircle, Cpu, Layers, RotateCcw, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Plus, MessageSquare, FolderGit2, WifiOff, Loader2, Search, X, Hash, TrendingUp, Users, PlayCircle, Cpu, Layers, RotateCcw, ChevronLeft, ChevronRight, Bookmark, Home, MessageCircle, Radar, Briefcase, Newspaper, Code, User, ChevronDown, ChevronUp, Flame, Compass, HelpCircle } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const MemoPostCard = memo(PostCard);
@@ -86,6 +87,8 @@ export default function FeedPage() {
     return !(fast?.data?.length > 0);
   });
   const [showCreate, setShowCreate] = useState(false);
+  const [gamesOpen, setGamesOpen] = useState(true);
+  const [customFeedsOpen, setCustomFeedsOpen] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -333,21 +336,26 @@ export default function FeedPage() {
         </div>
       )}
 
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
-        {/* Signal Stories Row */}
-        {user && <SignalStoriesRow />}
-
-        {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+      {/* Main Responsive Grid Container */}
+      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
+        
+        {/* Responsive Grid Shell */}
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_310px] gap-6 mt-6">
           
-          {/* Left Column - Main Feed Content */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* COLUMN 1: LEFT SIDEBAR (Desktop Only) */}
+          <Sidebar onPostCreated={fetchTrendingTags} />
+
+          {/* COLUMN 2: CENTER FEED (Main Content Column) */}
+          <main className="space-y-6 min-w-0 flex-1">
+            {/* Signal Stories Row */}
+            {user && <SignalStoriesRow />}
+
             {/* Tabs */}
             <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
               <button
                 data-testid="tab-discussion"
                 onClick={() => setActiveTab('discussion')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all cursor-pointer ${
                   activeTab === 'discussion'
                     ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
                     : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
@@ -359,7 +367,7 @@ export default function FeedPage() {
               <button
                 data-testid="tab-project"
                 onClick={() => setActiveTab('project')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all cursor-pointer ${
                   activeTab === 'project'
                     ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
                     : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
@@ -372,7 +380,7 @@ export default function FeedPage() {
                 <button
                   data-testid="tab-pulse"
                   onClick={() => navigate('/pulse')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] cursor-pointer`}
                 >
                   <PlayCircle className="w-4 h-4 text-[#EF4444]" />
                   Pulse
@@ -380,93 +388,91 @@ export default function FeedPage() {
               )}
             </div>
 
-            {/* Search bar and View Mode Segment Controls */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 mb-6">
-              {/* Search Pane */}
-              <div className="flex-1 flex flex-col">
-                {/* Search type toggle */}
-                <div className="flex gap-2 mb-2">
-                  <button
-                    onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all ${
-                      searchType === 'posts'
-                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
-                        : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-                    }`}
-                  >
-                    <Hash className="w-3 h-3" />
-                    Posts
-                  </button>
-                  <button
-                    onClick={() => setSearchType('users')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all ${
-                      searchType === 'users'
-                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
-                        : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
-                    }`}
-                  >
-                    <Users className="w-3 h-3" />
-                    Users
-                  </button>
-                </div>
-                
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
-                  <Input
-                    data-testid="feed-search-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={searchType === 'users' ? 'Search users by username...' : `Search ${activeTab === 'discussion' ? 'discussions' : 'projects'}...`}
-                    className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 rounded-[6px] text-[13px] md:text-[15px] h-10 shadow-card"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      data-testid="feed-search-clear"
-                      onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+            {/* Filter control bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-3 shadow-card">
+              {/* Type switches */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    searchType === 'posts'
+                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
+                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  }`}
+                >
+                  # Posts
+                </button>
+                <button
+                  onClick={() => setSearchType('users')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    searchType === 'users'
+                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
+                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  }`}
+                >
+                  Users
+                </button>
               </div>
 
-              {/* View Mode Segment Switcher (List Feed vs Swipe Deck) */}
+              {/* Search Bar Input */}
+              <div className="relative flex-1 max-w-md mx-2">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={searchType === 'users' ? 'Search users...' : 'Search discussions...'}
+                  className="pl-9 pr-9 bg-neutral-50 dark:bg-neutral-900 discuss:bg-black/20 border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-full h-9 shadow-sm text-xs focus:ring-[#2563EB]/10"
+                />
+                {searchQuery && (
+                  <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* View Switches */}
               {searchType === 'posts' && (
-                <div className="flex items-center w-full sm:w-[260px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] p-1 shadow-card h-10 shrink-0 self-stretch sm:self-end">
+                <div className="flex items-center bg-neutral-100 dark:bg-neutral-900 discuss:bg-black/30 rounded-full p-0.5 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shadow-inner">
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`flex-1 h-full rounded-[8px] text-[12.5px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                       viewMode === 'list'
-                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
-                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white discuss:text-[#9CA3AF] discuss:hover:text-white'
+                        ? 'bg-white dark:bg-neutral-800 discuss:bg-[#EF4444] text-neutral-900 dark:text-white discuss:text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
                     }`}
-                    title="List Feed"
                   >
-                    <Layers className="w-3.5 h-3.5 rotate-90" />
-                    <span>List View</span>
+                    List View
                   </button>
                   <button
                     onClick={() => {
                       setViewMode('slide');
-                      // Sync index
                       const saved = sessionStorage.getItem(`discuss_slide_index_${activeTab}`);
                       setSlideIndex(saved ? parseInt(saved, 10) : 0);
                     }}
-                    className={`flex-1 h-full rounded-[8px] text-[12.5px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                       viewMode === 'slide'
-                        ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
-                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white discuss:text-[#9CA3AF] discuss:hover:text-white'
+                        ? 'bg-white dark:bg-neutral-800 discuss:bg-[#EF4444] text-neutral-900 dark:text-white discuss:text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
                     }`}
-                    title="Slide View"
                   >
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>Slide View</span>
+                    Slide View
                   </button>
                 </div>
               )}
             </div>
+
+            {/* Active search type or query banner */}
+            {searchType === 'posts' && debouncedSearch && (
+              <div data-testid="active-search-badge" className="flex items-center gap-2 mb-4 bg-[#2563EB]/10 dark:bg-[#2563EB]/15 border border-[#2563EB]/20 dark:border-[#2563EB]/30 rounded-[6px] px-3 py-2">
+                <Search className="w-3.5 h-3.5 text-[#2563EB]" />
+                <span className="text-[#2563EB] text-[13px] font-medium">
+                  {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''} for "{debouncedSearch}" in {activeTab === 'discussion' ? 'Discussions' : 'Projects'}
+                </span>
+                <button onClick={handleClearSearch} className="ml-auto text-[#2563EB] hover:text-[#1D4ED8] cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* User Search Results */}
             {searchType === 'users' && debouncedSearch && (
@@ -500,44 +506,7 @@ export default function FeedPage() {
               </div>
             )}
 
-            {/* Active search indicator for posts */}
-            {searchType === 'posts' && debouncedSearch && (
-              <div data-testid="active-search-badge" className="flex items-center gap-2 mb-4 bg-[#2563EB]/10 dark:bg-[#2563EB]/15 border border-[#2563EB]/20 dark:border-[#2563EB]/30 rounded-[6px] px-3 py-2">
-                <Search className="w-3.5 h-3.5 text-[#2563EB]" />
-                <span className="text-[#2563EB] text-[13px] font-medium">
-                  {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''} for "{debouncedSearch}" in {activeTab === 'discussion' ? 'Discussions' : 'Projects'}
-                </span>
-                <button onClick={handleClearSearch} className="ml-auto text-[#2563EB] hover:text-[#1D4ED8]">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Trending hashtags - only show when not searching users (Responsive: hidden on desktop, visible on mobile) */}
-            {searchType === 'posts' && trendingTags.length > 0 && !debouncedSearch && (
-              <div data-testid="trending-tags" className="mb-5 lg:hidden animate-fade-in">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]" />
-                  <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs font-semibold uppercase tracking-wider">Trending</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {trendingTags.slice(0, 4).map((t) => (
-                    <button
-                      key={t.tag}
-                      data-testid={`trending-tag-${t.tag}`}
-                      onClick={() => handleTagClick(t.tag)}
-                      className="inline-flex items-center gap-1 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:border-[#2563EB]/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 rounded-[6px] px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-[#2563EB] transition-all shadow-card"
-                    >
-                      <Hash className="w-3 h-3" />
-                      {t.tag}
-                      <span className="text-[10px] opacity-60">({t.count})</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Posts - only show when not searching users */}
+            {/* Feed contents */}
             {searchType === 'posts' && (
               loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
@@ -545,8 +514,8 @@ export default function FeedPage() {
                   <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading posts...</p>
                 </div>
               ) : filteredPosts.length === 0 ? (
-                <div data-testid="empty-feed" className="text-center py-20">
-                  <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] flex items-center justify-center mx-auto mb-4">
+                <div data-testid="empty-feed" className="text-center py-20 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] p-8 shadow-card">
+                  <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-black/20 flex items-center justify-center mx-auto mb-4">
                     {activeTab === 'discussion' ? (
                       <MessageSquare className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
                     ) : (
@@ -564,7 +533,6 @@ export default function FeedPage() {
                 /* Slide View (Tinder-style deck) */
                 <div className="space-y-6">
                   {slideIndex >= filteredPosts.length ? (
-                    /* End of Feed Card */
                     <div className="w-full max-w-xl mx-auto bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-8 shadow-card text-center animate-fade-in">
                       <div className="w-20 h-20 rounded-full bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-6 relative">
                         <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-[#2563EB]/30 discuss:bg-[#EF4444]/30 opacity-75"></span>
@@ -598,9 +566,8 @@ export default function FeedPage() {
                       </div>
                     </div>
                   ) : (
-                    /* Swipeable Deck container */
                     <div className="space-y-4">
-                      {/* High-Fidelity Monospace System Navigation Tutorial Note */}
+                      {/* Swipeable deck tutorial */}
                       <div className="flex items-start sm:items-center gap-3.5 justify-center mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-2xl p-4 shadow-card select-none max-w-xl mx-auto border-l-4 border-l-[#2563EB] discuss:border-l-[#EF4444]">
                         <div className="p-2 rounded-xl bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] shrink-0 flex items-center justify-center">
                           <Cpu className="w-4 h-4 animate-pulse" />
@@ -614,12 +581,9 @@ export default function FeedPage() {
                       </div>
 
                       <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6">
-                        {/* Underneath Card 2 (Deck depth) */}
                         {slideIndex + 2 < filteredPosts.length && (
                           <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
                         )}
-                        
-                        {/* Underneath Card 1 (Deck depth) */}
                         {slideIndex + 1 < filteredPosts.length && (
                           <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
                         )}
@@ -646,12 +610,12 @@ export default function FeedPage() {
                         </AnimatePresence>
                       </div>
 
-                      {/* Controls bar below active deck card */}
+                      {/* Control bar */}
                       <div className="flex items-center justify-between mt-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-3 shadow-card animate-fade-in relative z-20">
                         <Button
                           onClick={handleStartOver}
                           variant="outline"
-                          className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF]"
+                          className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] cursor-pointer"
                           title="Start Over"
                         >
                           <RotateCcw className="w-4 h-4 text-neutral-500 discuss:text-[#9CA3AF]" />
@@ -663,7 +627,7 @@ export default function FeedPage() {
                             onClick={handlePrev}
                             disabled={slideIndex === 0}
                             variant="outline"
-                            className="h-10 w-10 p-0 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] disabled:opacity-40 text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF]"
+                            className="h-10 w-10 p-0 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] disabled:opacity-40 text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] cursor-pointer"
                             title="Previous Post"
                           >
                             <ChevronLeft className="w-5 h-5" />
@@ -679,7 +643,7 @@ export default function FeedPage() {
                               handleNext();
                             }}
                             variant="outline"
-                            className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF]"
+                            className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] cursor-pointer"
                             title="Skip Post"
                           >
                             <span>Skip</span>
@@ -691,7 +655,7 @@ export default function FeedPage() {
                   )}
                 </div>
               ) : (
-                /* List View (Standard scroll list) */
+                /* List View */
                 <div className="space-y-4">
                   {filteredPosts.map((post) => (
                     <MemoPostCard
@@ -707,95 +671,89 @@ export default function FeedPage() {
                 </div>
               )
             )}
-          </div>
+          </main>
 
-          {/* Right Column - Desktop Sidebar (Sticky) */}
-          <div className="hidden lg:block lg:col-span-4">
-            <div className="sticky top-20 space-y-6 animate-fade-in">
-              
-              {/* Trending Card */}
-              {trendingTags.length > 0 && (
-                <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
-                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
-                    <TrendingUp className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
-                      Trending Hashtags
-                    </h3>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {trendingTags.slice(0, 6).map((t) => (
-                      <button
-                        key={t.tag}
-                        onClick={() => handleTagClick(t.tag)}
-                        className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 discuss:bg-black/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 border border-transparent hover:border-[#2563EB]/20 text-[13px] font-medium text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-all duration-150"
-                      >
-                        <span className="flex items-center gap-1.5 truncate">
-                          <Hash className="w-3.5 h-3.5 opacity-60 shrink-0" />
-                          <span className="truncate">{t.tag}</span>
-                        </span>
-                        <span className="text-xs bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] px-2 py-0.5 rounded-md opacity-70 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shrink-0 font-mono">
-                          {t.count} posts
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Platform Status Card */}
+          {/* COLUMN 3: RIGHT SIDEBAR (Desktop Only - Sticky) */}
+          <aside className="hidden xl:block w-[310px] shrink-0 sticky top-[72px] self-start space-y-6 animate-fade-in">
+            {/* Trending Card */}
+            {trendingTags.length > 0 && (
               <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
-                  <Cpu className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <TrendingUp className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
-                    System Status
+                    Trending Hashtags
                   </h3>
                 </div>
-                
-                <div className="space-y-4">
-                  {/* Pulsing Status indicator */}
-                  <div className="flex items-center gap-2 bg-green-500/5 border border-green-500/10 rounded-lg p-2.5">
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span className="text-[12px] font-mono font-bold text-green-600 dark:text-green-400">
-                      discuss_network: active
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-2">
+                  {trendingTags.slice(0, 4).map((t) => (
+                    <button
+                      key={t.tag}
+                      onClick={() => handleTagClick(t.tag)}
+                      className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 discuss:bg-black/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 border border-transparent hover:border-[#2563EB]/20 text-[13px] font-medium text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-all duration-150 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-1.5 truncate">
+                        <Hash className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                        <span className="truncate">{t.tag}</span>
+                      </span>
+                      <span className="text-xs bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] px-2 py-0.5 rounded-md opacity-70 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shrink-0 font-mono">
+                        {t.count} posts
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => navigate('/feed')} className="mt-3 text-xs font-bold text-[#2563EB] discuss:text-[#EF4444] hover:underline focus:outline-none cursor-pointer">
+                  View all hashtags
+                </button>
+              </div>
+            )}
 
-                  {/* Tech Metrics */}
-                  <div className="space-y-2 text-xs font-mono border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] pb-4">
-                    <div className="flex justify-between">
-                      <span className="text-neutral-400 dark:text-neutral-500">Uptime:</span>
-                      <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold">99.98%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-400 dark:text-neutral-500">Latency:</span>
-                      <span className="text-green-600 dark:text-green-400 font-semibold">12ms (api_edge)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-400 dark:text-neutral-500">Active Nodes:</span>
-                      <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold font-mono">4 [Stable]</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-400 dark:text-neutral-500">Gateways:</span>
-                      <span className="text-[#2563EB] discuss:text-[#EF4444] font-semibold">Firebase, Brevo</span>
-                    </div>
-                  </div>
+            {/* Platform Status Card */}
+            <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
+                <Cpu className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+                  System Status
+                </h3>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Pulsing Status indicator */}
+                <div className="flex items-center gap-2 bg-green-500/5 border border-green-500/10 rounded-lg p-2.5">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  <span className="text-[12px] font-mono font-bold text-green-600 dark:text-green-400">
+                    discuss_network: active
+                  </span>
+                </div>
 
-                  {/* Developer Logs Guidelines */}
-                  <div className="space-y-1.5 bg-neutral-50 dark:bg-neutral-900/50 discuss:bg-black/35 border border-neutral-100 dark:border-neutral-800/60 discuss:border-[#262626] rounded-lg p-3 text-[11px] font-mono text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]">
-                    <div className="text-neutral-500 dark:text-neutral-600 font-bold select-none mb-1">◈ SYSTEM_LOGS:</div>
-                    <div>// keep discussion constructive</div>
-                    <div>// flag violations via CPU menu</div>
-                    <div>// share builds under #project</div>
-                    <div className="text-[#2563EB] discuss:text-[#EF4444]/80">// discuss_version: v2.4-stable</div>
+                {/* Tech Metrics */}
+                <div className="space-y-2 text-xs font-mono border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] pb-4">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-400 dark:text-neutral-500">Uptime:</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold">99.98%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-400 dark:text-neutral-500">Latency:</span>
+                    <span className="text-green-600 dark:text-green-400 font-semibold">12ms (api_edge)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-400 dark:text-neutral-500">Active Nodes:</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold font-mono">4 [Stable]</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-400 dark:text-neutral-500">Gateways:</span>
+                    <span className="text-[#2563EB] discuss:text-[#EF4444] font-semibold">Firebase, Brevo</span>
                   </div>
                 </div>
-              </div>
 
+                <button onClick={() => navigate('/feed')} className="text-xs font-bold text-[#2563EB] discuss:text-[#EF4444] hover:underline focus:outline-none cursor-pointer">
+                  View status page
+                </button>
+              </div>
             </div>
-          </div>
+          </aside>
 
         </div>
       </div>

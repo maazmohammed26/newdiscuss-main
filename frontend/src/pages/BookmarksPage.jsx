@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPosts } from '@/lib/db';
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import PostCard from '@/components/PostCard';
 import LoadingScreen from '@/components/LoadingScreen';
 import { Button } from '@/components/ui/button';
@@ -142,24 +143,11 @@ export default function BookmarksPage() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
       <Header />
 
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
-        
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 mb-4">
-          <button 
-            onClick={() => navigate('/feed')}
-            className="flex items-center gap-1 text-[13px] font-semibold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Feed
-          </button>
-        </div>
-
-        {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_310px] gap-6 mt-6">
+          <Sidebar />
           
-          {/* Left Column - Main Bookmarks Content */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="space-y-6 min-w-0 flex-1">
             
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#262626]">
@@ -296,8 +284,7 @@ export default function BookmarksPage() {
           </div>
 
           {/* Right Column - Desktop Sticky Bookmarks Stats */}
-          <div className="hidden lg:block lg:col-span-4">
-            <div className="sticky top-20 space-y-6">
+          <aside className="hidden xl:block w-[310px] shrink-0 sticky top-[72px] self-start space-y-6 animate-fade-in">
               
               {/* Stats Card */}
               <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card">
@@ -362,9 +349,7 @@ export default function BookmarksPage() {
                   </div>
                 </div>
               </div>
-
-            </div>
-          </div>
+          </aside>
 
         </div>
       </div>

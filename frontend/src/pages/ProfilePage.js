@@ -42,6 +42,7 @@ import {
   rejectGroupInvite
 } from '@/lib/groupsDb';
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import PostCard from '@/components/PostCard';
 import ThemeSelector from '@/components/ThemeSelector';
 import VerifiedBadge from '@/components/VerifiedBadge';
@@ -1132,7 +1133,10 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
       <Header />
-      <div className="w-full max-w-5xl mx-auto px-4 py-6 md:py-10 pb-32">
+      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 md:py-10 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+          <Sidebar />
+          <div className="min-w-0 flex-1">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] text-[13px] font-medium mb-4 transition-colors"
@@ -2581,6 +2585,8 @@ export default function ProfilePage() {
         <p className="text-center text-[#94A3B8] dark:text-[#6275AF] text-xs mt-6 mb-24">
           <span>Managed by </span><span className="font-semibold text-[#BC4800]">&lt;discuss&gt;</span>
         </p>
+          </div>
+        </div>
       </div>
 
       <VerificationRequestModal 

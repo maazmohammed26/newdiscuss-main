@@ -6,6 +6,7 @@ import { subscribeToPublicLocations, getUserLocation, saveUserLocation } from '@
 import { ArrowLeft, MapPin, Loader2, ExternalLink, X, Navigation, User, ChevronLeft, Sparkles, Compass, ShieldCheck, Check, Radar } from 'lucide-react';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import UserAvatar from '@/components/UserAvatar';
+import Sidebar from '@/components/Sidebar';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import CurrentLocationUpdateModal from '@/components/CurrentLocationUpdateModal';
 import { toast } from 'sonner';
@@ -451,7 +452,9 @@ export default function DevRadarPage() {
   }
 
   return (
-    <div className={`relative flex flex-col w-full h-[100vh] overflow-hidden ${containerClass}`}>
+    <div className={`relative flex flex-row w-full h-[100vh] overflow-hidden ${containerClass}`}>
+      <Sidebar />
+      <div className="flex-1 flex flex-col relative h-full min-w-0 overflow-hidden">
       
       {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <header className={`absolute top-0 left-0 right-0 z-[1000] flex items-center justify-between px-4 h-16 border-b ${headerClass}`}>
@@ -982,6 +985,7 @@ export default function DevRadarPage() {
         }
       `}</style>
 
+      </div>
     </div>
   );
 }

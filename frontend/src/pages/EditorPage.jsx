@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Play, Download, Trash2, Cpu, Terminal, ShieldAlert, Code, Maximize2, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -358,7 +359,10 @@ export default function EditorPage() {
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
       <Header />
       
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
+      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+          <Sidebar />
+          <div className="min-w-0 flex-1">
         
         {/* Header Title block */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
@@ -521,8 +525,10 @@ export default function EditorPage() {
             </div>
           </div>
 
+          </div>
         </div>
       </div>
+    </div>
 
       {/* Full Screen Sandbox Preview Modal */}
       {showFullscreen && (

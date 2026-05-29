@@ -245,11 +245,11 @@ function OnboardingWrapper({ children }) {
 
   return (
     <>
-      <div className={showNavbar ? "md:pl-[100px] transition-all duration-300 min-h-screen w-full flex flex-col" : "min-h-screen w-full flex flex-col"}>
+      <div className={showNavbar ? "md:pl-[100px] lg:pl-0 transition-all duration-300 min-h-screen w-full flex flex-col" : "min-h-screen w-full flex flex-col"}>
         {children}
       </div>
       <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
-      {showNavbar && <FloatingNavbar />}
+      {showNavbar && <div className="lg:hidden"><FloatingNavbar /></div>}
     </>
   );
 }
