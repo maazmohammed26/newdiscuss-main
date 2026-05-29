@@ -592,11 +592,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium transition-all duration-200 active:scale-90 hover:scale-105 border lg:border-transparent ml-auto focus:outline-none cursor-pointer
             ${isBookmarked
               ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.15)] lg:shadow-none animate-pulse-subtle'
-              : 'bg-white/5 lg:bg-transparent border-white/10 lg:border-transparent text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
+              : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 lg:bg-transparent lg:border-transparent text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
             }`}
           title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Post'}
         >
-          <Bookmark className="w-4.5 h-4.5" fill={isBookmarked ? 'currentColor' : 'none'} />
+          <Bookmark className="w-4 h-4" fill={isBookmarked ? 'currentColor' : 'none'} />
           <span className="hidden lg:inline">{isBookmarked ? 'Saved' : 'Save'}</span>
         </button>
       </div>
