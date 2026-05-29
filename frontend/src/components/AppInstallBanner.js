@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2, ShieldCheck, Cpu } from 'lucide-react';
+import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2, ShieldCheck, Cpu, Share2, Copy, Send, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -17,6 +17,8 @@ import { toast } from 'sonner';
  *    rating stats, v2.0.0 specs, scrollable hidden-scrollbar description, and a 3-second animated download loading sequence.
  *  - Interaction (APK modal or PWA install click) auto-dismisses the expanded widget to the docked tab forever.
  *  - Suppressed inside mobile WebView wrappers.
+ *  - Premium Social Share Overlay: Allows users to share a unique installer URL directly on WhatsApp, Telegram, X / Twitter, or copy the direct link.
+ *  - Unique Installer Share URL: Landing on '/?download=apk' immediately pops open the high-fidelity APK download modal on page load!
  */
 export default function AppInstallBanner() {
   const [platform, setPlatform] = useState('desktop'); // 'android', 'ios', 'mac', 'desktop'
@@ -29,6 +31,10 @@ export default function AppInstallBanner() {
   const [showAPKModal, setShowAPKModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+
+  // Premium Social Share Menu States
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // 1. Silently suppress inside mobile app Native WebViews
@@ -59,6 +65,16 @@ export default function AppInstallBanner() {
     // 3. Load localStorage dismissed state
     const dismissedFlag = localStorage.getItem('discuss_install_widget_dismissed') === 'true';
     setIsDismissed(dismissedFlag);
+
+    // 3.5. Immediately evaluate query parameters for the unique share URL
+    const params = new URLSearchParams(window.location.search);
+    const hasDownloadParam = params.get('download') === 'apk' || params.get('install') === 'apk' || window.location.hash === '#download-apk';
+    if (hasDownloadParam) {
+      setVisible(true);
+      setMinimized(true); // Keep the banner minimized
+      setShowAPKModal(true); // Pop open the official Discuss App modal directly!
+      return; // Skip standard expanded auto-timer rules
+    }
 
     // 4. Initial Mount Timing Sequence (5 Seconds Delay)
     const initTimer = setTimeout(() => {
@@ -136,6 +152,15 @@ export default function AppInstallBanner() {
     setShowAPKModal(true);
   };
 
+  // Copy Link share handler
+  const handleCopyLink = () => {
+    const shareUrl = window.location.origin + '/?download=apk';
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    toast.success('Unique download link copied to clipboard!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Modal Download Button Sequence (3 Seconds Loading Progress animation)
   const startSecureDownload = () => {
     if (isDownloading) return;
@@ -177,7 +202,7 @@ export default function AppInstallBanner() {
       case 'android':
         return {
           title: 'Discuss for Android',
-          desc: 'Deploy native Android package. Available via direct APK download (4.4 ★) or secure standalone PWA container.',
+          desc: 'Deploy native Android package. Available via direct APK download (4.4 ★) or secure standalone PWA shell.',
           badge: 'APK + PWA Client',
         };
       case 'ios':
@@ -532,15 +557,109 @@ export default function AppInstallBanner() {
                     </div>
                   </div>
                 ) : (
-                  <button
-                    onClick={startSecureDownload}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
-                  >
-                    <Download size={13} className="shrink-0" />
-                    Download APK Package
-                  </button>
+                  /* Double CTA button row: APK download (78%) + Share widget toggle button (22%) */
+                  <div className="flex gap-2">
+                    <button
+                      onClick={startSecureDownload}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-red-500 to-blue-600 hover:opacity-90 text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(239,68,68,0.25)] cursor-pointer"
+                    >
+                      <Download size={13} className="shrink-0" />
+                      Download APK
+                    </button>
+                    <button
+                      onClick={() => setShowShareMenu(!showShareMenu)}
+                      className={`w-11 h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                        showShareMenu 
+                          ? 'border-red-500 bg-red-500/10 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.25)]' 
+                          : 'border-white/10 text-neutral-300 hover:text-white hover:bg-white/5'
+                      }`}
+                      title="Share Client Link"
+                    >
+                      <Share2 size={15} />
+                    </button>
+                  </div>
                 )}
                 
+                {/* Expandable Premium Social Sharing dashboard */}
+                <AnimatePresence>
+                  {showShareMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                      className="overflow-hidden border-t border-white/5 pt-3.5 mt-3.5 space-y-2.5 font-mono"
+                    >
+                      <div className="flex items-center justify-between text-[9px] text-neutral-500 uppercase">
+                        <span>// SHARE_NATIVE_CLIENT:</span>
+                        <span className="text-[8px] text-red-500 font-bold">v2.0.0</span>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2 text-center text-[10px]">
+                        {/* WhatsApp share */}
+                        <a
+                          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                            `Download the official Discuss App now for real-time developer conversations & communities! 🚀 Get it here: ${window.location.origin}/?download=apk`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center justify-center p-2 rounded-xl bg-green-500/5 border border-green-500/10 hover:bg-green-500/10 text-green-400 transition-all gap-1.5 font-sans font-bold"
+                          title="Share to WhatsApp"
+                        >
+                          <Send size={13} className="shrink-0 rotate-[320deg] text-green-400" />
+                          <span>WhatsApp</span>
+                        </a>
+
+                        {/* Telegram share */}
+                        <a
+                          href={`https://t.me/share/url?url=${encodeURIComponent(
+                            `${window.location.origin}/?download=apk`
+                          )}&text=${encodeURIComponent(
+                            'Download the official Discuss App now for real-time developer conversations & communities! 🚀'
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center justify-center p-2 rounded-xl bg-blue-400/5 border border-blue-400/10 hover:bg-blue-400/10 text-blue-400 transition-all gap-1.5 font-sans font-bold"
+                          title="Share to Telegram"
+                        >
+                          <Send size={13} className="shrink-0 text-blue-400" />
+                          <span>Telegram</span>
+                        </a>
+
+                        {/* Twitter / X share */}
+                        <a
+                          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                            `Download the official Discuss App for real-time developer conversations & communities! 🚀 ${window.location.origin}/?download=apk`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex flex-col items-center justify-center p-2 rounded-xl bg-neutral-900 border border-white/5 hover:bg-white/5 text-neutral-300 transition-all gap-1.5 font-sans font-bold"
+                          title="Share to X"
+                        >
+                          <svg className="w-3 h-3 text-neutral-300 fill-current shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                          </svg>
+                          <span>X / Tweet</span>
+                        </a>
+
+                        {/* Copy Link copy widget */}
+                        <button
+                          onClick={handleCopyLink}
+                          className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 text-neutral-300 transition-all gap-1.5 font-sans font-bold cursor-pointer"
+                          title="Copy Unique Installer URL"
+                        >
+                          {copied ? (
+                            <Check size={13} className="text-green-400 shrink-0 animate-bounce" />
+                          ) : (
+                            <Copy size={13} className="shrink-0 text-neutral-400" />
+                          )}
+                          <span>{copied ? 'Copied' : 'Copy URL'}</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="flex items-center justify-center gap-1.5 text-[9px] text-neutral-500 font-mono">
                   <ShieldCheck size={10} className="text-green-500 shrink-0" />
                   <span>Verify checksum on download completion.</span>
