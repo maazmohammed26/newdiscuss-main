@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import DiscussLogo from '@/components/DiscussLogo';
 import { Loader2, RefreshCw, WifiOff } from 'lucide-react';
 
 /**
@@ -40,14 +39,40 @@ export default function LoadingScreen({ message = 'Loading...' }) {
 
   return (
     <div id="discuss-loading-screen" className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center select-none overflow-hidden">
+      {/* Premium CSS Keyframe Styles */}
+      <style>{`
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-10px) scale(1.02); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { filter: drop-shadow(0 0 15px rgba(229, 62, 62, 0.4)) drop-shadow(0 0 30px rgba(49, 130, 206, 0.3)); }
+          50% { filter: drop-shadow(0 0 25px rgba(229, 62, 62, 0.7)) drop-shadow(0 0 45px rgba(49, 130, 206, 0.6)); }
+        }
+        .animate-float-gentle {
+          animation: float-gentle 3s ease-in-out infinite;
+        }
+        .animate-pulse-glow {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Noise background */}
       <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
 
-      {/* Logo — with subtle fade when stuck */}
+      {/* Cinematic Radial Halo behind logo */}
+      <div 
+        className="absolute w-[280px] h-[280px] bg-gradient-to-tr from-[#E53E3E]/10 to-[#3182CE]/10 rounded-full blur-[70px] pointer-events-none animate-pulse z-0" 
+        style={{ animationDuration: '4s' }}
+      />
+
+      {/* Large Code Brackets Logo — with gentle floating/pulsing glow */}
       <div
-        className="relative transition-opacity duration-500 z-10"
+        className="relative transition-opacity duration-500 z-10 flex items-center justify-center gap-4 text-7xl font-heading font-black italic select-none tracking-widest animate-float-gentle animate-pulse-glow"
         style={{ opacity: showRetry ? 0.45 : 1 }}
       >
-        <DiscussLogo size="xl" />
+        <span className="text-[#E53E3E]">&lt;</span>
+        <span className="text-[#3182CE]">&gt;</span>
       </div>
 
       {/* Spinner + message */}
@@ -68,7 +93,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
             className="flex-shrink-0 text-[#DC2626]"
           />
         )}
-        <span style={{ color: showRetry ? '#DC2626' : '#E1E0CC' }}>
+        <span className="tracking-wide" style={{ color: showRetry ? '#DC2626' : '#F1F5F9' }}>
           {displayMessage}
         </span>
       </div>
@@ -95,11 +120,11 @@ export default function LoadingScreen({ message = 'Loading...' }) {
         </button>
       )}
 
-      {/* Animated loading dots (thick red and blue, bounce animation) */}
+      {/* Animated loading dots (thick red, blue, and white, bounce animation) */}
       {!showRetry && (
         <div className="flex gap-2.5 mt-8 z-10 items-center justify-center">
           <div
-            className="w-3.5 h-3.5 bg-[#DC2626] rounded-full animate-bounce shadow-[0_0_12px_rgba(220,38,38,0.4)]"
+            className="w-3.5 h-3.5 bg-[#DC2626] rounded-full animate-bounce shadow-[0_0_12px_rgba(220,38,38,0.5)]"
             style={{
               animationDelay: '0ms',
               opacity: showSlowWarning ? 0.35 : 1,
@@ -107,7 +132,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
             }}
           />
           <div
-            className="w-3.5 h-3.5 bg-[#E1E0CC] rounded-full animate-bounce"
+            className="w-3.5 h-3.5 bg-[#2563EB] rounded-full animate-bounce shadow-[0_0_12px_rgba(37,99,235,0.5)]"
             style={{
               animationDelay: '150ms',
               opacity: showSlowWarning ? 0.35 : 1,
@@ -115,7 +140,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
             }}
           />
           <div
-            className="w-3.5 h-3.5 bg-[#2563EB] rounded-full animate-bounce shadow-[0_0_12px_rgba(37,99,235,0.4)]"
+            className="w-3.5 h-3.5 bg-white rounded-full animate-bounce shadow-[0_0_12px_rgba(255,255,255,0.4)]"
             style={{
               animationDelay: '300ms',
               opacity: showSlowWarning ? 0.35 : 1,
