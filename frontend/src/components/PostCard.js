@@ -512,14 +512,14 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       {/* Actions bar */}
       <div 
         onPointerDown={(e) => e.stopPropagation()}
-        className="flex items-center gap-2 px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
       >
         {/* Mobile Upvote Button (hidden on desktop) */}
         <button 
           data-testid={`post-upvote-btn-${post.id}`} 
           onClick={() => handleVote('up')} 
           disabled={voting}
-          className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-medium transition-all ${
+          className={`lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium transition-all ${
             userVote === 'up' 
               ? 'bg-[#10B981]/10 text-[#10B981] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] border border-[#10B981]/30 discuss:border-[#EF4444]/30' 
               : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-[#10B981]/5 hover:text-[#10B981] discuss:hover:bg-[#262626] discuss:hover:text-[#F5F5F5] border border-transparent'
@@ -534,7 +534,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           data-testid={`post-downvote-btn-${post.id}`} 
           onClick={() => handleVote('down')} 
           disabled={voting}
-          className={`lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-medium transition-all ${
+          className={`lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium transition-all ${
             userVote === 'down' 
               ? 'bg-[#EF4444]/10 text-[#EF4444] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] border border-[#EF4444]/30 discuss:border-[#EF4444]/30' 
               : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-[#EF4444]/5 hover:text-[#EF4444] discuss:hover:bg-[#262626] discuss:hover:text-[#F5F5F5] border border-transparent'
@@ -544,10 +544,10 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           <span data-testid={`post-downvote-count-${post.id}`}><span>{downvoteCount}</span></span>
         </button>
 
-        <div className="lg:hidden w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-1" />
+        <div className="lg:hidden w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-0.5" />
 
         <button data-testid={`post-comments-btn-${post.id}`} onClick={() => setShowComments(!showComments)}
-          className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors cursor-pointer">
+          className="relative flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors cursor-pointer">
           <MessageSquare className="w-4 h-4" />
           <span data-testid={`post-comment-count-${post.id}`}><span>{post.comment_count || 0}</span></span>
           {hasNewCommentBadge && !showComments && (
@@ -556,19 +556,19 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         </button>
 
         <button data-testid={`post-share-btn-${post.id}`} onClick={() => setShowShare(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors cursor-pointer">
+          className="flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors cursor-pointer">
           <Share2 className="w-4 h-4" />
-          <span><span>Share</span></span>
+          <span className="hidden sm:inline"><span>Share</span></span>
         </button>
 
-        <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-1" />
+        <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-0.5" />
 
         {/* Always-visible Translate button */}
         <button
           data-testid={`post-translate-btn-${post.id}`}
           onClick={handleTranslateClick}
           disabled={translating}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[12px] font-semibold transition-all border cursor-pointer ${
+          className={`flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[12px] font-semibold transition-all border cursor-pointer ${
             translatedContent
               ? 'bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] border-neutral-300 dark:border-neutral-600 discuss:border-[#444444] hover:bg-neutral-200 dark:hover:bg-neutral-600 discuss:hover:bg-[#333333]'
               : 'bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] border-[#2563EB]/30 discuss:border-[#EF4444]/30 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20'
@@ -589,7 +589,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         {/* Dynamic O(1) Local Storage Auth-Guarded Bookmark Button (styled as Save on desktop) */}
         <button
           onClick={handleBookmarkClick}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium transition-all duration-200 active:scale-90 hover:scale-105 border lg:border-transparent ml-auto focus:outline-none cursor-pointer
+          className={`flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium transition-all duration-200 active:scale-90 hover:scale-105 border lg:border-transparent ml-auto focus:outline-none cursor-pointer
             ${isBookmarked
               ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.15)] lg:shadow-none animate-pulse-subtle'
               : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 lg:bg-transparent lg:border-transparent text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
@@ -597,7 +597,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Post'}
         >
           <Bookmark className="w-4 h-4" fill={isBookmarked ? 'currentColor' : 'none'} />
-          <span className="hidden lg:inline">{isBookmarked ? 'Saved' : 'Save'}</span>
+          <span className="hidden sm:inline">{isBookmarked ? 'Saved' : 'Save'}</span>
         </button>
       </div>
 
