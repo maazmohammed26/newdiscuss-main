@@ -30,6 +30,9 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
   const [media, setMedia] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeLanguage, setCodeLanguage] = useState('javascript');
 
   const reset = () => { 
     setPostType('discussion'); 
@@ -41,6 +44,9 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
     setHashtags([]); 
     setMedia([]);
     setError(''); 
+    setShowCode(false);
+    setCode('');
+    setCodeLanguage('javascript');
   };
 
   const addHashtag = () => {
@@ -81,6 +87,8 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
           github_link: postType === 'project' ? githubLink.trim() : '',
           preview_link: postType === 'project' ? previewLink.trim() : '', 
           hashtags,
+          code: (postType === 'discussion' && showCode) ? code.trim() : '',
+          codeLanguage: (postType === 'discussion' && showCode) ? codeLanguage : '',
         }, user);
         onCreated(newPost);
       }
@@ -155,6 +163,72 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
               placeholder={placeholderText}
               rows={postType === 'discussion' ? 5 : 3} className="mt-1.5 bg-[#F1F5F9] dark:bg-[#0F172A] border-transparent dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#64748B] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 rounded-md resize-none" />
           </div>
+
+          {/* Interactive Code Entry Option (only for Discussion posts) */}
+          {postType === 'discussion' && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowCode(!showCode)}
+                  className="text-xs font-bold text-[#2563EB] dark:text-[#60A5FA] hover:underline flex items-center gap-1.5 select-none"
+                >
+                  {showCode ? 'Remove Code Support (-)' : 'Add Code Support (+)'}
+                </button>
+              </div>
+
+              {showCode && (
+                <div className="bg-neutral-900 dark:bg-neutral-950 border border-neutral-800 rounded-xl p-3.5 space-y-3 animate-in slide-in-from-top-1 duration-200">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className="text-[12px] font-bold text-neutral-400">Language / Stack</Label>
+                    <select
+                      value={codeLanguage}
+                      onChange={(e) => setCodeLanguage(e.target.value)}
+                      className="bg-neutral-800 border-none text-xs font-bold text-neutral-200 p-1.5 px-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value="javascript">JavaScript</option>
+                      <option value="typescript">TypeScript</option>
+                      <option value="python">Python</option>
+                      <option value="html">HTML</option>
+                      <option value="css">CSS</option>
+                      <option value="cpp">C++</option>
+                      <option value="go">Go</option>
+                      <option value="rust">Rust</option>
+                      <option value="java">Java</option>
+                      <option value="sql">SQL</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span className={code.split('\n').filter(Boolean).length >= 60 ? 'text-red-500 animate-pulse' : 'text-neutral-500'}>
+                        Lines: {code.split('\n').filter(Boolean).length} / 60
+                      </span>
+                      <span className={code.length >= 3000 ? 'text-red-500 animate-pulse' : 'text-neutral-500'}>
+                        Characters: {code.length} / 3000
+                      </span>
+                    </div>
+
+                    <textarea
+                      value={code}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const lineCount = val.split('\n').length;
+                        if (lineCount <= 60 && val.length <= 3000) {
+                          setCode(val);
+                        } else {
+                          toast.error('Limit reached: Code snippet cannot exceed 60 lines or 3,000 characters');
+                        }
+                      }}
+                      placeholder="// Write or paste your code snippet here..."
+                      rows={5}
+                      className="w-full bg-neutral-950 border border-neutral-800/80 rounded-lg p-3 text-xs font-mono text-green-400 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Media Upload Section */}
           <div className="space-y-2">

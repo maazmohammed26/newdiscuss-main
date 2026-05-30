@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toggleVote, deletePost } from '@/lib/db';
 import { hasNewComments } from '@/lib/commentsDb';
@@ -24,7 +24,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag, Bookmark, ChevronUp, ChevronDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag, Bookmark, ChevronUp, ChevronDown, Volume2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaCarousel from '@/components/MediaCarousel';
 import FullscreenMedia from '@/components/FullscreenMedia';
@@ -162,6 +162,82 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportedLocally, setReportedLocally] = useState(false);
+
+  // --- Audio Podcast Reader (Web Speech API) ---
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
+  const utteranceRef = useRef(null);
+
+  const getSentences = useCallback((text) => {
+    if (!text) return [];
+    return text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  }, []);
+
+  const playFromIndex = useCallback((index, sentences) => {
+    if (index >= sentences.length) {
+      setIsSpeaking(false);
+      setCurrentSentenceIndex(0);
+      return;
+    }
+
+    setCurrentSentenceIndex(index);
+    setIsSpeaking(true);
+
+    const utterance = new SpeechSynthesisUtterance(sentences[index]);
+    utteranceRef.current = utterance;
+
+    utterance.onend = () => {
+      setTimeout(() => {
+        playFromIndex(index + 1, sentences);
+      }, 250);
+    };
+
+    utterance.onerror = (e) => {
+      if (e.error !== 'interrupted') {
+        setIsSpeaking(false);
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const handleToggleAudio = useCallback((e) => {
+    if (e) e.stopPropagation();
+
+    const sentences = getSentences(post.content);
+    if (sentences.length === 0) {
+      toast.error('No content to read');
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      toast.success('Audio paused');
+    } else {
+      playFromIndex(currentSentenceIndex, sentences);
+      toast.success(currentSentenceIndex > 0 ? 'Resuming audio' : 'Playing post audio 🎧');
+    }
+  }, [post.content, isSpeaking, currentSentenceIndex, getSentences, playFromIndex]);
+
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  // --- Copy Code Snippet Utility ---
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = useCallback((e) => {
+    if (e) e.stopPropagation();
+    if (!post.code) return;
+    navigator.clipboard.writeText(post.code);
+    setCopied(true);
+    toast.success('Code copied to clipboard! 📋');
+    setTimeout(() => setCopied(false), 2000);
+  }, [post.code]);
 
   useEffect(() => {
     setReportedLocally(hasUserReportedTarget(post.id));
@@ -447,17 +523,71 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             </ExpandableText>
             {translatedContent && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <Globe className="w-3 h-3 text-neutral-400 discuss:text-[#9CA3AF] shrink-0" />
-                <span className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]"><span>Translated to {LANG_LABELS[translatedLang]}</span></span>
+                <Globe className="w-3.5 h-3.5 text-neutral-400 discuss:text-[#9CA3AF] shrink-0" />
+                <span className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]">
+                  Translated to {LANG_LABELS[translatedLang]}
+                </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }}
                   className="text-[11px] text-[#2563EB] discuss:text-[#60A5FA] hover:underline ml-1"
                 >
-                  <span>Back to Original</span>
+                  Back to Original
                 </button>
               </div>
             )}
           </div>
+        </div>
+
+        {/* Premium IDE-Style Code Box Panel (Strictly for Discussion posts with code) */}
+        {post.code && (
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="mt-3.5 mx-0.5 border border-neutral-200 dark:border-neutral-700/50 discuss:border-[#333333] rounded-xl overflow-hidden bg-neutral-950 shadow-sm"
+          >
+            {/* Header bar */}
+            <div className="bg-neutral-900 dark:bg-black px-4 py-2.5 flex items-center justify-between border-b border-white/5 select-none">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
+                <span className="w-2 h-2 rounded-full bg-[#EAB308]" />
+                <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
+                <span className="text-[10px] font-bold uppercase text-neutral-400 font-mono tracking-wider ml-2">
+                  {post.codeLanguage || 'code'}
+                </span>
+              </div>
+              
+              {/* Copy Button */}
+              <button
+                onClick={handleCopyCode}
+                className="p-1 px-2.5 text-[10px] font-bold text-neutral-400 hover:text-white rounded bg-white/5 hover:bg-white/10 active:scale-95 transition-all flex items-center gap-1 cursor-pointer border border-white/5"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-green-400" />
+                    <span className="text-green-400 font-bold">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold">Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Code Block Container */}
+            <div 
+              className="p-3 text-left font-mono text-[12px] text-green-400 overflow-y-auto [&::-webkit-scrollbar]:hidden"
+              style={{
+                maxHeight: '120px', // Exact max-height to restrict to 5 lines of code (line-height is 24px)
+                lineHeight: '24px',
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
+                whiteSpace: 'pre',
+              }}
+            >
+              {post.code}
+            </div>
+          </div>
+        )}
 
           {/* Media Carousel */}
           {post.media && post.media.length > 0 && (
@@ -586,13 +716,26 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </span>
         </button>
 
+        {/* "Listen to Post" Audio Reader Button */}
+        <button
+          onClick={handleToggleAudio}
+          className={`flex items-center justify-center p-2 rounded-[6px] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] border transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95
+            ${isSpeaking 
+              ? 'bg-[#EF4444]/10 discuss:bg-[#EF4444]/10 border-[#EF4444]/30 discuss:border-[#EF4444]/30 text-[#EF4444] shadow-[0_0_12px_rgba(239,68,68,0.2)] animate-pulse' 
+              : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
+            }`}
+          title={isSpeaking ? 'Pause Audio Reader' : currentSentenceIndex > 0 ? 'Resume Audio Reader' : 'Listen to Post'}
+        >
+          <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-[#EF4444]' : ''}`} />
+        </button>
+
         {/* Dynamic O(1) Local Storage Auth-Guarded Bookmark Button (styled as Save on desktop) */}
         <button
           onClick={handleBookmarkClick}
           className={`flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium transition-all duration-200 active:scale-90 hover:scale-105 border lg:border-transparent ml-auto focus:outline-none cursor-pointer
             ${isBookmarked
               ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.15)] lg:shadow-none animate-pulse-subtle'
-              : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 lg:bg-transparent lg:border-transparent text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
+              : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 lg:bg-transparent lg:border-transparent text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
             }`}
           title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Post'}
         >
@@ -685,7 +828,6 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         currentUser={currentUser}
         onReportSuccess={() => setReportedLocally(true)}
       />
-    </div>
     </div>
   );
 }
