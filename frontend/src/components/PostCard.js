@@ -167,6 +167,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const utteranceRef = useRef(null);
+  const isSpeakingRef = useRef(false);
 
   const getSentences = useCallback((text) => {
     if (!text) return [];
@@ -176,18 +177,22 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const playFromIndex = useCallback((index, sentences) => {
     if (index >= sentences.length) {
       setIsSpeaking(false);
+      isSpeakingRef.current = false;
       setCurrentSentenceIndex(0);
       return;
     }
 
     setCurrentSentenceIndex(index);
     setIsSpeaking(true);
+    isSpeakingRef.current = true;
 
     const utterance = new SpeechSynthesisUtterance(sentences[index]);
     utteranceRef.current = utterance;
 
     utterance.onend = () => {
+      if (!isSpeakingRef.current) return;
       setTimeout(() => {
+        if (!isSpeakingRef.current) return;
         playFromIndex(index + 1, sentences);
       }, 250);
     };
@@ -195,6 +200,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     utterance.onerror = (e) => {
       if (e.error !== 'interrupted') {
         setIsSpeaking(false);
+        isSpeakingRef.current = false;
       }
     };
 
@@ -204,6 +210,12 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const handleToggleAudio = useCallback((e) => {
     if (e) e.stopPropagation();
 
+    // Check if the post content has been translated (meaning it is a local language)
+    if (translatedContent) {
+      toast.error('This language is not supported');
+      return;
+    }
+
     const sentences = getSentences(post.content);
     if (sentences.length === 0) {
       toast.error('No content to read');
@@ -211,14 +223,25 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     }
 
     if (isSpeaking) {
+      isSpeakingRef.current = false;
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       toast.success('Audio paused');
     } else {
+      isSpeakingRef.current = true;
       playFromIndex(currentSentenceIndex, sentences);
       toast.success(currentSentenceIndex > 0 ? 'Resuming audio' : 'Playing post audio 🎧');
     }
-  }, [post.content, isSpeaking, currentSentenceIndex, getSentences, playFromIndex]);
+  }, [post.content, isSpeaking, currentSentenceIndex, getSentences, playFromIndex, translatedContent]);
+
+  // Cancel any ongoing audio reading instantly if the post is translated to another language
+  useEffect(() => {
+    if (translatedContent) {
+      isSpeakingRef.current = false;
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  }, [translatedContent]);
 
   // Cleanup speech on unmount
   useEffect(() => {
@@ -384,7 +407,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   };
 
   return (
-    <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden flex">
+    <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden flex flex-col lg:flex-row">
       
       {/* Left side voting panel for desktop only */}
       <div className="hidden lg:flex flex-col items-center gap-1 px-2.5 py-4 bg-neutral-50/50 dark:bg-neutral-900/10 discuss:bg-black/10 border-r border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] w-11 shrink-0 select-none">
@@ -642,7 +665,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       {/* Actions bar */}
       <div 
         onPointerDown={(e) => e.stopPropagation()}
-        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+        className="flex items-center flex-wrap gap-1 sm:gap-2 px-2 sm:px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
       >
         {/* Mobile Upvote Button (hidden on desktop) */}
         <button 
