@@ -204,7 +204,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       }
     };
 
-    window.speechSynthesis.speak(utterance);
+    window.speechSynthesis?.speak?.(utterance);
   }, []);
 
   const handleToggleAudio = useCallback((e) => {
@@ -224,7 +224,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
 
     if (isSpeaking) {
       isSpeakingRef.current = false;
-      window.speechSynthesis.cancel();
+      window.speechSynthesis?.cancel?.();
       setIsSpeaking(false);
       toast.success('Audio paused');
     } else {
@@ -238,7 +238,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   useEffect(() => {
     if (translatedContent) {
       isSpeakingRef.current = false;
-      window.speechSynthesis.cancel();
+      window.speechSynthesis?.cancel?.();
       setIsSpeaking(false);
     }
   }, [translatedContent]);
@@ -246,7 +246,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   // Cleanup speech on unmount
   useEffect(() => {
     return () => {
-      window.speechSynthesis.cancel();
+      window.speechSynthesis?.cancel?.();
     };
   }, []);
 
@@ -256,10 +256,18 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const handleCopyCode = useCallback((e) => {
     if (e) e.stopPropagation();
     if (!post.code) return;
-    navigator.clipboard.writeText(post.code);
-    setCopied(true);
-    toast.success('Code copied to clipboard! 📋');
-    setTimeout(() => setCopied(false), 2000);
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(post.code)
+        .then(() => {
+          setCopied(true);
+          toast.success('Code copied to clipboard! 📋');
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => toast.error('Failed to copy'));
+    } else {
+      toast.error('Clipboard not supported');
+    }
   }, [post.code]);
 
   useEffect(() => {
