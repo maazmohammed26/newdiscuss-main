@@ -281,6 +281,8 @@ export const createPost = async (postData, user) => {
     github_link: (postData.github_link || '').trim(),
     preview_link: (postData.preview_link || '').trim(),
     hashtags: allTags,
+    code: postData.code || '',
+    codeLanguage: postData.codeLanguage || '',
     author_username: user.username || user.displayName || user.email?.split('@')[0],
     author_id: user.id || user.uid,
     author_photo: user.photo_url || user.photoURL || '',
