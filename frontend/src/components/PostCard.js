@@ -660,7 +660,6 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             </div>
           )}
         </div>
-      </div>
 
       {/* Actions bar */}
       <div 
@@ -851,6 +850,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         currentUser={currentUser}
         onReportSuccess={() => setReportedLocally(true)}
       />
+      </div>
     </div>
   );
 }
