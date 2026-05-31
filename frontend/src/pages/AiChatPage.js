@@ -40,7 +40,7 @@ export default function AiChatPage() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   
   // Delete Dialog
   const [chatToDelete, setChatToDelete] = useState(null);
@@ -176,13 +176,12 @@ export default function AiChatPage() {
       setMessages(updatedMessages);
       updateConversationInState(convId, updatedMessages);
     } catch (error) {
-      let errMsg = 'Sorry, I encountered an error connecting to the NVIDIA network. Please try again.';
-      if (error.message?.includes('high traffic')) {
-        errMsg = '🙏 Our AI servers are currently busy. Please try again in a moment.';
-      } else if (error.message?.includes('NETWORK_DISCONNECTED')) {
-        errMsg = '📶 Network Offline: Could not connect to Discuss AI. Please check your internet connection and try again.';
-      }
-      const errorMessage = { role: 'assistant', content: errMsg };
+      console.error('Error in chatWithAI:', error);
+      let errMsg = 'Sorry, I encountered an error connecting to the Google Gemini network. Please try again.';
+      if (error.message.includes('429')) errMsg = 'Rate limit reached for this AI model. Please try another model or wait a moment.';
+      if (error.message.includes('403')) errMsg = 'Access forbidden to this AI model. Please check your API key.';
+      
+      const errorMessage = { role: 'assistant', content: errMsg, isError: true };
       const updatedMessages = [...newMessages, errorMessage];
       setMessages(updatedMessages);
       updateConversationInState(convId, updatedMessages);
@@ -375,10 +374,11 @@ export default function AiChatPage() {
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded-lg px-2 py-1 outline-none border-none cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Smart)</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                <option value="gemini-3-flash">Gemini 3 Flash</option>
+                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
               </select>
             </div>
             <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex items-center gap-2">

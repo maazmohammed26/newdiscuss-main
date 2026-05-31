@@ -937,7 +937,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               </p>
             </div>
             <p className="text-xs text-neutral-500 flex flex-col gap-1">
-              <span>This content was automatically reviewed by <b>NVIDIA Nemotron-3</b> for safety and usefulness.</span>
+              <span>This content was automatically reviewed by <b>Discuss AI</b> for safety and usefulness.</span>
               <span className="italic">Discuss AI can make mistakes. Please double check its reasoning.</span>
             </p>
           </div>
