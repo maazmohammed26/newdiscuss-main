@@ -2211,17 +2211,7 @@ export default function ProfilePage() {
 
         </div>
 
-        {/* ==================== GLOBAL USER LOGOUT ==================== */}
-        <div className="mt-6">
-          <Button 
-            data-testid="profile-logout-btn" 
-            onClick={handleLogout} 
-            disabled={loggingOut}
-            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-4 h-14 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-[#EF4444]/10 hover:border-[#EF4444]/25"
-          >
-            {loggingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <><LogOut className="w-5 h-5" /> <span>Logout from Discuss</span></>}
-          </Button>
-        </div>
+
 
         {/* ==================== FRIENDS SECTION ==================== */}
         <div className="mt-6">
@@ -2570,6 +2560,18 @@ export default function ProfilePage() {
         </div>
         {/* ==================== END FRIENDS SECTION ==================== */}
 
+        {/* ==================== GLOBAL USER LOGOUT ==================== */}
+        <div className="mt-6">
+          <Button 
+            data-testid="profile-logout-btn" 
+            onClick={handleLogout} 
+            disabled={loggingOut}
+            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-4 h-14 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-[#EF4444]/10 hover:border-[#EF4444]/25"
+          >
+            {loggingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <><LogOut className="w-5 h-5" /> <span>Logout from Discuss</span></>}
+          </Button>
+        </div>
+
         {/* Your Posts Section */}
         <div className="mt-6">
           <button
@@ -2727,6 +2729,7 @@ export default function ProfilePage() {
 
         <p className="text-center text-[#94A3B8] dark:text-[#6275AF] text-xs mt-6 mb-24">
           <span>Managed by </span><span className="font-semibold text-[#BC4800]">&lt;discuss&gt;</span>
+          <span className="text-[10px] mt-1 block">made in Bengaluru</span>
         </p>
           </div>
         </div>
