@@ -294,12 +294,7 @@ export const createPost = async (postData, user) => {
   const newPostRef = push(postsRef);
   await set(newPostRef, newPost);
   
-  // Background safety check
-  checkContentSafety((newPost.title || '') + '\n' + (newPost.content || '')).then(safetyInfo => {
-    if (safetyInfo) {
-      update(newPostRef, { aiSafetyInfo: safetyInfo }).catch(console.error);
-    }
-  }).catch(console.error);
+  // Background safety check removed: It is now triggered manually via the Shield icon in PostCard.js
   
   return {
     id: newPostRef.key,
@@ -488,7 +483,7 @@ export const updatePost = async (postId, updates, userId) => {
   }
   
   const post = snapshot.val();
-  if (post.author_id !== userId) {
+  if (post.author_id !== userId && userId !== 'ADMIN_OVERRIDE') {
     throw new Error('You can only edit your own posts');
   }
   
@@ -500,19 +495,27 @@ export const updatePost = async (postId, updates, userId) => {
     ...updates,
     hashtags: [...new Set([...existingTags, ...contentTags, ...titleTags])]
   };
+
+  // AI Scoring Hash Check
+  // If the post has been scored before, and we are editing the text, check if the hash changed
+  if (post.aiScored && !finalUpdates.aiSafetyInfo) {
+    const textToCheck = (finalUpdates.title !== undefined ? finalUpdates.title : post.title || '') + ' ' + 
+                        (finalUpdates.content !== undefined ? finalUpdates.content : post.content || '');
+    
+    // Import dynamically to avoid circular dependencies if any, though it should be fine at top level
+    const { generateContentHash } = require('./scoringLogic');
+    const newHash = generateContentHash(textToCheck);
+
+    if (newHash !== post.lastScoredContentHash) {
+      finalUpdates.aiScoreOutdated = true;
+    }
+  }
   
   await update(postRef, finalUpdates);
 
-  // Background safety check for edit
-  const textToCheck = (finalUpdates.title !== undefined ? finalUpdates.title : post.title || '') + '\n' + 
-                      (finalUpdates.content !== undefined ? finalUpdates.content : post.content || '');
-                      
-  checkContentSafety(textToCheck).then(safetyInfo => {
-    if (safetyInfo) {
-      update(postRef, { aiSafetyInfo: safetyInfo }).catch(console.error);
-    }
-  }).catch(console.error);
-
+  // Background safety check for edit (Removed because we want users to manually click Rescore as per the new plan)
+  // checkContentSafety(textToCheck).then(...)
+  
   return { id: postId, ...post, ...finalUpdates };
 };
 

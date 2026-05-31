@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toggleVote, deletePost, updatePost } from '@/lib/db';
 import { checkContentSafety } from '@/lib/nvidiaApi';
+import { generateContentHash, computeFinalScore, classifyScore, localDiscussAlgorithmFallback } from '@/lib/scoringLogic';
 import { hasNewComments } from '@/lib/commentsDb';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
@@ -416,29 +417,67 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     setShowLangPrompt(false);
   };
 
-  const handleScoreSafety = async (e) => {
+  const handleScoreSafety = async (e, forceRescore = false) => {
     e.stopPropagation();
+    
+    // If it's already scored and not outdated, just show the modal, don't rescore.
+    if (post.aiScored && !post.aiScoreOutdated && !forceRescore) {
+      setShowSafetyExplanation(true);
+      return;
+    }
+
     if (isScoringSafety) return;
     
     setIsScoringSafety(true);
     try {
       const textToAnalyze = (post.title || '') + ' ' + (post.content || '');
-      const aiScore = await checkContentSafety(textToAnalyze);
-      if (aiScore && aiScore.score) {
-        // Try saving to DB using the author's ID to satisfy any basic validation
-        await updatePost(post.id, { aiSafetyInfo: aiScore }, currentUser?.id || post.author_id);
-        
-        // Update UI locally
-        if (onUpdated) {
-          onUpdated({ ...post, aiSafetyInfo: aiScore });
-        }
-        toast.success('Post analyzed by AI successfully!');
+      const contentHash = generateContentHash(textToAnalyze);
+
+      let aiScorePayload = null;
+      
+      // Try calling Gemini AI
+      const rawFactors = await checkContentSafety(textToAnalyze);
+      
+      if (rawFactors && typeof rawFactors.toxicityScore === 'number') {
+        const finalScore = computeFinalScore(rawFactors);
+        const aiStatus = classifyScore(finalScore, rawFactors);
+        aiScorePayload = {
+          aiScore: finalScore,
+          aiStatus: aiStatus,
+          aiReasons: rawFactors.reasoning,
+          factors: rawFactors,
+          aiScored: true,
+          aiScoreOutdated: false,
+          aiScoredAt: new Date().toISOString(),
+          aiModelVersion: 'Gemini 1.5 Flash',
+          lastScoredContentHash: contentHash,
+          scoredBy: 'Discuss AI'
+        };
       } else {
-        toast.error('AI could not determine safety score.');
+        // Fallback to local algorithm if API fails
+        const fallbackResult = localDiscussAlgorithmFallback(textToAnalyze);
+        aiScorePayload = {
+          ...fallbackResult,
+          aiScored: true,
+          aiScoreOutdated: false,
+          aiScoredAt: new Date().toISOString(),
+          lastScoredContentHash: contentHash
+        };
+      }
+
+      if (aiScorePayload) {
+        await updatePost(post.id, { aiSafetyInfo: aiScorePayload, aiScored: true, aiScoreOutdated: false, lastScoredContentHash: contentHash }, currentUser?.id || post.author_id);
+        
+        if (onUpdated) {
+          onUpdated({ ...post, aiSafetyInfo: aiScorePayload, aiScored: true, aiScoreOutdated: false, lastScoredContentHash: contentHash });
+        }
+        
+        toast.success(`Post scored by ${aiScorePayload.scoredBy}!`);
+        setShowSafetyExplanation(true); // Open the modal after scoring
       }
     } catch (err) {
       console.error('Safety score error:', err);
-      toast.error('Failed to get AI safety score.');
+      toast.error('Failed to score post.');
     } finally {
       setIsScoringSafety(false);
     }
@@ -510,28 +549,49 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               {post.author_verified && <VerifiedBadge size="xs" />}
             </span>
             {post.aiSafetyInfo ? (
-              <span 
-                data-testid={`post-safety-badge-${post.id}`}
-                onClick={(e) => { e.stopPropagation(); setShowSafetyExplanation(true); }}
-                className={`ml-0.5 flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold cursor-pointer shadow-sm transition-transform hover:scale-105 ${
-                  post.aiSafetyInfo.score === 'Green' ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30' :
-                  post.aiSafetyInfo.score === 'Yellow' ? 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30' :
-                  'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30'
-                }`}
-                title="AI Safety Score"
-              >
-                {post.aiSafetyInfo.score === 'Green' ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                <span className="hidden sm:inline">AI Safe</span>
-              </span>
+              <div className="flex items-center gap-1.5 ml-0.5">
+                <span 
+                  data-testid={`post-safety-badge-${post.id}`}
+                  onClick={(e) => { e.stopPropagation(); setShowSafetyExplanation(true); }}
+                  className={`flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold cursor-pointer shadow-sm transition-transform hover:scale-105 ${
+                    post.aiScoreOutdated ? 'bg-neutral-100 text-neutral-500 border-neutral-300' :
+                    post.aiSafetyInfo.aiStatus === 'Green' ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30' :
+                    post.aiSafetyInfo.aiStatus === 'Yellow' ? 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30' :
+                    'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30'
+                  }`}
+                  title={post.aiScoreOutdated ? "Score is outdated. Post was edited." : "AI Safety Score"}
+                >
+                  {post.aiScoreOutdated ? (
+                    <RotateCcw className="w-3 h-3" />
+                  ) : post.aiSafetyInfo.aiStatus === 'Green' ? (
+                    <ShieldCheck className="w-3 h-3" />
+                  ) : (
+                    <ShieldAlert className="w-3 h-3" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {post.aiScoreOutdated ? 'Outdated Score' : (post.aiSafetyInfo.scoredBy === 'Discuss Algorithm' ? 'Discuss Algorithm' : 'Discuss AI')}
+                  </span>
+                </span>
+                
+                {post.aiScoreOutdated && (
+                  <button
+                    onClick={(e) => handleScoreSafety(e, true)}
+                    className="flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold bg-blue-100 text-blue-600 border border-blue-200 hover:bg-blue-200 transition-colors"
+                  >
+                    {isScoringSafety ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                    <span>Rescore</span>
+                  </button>
+                )}
+              </div>
             ) : (
               <span 
                 data-testid={`post-safety-badge-${post.id}`}
-                onClick={handleScoreSafety}
+                onClick={(e) => handleScoreSafety(e, false)}
                 className={`ml-0.5 flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold shadow-sm bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] cursor-pointer hover:scale-105 transition-transform ${isScoringSafety ? 'opacity-50 pointer-events-none' : ''}`}
                 title="Pending AI Score (Click to Analyze)"
               >
                 {isScoringSafety ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3 opacity-70" />}
-                <span className="hidden sm:inline opacity-70">{isScoringSafety ? 'Analyzing...' : 'AI Safe'}</span>
+                <span className="hidden sm:inline opacity-70">{isScoringSafety ? 'Analyzing...' : 'Score AI'}</span>
               </span>
             )}
             <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0 ml-1"><span>{timeAgo(post.timestamp)}</span></span>
@@ -945,6 +1005,57 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         onReportSuccess={() => setReportedLocally(true)}
       />
       </div>
+      {/* Safety Explanation Modal */}
+      {post.aiSafetyInfo && (
+        <Dialog open={showSafetyExplanation} onOpenChange={setShowSafetyExplanation}>
+          <DialogContent className="sm:max-w-md bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl">
+            <DialogHeader className="mb-4 text-center">
+              <div className="flex justify-center mb-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${
+                  post.aiSafetyInfo.aiStatus === 'Green' ? 'bg-[#10B981]/20 border-[#10B981] text-[#10B981]' :
+                  post.aiSafetyInfo.aiStatus === 'Yellow' ? 'bg-[#F59E0B]/20 border-[#F59E0B] text-[#F59E0B]' :
+                  'bg-[#EF4444]/20 border-[#EF4444] text-[#EF4444]'
+                }`}>
+                  <span className="text-2xl font-bold">{post.aiSafetyInfo.aiScore}</span>
+                </div>
+              </div>
+              <DialogTitle className="text-xl font-bold text-center">
+                {post.aiSafetyInfo.aiStatus === 'Green' ? 'Safe Content' :
+                 post.aiSafetyInfo.aiStatus === 'Yellow' ? 'Borderline Content' :
+                 'Toxic Content'}
+              </DialogTitle>
+              <DialogDescription className="text-center mt-2 text-neutral-600 dark:text-neutral-400">
+                {post.aiSafetyInfo.aiReasons}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="bg-neutral-50 dark:bg-neutral-800 rounded-xl p-4 mt-2">
+              <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Score Factors</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {post.aiSafetyInfo.factors && Object.entries(post.aiSafetyInfo.factors).map(([key, value]) => (
+                  <div key={key} className="flex flex-col">
+                    <span className="text-[10px] text-neutral-500 font-semibold capitalize">{key.replace('Score', '')}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${value > 0.5 ? (key === 'usefulnessScore' || key === 'qualityScore' ? 'bg-[#10B981]' : 'bg-[#EF4444]') : 'bg-[#3B82F6]'}`} 
+                          style={{ width: `${Math.max(5, value * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold w-6 text-right">{(value * 100).toFixed(0)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between text-[10px] text-neutral-400 font-medium">
+              <span>Scored by {post.aiSafetyInfo.scoredBy}</span>
+              <span>v{post.aiSafetyInfo.aiModelVersion?.split(' ')[1] || '1.0'}</span>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

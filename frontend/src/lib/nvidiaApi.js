@@ -72,23 +72,28 @@ export async function chatWithAI(messages, model = "gemini-1.5-flash") {
 }
 
 /**
- * Check content safety using Gemini
+ * Check content safety using Gemini (returns raw factors for scoring logic)
  */
 export async function checkContentSafety(text) {
   try {
     const contents = [
       {
         role: "user",
-        parts: [{ text: `Analyze the following text for safety, toxicity, and usefulness.
-Respond ONLY with a JSON object in exactly this format:
+        parts: [{ text: `Analyze the following text for safety, toxicity, usefulness, and quality.
+Support English, Hindi, Hinglish, and mixed-language posts written in English letters.
+Detect slang, bad words, misspellings, symbol-masked words, and repeated characters.
+
+Respond ONLY with a JSON object in exactly this format containing float values from 0.0 to 1.0:
 {
-  "score": "Green" | "Yellow" | "Red",
-  "reasoning": "A short explanation of why it received this score"
+  "toxicityScore": 0.0,
+  "hateSpeechScore": 0.0,
+  "profanityScore": 0.0,
+  "spamScore": 0.0,
+  "usefulnessScore": 0.0,
+  "qualityScore": 0.0,
+  "threatScore": 0.0,
+  "reasoning": "A short explanation of your analysis."
 }
-Rules for scoring:
-- Green: Fully useful content, educational, standard discussion.
-- Yellow: Non-educational, unnecessary, spammy, or slightly off-topic.
-- Red: Hate speech, highly toxic, dangerous, or illegal content.
 
 Text to analyze:
 "${text.replace(/"/g, '\\"')}"` }]
@@ -104,8 +109,9 @@ Text to analyze:
       body: JSON.stringify({
         contents: contents,
         generationConfig: {
-          temperature: 0.2,
+          temperature: 0.1,
           maxOutputTokens: 300,
+          responseMimeType: "application/json",
         }
       }),
     });
@@ -123,14 +129,17 @@ Text to analyze:
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
       return {
-        score: parsed.score || "Green",
-        reasoning: parsed.reasoning || "Checked automatically by Gemini.",
+        toxicityScore: parseFloat(parsed.toxicityScore) || 0,
+        hateSpeechScore: parseFloat(parsed.hateSpeechScore) || 0,
+        profanityScore: parseFloat(parsed.profanityScore) || 0,
+        spamScore: parseFloat(parsed.spamScore) || 0,
+        usefulnessScore: parseFloat(parsed.usefulnessScore) || 0,
+        qualityScore: parseFloat(parsed.qualityScore) || 0,
+        threatScore: parseFloat(parsed.threatScore) || 0,
+        reasoning: parsed.reasoning || "Analyzed by Gemini AI."
       };
     } catch (e) {
-      return {
-        score: "Green",
-        reasoning: "System default (AI response could not be parsed).",
-      };
+      return null; // Force fallback if parsing fails
     }
   } catch (error) {
     console.error("Error in checkContentSafety:", error);
