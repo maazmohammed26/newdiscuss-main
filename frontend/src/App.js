@@ -37,6 +37,7 @@ const JobsPage              = lazy(() => import('@/pages/JobsPage'));
 const JobDetailPage         = lazy(() => import('@/pages/JobDetailPage'));
 const EditorPage            = lazy(() => import('@/pages/EditorPage'));
 const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
+const AiChatPage            = lazy(() => import('@/pages/AiChatPage'));
 
 // Public static pages
 const AboutPage   = lazy(() => import('@/pages/AboutPage'));
@@ -168,6 +169,7 @@ function AppRoutes() {
         <Route path="/jobs/:jobId"             element={<JobDetailPage />} />
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
+        <Route path="/ai-assistant"            element={<ProtectedRoute><AiChatPage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -241,7 +243,8 @@ function OnboardingWrapper({ children }) {
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge', '/download'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
-  const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
+  const isAiChatRoute = location.pathname === '/ai-assistant';
+  const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 
   return (
     <>

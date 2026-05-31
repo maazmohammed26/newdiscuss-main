@@ -20,6 +20,7 @@ import {
   Radar,
   MoreHorizontal,
 } from 'lucide-react';
+import aiIcon from '@/assets/ai-icon.png';
 
 export default function FloatingNavbar() {
   const { theme } = useTheme();
@@ -171,6 +172,7 @@ export default function FloatingNavbar() {
     { key: 'home', to: '/feed', active: currentPath === '/feed', icon: Home, label: 'Home' },
     { key: 'chats', to: '/chat', active: currentPath.startsWith('/chat'), icon: MessageCircle, label: 'Chats' },
     { key: 'add', action: handleOpenCreateModal, active: false, icon: Plus, label: 'Add Post' },
+    { key: 'ai', to: '/ai-assistant', active: currentPath === '/ai-assistant', customIcon: aiIcon, label: 'Discuss AI' },
     { key: 'explore', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs', '/editor', '/bookmarks'].includes(currentPath), icon: MoreHorizontal, label: 'More' },
     { key: 'profile', to: '/profile', active: currentPath === '/profile', label: 'Profile' },
   ];
@@ -196,7 +198,7 @@ export default function FloatingNavbar() {
           <div className={`absolute pointer-events-none ${isDesktop ? 'inset-y-8 left-[2px] w-[1px] bg-gradient-to-b' : 'inset-x-8 top-[2px] h-[1px] bg-gradient-to-r'} from-transparent ${glassReflectionClass}`} />
           <div className={`absolute pointer-events-none ${isDesktop ? '-top-10 -left-5 w-20 h-40 bg-white/25 blur-xl rotate-[-8deg]' : '-top-5 -left-10 w-40 h-14 bg-white/25 blur-xl rotate-[-8deg]'}`} />
           <div className={`absolute pointer-events-none ${isDesktop ? '-bottom-10 right-[-18%] w-24 h-36 bg-sky-300/10 blur-2xl' : '-bottom-6 right-[-18%] w-36 h-12 bg-sky-300/10 blur-2xl'}`} />
-          <div className={`relative items-center justify-items-center h-full w-full ${isDesktop ? 'flex flex-col justify-evenly' : 'grid grid-cols-5'}`}>
+          <div className={`relative items-center justify-items-center h-full w-full ${isDesktop ? 'flex flex-col justify-evenly' : 'grid grid-cols-6'}`}>
             {navItems.map((item) => {
               const isActive = item.active;
               const Icon = item.icon;
@@ -257,6 +259,8 @@ export default function FloatingNavbar() {
                     >
                       <Icon className={`w-5 h-5 ${baseIconClass}`} />
                     </button>
+                  ) : item.customIcon ? (
+                    <img src={item.customIcon} alt={item.label} className={`w-6 h-6 object-contain ${baseIconClass} invert dark:invert-0 discuss:invert-0 opacity-80`} />
                   ) : (
                     Icon && <Icon className={`w-5 h-5 ${baseIconClass}`} />
                   )}

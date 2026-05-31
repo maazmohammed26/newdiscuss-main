@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 import UserAvatar from '@/components/UserAvatar';
-import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark, HelpCircle, ChevronDown } from 'lucide-react';
+import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark, HelpCircle, ChevronDown, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -272,6 +272,29 @@ export default function Header() {
                         </h4>
                         <p className="text-[10px] text-neutral-400 font-medium font-sans">
                           Run and edit code
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Discuss AI Assistant */}
+                  <button
+                    onClick={() => {
+                      setShowDrawer(false);
+                      navigate('/ai-assistant');
+                    }}
+                    className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#8B5CF6]/5 hover:bg-[#8B5CF6]/10 border border-[#8B5CF6]/10 text-left transition-all duration-200 group active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6] group-hover:scale-110 transition-transform">
+                        <Sparkles className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[13.5px] text-neutral-800 dark:text-neutral-100 discuss:text-neutral-100 font-mono">
+                          Discuss AI
+                        </h4>
+                        <p className="text-[10px] text-neutral-400 font-medium font-sans">
+                          Your smart assistant
                         </p>
                       </div>
                     </div>

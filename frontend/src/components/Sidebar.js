@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Home, MessageCircle, Radar, Briefcase, Newspaper, Bookmark, Code, User } from 'lucide-react';
+import { Plus, Home, MessageCircle, Radar, Briefcase, Newspaper, Bookmark, Code, User, Sparkles } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
 
 export default function Sidebar({ onPostCreated, className = "", topClass = "top-[72px]", maxHeightStyle = "calc(100vh - 96px)" }) {
@@ -60,6 +60,18 @@ export default function Sidebar({ onPostCreated, className = "", topClass = "top
             >
               <MessageCircle className="w-5 h-5 shrink-0" />
               <span>Chats</span>
+            </Link>
+
+            <Link
+              to="/ai-assistant"
+              className={`flex items-center gap-3 py-2.5 px-4 rounded-xl text-[14px] font-bold transition-all ${
+                location.pathname === '/ai-assistant'
+                  ? 'bg-neutral-100 dark:bg-neutral-900 discuss:bg-black/40 text-[#8B5CF6] discuss:text-[#A78BFA]'
+                  : 'text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] hover:bg-neutral-50 dark:hover:bg-neutral-900/50 discuss:hover:bg-[#262626] hover:text-[#8B5CF6] dark:hover:text-[#A78BFA]'
+              }`}
+            >
+              <Sparkles className="w-5 h-5 shrink-0" />
+              <span>Discuss AI</span>
             </Link>
 
             <Link

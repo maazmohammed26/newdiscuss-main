@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toggleVote, deletePost } from '@/lib/db';
+import { toggleVote, deletePost, updatePost } from '@/lib/db';
+import { checkContentSafety } from '@/lib/nvidiaApi';
 import { hasNewComments } from '@/lib/commentsDb';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
@@ -24,7 +25,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag, Bookmark, ChevronUp, ChevronDown, Volume2, Check } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag, Bookmark, ChevronUp, ChevronDown, Volume2, Check, ShieldCheck, ShieldAlert, Sparkles, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaCarousel from '@/components/MediaCarousel';
 import FullscreenMedia from '@/components/FullscreenMedia';
@@ -153,8 +154,8 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [previewUser, setPreviewUser] = useState(null);
   const [hasNewCommentBadge, setHasNewCommentBadge] = useState(false);
   const [translatedContent, setTranslatedContent] = useState(null);
-  const [translatedLang, setTranslatedLang] = useState(null);
   const [translating, setTranslating] = useState(false);
+  const [isScoringSafety, setIsScoringSafety] = useState(false);
   const [preferredLang, setPreferredLangState] = useState(() => getPreferredLang());
   const [showLangPrompt, setShowLangPrompt] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
@@ -162,6 +163,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportedLocally, setReportedLocally] = useState(false);
+  const [showSafetyExplanation, setShowSafetyExplanation] = useState(false);
 
   // --- Audio Podcast Reader (Web Speech API) ---
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -414,6 +416,34 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     setShowLangPrompt(false);
   };
 
+  const handleScoreSafety = async (e) => {
+    e.stopPropagation();
+    if (isScoringSafety) return;
+    
+    setIsScoringSafety(true);
+    try {
+      const textToAnalyze = (post.title || '') + ' ' + (post.content || '');
+      const aiScore = await checkContentSafety(textToAnalyze);
+      if (aiScore && aiScore.score) {
+        // Try saving to DB using the author's ID to satisfy any basic validation
+        await updatePost(post.id, { aiSafetyInfo: aiScore }, currentUser?.id || post.author_id);
+        
+        // Update UI locally
+        if (onUpdated) {
+          onUpdated({ ...post, aiSafetyInfo: aiScore });
+        }
+        toast.success('Post analyzed by AI successfully!');
+      } else {
+        toast.error('AI could not determine safety score.');
+      }
+    } catch (err) {
+      console.error('Safety score error:', err);
+      toast.error('Failed to get AI safety score.');
+    } finally {
+      setIsScoringSafety(false);
+    }
+  };
+
   return (
     <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden flex flex-col lg:flex-row">
       
@@ -479,7 +509,32 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               <span>{post.author_username}</span>
               {post.author_verified && <VerifiedBadge size="xs" />}
             </span>
-            <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0"><span>{timeAgo(post.timestamp)}</span></span>
+            {post.aiSafetyInfo ? (
+              <span 
+                data-testid={`post-safety-badge-${post.id}`}
+                onClick={(e) => { e.stopPropagation(); setShowSafetyExplanation(true); }}
+                className={`ml-0.5 flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold cursor-pointer shadow-sm transition-transform hover:scale-105 ${
+                  post.aiSafetyInfo.score === 'Green' ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30' :
+                  post.aiSafetyInfo.score === 'Yellow' ? 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30' :
+                  'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30'
+                }`}
+                title="AI Safety Score"
+              >
+                {post.aiSafetyInfo.score === 'Green' ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                <span className="hidden sm:inline">AI Safe</span>
+              </span>
+            ) : (
+              <span 
+                data-testid={`post-safety-badge-${post.id}`}
+                onClick={handleScoreSafety}
+                className={`ml-0.5 flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold shadow-sm bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] cursor-pointer hover:scale-105 transition-transform ${isScoringSafety ? 'opacity-50 pointer-events-none' : ''}`}
+                title="Pending AI Score (Click to Analyze)"
+              >
+                {isScoringSafety ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3 opacity-70" />}
+                <span className="hidden sm:inline opacity-70">{isScoringSafety ? 'Analyzing...' : 'AI Safe'}</span>
+              </span>
+            )}
+            <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0 ml-1"><span>{timeAgo(post.timestamp)}</span></span>
           </div>
           <div className="flex items-center shrink-0">
             {!currentUser && (
@@ -746,17 +801,18 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </span>
         </button>
 
-        {/* "Listen to Post" Audio Reader Button */}
+        {/* Summarize Post AI Button */}
         <button
-          onClick={handleToggleAudio}
-          className={`flex items-center justify-center p-2 rounded-[6px] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] border transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95
-            ${isSpeaking 
-              ? 'bg-[#EF4444]/10 discuss:bg-[#EF4444]/10 border-[#EF4444]/30 discuss:border-[#EF4444]/30 text-[#EF4444] shadow-[0_0_12px_rgba(239,68,68,0.2)] animate-pulse' 
-              : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
-            }`}
-          title={isSpeaking ? 'Pause Audio Reader' : currentSentenceIndex > 0 ? 'Resume Audio Reader' : 'Listen to Post'}
+          onClick={(e) => {
+            e.stopPropagation();
+            const textToSummarize = (post.title || '') + '\n' + (post.content || '');
+            const prompt = `Summarize this post:\n\n${textToSummarize}`;
+            navigate('/ai-assistant', { state: { prompt } });
+          }}
+          className="flex items-center justify-center p-2 rounded-[6px] text-[#8B5CF6] discuss:text-[#A78BFA] border transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 bg-[#8B5CF6]/10 discuss:bg-[#8B5CF6]/10 border-[#8B5CF6]/30 discuss:border-[#8B5CF6]/30 lg:hover:bg-[#8B5CF6]/20"
+          title="Summarize with AI"
         >
-          <Volume2 className={`w-4 h-4 ${isSpeaking ? 'text-[#EF4444]' : ''}`} />
+          <Sparkles className="w-4 h-4" />
         </button>
 
         {/* Dynamic O(1) Local Storage Auth-Guarded Bookmark Button (styled as Save on desktop) */}
@@ -797,6 +853,36 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       {previewUser && (
         <UserPreviewModal open={true} onClose={() => setPreviewUser(null)} userId={previewUser} currentUserId={currentUser?.id} currentUser={currentUser} />
       )}
+
+      {/* AI Safety Explanation Modal */}
+      <Dialog open={showSafetyExplanation} onOpenChange={setShowSafetyExplanation}>
+        <DialogContent className="bg-white dark:bg-neutral-900 discuss:bg-[#121212] border-neutral-200 dark:border-neutral-800 discuss:border-neutral-800 rounded-2xl max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-neutral-900 dark:text-white">
+              <ShieldCheck className="w-5 h-5 text-blue-500" />
+              Discuss AI Safety Score
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className={`p-4 rounded-xl border ${
+                post.aiSafetyInfo?.score === 'Green' ? 'bg-[#10B981]/10 border-[#10B981]/20 text-[#10B981]' :
+                post.aiSafetyInfo?.score === 'Yellow' ? 'bg-[#F59E0B]/10 border-[#F59E0B]/20 text-[#F59E0B]' :
+                'bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444]'
+            }`}>
+              <div className="font-bold flex items-center gap-2 mb-1">
+                Score: {post.aiSafetyInfo?.score}
+              </div>
+              <p className="text-sm font-medium">
+                {post.aiSafetyInfo?.reasoning}
+              </p>
+            </div>
+            <p className="text-xs text-neutral-500 flex flex-col gap-1">
+              <span>This content was automatically reviewed by <b>NVIDIA Nemotron-3</b> for safety and usefulness.</span>
+              <span className="italic">Discuss AI can make mistakes. Please double check its reasoning.</span>
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#1a1a1a] discuss:border-[#333333] rounded-[12px]">

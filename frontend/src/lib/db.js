@@ -23,6 +23,7 @@ import {
 import { openDB } from 'idb';
 import { notifyTelegramLike } from './telegramService';
 import { notifyDiscordLike } from './discordService';
+import { checkContentSafety } from './nvidiaApi';
 
 // IndexedDB for offline caching
 const DB_NAME = 'discuss_offline';
@@ -293,6 +294,13 @@ export const createPost = async (postData, user) => {
   const newPostRef = push(postsRef);
   await set(newPostRef, newPost);
   
+  // Background safety check
+  checkContentSafety((newPost.title || '') + '\n' + (newPost.content || '')).then(safetyInfo => {
+    if (safetyInfo) {
+      update(newPostRef, { aiSafetyInfo: safetyInfo }).catch(console.error);
+    }
+  }).catch(console.error);
+  
   return {
     id: newPostRef.key,
     ...newPost,
@@ -494,6 +502,17 @@ export const updatePost = async (postId, updates, userId) => {
   };
   
   await update(postRef, finalUpdates);
+
+  // Background safety check for edit
+  const textToCheck = (finalUpdates.title !== undefined ? finalUpdates.title : post.title || '') + '\n' + 
+                      (finalUpdates.content !== undefined ? finalUpdates.content : post.content || '');
+                      
+  checkContentSafety(textToCheck).then(safetyInfo => {
+    if (safetyInfo) {
+      update(postRef, { aiSafetyInfo: safetyInfo }).catch(console.error);
+    }
+  }).catch(console.error);
+
   return { id: postId, ...post, ...finalUpdates };
 };
 
