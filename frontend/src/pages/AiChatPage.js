@@ -163,12 +163,20 @@ export default function AiChatPage() {
     setIsTyping(true);
 
     try {
-      const payload = [
-        { role: 'system', content: 'You are Discuss AI, a helpful and brilliant developer assistant created for the Discuss platform. Help programmers write code, debug issues, summarize tech topics, and answer developer questions. Format code blocks properly using markdown.' },
-        ...newMessages.map(m => ({ role: m.role, content: m.content }))
-      ];
+      const discussContext = {
+        role: "system",
+        content: `You are Discuss AI, an intelligent assistant built into the Discuss platform. 
+Information about Discuss:
+- Founder & Creator: Mohammed Maaz A.
+- Platform: Discuss is a social platform for developers, programmers, and tech enthusiasts to connect, share code, and discuss ideas.
+- Key Features: DevRadar, AI Chat, Post Safety Scoring, Groups, Code Snippets, Real-time messaging.
+- Policies: Users must be respectful, no hate speech, spam, or toxicity allowed (monitored by the Discuss AI algorithm).
+When answering, be helpful, concise, and acknowledge that you are part of the Discuss platform built by Mohammed Maaz A if asked.`
+      };
 
-      const reply = await chatWithAI(payload, selectedModel);
+      const messagesForApi = [discussContext, ...newMessages.map(m => ({ role: m.role, content: m.content }))];
+
+      const reply = await chatWithAI(messagesForApi, selectedModel);
       
       const assistantMessage = { role: 'assistant', content: reply };
       const updatedMessages = [...newMessages, assistantMessage];
@@ -178,7 +186,9 @@ export default function AiChatPage() {
     } catch (error) {
       console.error('Error in chatWithAI:', error);
       let errMsg = 'Sorry, I encountered an error connecting to the Google Gemini network. Please try again.';
-      if (error.message.includes('429')) errMsg = 'Rate limit reached for this AI model. Please try another model or wait a moment.';
+      if (error.message.includes('429') || error.message.includes('RATE_LIMIT')) {
+        errMsg = 'Discuss Server is facing heavy traffic right now. Please try again later or select a different AI model.';
+      }
       if (error.message.includes('403')) errMsg = 'Access forbidden to this AI model. Please check your API key.';
       
       const errorMessage = { role: 'assistant', content: errMsg, isError: true };
