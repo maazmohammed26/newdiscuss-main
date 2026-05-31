@@ -104,7 +104,7 @@ Text to analyze:
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-gemini-model": "gemini-1.5-flash",
+        "x-gemini-model": "gemini-2.5-flash",
       },
       body: JSON.stringify({
         contents: contents,

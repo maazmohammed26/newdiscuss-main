@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Missing Gemini API key.' });
   }
 
-  const model = req.headers['x-gemini-model'] || 'gemini-1.5-flash';
+  const model = req.headers['x-gemini-model'] || 'gemini-2.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   try {
