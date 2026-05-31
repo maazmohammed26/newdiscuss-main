@@ -31,7 +31,7 @@ const NVIDIA_PROXY = getNvidiaProxyUrl();
  */
 export async function chatWithAI(messages) {
   try {
-    const response = await fetch(`${NVIDIA_PROXY}/chat/completions`, {
+    const response = await fetch(`${NVIDIA_PROXY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -72,7 +72,7 @@ export async function chatWithAI(messages) {
  */
 export async function checkContentSafety(text) {
   try {
-    const response = await fetch(`${NVIDIA_PROXY}/chat/completions`, {
+    const response = await fetch(`${NVIDIA_PROXY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

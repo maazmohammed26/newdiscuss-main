@@ -16,25 +16,25 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get the API key from request header (sent by client)
-  let apiKey = req.headers['x-api-key'];
-
-  // If the key is missing or undefined (CRA build is running in production without local .env file),
-  // load the secure environment variables directly from Vercel's edge environment.
-  if (!apiKey || apiKey === 'undefined' || apiKey === 'null' || apiKey.trim() === '') {
-    const isSafety = req.body?.model?.includes('nemotron') || req.body?.model?.includes('safety');
-    
-    const secureAssistantKey = process.env.NVIDIA_AI_ASSISTANT_KEY || process.env.REACT_APP_NVIDIA_AI_ASSISTANT_KEY;
-    const secureNemotronKey = process.env.NVIDIA_NEMOTRON_KEY || process.env.REACT_APP_NVIDIA_NEMOTRON_KEY;
-    
-    if (isSafety) {
-      apiKey = secureNemotronKey || secureAssistantKey;
-    } else {
-      apiKey = secureAssistantKey || secureNemotronKey;
-    }
+  // We ignore any key sent by the client for security.
+  // We ALWAYS use the secure environment variables directly from Vercel's edge environment.
+  const isSafety = req.body?.model?.includes('nemotron') || req.body?.model?.includes('safety');
+  
+  let secureAssistantKey = process.env.NVIDIA_AI_ASSISTANT_KEY || process.env.REACT_APP_NVIDIA_AI_ASSISTANT_KEY || '';
+  let secureNemotronKey = process.env.NVIDIA_NEMOTRON_KEY || process.env.REACT_APP_NVIDIA_NEMOTRON_KEY || '';
+  
+  // Clean keys in case user accidentally copy-pasted quotes into Vercel env settings
+  secureAssistantKey = secureAssistantKey.replace(/['"]/g, '').trim();
+  secureNemotronKey = secureNemotronKey.replace(/['"]/g, '').trim();
+  
+  let apiKey = '';
+  if (isSafety) {
+    apiKey = secureNemotronKey || secureAssistantKey;
+  } else {
+    apiKey = secureAssistantKey || secureNemotronKey;
   }
 
-  if (!apiKey || apiKey === 'undefined' || apiKey === 'null' || apiKey.trim() === '') {
+  if (!apiKey) {
     return res.status(401).json({ 
       error: 'Missing NVIDIA API key. Please configure NVIDIA_AI_ASSISTANT_KEY or REACT_APP_NVIDIA_AI_ASSISTANT_KEY in your Vercel Project Settings.' 
     });
@@ -63,6 +63,10 @@ export default async function handler(req, res) {
     if (!nvidiaRes.ok) {
       if (nvidiaRes.status === 429) {
         return res.status(429).json({ error: 'Rate limit reached. Our servers are busy, please try again shortly.' });
+      }
+      // If NVIDIA rejects the key itself
+      if (nvidiaRes.status === 401 || nvidiaRes.status === 403) {
+        data.help = "Your NVIDIA API key might be invalid, expired, or lacking permissions for this model. Please check your Vercel Environment Variables.";
       }
       return res.status(nvidiaRes.status).json(data);
     }
