@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Radar,
   MoreHorizontal,
+  Sparkles,
 } from 'lucide-react';
 import aiIcon from '@/assets/ai-icon.png';
 
