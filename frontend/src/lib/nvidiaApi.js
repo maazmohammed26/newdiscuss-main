@@ -1,49 +1,50 @@
-const AI_ASSISTANT_API_KEY = process.env.REACT_APP_NVIDIA_AI_ASSISTANT_KEY;
-const AI_ASSISTANT_MODEL = "stepfun-ai/step-3.7-flash";
-
-const CONTENT_SAFETY_API_KEY = process.env.REACT_APP_NVIDIA_NEMOTRON_KEY;
-const CONTENT_SAFETY_MODEL = "meta/nemotron-3-8b-content-safety";
-
-// Dynamic API base detection — handles local development, production web, 
-// and hybrid mobile app WebView contexts (e.g. Median.co/GoNative, Cordova, Capacitor)
-const getNvidiaProxyUrl = () => {
+// We've switched to Google Gemini API but kept the file name for backwards compatibility
+const getGeminiProxyUrl = () => {
   if (typeof window !== 'undefined') {
     const { protocol, hostname } = window.location;
-    // If local dev environment, use relative path so craco setupProxy.js intercepts it
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return "/api/nvidia";
+      return "/api/gemini";
     }
-    // If running on production website, use standard relative path
     if (hostname.endsWith('discussit.in')) {
-      return "/api/nvidia";
+      return "/api/gemini";
     }
-    // Fallback: If inside native mobile webview wrapper (loads via file:// or custom local schemas),
-    // route directly to the secure production serverless proxy endpoint
-    return "https://discussit.in/api/nvidia";
+    return "https://discussit.in/api/gemini";
   }
-  return "/api/nvidia";
+  return "/api/gemini";
 };
 
-const NVIDIA_PROXY = getNvidiaProxyUrl();
+const GEMINI_PROXY = getGeminiProxyUrl();
 
 /**
- * Chat with Discuss AI Assistant
+ * Chat with Discuss AI Assistant using Gemini
+ * Supports dynamic model selection via the model param
  */
-export async function chatWithAI(messages) {
+export async function chatWithAI(messages, model = "gemini-1.5-flash") {
   try {
-    const response = await fetch(`${NVIDIA_PROXY}`, {
+    // Convert OpenAI style messages to Gemini format
+    const systemMsg = messages.find(m => m.role === 'system');
+    const systemInstruction = systemMsg ? { parts: [{ text: systemMsg.content }] } : undefined;
+    
+    const contents = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: String(m.content) }]
+      }));
+
+    const response = await fetch(`${GEMINI_PROXY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${AI_ASSISTANT_API_KEY}`,
-        // Also pass as custom header so the Vercel serverless fn can forward it
-        "x-api-key": AI_ASSISTANT_API_KEY,
+        "x-gemini-model": model,
       },
       body: JSON.stringify({
-        model: AI_ASSISTANT_MODEL,
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 1024,
+        systemInstruction,
+        contents: contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        }
       }),
     });
 
@@ -52,14 +53,17 @@ export async function chatWithAI(messages) {
         throw new Error("RATE_LIMIT");
       }
       const errText = await response.text().catch(() => "");
-      throw new Error(`NVIDIA API Error: ${response.status}${errText ? " — " + errText.slice(0, 120) : ""}`);
+      throw new Error(`Gemini API Error: ${response.status}${errText ? " — " + errText.slice(0, 150) : ""}`);
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    if (data.candidates && data.candidates.length > 0) {
+      return data.candidates[0].content.parts[0].text;
+    } else {
+      throw new Error("No response from Gemini API");
+    }
   } catch (error) {
     console.error("Error in chatWithAI:", error);
-    // Robust exception mapping for webviews and offline network disconnects
     if (error instanceof TypeError || error.message?.includes('Failed to fetch')) {
       throw new Error("NETWORK_DISCONNECTED: Could not reach the AI network. Please check your internet connection.");
     }
@@ -68,23 +72,14 @@ export async function chatWithAI(messages) {
 }
 
 /**
- * Check content safety using Nemotron-3
+ * Check content safety using Gemini
  */
 export async function checkContentSafety(text) {
   try {
-    const response = await fetch(`${NVIDIA_PROXY}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${CONTENT_SAFETY_API_KEY}`,
-        "x-api-key": CONTENT_SAFETY_API_KEY,
-      },
-      body: JSON.stringify({
-        model: CONTENT_SAFETY_MODEL,
-        messages: [
-          {
-            role: "user",
-            content: `Analyze the following text for safety, toxicity, and usefulness.
+    const contents = [
+      {
+        role: "user",
+        parts: [{ text: `Analyze the following text for safety, toxicity, and usefulness.
 Respond ONLY with a JSON object in exactly this format:
 {
   "score": "Green" | "Yellow" | "Red",
@@ -96,30 +91,40 @@ Rules for scoring:
 - Red: Hate speech, highly toxic, dangerous, or illegal content.
 
 Text to analyze:
-"${text.replace(/"/g, '\\"')}"`,
-          },
-        ],
-        temperature: 0.2,
-        max_tokens: 300,
+"${text.replace(/"/g, '\\"')}"` }]
+      }
+    ];
+
+    const response = await fetch(`${GEMINI_PROXY}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-gemini-model": "gemini-1.5-flash",
+      },
+      body: JSON.stringify({
+        contents: contents,
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 300,
+        }
       }),
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error("RATE_LIMIT");
-      }
-      throw new Error(`NVIDIA Safety API Error: ${response.status}`);
+      return null; // Fail open
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    if (!data.candidates) return null;
+    
+    const content = data.candidates[0].content.parts[0].text;
 
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
       return {
         score: parsed.score || "Green",
-        reasoning: parsed.reasoning || "Checked automatically by Nemotron-3.",
+        reasoning: parsed.reasoning || "Checked automatically by Gemini.",
       };
     } catch (e) {
       return {

@@ -40,6 +40,7 @@ export default function AiChatPage() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
   
   // Delete Dialog
   const [chatToDelete, setChatToDelete] = useState(null);
@@ -167,7 +168,7 @@ export default function AiChatPage() {
         ...newMessages.map(m => ({ role: m.role, content: m.content }))
       ];
 
-      const reply = await chatWithAI(payload);
+      const reply = await chatWithAI(payload, selectedModel);
       
       const assistantMessage = { role: 'assistant', content: reply };
       const updatedMessages = [...newMessages, assistantMessage];
@@ -320,7 +321,7 @@ export default function AiChatPage() {
                 <div>
                   <h2 className="text-xl font-bold text-neutral-900 dark:text-white discuss:text-white mb-2">How can I help you today?</h2>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    Ask me to write code, debug issues, explain concepts, or summarize any post. Powered by <span className="font-bold text-[#8B5CF6]">NVIDIA NIM</span>.
+                    Ask me to write code, debug issues, explain concepts, or summarize any post. Powered by <span className="font-bold text-[#8B5CF6]">Google Gemini</span>.
                   </p>
                 </div>
                 <p className="text-xs text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-full font-medium">
@@ -367,6 +368,19 @@ export default function AiChatPage() {
 
           {/* Input Area — always sticks to bottom */}
           <div className="shrink-0 px-3 py-3 bg-white dark:bg-neutral-900 discuss:bg-[#0c0c12] border-t border-neutral-200 dark:border-neutral-800 discuss:border-white/5">
+            <div className="max-w-3xl mx-auto mb-2 flex justify-between items-center px-1">
+              <span className="text-[10px] text-neutral-400 font-medium">Powered by Google Gemini</span>
+              <select 
+                value={selectedModel} 
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded-lg px-2 py-1 outline-none border-none cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+              >
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Smart)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              </select>
+            </div>
             <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex items-center gap-2">
               <input
                 type="text"
@@ -384,9 +398,6 @@ export default function AiChatPage() {
                 {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
             </form>
-            <p className="text-center text-[10px] text-neutral-400 mt-2 font-medium">
-              Discuss AI can make mistakes. Double check it. Powered by NVIDIA NIM.
-            </p>
           </div>
         </div>
       </div>
