@@ -337,8 +337,8 @@ export default function AiChatPage() {
                   }`}>
                     {msg.role === 'user' ? (user?.username?.[0]?.toUpperCase() || 'U') : <Bot className="w-4 h-4" />}
                   </div>
-                  <div className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[78%]`}>
-                    <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
+                  <div className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[78%] min-w-0`}>
+                    <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words break-all shadow-sm ${
                       msg.role === 'user'
                         ? 'bg-gradient-to-br from-[#8B5CF6] to-blue-600 text-white rounded-tr-sm'
                         : 'bg-white dark:bg-neutral-800 discuss:bg-[#1A1A24] text-neutral-800 dark:text-neutral-200 discuss:text-neutral-300 border border-neutral-100 dark:border-neutral-700 discuss:border-white/5 rounded-tl-sm'
