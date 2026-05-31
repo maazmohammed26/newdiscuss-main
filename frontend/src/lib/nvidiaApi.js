@@ -97,19 +97,114 @@ export const checkContentSafety = async (text) => {
       role: "user",
       parts: [
         {
-          text: `Analyze the following text and rate it on 7 scales from 0.0 to 1.0 (where 1.0 is extremely high, and 0.0 is none).
-Text: "${text}"
+          text: `You are an AI post scoring model for a social discussion platform called Discuss.
 
-Scales to score:
-1. toxicityScore (0-1.0)
-2. hateSpeechScore (0-1.0)
-3. profanityScore (0-1.0)
-4. spamScore (0-1.0)
-5. usefulnessScore (0-1.0)
-6. qualityScore (0-1.0)
-7. threatScore (0-1.0)
+Your job is to analyze a user post and return a safety and usefulness score.
 
-Provide a 1-sentence reasoning. Return ONLY valid JSON.`
+You must classify the post into one of three statuses:
+
+GREEN:
+The post is safe, useful, educational, meaningful, helpful, or adds value to the community.
+
+YELLOW:
+The post is not highly harmful, but it is low-quality, unnecessary, non-educational, spam-like, promotional, confusing, off-topic, or slightly toxic.
+
+RED:
+The post contains toxic language, hate speech, religious hate, caste/community hate, abusive words, harassment, threats, harmful content, or strongly unsafe content.
+
+You must support:
+
+* English
+* Mixed-language text
+* Hindi words written in English letters
+* Slang
+* Misspellings
+* Symbol-masked words
+* Repeated characters
+* Abusive words written with spaces or symbols
+
+Analyze the post based on these scores:
+
+toxicityScore: 0 to 1
+Measures rude, insulting, aggressive, or abusive language.
+
+hateSpeechScore: 0 to 1
+Measures hate or attacks against religion, caste, race, gender, nationality, language, region, or community.
+
+profanityScore: 0 to 1
+Measures bad words, vulgar words, abusive slang, and offensive language.
+
+spamScore: 0 to 1
+Measures promotional, repeated, scam-like, link-heavy, copy-paste, or irrelevant content.
+
+usefulnessScore: 0 to 1
+Measures whether the post is helpful, educational, informative, problem-solving, or meaningful.
+
+qualityScore: 0 to 1
+Measures readability, clarity, context, grammar, structure, and meaningfulness.
+
+threatScore: 0 to 1
+Measures threats, intimidation, violent intent, or dangerous language.
+
+Calculate finalScore from 0 to 100 using this formula:
+
+finalScore = 100 - toxicityScore*30 - hateSpeechScore*35 - profanityScore*20 - spamScore*15 - threatScore*30 + usefulnessScore*25 + qualityScore*15
+
+After calculation, keep finalScore between 0 and 100.
+
+Classification rules:
+
+Return RED if:
+
+* hateSpeechScore >= 0.75
+* OR toxicityScore >= 0.85
+* OR threatScore >= 0.75
+* OR profanityScore >= 0.90
+
+Return GREEN if:
+
+* finalScore >= 70
+* AND toxicityScore < 0.40
+* AND hateSpeechScore < 0.30
+* AND spamScore < 0.50
+* AND usefulnessScore >= 0.50
+
+Otherwise return YELLOW.
+
+Important rules:
+
+* Do not over-block normal criticism, jokes, or casual language.
+* Do not mark a post RED only because it mentions religion, caste, politics, or community. Mark RED only if it attacks, abuses, threatens, or spreads hate.
+* If the post is safe but useless, mark it YELLOW.
+* If the post is educational but contains mild issues, mark it YELLOW.
+* If the post is clearly harmful, mark it RED.
+* If the post is clearly helpful and safe, mark it GREEN.
+* Always give short, clear reasons.
+* Return only valid JSON.
+* Do not include extra explanation outside JSON.
+
+Output format:
+
+{
+"finalScore": 0,
+"aiStatus": "green | yellow | red",
+"toxicityScore": 0,
+"hateSpeechScore": 0,
+"profanityScore": 0,
+"spamScore": 0,
+"usefulnessScore": 0,
+"qualityScore": 0,
+"threatScore": 0,
+"aiReasons": [
+"reason 1",
+"reason 2"
+],
+"summary": "Short explanation of why this score was given"
+}
+
+Now analyze this post:
+
+${text}`
         }
       ]
     }
@@ -127,7 +222,7 @@ Provide a 1-sentence reasoning. Return ONLY valid JSON.`
           contents: contents,
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 300,
+            maxOutputTokens: 500,
             responseMimeType: "application/json",
           }
         }),
@@ -150,6 +245,8 @@ Provide a 1-sentence reasoning. Return ONLY valid JSON.`
       const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
       
       return {
+        finalScore: parseFloat(parsed.finalScore),
+        aiStatus: parsed.aiStatus,
         toxicityScore: parseFloat(parsed.toxicityScore) || 0,
         hateSpeechScore: parseFloat(parsed.hateSpeechScore) || 0,
         profanityScore: parseFloat(parsed.profanityScore) || 0,
@@ -157,8 +254,9 @@ Provide a 1-sentence reasoning. Return ONLY valid JSON.`
         usefulnessScore: parseFloat(parsed.usefulnessScore) || 0,
         qualityScore: parseFloat(parsed.qualityScore) || 0,
         threatScore: parseFloat(parsed.threatScore) || 0,
-        reasoning: parsed.reasoning || `Analyzed by Discuss AI (${model}).`,
-        aiModelVersion: model // Added so PostCard can display the exact model used!
+        aiReasons: parsed.aiReasons || [],
+        summary: parsed.summary || "",
+        aiModelVersion: model 
       };
     } catch (e) {
       console.warn(`[Discuss AI Scoring] Model ${model} threw an error:`, e.message);

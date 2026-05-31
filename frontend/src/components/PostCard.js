@@ -439,17 +439,33 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       const rawFactors = await checkContentSafety(textToAnalyze);
       
       if (rawFactors && typeof rawFactors.toxicityScore === 'number') {
-        const finalScore = computeFinalScore(rawFactors);
-        const aiStatus = classifyScore(finalScore, rawFactors);
+        const finalScore = rawFactors.finalScore !== undefined && !isNaN(rawFactors.finalScore) ? rawFactors.finalScore : computeFinalScore(rawFactors);
+        
+        let aiStatus = rawFactors.aiStatus || classifyScore(finalScore, rawFactors);
+        if (aiStatus) {
+            aiStatus = aiStatus.charAt(0).toUpperCase() + aiStatus.slice(1).toLowerCase(); // Normalize "green" to "Green"
+        }
+
+        let reasons = "";
+        if (Array.isArray(rawFactors.aiReasons) && rawFactors.aiReasons.length > 0) {
+            reasons = rawFactors.aiReasons.join(' ');
+        } else if (rawFactors.summary) {
+            reasons = rawFactors.summary;
+        } else if (rawFactors.reasoning) {
+            reasons = rawFactors.reasoning;
+        } else {
+            reasons = "Analyzed by Discuss AI.";
+        }
+
         aiScorePayload = {
           aiScore: finalScore,
           aiStatus: aiStatus,
-          aiReasons: rawFactors.reasoning,
+          aiReasons: reasons,
           factors: rawFactors,
           aiScored: true,
           aiScoreOutdated: false,
           aiScoredAt: new Date().toISOString(),
-          aiModelVersion: 'Gemini 1.5 Flash',
+          aiModelVersion: rawFactors.aiModelVersion || 'Discuss AI',
           lastScoredContentHash: contentHash,
           scoredBy: 'Discuss AI'
         };
