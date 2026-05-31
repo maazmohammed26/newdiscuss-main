@@ -50,7 +50,15 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body),
     });
 
-    const data = await nvidiaRes.json();
+    // Safely parse JSON or text response to avoid crashes
+    let data;
+    const contentType = nvidiaRes.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await nvidiaRes.json().catch(() => ({}));
+    } else {
+      const text = await nvidiaRes.text().catch(() => '');
+      data = { error: text || `HTTP Error ${nvidiaRes.status}` };
+    }
 
     if (!nvidiaRes.ok) {
       if (nvidiaRes.status === 429) {
@@ -62,6 +70,24 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
   } catch (err) {
     console.error('[NVIDIA Proxy Error]', err.message);
-    return res.status(502).json({ error: 'Failed to reach NVIDIA API. Please try again.' });
+    
+    // Secure diagnostic info to help debug Vercel environment setup
+    const secureAssistantKey = process.env.NVIDIA_AI_ASSISTANT_KEY || process.env.REACT_APP_NVIDIA_AI_ASSISTANT_KEY;
+    const secureNemotronKey = process.env.NVIDIA_NEMOTRON_KEY || process.env.REACT_APP_NVIDIA_NEMOTRON_KEY;
+    
+    const keyDiagnostics = {
+      assistantKeyConfigured: !!secureAssistantKey,
+      assistantKeyPrefix: secureAssistantKey ? secureAssistantKey.substring(0, 10) + '...' : 'none',
+      nemotronKeyConfigured: !!secureNemotronKey,
+      nemotronKeyPrefix: secureNemotronKey ? secureNemotronKey.substring(0, 10) + '...' : 'none',
+      clientKeySent: !!req.headers['x-api-key'],
+      clientKeyPrefix: req.headers['x-api-key'] && req.headers['x-api-key'] !== 'undefined' ? req.headers['x-api-key'].substring(0, 10) + '...' : 'none'
+    };
+
+    return res.status(502).json({ 
+      error: 'Failed to reach NVIDIA API. Please try again.',
+      details: err.message,
+      diagnostics: keyDiagnostics
+    });
   }
 }
