@@ -22,7 +22,8 @@ export default function Header() {
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
-  const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
+  const isAiChatRoute = location.pathname === '/ai-assistant';
+  const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 
   const headerClass = `sticky top-0 z-40 bg-black/75 backdrop-blur-md border-b border-white/10 select-none transition-all duration-300 ${
     hasNavbar ? 'md:fixed md:top-0 md:left-0 md:w-full md:pl-[100px] lg:pl-0 md:z-40' : 'w-full'

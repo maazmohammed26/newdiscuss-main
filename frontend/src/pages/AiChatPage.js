@@ -62,6 +62,29 @@ export default function AiChatPage() {
     localStorage.setItem('discuss_ai_history', JSON.stringify(conversations));
   }, [conversations]);
 
+  // Lock body/html scroll and height to prevent browser viewport from bouncing/scrolling
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    
+    const originalHtmlOverflow = html.style.overflow;
+    const originalHtmlHeight = html.style.height;
+    const originalBodyOverflow = body.style.overflow;
+    const originalBodyHeight = body.style.height;
+
+    html.style.overflow = 'hidden';
+    html.style.height = '100%';
+    body.style.overflow = 'hidden';
+    body.style.height = '100%';
+
+    return () => {
+      html.style.overflow = originalHtmlOverflow;
+      html.style.height = originalHtmlHeight;
+      body.style.overflow = originalBodyOverflow;
+      body.style.height = originalBodyHeight;
+    };
+  }, []);
+
   // Load Active Conversation Messages
   useEffect(() => {
     if (activeConversationId) {
@@ -174,12 +197,12 @@ export default function AiChatPage() {
   };
 
   return (
-    <div className="flex flex-col bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#0c0c12]" style={{ height: '100dvh' }}>
-      {/* Fixed top Header */}
+    <div className="flex flex-col bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#0c0c12] overflow-hidden" style={{ height: '100dvh' }}>
+      {/* Header is sticky — it stays in document flow, so NO marginTop needed */}
       <Header />
 
-      {/* Content area below header — uses CSS var for header height */}
-      <div className="flex flex-1 overflow-hidden" style={{ marginTop: '64px' }}>
+      {/* This div fills exactly the remaining height after the sticky header */}
+      <div className="relative flex flex-1 overflow-hidden min-h-0">
 
         {/* Mobile Overlay */}
         <AnimatePresence>
@@ -197,7 +220,7 @@ export default function AiChatPage() {
         {/* --- SIDEBAR --- */}
         <div
           className={`
-            fixed md:static z-50 h-full
+            absolute md:static inset-y-0 left-0 z-50
             w-72 shrink-0 flex flex-col
             bg-white dark:bg-[#1E293B] discuss:bg-[#111116]
             border-r border-neutral-200 dark:border-neutral-800 discuss:border-white/5

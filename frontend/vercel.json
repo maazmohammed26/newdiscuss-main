@@ -14,7 +14,11 @@
       "destination": "https://discuss-13fbc.firebaseapp.com/__/auth/iframe"
     },
     {
-      "source": "/(.*)",
+      "source": "/api/nvidia/(.*)",
+      "destination": "/api/nvidia"
+    },
+    {
+      "source": "/((?!api/|__/auth/).*)",
       "destination": "/index.html"
     }
   ],
