@@ -4,10 +4,27 @@ const AI_ASSISTANT_MODEL = "stepfun-ai/step-3.7-flash";
 const CONTENT_SAFETY_API_KEY = process.env.REACT_APP_NVIDIA_NEMOTRON_KEY;
 const CONTENT_SAFETY_MODEL = "meta/nemotron-3-8b-content-safety";
 
-// /api/nvidia works in BOTH environments:
-//   - localhost:  setupProxy.js forwards it to integrate.api.nvidia.com
-//   - Vercel:     api/nvidia.js serverless function forwards it server-side
-const NVIDIA_PROXY = "/api/nvidia";
+// Dynamic API base detection — handles local development, production web, 
+// and hybrid mobile app WebView contexts (e.g. Median.co/GoNative, Cordova, Capacitor)
+const getNvidiaProxyUrl = () => {
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    // If local dev environment, use relative path so craco setupProxy.js intercepts it
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return "/api/nvidia";
+    }
+    // If running on production website, use standard relative path
+    if (hostname.endsWith('discussit.in')) {
+      return "/api/nvidia";
+    }
+    // Fallback: If inside native mobile webview wrapper (loads via file:// or custom local schemas),
+    // route directly to the secure production serverless proxy endpoint
+    return "https://discussit.in/api/nvidia";
+  }
+  return "/api/nvidia";
+};
+
+const NVIDIA_PROXY = getNvidiaProxyUrl();
 
 /**
  * Chat with Discuss AI Assistant
@@ -42,6 +59,10 @@ export async function chatWithAI(messages) {
     return data.choices[0].message.content;
   } catch (error) {
     console.error("Error in chatWithAI:", error);
+    // Robust exception mapping for webviews and offline network disconnects
+    if (error instanceof TypeError || error.message?.includes('Failed to fetch')) {
+      throw new Error("NETWORK_DISCONNECTED: Could not reach the AI network. Please check your internet connection.");
+    }
     throw error;
   }
 }

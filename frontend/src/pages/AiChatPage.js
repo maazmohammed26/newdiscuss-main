@@ -175,9 +175,12 @@ export default function AiChatPage() {
       setMessages(updatedMessages);
       updateConversationInState(convId, updatedMessages);
     } catch (error) {
-      const errMsg = error.message?.includes('high traffic') 
-        ? '🙏 Our AI servers are currently busy. Please try again in a moment.'
-        : 'Sorry, I encountered an error connecting to the NVIDIA network. Please try again.';
+      let errMsg = 'Sorry, I encountered an error connecting to the NVIDIA network. Please try again.';
+      if (error.message?.includes('high traffic')) {
+        errMsg = '🙏 Our AI servers are currently busy. Please try again in a moment.';
+      } else if (error.message?.includes('NETWORK_DISCONNECTED')) {
+        errMsg = '📶 Network Offline: Could not connect to Discuss AI. Please check your internet connection and try again.';
+      }
       const errorMessage = { role: 'assistant', content: errMsg };
       const updatedMessages = [...newMessages, errorMessage];
       setMessages(updatedMessages);
