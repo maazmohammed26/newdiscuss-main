@@ -220,8 +220,11 @@ ${text}`
         },
         body: JSON.stringify({
           contents: contents,
+          systemInstruction: {
+            parts: [{ text: "You are a strict, objective, and highly accurate AI analysis system. Follow the scoring rules with absolute mathematical precision based on the provided text. Never deviate from the formula." }]
+          },
           generationConfig: {
-            temperature: 0.1,
+            temperature: 0.0,
             maxOutputTokens: 500,
             responseMimeType: "application/json",
           }

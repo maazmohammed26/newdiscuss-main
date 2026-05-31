@@ -589,13 +589,15 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                   </span>
                 </span>
                 
-                {post.aiScoreOutdated && (
+                {(post.aiScoreOutdated || currentUser?.id === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2') && (
                   <button
                     onClick={(e) => handleScoreSafety(e, true)}
                     className="flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold bg-blue-100 text-blue-600 border border-blue-200 hover:bg-blue-200 transition-colors"
                   >
                     {isScoringSafety ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-                    <span>Rescore</span>
+                    <span className="hidden sm:inline">
+                       {currentUser?.id === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && !post.aiScoreOutdated ? 'Admin Rescore' : 'Rescore AI'}
+                    </span>
                   </button>
                 )}
               </div>
