@@ -171,7 +171,7 @@ function AppRoutes() {
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
         <Route path="/ai-assistant"            element={<ProtectedRoute><AiChatPage /></ProtectedRoute>} />
-        <Route path="/sherlock"                element={<DiscussSherlockPage />} />
+        <Route path="/sherlock"                element={<ProtectedRoute><DiscussSherlockPage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

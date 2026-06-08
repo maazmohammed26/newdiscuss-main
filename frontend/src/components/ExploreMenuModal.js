@@ -88,7 +88,7 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
       description: 'Investigate digital footprints across 500+ sites',
       icon: Search,
       path: '/sherlock',
-      requiresAuth: false,
+      requiresAuth: true,
       color: 'text-red-500 dark:text-red-400',
       bg: 'bg-red-500/10 dark:bg-red-500/15',
       glow: 'group-hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]',

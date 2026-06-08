@@ -87,13 +87,13 @@ export default function DiscussSherlockPage() {
   const isAnyLoading = Object.values(activeSearches).some(v => v);
 
   return (
-    <div className="min-h-screen bg-[#Fbfcfd] dark:bg-[#0c0c12] discuss:bg-[#0c0c12] text-neutral-900 dark:text-neutral-100 flex flex-col font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-[#Fbfcfd] dark:bg-[#0c0c12] discuss:bg-[#0c0c12] text-neutral-900 dark:text-neutral-100 flex flex-col font-sans transition-colors duration-300 overflow-x-hidden">
       <Header />
       
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-20">
         
         {/* Header Section */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-blue-500/10 discuss:bg-red-500/10 text-blue-600 discuss:text-red-500 mb-4 shadow-inner">
             <Target className="w-8 h-8" />
           </div>
@@ -103,6 +103,12 @@ export default function DiscussSherlockPage() {
           <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto font-medium">
             Investigate public digital footprints across developer platforms, social media, and forums instantly.
           </p>
+          <div className="mt-4 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-[11px] font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+              Beta Version — Results Might Vary
+            </span>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -167,8 +173,6 @@ export default function DiscussSherlockPage() {
           })}
         </div>
       </main>
-
-      <Footer />
 
       <SherlockHistoryDrawer 
         isOpen={historyOpen}
