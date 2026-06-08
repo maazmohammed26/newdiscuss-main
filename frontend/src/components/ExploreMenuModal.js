@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { Radar, Newspaper, Briefcase, ChevronRight, Code, Bookmark } from 'lucide-react';
+import { Radar, Newspaper, Briefcase, ChevronRight, Code, Bookmark, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
@@ -82,6 +82,19 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
       hoverBorder: 'hover:border-yellow-500/30 dark:hover:border-yellow-500/20',
       hoverBg: 'hover:bg-yellow-500/[0.04] dark:hover:bg-yellow-500/[0.06]',
       badge: 'OFFLINE'
+    },
+    {
+      title: 'Discuss Sherlock',
+      description: 'Investigate digital footprints across 500+ sites',
+      icon: Search,
+      path: '/sherlock',
+      requiresAuth: false,
+      color: 'text-red-500 dark:text-red-400',
+      bg: 'bg-red-500/10 dark:bg-red-500/15',
+      glow: 'group-hover:shadow-[0_0_15px_rgba(239,68,68,0.25)]',
+      hoverBorder: 'hover:border-red-500/30 dark:hover:border-red-500/20',
+      hoverBg: 'hover:bg-red-500/[0.04] dark:hover:bg-red-500/[0.06]',
+      badge: 'OSINT'
     }
   ];
 

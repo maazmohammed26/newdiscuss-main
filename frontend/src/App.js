@@ -38,6 +38,7 @@ const JobDetailPage         = lazy(() => import('@/pages/JobDetailPage'));
 const EditorPage            = lazy(() => import('@/pages/EditorPage'));
 const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
 const AiChatPage            = lazy(() => import('@/pages/AiChatPage'));
+const DiscussSherlockPage   = lazy(() => import('@/pages/DiscussSherlockPage'));
 
 // Public static pages
 const AboutPage   = lazy(() => import('@/pages/AboutPage'));
@@ -170,6 +171,7 @@ function AppRoutes() {
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
         <Route path="/ai-assistant"            element={<ProtectedRoute><AiChatPage /></ProtectedRoute>} />
+        <Route path="/sherlock"                element={<DiscussSherlockPage />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,142 @@
+[
+  {
+    "name": "GitHub",
+    "url": "https://github.com/{}",
+    "category": "Developer",
+    "icon": "Github",
+    "color": "#181717"
+  },
+  {
+    "name": "GitLab",
+    "url": "https://gitlab.com/{}",
+    "category": "Developer",
+    "icon": "Gitlab",
+    "color": "#FC6D26"
+  },
+  {
+    "name": "Stack Overflow",
+    "url": "https://stackoverflow.com/users/{}",
+    "category": "Developer",
+    "icon": "Layers",
+    "color": "#F58025"
+  },
+  {
+    "name": "LinkedIn",
+    "url": "https://www.linkedin.com/in/{}/",
+    "category": "Professional",
+    "icon": "Linkedin",
+    "color": "#0A66C2"
+  },
+  {
+    "name": "Reddit",
+    "url": "https://www.reddit.com/user/{}",
+    "category": "Forums",
+    "icon": "MessageSquare",
+    "color": "#FF4500"
+  },
+  {
+    "name": "Twitter / X",
+    "url": "https://x.com/{}",
+    "category": "Social Media",
+    "icon": "Twitter",
+    "color": "#1DA1F2"
+  },
+  {
+    "name": "Instagram",
+    "url": "https://www.instagram.com/{}/",
+    "category": "Social Media",
+    "icon": "Instagram",
+    "color": "#E4405F"
+  },
+  {
+    "name": "Facebook",
+    "url": "https://www.facebook.com/{}",
+    "category": "Social Media",
+    "icon": "Facebook",
+    "color": "#1877F2"
+  },
+  {
+    "name": "TikTok",
+    "url": "https://www.tiktok.com/@{}",
+    "category": "Social Media",
+    "icon": "Video",
+    "color": "#000000"
+  },
+  {
+    "name": "YouTube",
+    "url": "https://www.youtube.com/@{}",
+    "category": "Streaming",
+    "icon": "Youtube",
+    "color": "#FF0000"
+  },
+  {
+    "name": "Twitch",
+    "url": "https://www.twitch.tv/{}",
+    "category": "Streaming",
+    "icon": "Twitch",
+    "color": "#9146FF"
+  },
+  {
+    "name": "Pinterest",
+    "url": "https://www.pinterest.com/{}/",
+    "category": "Social Media",
+    "icon": "Image",
+    "color": "#BD081C"
+  },
+  {
+    "name": "Steam",
+    "url": "https://steamcommunity.com/id/{}",
+    "category": "Gaming",
+    "icon": "Gamepad2",
+    "color": "#171A21"
+  },
+  {
+    "name": "Medium",
+    "url": "https://medium.com/@{}",
+    "category": "Blogging",
+    "icon": "FileText",
+    "color": "#00AB6C"
+  },
+  {
+    "name": "HackerNews",
+    "url": "https://news.ycombinator.com/user?id={}",
+    "category": "Forums",
+    "icon": "Terminal",
+    "color": "#FF6600"
+  },
+  {
+    "name": "Quora",
+    "url": "https://www.quora.com/profile/{}",
+    "category": "Forums",
+    "icon": "HelpCircle",
+    "color": "#B92B27"
+  },
+  {
+    "name": "Patreon",
+    "url": "https://www.patreon.com/{}",
+    "category": "Creator",
+    "icon": "CreditCard",
+    "color": "#FF424D"
+  },
+  {
+    "name": "Spotify",
+    "url": "https://open.spotify.com/user/{}",
+    "category": "Streaming",
+    "icon": "Music",
+    "color": "#1DB954"
+  },
+  {
+    "name": "Discord",
+    "url": "https://discord.com/users/{}",
+    "category": "Community",
+    "icon": "MessageCircle",
+    "color": "#5865F2"
+  },
+  {
+    "name": "Dev.to",
+    "url": "https://dev.to/{}",
+    "category": "Developer",
+    "icon": "Code",
+    "color": "#0A0A0A"
+  }
+]
