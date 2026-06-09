@@ -92,7 +92,7 @@ export default function SkillsOnboardingModal() {
         setOpen(val);
       }
     }}>
-      <DialogContent className="sm:max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-lg">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
             Welcome to Discuss AI TalentGraph
@@ -102,18 +102,18 @@ export default function SkillsOnboardingModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 my-4">
-          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto py-1">
+        <div className="space-y-5 my-5">
+          <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto py-2 px-1">
             {PREDEFINED_SKILLS.map((skill) => {
               const isSelected = selectedSkills.includes(skill);
               return (
                 <button
                   key={skill}
                   onClick={() => handleToggleSkill(skill)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                     isSelected
-                      ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                      : 'bg-transparent text-neutral-600 border-neutral-200 dark:text-neutral-400 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
+                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-md dark:bg-white dark:text-neutral-900 dark:border-white'
+                      : 'bg-transparent text-neutral-600 border-neutral-200 dark:text-neutral-400 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500'
                   }`}
                 >
                   {skill}
@@ -127,13 +127,13 @@ export default function SkillsOnboardingModal() {
               value={customSkill}
               onChange={(e) => setCustomSkill(e.target.value)}
               placeholder="Add a custom skill..."
-              className="bg-transparent border border-neutral-200 dark:border-neutral-800 focus:border-neutral-400 dark:focus:border-neutral-600 text-sm h-9"
+              className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white text-sm h-10 rounded-lg"
               maxLength={25}
             />
             <Button
               type="submit"
               variant="outline"
-              className="border-neutral-200 dark:border-neutral-800 h-9 px-4 text-xs font-semibold"
+              className="border-neutral-200 dark:border-neutral-700 h-10 px-5 text-xs font-bold rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
               Add
             </Button>
@@ -167,7 +167,7 @@ export default function SkillsOnboardingModal() {
           <Button
             onClick={handleSave}
             disabled={saving || selectedSkills.length === 0}
-            className="bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-md font-semibold text-xs py-2 px-4 shadow"
+            className="w-full sm:w-auto bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 rounded-lg font-bold text-sm py-2.5 px-6 shadow-lg transition-all"
           >
             {saving ? 'Saving...' : 'Save and Continue'}
           </Button>

@@ -1,7 +1,7 @@
 // Discuss AI helper service using public no-key endpoint with fallback
 
 export async function askPublicAI(prompt, format = 'json') {
-  const models = ['tinyllama', 'deepseek-r1:1.5b'];
+  const models = ['deepseek-r1:1.5b', 'tinyllama'];
   let lastError = null;
 
   for (const model of models) {
@@ -47,6 +47,53 @@ export async function askPublicAI(prompt, format = 'json') {
   throw lastError || new Error("AI service is currently busy. Please try again later.");
 }
 
+export async function askAI(prompt, format = 'json') {
+  const geminiKey = process.env.REACT_APP_GEMINI_API_KEY;
+  if (!geminiKey) {
+    console.warn("No Gemini API key found, falling back to public LLM (mlvoca).");
+    return askPublicAI(prompt, format);
+  }
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          responseMimeType: format === 'json' ? "application/json" : "text/plain"
+        }
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        console.warn("Gemini API limit reached. Falling back to public LLM.");
+      } else {
+        console.warn("Gemini API error. Falling back to public LLM.");
+      }
+      return askPublicAI(prompt, format);
+    }
+
+    const data = await response.json();
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    if (format === 'json') {
+      try {
+        const jsonText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        return JSON.parse(jsonText);
+      } catch (e) {
+        return askPublicAI(prompt, format);
+      }
+    }
+    return text;
+  } catch (err) {
+    console.warn("Gemini request failed, falling back to public LLM:", err.message);
+    return askPublicAI(prompt, format);
+  }
+}
+
 // 1. Prompt Builder for AI Profile Analyzer
 export async function analyzeUserProfile(bio = "", skills = [], posts = []) {
   const postSnippets = posts.slice(0, 10).map(p => `Title: ${p.title || ""}\nContent: ${p.content || ""}`).join("\n---\n");
@@ -67,7 +114,7 @@ Skills: ${skills.join(", ")}
 Recent Posts:
 ${postSnippets || "No posts yet."}`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 2. Prompt Builder for AI Skill Discovery (suggestions from posts/profile)
@@ -83,7 +130,7 @@ Bio: ${bio}
 Posts:
 ${postSnippets || "No posts yet."}`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 3. Prompt Builder for AI Developer Matchmaking
@@ -116,7 +163,7 @@ Skills: ${(currentUser.talentGraph?.skills || currentUser.skills || []).join(", 
 Other Users:
 ${JSON.stringify(otherUsersData)}`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 4. Prompt Builder for AI Team Builder
@@ -145,7 +192,7 @@ ${memorySection}
 Other Users:
 ${JSON.stringify(otherUsersData)}`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 5. Prompt Builder for AI Project Opportunity Feed
@@ -163,7 +210,7 @@ export async function generateOpportunityFeed(skills = [], bio = "") {
 ]
 Do not use emojis. Return ONLY JSON.`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 6. Prompt Builder for AI Founder & Hiring Assistant
@@ -189,7 +236,7 @@ Return ONLY JSON.
 Users:
 ${JSON.stringify(otherUsersData)}`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 7. Prompt Builder for Discuss AI Chat Integration
@@ -227,11 +274,11 @@ Instructions:
 }
 Return ONLY JSON.`;
 
-  return askPublicAI(prompt, 'json');
+  return askAI(prompt, 'json');
 }
 
 // 8. Generate Encouraging AI Message for empty matches
 export async function getEmptyMatchesMessage(skills = [], bio = "") {
   const prompt = `Write a short, encouraging message (max 3 sentences) in a modern, professional tone for a developer who currently has no collaborator matches on the platform. Suggest how they can update their profile or write new posts to increase visibility. User skills: ${skills.join(", ")}, Bio: "${bio}". Do not use emojis.`;
-  return askPublicAI(prompt, 'text');
+  return askAI(prompt, 'text');
 }
