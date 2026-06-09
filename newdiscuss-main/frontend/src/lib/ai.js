@@ -87,13 +87,16 @@ ${postSnippets || "No posts yet."}`;
 }
 
 // 3. Prompt Builder for AI Developer Matchmaking
-export async function matchCollaborators(currentUser, otherUsers) {
+export async function matchCollaborators(currentUser, otherUsers, pastMemory = []) {
   const otherUsersData = otherUsers.slice(0, 30).map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",
     skills: u.talentGraph?.skills || u.skills || []
   }));
+
+  const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
+  const memorySection = memoryText ? `\nPast Activity Memory:\n${memoryText}\n` : "";
 
   const prompt = `Identify top 5 developer collaborator matches for the current user from the list of other users. Return a JSON array of objects:
 [
@@ -104,7 +107,7 @@ export async function matchCollaborators(currentUser, otherUsers) {
   }
 ]
 Do not return users with no skills. Explain matches in a professional networking tone without using emojis. Return ONLY JSON.
-
+${memorySection}
 Current User:
 Username: ${currentUser.username}
 Bio: ${currentUser.talentGraph?.bio || currentUser.bio || ""}
@@ -117,13 +120,16 @@ ${JSON.stringify(otherUsersData)}`;
 }
 
 // 4. Prompt Builder for AI Team Builder
-export async function buildTeam(projectIdea, otherUsers) {
+export async function buildTeam(projectIdea, otherUsers, pastMemory = []) {
   const otherUsersData = otherUsers.slice(0, 30).map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",
     skills: u.talentGraph?.skills || u.skills || []
   }));
+
+  const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
+  const memorySection = memoryText ? `\nPast Team Building Context:\n${memoryText}\n` : "";
 
   const prompt = `You are an AI team builder. Suggest up to 4 developers from the user list who would be perfect for this project: "${projectIdea}". Return a JSON array of objects:
 [
@@ -135,7 +141,7 @@ export async function buildTeam(projectIdea, otherUsers) {
   }
 ]
 Recommend actual users from the list only. Return ONLY JSON.
-
+${memorySection}
 Other Users:
 ${JSON.stringify(otherUsersData)}`;
 
@@ -187,13 +193,16 @@ ${JSON.stringify(otherUsersData)}`;
 }
 
 // 7. Prompt Builder for Discuss AI Chat Integration
-export async function chatAssistant(message, currentUser, otherUsers) {
+export async function chatAssistant(message, currentUser, otherUsers, pastMemory = []) {
   const otherUsersData = otherUsers.slice(0, 40).map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",
     skills: u.talentGraph?.skills || u.skills || []
   }));
+
+  const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
+  const memorySection = memoryText ? `\nPast Interactions Memory:\n${memoryText}\n` : "";
 
   const prompt = `You are a personal networking, hiring, and collaboration assistant for the Discuss developer platform.
 Answer this user question: "${message}".
@@ -203,6 +212,8 @@ Current User: ${currentUser.username} (Skills: ${(currentUser.talentGraph?.skill
 
 Other Developers:
 ${JSON.stringify(otherUsersData)}
+
+${memorySection}
 
 Instructions:
 1. Provide a clear, helpful reply in plain text under the 'text' field.
@@ -217,4 +228,10 @@ Instructions:
 Return ONLY JSON.`;
 
   return askPublicAI(prompt, 'json');
+}
+
+// 8. Generate Encouraging AI Message for empty matches
+export async function getEmptyMatchesMessage(skills = [], bio = "") {
+  const prompt = `Write a short, encouraging message (max 3 sentences) in a modern, professional tone for a developer who currently has no collaborator matches on the platform. Suggest how they can update their profile or write new posts to increase visibility. User skills: ${skills.join(", ")}, Bio: "${bio}". Do not use emojis.`;
+  return askPublicAI(prompt, 'text');
 }

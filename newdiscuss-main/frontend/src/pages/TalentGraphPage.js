@@ -20,7 +20,8 @@ import {
   generateOpportunityFeed, 
   buildTeam, 
   hireDevelopers, 
-  chatAssistant 
+  chatAssistant,
+  getEmptyMatchesMessage
 } from '@/lib/ai';
 import { 
   Users, Briefcase, UserPlus, MessageSquare, Terminal, Eye,
@@ -72,6 +73,18 @@ export default function TalentGraphPage() {
   const [actionLogs, setActionLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
 
+  // Empty matches advice states
+  const [emptyMatchesMessage, setEmptyMatchesMessage] = useState('Select your skills and refresh to find matches.');
+  const [loadingEmptyMessage, setLoadingEmptyMessage] = useState(false);
+
+  const triggerLogAIAction = async (type, desc) => {
+    await logAIAction(user.id, type, desc);
+    try {
+      const logs = await getAIActions(user.id);
+      setActionLogs(logs);
+    } catch {}
+  };
+
   // Load Users and Current TalentGraph Data
   useEffect(() => {
     if (!user?.id) return;
@@ -92,6 +105,10 @@ export default function TalentGraphPage() {
           setMatches(tg.cachedMatches || []);
           setOpportunities(tg.cachedOpportunities || []);
         }
+
+        // Fetch logs
+        const logs = await getAIActions(user.id);
+        setActionLogs(logs);
       } catch (err) {
         console.error('Failed to load users:', err);
       } finally {
@@ -101,6 +118,20 @@ export default function TalentGraphPage() {
     
     loadInitialData();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (matches.length === 0 && userProfile) {
+      setLoadingEmptyMessage(true);
+      const skills = userProfile.talentGraph?.skills || [];
+      const bio = userProfile.talentGraph?.bio || userProfile.bio || '';
+      getEmptyMatchesMessage(skills, bio)
+        .then(msg => {
+          if (msg) setEmptyMatchesMessage(msg);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingEmptyMessage(false));
+    }
+  }, [matches, userProfile]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -131,11 +162,11 @@ export default function TalentGraphPage() {
     if (!userProfile) return;
     setLoadingMatches(true);
     try {
-      const result = await matchCollaborators(userProfile, otherUsers);
+      const result = await matchCollaborators(userProfile, otherUsers, actionLogs);
       if (result && result.length > 0) {
         setMatches(result);
         await saveAIMatches(user.id, result);
-        await logAIAction(user.id, 'matchmaking', `Refreshed collaborator matches. Found ${result.length} matches.`);
+        await triggerLogAIAction('matchmaking', `Refreshed collaborator matches. Found ${result.length} matches.`);
         toast.success('Matches updated');
       } else {
         toast.info('No matches found. Try updating your profile or skills.');
@@ -157,7 +188,7 @@ export default function TalentGraphPage() {
       if (result && result.length > 0) {
         setOpportunities(result);
         await saveOpportunityFeed(user.id, result);
-        await logAIAction(user.id, 'opportunity_feed', `Generated opportunity feed containing ${result.length} suggestions.`);
+        await triggerLogAIAction('opportunity_feed', `Generated opportunity feed containing ${result.length} suggestions.`);
         toast.success('Opportunity feed updated');
       }
     } catch (err) {
@@ -173,9 +204,9 @@ export default function TalentGraphPage() {
     if (!projectDesc.trim()) return;
     setBuildingTeam(true);
     try {
-      const result = await buildTeam(projectDesc, otherUsers);
+      const result = await buildTeam(projectDesc, otherUsers, actionLogs);
       setTeamRecommendations(result || []);
-      await logAIAction(user.id, 'team_builder', `Requested recommendations for project: ${projectName || 'Untitled'}`);
+      await triggerLogAIAction('team_builder', `Requested recommendations for project: ${projectName || 'Untitled'}`);
       toast.success('Contributors suggested');
     } catch (err) {
       toast.error('AI service is busy. Try again later.');
@@ -189,7 +220,7 @@ export default function TalentGraphPage() {
       const chat = await getOrCreateChat(user.id, targetUserId);
       const text = `Hello. I am building a project called "${projectName || 'Untitled'}": ${projectDesc}. Based on your profile, AI recommended you as a collaborator for the role of: ${role}. Let me know if you would like to collaborate!`;
       await sendMessage(chat.chatId, user.id, text);
-      await logAIAction(user.id, 'invite_sent', `Sent collaboration invitation to @${targetUsername} for ${projectName || 'Untitled'}`);
+      await triggerLogAIAction('invite_sent', `Sent collaboration invitation to @${targetUsername} for ${projectName || 'Untitled'}`);
       toast.success(`Invitation sent to @${targetUsername} in DMs`);
     } catch (err) {
       toast.error('Failed to send invitation');
@@ -204,7 +235,7 @@ export default function TalentGraphPage() {
     try {
       const result = await hireDevelopers(hiringReq, otherUsers);
       setHiringRecommendations(result || []);
-      await logAIAction(user.id, 'hiring_assistant', `Queried developers matching: ${hiringReq.slice(0, 40)}`);
+      await triggerLogAIAction('hiring_assistant', `Queried developers matching: ${hiringReq.slice(0, 40)}`);
       toast.success('Developer matches identified');
     } catch (err) {
       toast.error('AI service is busy. Try again later.');
@@ -218,7 +249,7 @@ export default function TalentGraphPage() {
       const chat = await getOrCreateChat(user.id, targetUserId);
       const text = `Hello. I noticed your profile on Discuss. I have a potential project/hiring opportunity that aligns with your skills: "${hiringReq}". Let me know if you are open to discussing this further!`;
       await sendMessage(chat.chatId, user.id, text);
-      await logAIAction(user.id, 'hiring_contact', `Contacted developer @${targetUsername} regarding: ${hiringReq.slice(0, 30)}...`);
+      await triggerLogAIAction('hiring_contact', `Contacted developer @${targetUsername} regarding: ${hiringReq.slice(0, 30)}...`);
       toast.success(`Message sent to @${targetUsername} in DMs`);
     } catch (err) {
       toast.error('Failed to contact developer');
@@ -236,14 +267,14 @@ export default function TalentGraphPage() {
     setChatLoading(true);
 
     try {
-      const result = await chatAssistant(userMsg, userProfile, otherUsers);
+      const result = await chatAssistant(userMsg, userProfile, otherUsers, actionLogs);
       if (result) {
         setChatMessages(prev => [...prev, {
           sender: 'assistant',
           text: result.text,
           matchedUsers: result.matchedUsers || []
         }]);
-        await logAIAction(user.id, 'chat_query', `Queried AI assistant: ${userMsg.slice(0, 30)}...`);
+        await triggerLogAIAction('chat_query', `Queried AI assistant: ${userMsg.slice(0, 30)}...`);
       }
     } catch (err) {
       setChatMessages(prev => [...prev, {
@@ -390,12 +421,21 @@ export default function TalentGraphPage() {
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
               </div>
             ) : matches.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl">
+              <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-6">
                 <Users className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">No Matches Found</h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto mb-4">
-                  Make sure you have completed the onboarding and added skills.
-                </p>
+                <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">Collaborator Recommendations</h3>
+                
+                {loadingEmptyMessage ? (
+                  <div className="flex items-center justify-center gap-1.5 py-4">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-600" />
+                    <span className="text-xs text-neutral-500">Generating network advice...</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-md mx-auto mb-4 leading-relaxed font-medium">
+                    {emptyMatchesMessage}
+                  </p>
+                )}
+                
                 <Button onClick={() => navigate('/profile')} variant="outline" className="border-neutral-200 text-xs rounded-md">
                   Update Skills
                 </Button>
