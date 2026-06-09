@@ -8,6 +8,13 @@ import L from 'leaflet';
 import { getPosts, getUser } from '@/lib/db';
 import { getUserPulses } from '@/lib/pulseDb';
 import { getEligibleDiscussionsCount, OFFICIAL_BADGES, BadgeIcon } from '@/components/Badges';
+import { getUserTalentGraph, updateUserSkills, saveAIInsights, logAIAction } from '@/lib/talentGraphDb';
+import { discoverUserSkills, analyzeUserProfile } from '@/lib/ai';
+
+const PREDEFINED_SKILLS = [
+  'React', 'Node.js', 'Python', 'Cybersecurity', 'Data Science',
+  'AI/ML', 'Firebase', 'Supabase', 'Flutter', 'DevOps', 'UI/UX', 'Cloud'
+];
 
 import {
   getUserProfile, 
@@ -606,6 +613,126 @@ export default function ProfilePage() {
   // Suggested friends
   const [suggestedFriends, setSuggestedFriends] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+
+  // TalentGraph states
+  const [skills, setSkills] = useState([]);
+  const [editingSkills, setEditingSkills] = useState(false);
+  const [selectedSkillsInput, setSelectedSkillsInput] = useState([]);
+  const [customSkillInput, setCustomSkillInput] = useState('');
+  const [savingSkills, setSavingSkills] = useState(false);
+
+  const [aiInsights, setAiInsights] = useState(null);
+  const [showAiInsights, setShowAiInsights] = useState(false);
+  const [analyzingProfile, setAnalyzingProfile] = useState(false);
+
+  const [suggestedSkills, setSuggestedSkills] = useState([]);
+  const [discoveringSkills, setDiscoveringSkills] = useState(false);
+
+  // Fetch skills and insights from database
+  useEffect(() => {
+    if (user?.id) {
+      getUserTalentGraph(user.id).then(tg => {
+        if (tg) {
+          setSkills(tg.skills || []);
+          setAiInsights(tg.aiInsights || null);
+        }
+      }).catch(console.error);
+    }
+  }, [user?.id]);
+
+  const handleSaveSkills = async () => {
+    if (selectedSkillsInput.length === 0) {
+      toast.error('Please select or enter at least one skill.');
+      return;
+    }
+    setSavingSkills(true);
+    try {
+      await updateUserSkills(user.id, selectedSkillsInput);
+      setSkills(selectedSkillsInput);
+      setEditingSkills(false);
+      await logAIAction(user.id, 'skills_update', `Updated skills manually: ${selectedSkillsInput.join(', ')}`);
+      toast.success('Skills updated');
+    } catch (err) {
+      toast.error('Failed to update skills');
+    } finally {
+      setSavingSkills(false);
+    }
+  };
+
+  const handleAddCustomSkillInProfile = () => {
+    const skill = customSkillInput.trim();
+    if (!skill) return;
+    if (selectedSkillsInput.some(s => s.toLowerCase() === skill.toLowerCase())) {
+      toast.error('Skill already selected');
+      return;
+    }
+    if (selectedSkillsInput.length >= 6) {
+      toast.error('Maximum of 6 skills allowed');
+      return;
+    }
+    setSelectedSkillsInput(prev => [...prev, skill]);
+    setCustomSkillInput('');
+  };
+
+  const handleDiscoverSkills = async () => {
+    setDiscoveringSkills(true);
+    try {
+      const bio = profileData?.bio || '';
+      const result = await discoverUserSkills(bio, userPosts);
+      if (result && result.suggestedSkills && result.suggestedSkills.length > 0) {
+        const filtered = result.suggestedSkills.filter(s => !skills.some(cs => cs.toLowerCase() === s.toLowerCase()));
+        if (filtered.length === 0) {
+          toast.info('No new skills discovered based on your profile.');
+        } else {
+          setSuggestedSkills(filtered);
+          toast.success('AI suggested skills based on your posts');
+        }
+      } else {
+        toast.info('No skills detected from your posts.');
+      }
+    } catch (err) {
+      toast.error('AI is currently busy. Try again later.');
+    } finally {
+      setDiscoveringSkills(false);
+    }
+  };
+
+  const handleAddSuggestedSkill = async (skill) => {
+    if (skills.length >= 6) {
+      toast.error('Maximum of 6 skills allowed.');
+      return;
+    }
+    const updated = [...skills, skill];
+    try {
+      await updateUserSkills(user.id, updated);
+      setSkills(updated);
+      setSuggestedSkills(prev => prev.filter(s => s !== skill));
+      await logAIAction(user.id, 'skill_discovered', `Added AI discovered skill: ${skill}`);
+      toast.success(`Added ${skill}`);
+    } catch (err) {
+      toast.error('Failed to add skill');
+    }
+  };
+
+  const handleAnalyzeProfile = async () => {
+    setAnalyzingProfile(true);
+    try {
+      const bio = profileData?.bio || '';
+      const result = await analyzeUserProfile(bio, skills, userPosts);
+      if (result) {
+        await saveAIInsights(user.id, result);
+        setAiInsights(result);
+        await logAIAction(user.id, 'profile_analysis', 'Regenerated profile AI Insights');
+        toast.success('AI Insights generated');
+      } else {
+        toast.error('Failed to generate insights');
+      }
+    } catch (err) {
+      toast.error('AI is currently busy. Try again later.');
+    } finally {
+      setAnalyzingProfile(false);
+    }
+  };
 
   // Fetch user posts and pulses
   const [userPulses, setUserPulses] = useState([]);
@@ -1701,6 +1828,132 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
+                {/* Skills Section */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                      Skills
+                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max 6 skills)</span>
+                    </label>
+                    {!editingSkills && skills.length > 0 && (
+                      <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput(skills); }}
+                        className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors cursor-pointer">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {editingSkills ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {PREDEFINED_SKILLS.map(s => {
+                          const isSel = selectedSkillsInput.includes(s);
+                          return (
+                            <button key={s} type="button" onClick={() => {
+                              if (isSel) {
+                                setSelectedSkillsInput(prev => prev.filter(x => x !== s));
+                              } else {
+                                if (selectedSkillsInput.length >= 6) {
+                                  toast.error('Maximum of 6 skills allowed');
+                                  return;
+                                }
+                                setSelectedSkillsInput(prev => [...prev, s]);
+                              }
+                            }}
+                            className={`px-2 py-1 rounded text-xs font-medium border cursor-pointer ${isSel ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900' : 'bg-transparent text-neutral-600 border-neutral-200 dark:text-neutral-400 dark:border-neutral-800'}`}>
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={customSkillInput} 
+                          onChange={(e) => setCustomSkillInput(e.target.value)}
+                          placeholder="Custom skill"
+                          className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm h-8"
+                          maxLength={20}
+                        />
+                        <Button onClick={handleAddCustomSkillInProfile} size="sm" variant="outline" className="h-8 text-xs border-[#E2E8F0] cursor-pointer">Add</Button>
+                      </div>
+                      
+                      {selectedSkillsInput.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {selectedSkillsInput.map(s => (
+                            <span key={s} className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs">
+                              {s}
+                              <button type="button" onClick={() => setSelectedSkillsInput(prev => prev.filter(x => x !== s))} className="text-red-500 font-bold ml-1 cursor-pointer">&times;</button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 justify-end pt-2">
+                        <Button onClick={handleSaveSkills} disabled={savingSkills} size="sm" className="bg-[#2563EB] discuss:bg-[#EF4444] text-white cursor-pointer">
+                          Save
+                        </Button>
+                        <Button onClick={() => setEditingSkills(false)} size="sm" variant="outline" className="border-[#E2E8F0] cursor-pointer">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : skills.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pl-6">
+                      {skills.map(s => (
+                        <span key={s} className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-xs font-semibold">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput([]); }}
+                      className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium cursor-pointer">
+                      <Plus className="w-4 h-4" /> <span>Add skills</span>
+                    </button>
+                  )}
+
+                  {/* AI Skill Discovery Sub-widget */}
+                  {!editingSkills && (
+                    <div className="mt-4 pt-3 border-t border-neutral-200/50 dark:border-neutral-800/50 pl-6">
+                      {suggestedSkills.length > 0 ? (
+                        <div className="space-y-2 bg-blue-50/30 dark:bg-blue-950/10 p-2.5 rounded-lg border border-blue-200/40 dark:border-blue-900/40">
+                          <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                            AI noticed you work with:
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {suggestedSkills.map(s => (
+                              <button key={s} onClick={() => handleAddSuggestedSkill(s)}
+                                className="bg-white dark:bg-neutral-850 hover:bg-neutral-100 text-[#2563EB] dark:text-[#60A5FA] px-2 py-0.5 rounded text-xs border border-blue-200 dark:border-blue-900 font-semibold transition-colors cursor-pointer">
+                                + {s}
+                              </button>
+                            ))}
+                          </div>
+                          <button onClick={() => setSuggestedSkills([])} className="text-[10px] text-neutral-400 hover:text-neutral-600 block mt-1 cursor-pointer">Dismiss suggestions</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={handleDiscoverSkills}
+                          disabled={discoveringSkills}
+                          className="text-xs text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          {discoveringSkills ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span>Discovering skills...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB] discuss:text-[#EF4444]" />
+                              <span>Scan profile for technical skills (AI)</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Display Theme Selector */}
                 <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
                   <div className="flex items-center justify-between mb-3">
@@ -2559,6 +2812,141 @@ export default function ProfilePage() {
           )}
         </div>
         {/* ==================== END FRIENDS SECTION ==================== */}
+
+        {/* ==================== AI INSIGHTS SECTION ==================== */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowAiInsights(!showAiInsights)}
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
+                <ShieldCheck className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">AI TalentGraph Insights</h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                  {aiInsights ? 'Analysis complete' : 'No insights generated yet'}
+                </p>
+              </div>
+            </div>
+            {showAiInsights ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+          </button>
+
+          {showAiInsights && (
+            <div className="mt-4 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl p-5 space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                <div className="text-left">
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Profile Insights</h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-generated understanding of your profile and posts</p>
+                </div>
+                <Button
+                  onClick={handleAnalyzeProfile}
+                  disabled={analyzingProfile}
+                  size="sm"
+                  className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-xs py-1.5 px-3 rounded-md border border-neutral-200 dark:border-neutral-800 cursor-pointer"
+                >
+                  {analyzingProfile ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    'Regenerate'
+                  )}
+                </Button>
+              </div>
+
+              {aiInsights ? (
+                <div className="space-y-4 text-sm text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Main Skills</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {(aiInsights.mainSkills || []).map(s => (
+                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Secondary Skills</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {(aiInsights.secondarySkills || []).map(s => (
+                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Areas of Interest</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {(aiInsights.areasOfInterest || []).map(s => (
+                        <span key={s} className="bg-white dark:bg-neutral-850 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded text-xs border border-rose-200 dark:border-rose-900">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Project Categories</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {(aiInsights.projectCategories || []).map(c => (
+                        <span key={c} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Collaboration Preferences</h4>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-medium">
+                      {aiInsights.collaborationPreferences}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Growth Opportunities</h4>
+                    <ul className="list-disc list-inside space-y-1 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                      {(aiInsights.growthOpportunities || []).map((o, idx) => (
+                        <li key={idx} className="leading-relaxed">{o}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 text-right font-medium">
+                    Last analyzed: {aiInsights.updatedAt ? new Date(aiInsights.updatedAt).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 font-medium">Analyze your profile bio and posts to extract key technical domains, roles, and growth areas.</p>
+                  <Button
+                    onClick={handleAnalyzeProfile}
+                    disabled={analyzingProfile}
+                    className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-xs py-2 px-4 rounded-md border border-neutral-200 cursor-pointer"
+                  >
+                    {analyzingProfile ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      'Analyze Profile'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ==================== GLOBAL USER LOGOUT ==================== */}
         <div className="mt-6">

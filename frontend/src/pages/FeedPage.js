@@ -350,6 +350,26 @@ export default function FeedPage() {
             {/* Signal Stories Row */}
             {user && <SignalStoriesRow />}
 
+            {/* Discuss AI TalentGraph Discovery Banner */}
+            <div className="mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-sm text-left relative overflow-hidden">
+              <div className="absolute top-3 right-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-250 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px] font-bold">
+                New Feature
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="h-2 w-2 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] animate-ping" />
+                <h2 className="text-sm font-bold text-neutral-900 dark:text-white">Discuss AI TalentGraph</h2>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 max-w-lg leading-relaxed font-medium">
+                Connect with collaborator matches, recommend developers, build startup teams, and search the Discuss network using our new network AI assistant.
+              </p>
+              <Button
+                onClick={() => navigate('/talentgraph')}
+                className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold py-1.5 px-4 rounded border border-neutral-355 dark:border-neutral-700 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-all shadow-sm"
+              >
+                Explore TalentGraph
+              </Button>
+            </div>
+
             {/* Tabs */}
             <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
               <button

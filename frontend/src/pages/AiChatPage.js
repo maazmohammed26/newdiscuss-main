@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { chatWithAI } from '@/lib/nvidiaApi';
+import { getUserTalentGraph, getAIActions } from '@/lib/talentGraphDb';
+import { getAllUsers } from '@/lib/db';
 import { 
   Bot, 
   Send, 
@@ -41,6 +43,29 @@ export default function AiChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+
+  const [talentGraphData, setTalentGraphData] = useState(null);
+  const [allOtherUsers, setAllOtherUsers] = useState([]);
+  const [memoryLogs, setMemoryLogs] = useState([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchContext = async () => {
+      try {
+        const [tg, users, logs] = await Promise.all([
+          getUserTalentGraph(user.id),
+          getAllUsers(),
+          getAIActions(user.id)
+        ]);
+        setTalentGraphData(tg);
+        setAllOtherUsers(users.filter(u => u.id !== user.id));
+        setMemoryLogs(logs);
+      } catch (e) {
+        console.error('Failed to load TalentGraph context for AI assistant', e);
+      }
+    };
+    fetchContext();
+  }, [user?.id]);
   
   // Delete Dialog
   const [chatToDelete, setChatToDelete] = useState(null);
@@ -163,15 +188,41 @@ export default function AiChatPage() {
     setIsTyping(true);
 
     try {
+      const tgBio = talentGraphData?.bio || user?.bio || "No bio set";
+      const tgSkills = (talentGraphData?.skills || []).join(", ") || "No skills set";
+      const candidateListText = JSON.stringify(allOtherUsers.slice(0, 30).map(u => ({
+        id: u.id,
+        username: u.username,
+        bio: u.talentGraph?.bio || u.bio || "",
+        skills: u.talentGraph?.skills || u.skills || []
+      })));
+      const memoryText = memoryLogs.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n") || "No activity logs yet.";
+
       const discussContext = {
         role: "system",
         content: `You are Discuss AI, an intelligent assistant built into the Discuss platform. 
 Information about Discuss:
 - Founder & Creator: Mohammed Maaz A.
 - Platform: Discuss is a social platform for developers, programmers, and tech enthusiasts to connect, share code, and discuss ideas.
-- Key Features: DevRadar, AI Chat, Post Safety Scoring, Groups, Code Snippets, Real-time messaging.
+- Key Features: DevRadar, AI Chat, Post Safety Scoring, Groups, Code Snippets, Real-time messaging, and Discuss AI TalentGraph.
 - Policies: Users must be respectful, no hate speech, spam, or toxicity allowed (monitored by the Discuss AI algorithm).
-When answering, be helpful, concise, and acknowledge that you are part of the Discuss platform built by Mohammed Maaz A if asked.`
+
+TalentGraph Context for Current User (@${user?.username || 'user'}):
+- Bio: ${tgBio}
+- Skills: ${tgSkills}
+
+Other developers on the platform:
+${candidateListText}
+
+User's past TalentGraph activities (memory logs):
+${memoryText}
+
+Instructions:
+1. Provide a clear, helpful reply.
+2. Acknowledge that you are part of the Discuss platform built by Mohammed Maaz A if asked.
+3. If asked to find developers (e.g. 'who knows React?', 'suggest backend developers'), match relevant developers from the Other Developers list above.
+4. If asked about user's past actions or memory, check the past activity logs.
+5. Do NOT use emojis or icons in your response. Keep a professional developer-to-developer tone.`
       };
 
       const messagesForApi = [discussContext, ...newMessages.map(m => ({ role: m.role, content: m.content }))];
@@ -329,9 +380,20 @@ When answering, be helpful, concise, and acknowledge that you are part of the Di
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-neutral-900 dark:text-white discuss:text-white mb-2">How can I help you today?</h2>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    Ask me to write code, debug issues, explain concepts, or summarize any post. Powered by <span className="font-bold text-[#8B5CF6]">Google Gemini</span>.
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed mb-4">
+                    Ask me to write code, debug issues, explain concepts, or summarize posts. I am also connected to your <span className="font-bold text-[#8B5CF6]">TalentGraph</span>: ask me to match developers, suggest co-founders, or recall past activity memory.
                   </p>
+                  <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-sm mx-auto">
+                    <button type="button" onClick={() => sendMessage("Recommend collaborator matches based on my skills")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 discuss:border-white/5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
+                      👥 Matches
+                    </button>
+                    <button type="button" onClick={() => sendMessage("Help me build a team for a Python AI project")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 discuss:border-white/5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
+                      🚀 Team Builder
+                    </button>
+                    <button type="button" onClick={() => sendMessage("What was my last action recorded in my memory?")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 discuss:border-white/5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
+                      🧠 Recall Memory
+                    </button>
+                  </div>
                 </div>
                 <p className="text-xs text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-3 py-1.5 rounded-full font-medium">
                   ⚠️ AI can make mistakes — always double-check

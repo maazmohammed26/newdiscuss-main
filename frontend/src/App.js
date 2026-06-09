@@ -39,6 +39,8 @@ const EditorPage            = lazy(() => import('@/pages/EditorPage'));
 const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
 const AiChatPage            = lazy(() => import('@/pages/AiChatPage'));
 const DiscussSherlockPage   = lazy(() => import('@/pages/DiscussSherlockPage'));
+const TalentGraphPage       = lazy(() => import('@/pages/TalentGraphPage'));
+import SkillsOnboardingModal from '@/components/SkillsOnboardingModal';
 
 // Public static pages
 const AboutPage   = lazy(() => import('@/pages/AboutPage'));
@@ -171,6 +173,7 @@ function AppRoutes() {
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
         <Route path="/ai-assistant"            element={<ProtectedRoute><AiChatPage /></ProtectedRoute>} />
+        <Route path="/talentgraph"             element={<ProtectedRoute><TalentGraphPage /></ProtectedRoute>} />
         <Route path="/sherlock"                element={<ProtectedRoute><DiscussSherlockPage /></ProtectedRoute>} />
 
         {/* Fallback */}
@@ -254,6 +257,7 @@ function OnboardingWrapper({ children }) {
         {children}
       </div>
       <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
+      {user && <SkillsOnboardingModal />}
       {showNavbar && <div className="lg:hidden"><FloatingNavbar /></div>}
     </>
   );

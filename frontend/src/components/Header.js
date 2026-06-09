@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 import UserAvatar from '@/components/UserAvatar';
-import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark, HelpCircle, ChevronDown, Sparkles } from 'lucide-react';
+import { Cpu, ShieldAlert, ShieldCheck, Menu, X, ChevronRight, Newspaper, Briefcase, Code, Bookmark, HelpCircle, ChevronDown, Sparkles, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -296,6 +296,29 @@ export default function Header() {
                         </h4>
                         <p className="text-[10px] text-neutral-400 font-medium font-sans">
                           Your smart assistant
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* TalentGraph */}
+                  <button
+                    onClick={() => {
+                      setShowDrawer(false);
+                      navigate('/talentgraph');
+                    }}
+                    className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 text-left transition-all duration-200 group active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500 group-hover:scale-110 transition-transform">
+                        <Users className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[13.5px] text-neutral-800 dark:text-neutral-100 discuss:text-neutral-100 font-mono">
+                          TalentGraph
+                        </h4>
+                        <p className="text-[10px] text-neutral-400 font-medium font-sans">
+                          Developer matches & teams
                         </p>
                       </div>
                     </div>

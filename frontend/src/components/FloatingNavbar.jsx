@@ -174,7 +174,7 @@ export default function FloatingNavbar() {
     { key: 'chats', to: '/chat', active: currentPath.startsWith('/chat'), icon: MessageCircle, label: 'Chats' },
     { key: 'add', action: handleOpenCreateModal, active: false, icon: Plus, label: 'Add Post' },
     { key: 'ai', to: '/ai-assistant', active: currentPath === '/ai-assistant', icon: Sparkles, label: 'Discuss AI' },
-    { key: 'explore', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs', '/editor', '/bookmarks'].includes(currentPath), icon: MoreHorizontal, label: 'More' },
+    { key: 'explore', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs', '/editor', '/bookmarks', '/talentgraph'].includes(currentPath), icon: MoreHorizontal, label: 'More' },
     { key: 'profile', to: '/profile', active: currentPath === '/profile', label: 'Profile' },
   ];
 

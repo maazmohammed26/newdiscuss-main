@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { Radar, Newspaper, Briefcase, ChevronRight, Code, Bookmark, Search } from 'lucide-react';
+import { Radar, Newspaper, Briefcase, ChevronRight, Code, Bookmark, Search, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
@@ -30,6 +30,19 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
       hoverBorder: 'hover:border-blue-500/30 dark:hover:border-blue-500/20',
       hoverBg: 'hover:bg-blue-500/[0.04] dark:hover:bg-blue-500/[0.06]',
       badge: 'MAP_NODE'
+    },
+    {
+      title: 'AI TalentGraph',
+      description: 'Find collaborator matches, opportunities, and build teams',
+      icon: Users,
+      path: '/talentgraph',
+      requiresAuth: true,
+      color: 'text-rose-500 dark:text-rose-400',
+      bg: 'bg-rose-500/10 dark:bg-rose-500/15',
+      glow: 'group-hover:shadow-[0_0_15px_rgba(244,63,94,0.25)]',
+      hoverBorder: 'hover:border-rose-500/30 dark:hover:border-rose-500/20',
+      hoverBg: 'hover:bg-rose-500/[0.04] dark:hover:bg-rose-500/[0.06]',
+      badge: 'MATCHMAKING'
     },
     {
       title: 'Tech News',
