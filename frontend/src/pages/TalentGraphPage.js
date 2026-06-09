@@ -28,6 +28,7 @@ import {
   ArrowLeft, Search, Loader2, Send, ChevronRight, UserCheck, RefreshCw, Layers
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 
 export default function TalentGraphPage() {
   const { user } = useAuth();
@@ -37,6 +38,15 @@ export default function TalentGraphPage() {
   const [loading, setLoading] = useState(false);
   const [otherUsers, setOtherUsers] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(
+    () => localStorage.getItem('discuss_ai_model') || 'gemini'
+  );
+
+  const handleModelChange = (e) => {
+    const val = e.target.value;
+    setSelectedModel(val);
+    localStorage.setItem('discuss_ai_model', val);
+  };
 
   // 1. Matchmaking States
   const [matches, setMatches] = useState([]);
@@ -319,6 +329,21 @@ export default function TalentGraphPage() {
             <p className="text-neutral-500 dark:text-neutral-400 text-sm">
               Discover opportunities, collaborators, founders, and build developer teams.
             </p>
+          </div>
+          
+          {/* Model Selector UI */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">AI Model:</span>
+            <select
+              value={selectedModel}
+              onChange={handleModelChange}
+              className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-white text-xs font-semibold rounded-md py-1.5 px-3 outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-all shadow-sm cursor-pointer"
+            >
+              <option value="gemini">Gemini (Default)</option>
+              <option value="poolside">Poolside Laguna M.1 (OpenRouter)</option>
+              <option value="deepseek">DeepSeek R1 (MLVoca)</option>
+              <option value="tinyllama">TinyLlama (MLVoca)</option>
+            </select>
           </div>
         </div>
 
@@ -875,12 +900,18 @@ export default function TalentGraphPage() {
                 const isUser = msg.sender === 'user';
                 return (
                   <div key={idx} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} space-y-1.5`}>
-                    <div className={`max-w-[80%] rounded-lg p-3 text-xs leading-relaxed border ${
+                    <div className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed border overflow-x-auto ${
                       isUser
                         ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
                         : 'bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200'
                     }`}>
-                      <p className="whitespace-pre-wrap font-medium">{msg.text}</p>
+                      {isUser ? (
+                        <p className="whitespace-pre-wrap font-medium">{msg.text}</p>
+                      ) : (
+                        <div className="markdown-content font-medium space-y-2 [&_p]:mb-2 [&_pre]:bg-neutral-800 dark:[&_pre]:bg-neutral-950 [&_pre]:text-neutral-100 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:font-mono [&_code]:bg-neutral-200/50 dark:[&_code]:bg-neutral-800/50 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-2 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_a]:text-blue-500 [&_a]:underline">
+                          <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        </div>
+                      )}
                     </div>
 
                     {/* If AI matched developers, render them as outlined cards below the message bubbles */}

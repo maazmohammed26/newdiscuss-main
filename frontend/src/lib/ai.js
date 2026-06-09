@@ -1,7 +1,7 @@
 // Discuss AI helper service using public no-key endpoint with fallback
 
-export async function askPublicAI(prompt, format = 'json') {
-  const models = ['deepseek-r1:1.5b', 'tinyllama'];
+export async function askPublicAI(prompt, format = 'json', overrideModel = null) {
+  const models = overrideModel ? [overrideModel] : ['deepseek-r1:1.5b', 'tinyllama'];
   let lastError = null;
 
   for (const model of models) {
@@ -47,7 +47,60 @@ export async function askPublicAI(prompt, format = 'json') {
   throw lastError || new Error("AI service is currently busy. Please try again later.");
 }
 
+export async function askPoolside(prompt, format = 'json') {
+  const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY;
+  if (!apiKey) {
+    console.warn("No OpenRouter API key found. Falling back to public LLM.");
+    return askPublicAI(prompt, format);
+  }
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "poolside/laguna-m.1:free",
+        messages: [{ role: "user", content: prompt }],
+        stream: false
+      })
+    });
+    
+    if (!response.ok) throw new Error("OpenRouter request failed");
+    
+    const data = await response.json();
+    let text = data.choices?.[0]?.message?.content || "";
+    
+    // Remove reasoning tags if any
+    text = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    if (format === 'json') {
+      try {
+        const jsonText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        return JSON.parse(jsonText);
+      } catch (e) {
+        return askPublicAI(prompt, format);
+      }
+    }
+    return text;
+  } catch (err) {
+    console.warn("Poolside request failed, falling back to public LLM:", err.message);
+    return askPublicAI(prompt, format);
+  }
+}
+
 export async function askAI(prompt, format = 'json') {
+  const selectedModel = typeof window !== 'undefined' ? localStorage.getItem('discuss_ai_model') || 'gemini' : 'gemini';
+
+  if (selectedModel === 'poolside') {
+    return askPoolside(prompt, format);
+  } else if (selectedModel === 'deepseek') {
+    return askPublicAI(prompt, format, 'deepseek-r1:1.5b');
+  } else if (selectedModel === 'tinyllama') {
+    return askPublicAI(prompt, format, 'tinyllama');
+  }
+
   const geminiKey = process.env.REACT_APP_GEMINI_API_KEY;
   if (!geminiKey) {
     console.warn("No Gemini API key found, falling back to public LLM (mlvoca).");
