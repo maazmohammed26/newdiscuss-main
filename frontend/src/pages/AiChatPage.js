@@ -236,11 +236,14 @@ Instructions:
       updateConversationInState(convId, updatedMessages);
     } catch (error) {
       console.error('Error in chatWithAI:', error);
-      let errMsg = 'Sorry, I encountered an error connecting to the Google Gemini network. Please try again.';
+      let errMsg = 'Sorry, I encountered an error connecting to the AI network. Please try again.';
       if (error.message.includes('429') || error.message.includes('RATE_LIMIT')) {
         errMsg = 'Discuss Server is facing heavy traffic right now. Please try again later or select a different AI model.';
       }
       if (error.message.includes('403')) errMsg = 'Access forbidden to this AI model. Please check your API key.';
+      if (selectedModel.includes('deepseek') || selectedModel.includes('tinyllama')) {
+        errMsg = 'The free MLVoca public API is currently overloaded (502 Bad Gateway). Please switch back to Gemini or Poolside.';
+      }
       
       const errorMessage = { role: 'assistant', content: errMsg, isError: true };
       const updatedMessages = [...newMessages, errorMessage];

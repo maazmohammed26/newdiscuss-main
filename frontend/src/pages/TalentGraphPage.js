@@ -803,7 +803,21 @@ export default function TalentGraphPage() {
               </form>
             </div>
 
-            {hiringRecommendations.length > 0 && (
+            {loadingHiring && (
+              <div className="py-12 flex flex-col items-center justify-center space-y-5">
+                <div className="relative flex items-center justify-center w-20 h-20">
+                  <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-[#8B5CF6] animate-spin"></div>
+                  <div className="absolute inset-2 rounded-full border-l-2 border-r-2 border-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                  <Search className="w-8 h-8 text-neutral-400 dark:text-neutral-500 animate-pulse" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-bold text-neutral-900 dark:text-white">AI is scanning the TalentGraph...</p>
+                  <p className="text-xs text-neutral-500 max-w-xs mx-auto">Matching your skills, analyzing activity logs, and finding the perfect developer fit.</p>
+                </div>
+              </div>
+            )}
+
+            {!loadingHiring && hiringRecommendations.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Identified Developer Candidates</h3>
                 <div className="space-y-3">

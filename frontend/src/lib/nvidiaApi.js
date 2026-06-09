@@ -35,7 +35,9 @@ export async function chatWithAI(messages, model = "gemini-1.5-flash") {
         body: JSON.stringify({
           model: "poolside/laguna-m.1:free",
           messages: messages.map(m => ({ role: m.role, content: m.content })),
-          stream: false
+          stream: false,
+          max_tokens: 800,
+          temperature: 0.2
         })
       });
       if (!response.ok) throw new Error("OpenRouter request failed");
