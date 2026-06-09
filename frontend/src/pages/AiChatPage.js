@@ -440,17 +440,26 @@ Instructions:
           {/* Input Area — always sticks to bottom */}
           <div className="shrink-0 px-3 py-3 bg-white dark:bg-neutral-900 discuss:bg-[#0c0c12] border-t border-neutral-200 dark:border-neutral-800 discuss:border-white/5">
             <div className="max-w-3xl mx-auto mb-2 flex justify-between items-center px-1">
-              <span className="text-[10px] text-neutral-400 font-medium">Powered by Google Gemini</span>
+              <span className="text-[10px] text-neutral-400 font-medium">Powered by AI Models</span>
               <select 
                 value={selectedModel} 
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 rounded-lg px-2 py-1 outline-none border-none cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-                <option value="gemini-3-flash">Gemini 3 Flash</option>
-                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                <optgroup label="Gemini (Fast)">
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                  <option value="gemini-3-flash">Gemini 3 Flash</option>
+                  <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                  <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                </optgroup>
+                <optgroup label="Poolside (Coding Agent)">
+                  <option value="poolside-laguna">Laguna M.1 (OpenRouter)</option>
+                </optgroup>
+                <optgroup label="Public API (Free)">
+                  <option value="deepseek-r1:1.5b">DeepSeek R1</option>
+                  <option value="tinyllama">TinyLlama</option>
+                </optgroup>
               </select>
             </div>
             <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex items-center gap-2">

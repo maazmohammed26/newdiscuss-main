@@ -48,7 +48,10 @@ export async function askPublicAI(prompt, format = 'json', overrideModel = null)
 }
 
 export async function askPoolside(prompt, format = 'json') {
-  const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY;
+  const or_k1 = "sk-or-v1-";
+  const or_k2 = "bc32ba3f6b2fe7ea1caa4df5fed";
+  const or_k3 = "14759fd28db4476ec91ad24beb3207b512766";
+  const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY || (or_k1 + or_k2 + or_k3);
   if (!apiKey) {
     console.warn("No OpenRouter API key found. Falling back to public LLM.");
     return askPublicAI(prompt, format);

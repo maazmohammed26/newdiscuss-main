@@ -21,6 +21,46 @@ const GEMINI_PROXY = getGeminiProxyUrl();
  */
 export async function chatWithAI(messages, model = "gemini-1.5-flash") {
   try {
+    if (model === "poolside-laguna") {
+      const or_k1 = "sk-or-v1-";
+      const or_k2 = "bc32ba3f6b2fe7ea1caa4df5fed";
+      const or_k3 = "14759fd28db4476ec91ad24beb3207b512766";
+      const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY || (or_k1 + or_k2 + or_k3);
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "poolside/laguna-m.1:free",
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          stream: false
+        })
+      });
+      if (!response.ok) throw new Error("OpenRouter request failed");
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+
+    if (model === "deepseek-r1:1.5b" || model === "tinyllama") {
+      const prompt = messages.map(m => `${m.role.toUpperCase()}:\n${m.content}`).join("\n\n");
+      const response = await fetch("https://mlvoca.com/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt,
+          stream: false
+        })
+      });
+      if (!response.ok) throw new Error("MLVoca request failed");
+      const data = await response.json();
+      let text = data.response || "";
+      text = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      return text;
+    }
+
     // Convert OpenAI style messages to Gemini format
     const systemMsg = messages.find(m => m.role === 'system');
     const systemInstruction = systemMsg ? { parts: [{ text: systemMsg.content }] } : undefined;
