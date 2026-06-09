@@ -21,6 +21,7 @@ const ChatConversationPage = lazy(() => import('@/pages/ChatConversationPage'));
 const GroupConversationPage = lazy(() => import('@/pages/GroupConversationPage'));
 const GroupInfoPage = lazy(() => import('@/pages/GroupInfoPage'));
 const JoinRequestsPage = lazy(() => import('@/pages/JoinRequestsPage'));
+const TalentGraphPage = lazy(() => import('@/pages/TalentGraphPage'));
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -95,6 +96,7 @@ function AppRoutes() {
           <Route path="/group/:groupId" element={<ProtectedRoute><GroupConversationPage /></ProtectedRoute>} />
           <Route path="/group/:groupId/info" element={<ProtectedRoute><GroupInfoPage /></ProtectedRoute>} />
           <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage /></ProtectedRoute>} />
+          <Route path="/talentgraph" element={<ProtectedRoute><TalentGraphPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

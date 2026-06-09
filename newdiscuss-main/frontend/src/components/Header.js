@@ -7,6 +7,7 @@ import { subscribeToAdminMessage, markAdminMessageSeen } from '@/lib/adminMessag
 import { subscribeToCommentBadges } from '@/lib/commentsDb';
 import DiscussLogo from '@/components/DiscussLogo';
 import UserAvatar from '@/components/UserAvatar';
+import SkillsOnboardingModal from '@/components/SkillsOnboardingModal';
 import { Button } from '@/components/ui/button';
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -81,6 +82,15 @@ export default function Header() {
                   className="text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] rounded-[6px] px-3 sm:px-4 text-[13px] font-medium"
                 >
                   Feed
+                </Button>
+              </Link>
+              <Link to="/talentgraph">
+                <Button 
+                  variant="ghost" 
+                  data-testid="header-talentgraph-btn" 
+                  className="text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] rounded-[6px] px-3 sm:px-4 text-[13px] font-medium"
+                >
+                  TalentGraph
                 </Button>
               </Link>
               
@@ -181,6 +191,7 @@ export default function Header() {
           ) : null}
         </nav>
       </div>
+      {user && <SkillsOnboardingModal />}
     </header>
   );
 }
