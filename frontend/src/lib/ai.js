@@ -94,61 +94,90 @@ export async function askPoolside(prompt, format = 'json') {
 }
 
 export async function askAI(prompt, format = 'json') {
-  const selectedModel = typeof window !== 'undefined' ? localStorage.getItem('discuss_ai_model') || 'gemini' : 'gemini';
-
-  if (selectedModel === 'poolside') {
-    return askPoolside(prompt, format);
-  } else if (selectedModel === 'deepseek') {
-    return askPublicAI(prompt, format, 'deepseek-r1:1.5b');
-  } else if (selectedModel === 'tinyllama') {
-    return askPublicAI(prompt, format, 'tinyllama');
-  }
-
-  const geminiKey = process.env.REACT_APP_GEMINI_API_KEY;
-  if (!geminiKey) {
-    console.warn("No Gemini API key found, falling back to public LLM (mlvoca).");
-    return askPublicAI(prompt, format);
-  }
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: format === 'json' ? "application/json" : "text/plain"
-        }
-      })
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.warn("Gemini API limit reached. Falling back to public LLM.");
-      } else {
-        console.warn("Gemini API error. Falling back to public LLM.");
-      }
-      return askPublicAI(prompt, format);
-    }
-
-    const data = await response.json();
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    
-    if (format === 'json') {
-      try {
-        const jsonText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-        return JSON.parse(jsonText);
-      } catch (e) {
-        return askPublicAI(prompt, format);
-      }
-    }
-    return text;
-  } catch (err) {
-    console.warn("Gemini request failed, falling back to public LLM:", err.message);
-    return askPublicAI(prompt, format);
-  }
+  // Lock all TalentGraph and auxiliary AI calls to Poolside M.1 (branded as Discuss Mars AI model)
+  return askPoolside(prompt, format);
 }
+
+// ==================== LOCAL MATCHING ALGORITHMS ====================
+
+// Local skills dictionary for keyword extraction
+const KNOWN_SKILLS = [
+  'react', 'node.js', 'node', 'python', 'cybersecurity', 'data science',
+  'ai/ml', 'ai', 'ml', 'firebase', 'supabase', 'flutter', 'devops', 'ui/ux', 'cloud',
+  'javascript', 'typescript', 'vue', 'angular', 'svelte', 'react native', 'express',
+  'django', 'flask', 'fastapi', 'java', 'spring', 'go', 'golang', 'rust', 'c++',
+  'c#', 'dotnet', 'sql', 'mysql', 'postgresql', 'mongodb', 'aws', 'docker',
+  'kubernetes', 'html', 'css', 'swift', 'kotlin', 'figma', 'design', 'ui', 'ux',
+  'solidity', 'web3', 'machine learning', 'pytorch', 'tensorflow', 'nlp', 'security'
+];
+
+/**
+ * Extract skills and technical terms from text
+ */
+function extractKeywords(text) {
+  if (!text) return [];
+  const cleanText = text.toLowerCase();
+  const found = [];
+  for (const skill of KNOWN_SKILLS) {
+    const escapedSkill = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\b${escapedSkill}\\b`, 'i');
+    if (regex.test(cleanText) || cleanText.includes(skill)) {
+      found.push(skill);
+    }
+  }
+  return Array.from(new Set(found));
+}
+
+/**
+ * Compute local match score (0-100) using Jaccard Similarity + Complementary bonus
+ */
+function calculateLocalMatchScore(userA, userB) {
+  const skillsA = (userA?.talentGraph?.skills || userA?.skills || []).map(s => s.toLowerCase());
+  const skillsB = (userB?.talentGraph?.skills || userB?.skills || []).map(s => s.toLowerCase());
+  
+  if (skillsA.length === 0 || skillsB.length === 0) return 0;
+
+  const setA = new Set(skillsA);
+  const setB = new Set(skillsB);
+
+  let intersection = 0;
+  for (const s of setA) {
+    if (setB.has(s)) intersection++;
+  }
+
+  const unionSize = setA.size + setB.size - intersection;
+  const jaccard = unionSize > 0 ? (intersection / unionSize) * 100 : 0;
+
+  // Complementary skills bonus (Frontend <-> Backend matchmaking)
+  const hasFrontend = (set) => [...set].some(s => s.includes('react') || s.includes('vue') || s.includes('frontend') || s.includes('css') || s.includes('html') || s.includes('ui') || s.includes('design') || s.includes('flutter') || s.includes('web'));
+  const hasBackend = (set) => [...set].some(s => s.includes('node') || s.includes('python') || s.includes('backend') || s.includes('database') || s.includes('sql') || s.includes('firebase') || s.includes('api') || s.includes('java') || s.includes('go') || s.includes('rust') || s.includes('supabase'));
+
+  let complementaryBonus = 0;
+  if ((hasFrontend(setA) && hasBackend(setB)) || (hasBackend(setA) && hasFrontend(setB))) {
+    complementaryBonus = 15;
+  }
+
+  return Math.min(100, Math.round(jaccard + complementaryBonus));
+}
+
+/**
+ * Score a user profile's skills against extracted query keywords
+ */
+function scoreUserAgainstQuery(user, queryKeywords) {
+  if (queryKeywords.length === 0) return 0;
+  const userSkills = (user?.talentGraph?.skills || user?.skills || []).map(s => s.toLowerCase());
+  if (userSkills.length === 0) return 0;
+
+  let matchCount = 0;
+  for (const kw of queryKeywords) {
+    if (userSkills.some(s => s.includes(kw) || kw.includes(s))) {
+      matchCount++;
+    }
+  }
+  return Math.round((matchCount / queryKeywords.length) * 100);
+}
+
+// ==================== EXPORTED ASSISTANT FUNCTIONS ====================
 
 // 1. Prompt Builder for AI Profile Analyzer
 export async function analyzeUserProfile(bio = "", skills = [], posts = []) {
@@ -191,7 +220,17 @@ ${postSnippets || "No posts yet."}`;
 
 // 3. Prompt Builder for AI Developer Matchmaking
 export async function matchCollaborators(currentUser, otherUsers, pastMemory = []) {
-  const otherUsersData = otherUsers.slice(0, 30).map(u => ({
+  // Pre-rank other developers locally using skills compatibility
+  const rankedCandidates = otherUsers
+    .map(u => ({
+      user: u,
+      score: calculateLocalMatchScore(currentUser, u)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12)
+    .map(item => item.user);
+
+  const otherUsersData = rankedCandidates.map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",
@@ -216,7 +255,7 @@ Username: ${currentUser.username}
 Bio: ${currentUser.talentGraph?.bio || currentUser.bio || ""}
 Skills: ${(currentUser.talentGraph?.skills || currentUser.skills || []).join(", ")}
 
-Other Users:
+Other Users (pre-sorted by skill similarity score):
 ${JSON.stringify(otherUsersData)}`;
 
   return askAI(prompt, 'json');
@@ -224,7 +263,18 @@ ${JSON.stringify(otherUsersData)}`;
 
 // 4. Prompt Builder for AI Team Builder
 export async function buildTeam(projectIdea, otherUsers, pastMemory = []) {
-  const otherUsersData = otherUsers.slice(0, 30).map(u => ({
+  // Pre-filter developers locally based on skills matching project requirements
+  const queryKeywords = extractKeywords(projectIdea);
+  const rankedCandidates = otherUsers
+    .map(u => ({
+      user: u,
+      score: scoreUserAgainstQuery(u, queryKeywords)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12)
+    .map(item => item.user);
+
+  const otherUsersData = rankedCandidates.map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",
@@ -271,7 +321,18 @@ Do not use emojis. Return ONLY JSON.`;
 
 // 6. Prompt Builder for AI Founder & Hiring Assistant
 export async function hireDevelopers(requirement, otherUsers) {
-  const otherUsersData = otherUsers.slice(0, 30).map(u => ({
+  // Pre-filter developers locally based on skills matching hiring requirement
+  const queryKeywords = extractKeywords(requirement);
+  const rankedCandidates = otherUsers
+    .map(u => ({
+      user: u,
+      score: scoreUserAgainstQuery(u, queryKeywords)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12)
+    .map(item => item.user);
+
+  const otherUsersData = rankedCandidates.map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",
@@ -297,7 +358,22 @@ ${JSON.stringify(otherUsersData)}`;
 
 // 7. Prompt Builder for Discuss AI Chat Integration
 export async function chatAssistant(message, currentUser, otherUsers, pastMemory = []) {
-  const otherUsersData = otherUsers.slice(0, 40).map(u => ({
+  // Pre-filter candidate list locally for conversational speed
+  const queryKeywords = extractKeywords(message);
+  const rankedCandidates = otherUsers
+    .map(u => {
+      const searchScore = scoreUserAgainstQuery(u, queryKeywords);
+      const collabScore = calculateLocalMatchScore(currentUser, u);
+      return {
+        user: u,
+        score: searchScore > 0 ? searchScore * 2 : collabScore
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 15)
+    .map(item => item.user);
+
+  const otherUsersData = rankedCandidates.map(u => ({
     id: u.id,
     username: u.username,
     bio: u.talentGraph?.bio || u.bio || "",

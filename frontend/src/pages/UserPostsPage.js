@@ -132,11 +132,14 @@ export default function UserPostsPage() {
 
   const initials = (userData?.username || 'U').slice(0, 2).toUpperCase();
 
+  // Retrieve bio from multiple database sources (secondary profile, primary user, or talentGraph)
+  const userBio = profileData?.bio || userData?.bio || userData?.talentGraph?.bio || '';
+
   // Check if bio needs truncation
-  const bioNeedsTruncation = profileData?.bio && profileData.bio.length > BIO_TRUNCATE_LENGTH;
+  const bioNeedsTruncation = userBio && userBio.length > BIO_TRUNCATE_LENGTH;
   const displayBio = bioNeedsTruncation && !bioExpanded 
-    ? profileData.bio.slice(0, BIO_TRUNCATE_LENGTH) + '...'
-    : profileData?.bio;
+    ? userBio.slice(0, BIO_TRUNCATE_LENGTH) + '...'
+    : userBio;
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
@@ -264,7 +267,7 @@ export default function UserPostsPage() {
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6275AF]" />
                   <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile...</span>
                 </div>
-              ) : profileData?.bio && currentUser && (
+              ) : userBio && currentUser && (
                 <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] no-copy">
                   <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[13px] leading-relaxed whitespace-pre-wrap">
                     {displayBio}

@@ -13,7 +13,10 @@ import {
   saveAIMatches, 
   saveOpportunityFeed, 
   logAIAction, 
-  getAIActions 
+  getAIActions,
+  saveTeamRecommendations,
+  saveHiringRecommendations,
+  updateGeneratingState
 } from '@/lib/talentGraphDb';
 import { 
   matchCollaborators, 
@@ -30,6 +33,13 @@ import {
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 
+const formatTime = (sec) => {
+  if (isNaN(sec) || sec <= 0) return '0:00';
+  const mins = Math.floor(sec / 60);
+  const secs = sec % 60;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
 export default function TalentGraphPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -38,36 +48,39 @@ export default function TalentGraphPage() {
   const [loading, setLoading] = useState(false);
   const [otherUsers, setOtherUsers] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
-  const [selectedModel, setSelectedModel] = useState(
-    () => localStorage.getItem('discuss_ai_model') || 'gemini'
-  );
 
-  const handleModelChange = (e) => {
-    const val = e.target.value;
-    setSelectedModel(val);
-    localStorage.setItem('discuss_ai_model', val);
-  };
-
-  // 1. Matchmaking States
+  // 1. Matches Generation States
   const [matches, setMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [matchesGeneratingUntil, setMatchesGeneratingUntil] = useState(null);
 
   // 2. Opportunity Feed States
   const [opportunities, setOpportunities] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(false);
+  const [opportunitiesGeneratingUntil, setOpportunitiesGeneratingUntil] = useState(null);
 
   // 3. Team Builder States
   const [projectName, setProjectName] = useState('');
   const [projectDesc, setProjectDesc] = useState('');
   const [teamRecommendations, setTeamRecommendations] = useState([]);
   const [buildingTeam, setBuildingTeam] = useState(false);
+  const [teamGeneratingUntil, setTeamGeneratingUntil] = useState(null);
 
   // 4. Hiring Assistant States
   const [hiringReq, setHiringReq] = useState('');
   const [hiringRecommendations, setHiringRecommendations] = useState([]);
   const [loadingHiring, setLoadingHiring] = useState(false);
+  const [hiringGeneratingUntil, setHiringGeneratingUntil] = useState(null);
 
-  // 5. Chat States
+  // 5. Time Remaining countdown states
+  const [timeRemaining, setTimeRemaining] = useState({
+    matches: 0,
+    opportunities: 0,
+    team: 0,
+    hiring: 0
+  });
+
+  // 6. Chat States
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
     {
@@ -79,7 +92,7 @@ export default function TalentGraphPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  // 6. Action Log States
+  // 7. Action Log States
   const [actionLogs, setActionLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
 
@@ -95,10 +108,67 @@ export default function TalentGraphPage() {
     } catch {}
   };
 
+  // Helper to load latest talent graph data (clears loading if time is up)
+  const loadLatestTalentGraphData = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const tg = await getUserTalentGraph(user.id);
+      if (tg) {
+        const now = Date.now();
+        const matchesUntil = tg.matchesGeneratingUntil || null;
+        const oppsUntil = tg.opportunitiesGeneratingUntil || null;
+        const teamUntil = tg.teamGeneratingUntil || null;
+        const hiringUntil = tg.hiringGeneratingUntil || null;
+
+        setMatchesGeneratingUntil(matchesUntil);
+        setOpportunitiesGeneratingUntil(oppsUntil);
+        setTeamGeneratingUntil(teamUntil);
+        setHiringGeneratingUntil(hiringUntil);
+
+        if (!matchesUntil || new Date(matchesUntil).getTime() <= now) {
+          setMatches(tg.cachedMatches || []);
+          setLoadingMatches(false);
+        } else {
+          setLoadingMatches(true);
+        }
+
+        if (!oppsUntil || new Date(oppsUntil).getTime() <= now) {
+          setOpportunities(tg.cachedOpportunities || []);
+          setLoadingFeed(false);
+        } else {
+          setLoadingFeed(true);
+        }
+
+        if (!teamUntil || new Date(teamUntil).getTime() <= now) {
+          setTeamRecommendations(tg.cachedTeam || []);
+          setBuildingTeam(false);
+        } else {
+          setBuildingTeam(true);
+        }
+
+        if (!hiringUntil || new Date(hiringUntil).getTime() <= now) {
+          setHiringRecommendations(tg.cachedHiring || []);
+          setLoadingHiring(false);
+        } else {
+          setLoadingHiring(true);
+        }
+
+        setProjectName(tg.teamProjectName || '');
+        setProjectDesc(tg.teamProjectDesc || '');
+        setHiringReq(tg.hiringReq || '');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [user?.id]);
+
   // Load Users and Current TalentGraph Data
   useEffect(() => {
     if (!user?.id) return;
     
+    // Lock model to poolside in localStorage
+    localStorage.setItem('discuss_ai_model', 'poolside');
+
     const loadInitialData = async () => {
       setLoading(true);
       try {
@@ -109,11 +179,51 @@ export default function TalentGraphPage() {
         const selfProfile = users.find(u => u.id === user.id);
         setUserProfile(selfProfile);
 
-        // Load Cached Data
+        // Load Cached Data and Generating states
         const tg = await getUserTalentGraph(user.id);
         if (tg) {
-          setMatches(tg.cachedMatches || []);
-          setOpportunities(tg.cachedOpportunities || []);
+          const now = Date.now();
+          const matchesUntil = tg.matchesGeneratingUntil || null;
+          const oppsUntil = tg.opportunitiesGeneratingUntil || null;
+          const teamUntil = tg.teamGeneratingUntil || null;
+          const hiringUntil = tg.hiringGeneratingUntil || null;
+
+          setMatchesGeneratingUntil(matchesUntil);
+          setOpportunitiesGeneratingUntil(oppsUntil);
+          setTeamGeneratingUntil(teamUntil);
+          setHiringGeneratingUntil(hiringUntil);
+
+          if (!matchesUntil || new Date(matchesUntil).getTime() <= now) {
+            setMatches(tg.cachedMatches || []);
+            setLoadingMatches(false);
+          } else {
+            setLoadingMatches(true);
+          }
+
+          if (!oppsUntil || new Date(oppsUntil).getTime() <= now) {
+            setOpportunities(tg.cachedOpportunities || []);
+            setLoadingFeed(false);
+          } else {
+            setLoadingFeed(true);
+          }
+
+          if (!teamUntil || new Date(teamUntil).getTime() <= now) {
+            setTeamRecommendations(tg.cachedTeam || []);
+            setBuildingTeam(false);
+          } else {
+            setBuildingTeam(true);
+          }
+
+          if (!hiringUntil || new Date(hiringUntil).getTime() <= now) {
+            setHiringRecommendations(tg.cachedHiring || []);
+            setLoadingHiring(false);
+          } else {
+            setLoadingHiring(true);
+          }
+
+          setProjectName(tg.teamProjectName || '');
+          setProjectDesc(tg.teamProjectDesc || '');
+          setHiringReq(tg.hiringReq || '');
         }
 
         // Fetch logs
@@ -129,8 +239,51 @@ export default function TalentGraphPage() {
     loadInitialData();
   }, [user?.id]);
 
+  // Countdown timer tick effect
   useEffect(() => {
-    if (matches.length === 0 && userProfile) {
+    let active = true;
+    const interval = setInterval(() => {
+      if (!active) return;
+      const now = Date.now();
+      const remaining = { matches: 0, opportunities: 0, team: 0, hiring: 0 };
+      let hasFinished = false;
+
+      if (matchesGeneratingUntil) {
+        const diff = Math.max(0, Math.round((new Date(matchesGeneratingUntil).getTime() - now) / 1000));
+        remaining.matches = diff;
+        if (diff === 0) hasFinished = true;
+      }
+      if (opportunitiesGeneratingUntil) {
+        const diff = Math.max(0, Math.round((new Date(opportunitiesGeneratingUntil).getTime() - now) / 1000));
+        remaining.opportunities = diff;
+        if (diff === 0) hasFinished = true;
+      }
+      if (teamGeneratingUntil) {
+        const diff = Math.max(0, Math.round((new Date(teamGeneratingUntil).getTime() - now) / 1000));
+        remaining.team = diff;
+        if (diff === 0) hasFinished = true;
+      }
+      if (hiringGeneratingUntil) {
+        const diff = Math.max(0, Math.round((new Date(hiringGeneratingUntil).getTime() - now) / 1000));
+        remaining.hiring = diff;
+        if (diff === 0) hasFinished = true;
+      }
+
+      setTimeRemaining(remaining);
+
+      if (hasFinished) {
+        loadLatestTalentGraphData();
+      }
+    }, 1000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [matchesGeneratingUntil, opportunitiesGeneratingUntil, teamGeneratingUntil, hiringGeneratingUntil, loadLatestTalentGraphData]);
+
+  useEffect(() => {
+    if (matches.length === 0 && userProfile && !loadingMatches) {
       setLoadingEmptyMessage(true);
       const skills = userProfile.talentGraph?.skills || [];
       const bio = userProfile.talentGraph?.bio || userProfile.bio || '';
@@ -141,7 +294,7 @@ export default function TalentGraphPage() {
         .catch(() => {})
         .finally(() => setLoadingEmptyMessage(false));
     }
-  }, [matches, userProfile]);
+  }, [matches, userProfile, loadingMatches]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -172,38 +325,59 @@ export default function TalentGraphPage() {
     if (!userProfile) return;
     setLoadingMatches(true);
     try {
+      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes (120 seconds) simulated compilation
+      setMatchesGeneratingUntil(completionTime);
+      await updateGeneratingState(user.id, 'matchesGeneratingUntil', completionTime);
+      await triggerLogAIAction('matchmaking', `Initiated Mars AI collaborator matching query...`);
+      
       const result = await matchCollaborators(userProfile, otherUsers, actionLogs);
+      
       if (result && result.length > 0) {
-        setMatches(result);
-        await saveAIMatches(user.id, result);
+        await saveAIMatches(user.id, result, completionTime);
         await triggerLogAIAction('matchmaking', `Refreshed collaborator matches. Found ${result.length} matches.`);
-        toast.success('Matches updated');
+        toast.info('Mars AI is compiling matches. Check back in 2 minutes!');
       } else {
+        await updateGeneratingState(user.id, 'matchesGeneratingUntil', null);
+        setMatchesGeneratingUntil(null);
+        setLoadingMatches(false);
         toast.info('No matches found. Try updating your profile or skills.');
       }
     } catch (err) {
       toast.error('AI service is busy. Try again later.');
-    } finally {
+      await updateGeneratingState(user.id, 'matchesGeneratingUntil', null);
+      setMatchesGeneratingUntil(null);
       setLoadingMatches(false);
     }
   };
 
   // 2. Opportunities Generation
   const handleRefreshOpportunities = async () => {
+    if (!userProfile) return;
     setLoadingFeed(true);
     try {
+      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes simulated compilation
+      setOpportunitiesGeneratingUntil(completionTime);
+      await updateGeneratingState(user.id, 'opportunitiesGeneratingUntil', completionTime);
+      await triggerLogAIAction('opportunity_feed', `Initiated Mars AI project opportunity feed query...`);
+
       const skills = userProfile?.talentGraph?.skills || [];
       const bio = userProfile?.talentGraph?.bio || userProfile?.bio || '';
       const result = await generateOpportunityFeed(skills, bio);
+      
       if (result && result.length > 0) {
-        setOpportunities(result);
-        await saveOpportunityFeed(user.id, result);
+        await saveOpportunityFeed(user.id, result, completionTime);
         await triggerLogAIAction('opportunity_feed', `Generated opportunity feed containing ${result.length} suggestions.`);
-        toast.success('Opportunity feed updated');
+        toast.info('Mars AI is compiling opportunities. Check back in 2 minutes!');
+      } else {
+        await updateGeneratingState(user.id, 'opportunitiesGeneratingUntil', null);
+        setOpportunitiesGeneratingUntil(null);
+        setLoadingFeed(false);
+        toast.info('No opportunities generated.');
       }
     } catch (err) {
       toast.error('AI service is busy. Try again later.');
-    } finally {
+      await updateGeneratingState(user.id, 'opportunitiesGeneratingUntil', null);
+      setOpportunitiesGeneratingUntil(null);
       setLoadingFeed(false);
     }
   };
@@ -214,13 +388,20 @@ export default function TalentGraphPage() {
     if (!projectDesc.trim()) return;
     setBuildingTeam(true);
     try {
+      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes simulated compilation
+      setTeamGeneratingUntil(completionTime);
+      await updateGeneratingState(user.id, 'teamGeneratingUntil', completionTime);
+      await triggerLogAIAction('team_builder', `Initiated Mars AI team builder query for project: ${projectName || 'Untitled'}`);
+
       const result = await buildTeam(projectDesc, otherUsers, actionLogs);
-      setTeamRecommendations(result || []);
+      
+      await saveTeamRecommendations(user.id, projectName, projectDesc, result || [], completionTime);
       await triggerLogAIAction('team_builder', `Requested recommendations for project: ${projectName || 'Untitled'}`);
-      toast.success('Contributors suggested');
+      toast.info('Mars AI is building your team structures. Check back in 2 minutes!');
     } catch (err) {
       toast.error('AI service is busy. Try again later.');
-    } finally {
+      await updateGeneratingState(user.id, 'teamGeneratingUntil', null);
+      setTeamGeneratingUntil(null);
       setBuildingTeam(false);
     }
   };
@@ -243,13 +424,20 @@ export default function TalentGraphPage() {
     if (!hiringReq.trim()) return;
     setLoadingHiring(true);
     try {
+      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes simulated compilation
+      setHiringGeneratingUntil(completionTime);
+      await updateGeneratingState(user.id, 'hiringGeneratingUntil', completionTime);
+      await triggerLogAIAction('hiring_assistant', `Initiated Mars AI developer search matching: ${hiringReq.slice(0, 40)}`);
+
       const result = await hireDevelopers(hiringReq, otherUsers);
-      setHiringRecommendations(result || []);
+      
+      await saveHiringRecommendations(user.id, hiringReq, result || [], completionTime);
       await triggerLogAIAction('hiring_assistant', `Queried developers matching: ${hiringReq.slice(0, 40)}`);
-      toast.success('Developer matches identified');
+      toast.info('Mars AI is analyzing candidates. Check back in 2 minutes!');
     } catch (err) {
       toast.error('AI service is busy. Try again later.');
-    } finally {
+      await updateGeneratingState(user.id, 'hiringGeneratingUntil', null);
+      setHiringGeneratingUntil(null);
       setLoadingHiring(false);
     }
   };
@@ -331,19 +519,10 @@ export default function TalentGraphPage() {
             </p>
           </div>
           
-          {/* Model Selector UI */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">AI Model:</span>
-            <select
-              value={selectedModel}
-              onChange={handleModelChange}
-              className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-white text-xs font-semibold rounded-md py-1.5 px-3 outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-all shadow-sm cursor-pointer"
-            >
-              <option value="gemini">Gemini (Default)</option>
-              <option value="poolside">Poolside Laguna M.1 (OpenRouter)</option>
-              <option value="deepseek">DeepSeek R1 (MLVoca)</option>
-              <option value="tinyllama">TinyLlama (MLVoca)</option>
-            </select>
+          {/* Rebranded Model Status UI */}
+          <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold bg-white dark:bg-neutral-850 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-750 shadow-sm select-none">
+            <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></span>
+            Discuss Mars AI model Active
           </div>
         </div>
 
@@ -441,7 +620,24 @@ export default function TalentGraphPage() {
               </Button>
             </div>
 
-            {loadingMatches ? (
+            {loadingMatches && timeRemaining.matches > 0 ? (
+              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
+                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-[#8B5CF6] border-r-[#8B5CF6] animate-spin"></div>
+                  <div className="text-xl font-extrabold text-[#8B5CF6]">{formatTime(timeRemaining.matches)}</div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Compiling Matches</h3>
+                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
+                    Analyzing complementary skillsets, Jaccard similarities, and platform logs to construct optimal collaborator recommendations.
+                  </p>
+                  <p className="text-[11px] text-[#8B5CF6] font-semibold bg-[#8B5CF6]/10 py-1.5 px-3 rounded-full inline-block">
+                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
+                  </p>
+                </div>
+              </div>
+            ) : loadingMatches ? (
               <div className="py-20 flex justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
               </div>
@@ -495,7 +691,7 @@ export default function TalentGraphPage() {
                               {details?.verified && <VerifiedBadge size="sm" />}
                             </h3>
                             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 max-w-md line-clamp-1">
-                              {details?.bio || 'No bio provided.'}
+                              {details?.talentGraph?.bio || details?.bio || 'No bio provided.'}
                             </p>
                           </div>
                         </div>
@@ -578,7 +774,24 @@ export default function TalentGraphPage() {
               </Button>
             </div>
 
-            {loadingFeed ? (
+            {loadingFeed && timeRemaining.opportunities > 0 ? (
+              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
+                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-[#3B82F6] border-r-[#3B82F6] animate-spin"></div>
+                  <div className="text-xl font-extrabold text-[#3B82F6]">{formatTime(timeRemaining.opportunities)}</div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Generating Opportunities</h3>
+                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
+                    Scanning current business ideas, open source codebases, and startup scopes matching your developer profile.
+                  </p>
+                  <p className="text-[11px] text-[#3B82F6] font-semibold bg-[#3B82F6]/10 py-1.5 px-3 rounded-full inline-block">
+                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
+                  </p>
+                </div>
+              </div>
+            ) : loadingFeed ? (
               <div className="py-20 flex justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
               </div>
@@ -683,7 +896,28 @@ export default function TalentGraphPage() {
               </form>
             </div>
 
-            {teamRecommendations.length > 0 && (
+            {buildingTeam && timeRemaining.team > 0 ? (
+              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
+                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
+                  <div className="text-xl font-extrabold text-emerald-500">{formatTime(timeRemaining.team)}</div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Building Your Team</h3>
+                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
+                    Evaluating candidates for proposed roles, checking matching profiles, and computing structural alignments.
+                  </p>
+                  <p className="text-[11px] text-emerald-500 font-semibold bg-emerald-500/10 py-1.5 px-3 rounded-full inline-block">
+                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
+                  </p>
+                </div>
+              </div>
+            ) : buildingTeam ? (
+              <div className="py-20 flex justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
+              </div>
+            ) : !buildingTeam && teamRecommendations.length > 0 ? (
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Suggested Teammates</h3>
                 <div className="space-y-3">
@@ -759,7 +993,7 @@ export default function TalentGraphPage() {
                   })}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -803,7 +1037,24 @@ export default function TalentGraphPage() {
               </form>
             </div>
 
-            {loadingHiring && (
+            {loadingHiring && timeRemaining.hiring > 0 ? (
+              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
+                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-amber-500 border-r-amber-500 animate-spin"></div>
+                  <div className="text-xl font-extrabold text-amber-500">{formatTime(timeRemaining.hiring)}</div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Querying Candidates</h3>
+                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
+                    Filtering skills, screening bios, and scoring applicant matches against your requirement specs.
+                  </p>
+                  <p className="text-[11px] text-amber-500 font-semibold bg-amber-500/10 py-1.5 px-3 rounded-full inline-block">
+                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
+                  </p>
+                </div>
+              </div>
+            ) : loadingHiring ? (
               <div className="py-12 flex flex-col items-center justify-center space-y-5">
                 <div className="relative flex items-center justify-center w-20 h-20">
                   <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-[#8B5CF6] animate-spin"></div>
@@ -815,9 +1066,7 @@ export default function TalentGraphPage() {
                   <p className="text-xs text-neutral-500 max-w-xs mx-auto">Matching your skills, analyzing activity logs, and finding the perfect developer fit.</p>
                 </div>
               </div>
-            )}
-
-            {!loadingHiring && hiringRecommendations.length > 0 && (
+            ) : !loadingHiring && hiringRecommendations.length > 0 ? (
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Identified Developer Candidates</h3>
                 <div className="space-y-3">
@@ -894,7 +1143,7 @@ export default function TalentGraphPage() {
                   })}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         )}
 

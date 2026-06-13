@@ -185,6 +185,10 @@ export default function LoginBridgePage() {
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-emerald-800 text-xs font-semibold leading-relaxed shadow-sm">
                 🎉 Authentication successful. You can now close this browser tab and return to the app.
               </div>
+              
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-indigo-800 text-xs font-semibold leading-relaxed shadow-sm text-left">
+                ℹ️ Note: Your AI TalentGraph profile and skills onboarding can only be completed inside the native app.
+              </div>
             </div>
           )}
 

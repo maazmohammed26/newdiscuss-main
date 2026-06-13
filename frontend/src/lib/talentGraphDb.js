@@ -63,13 +63,17 @@ export const saveAIInsights = async (userId, insights) => {
 /**
  * Save AI Developer Matches
  */
-export const saveAIMatches = async (userId, matches) => {
+export const saveAIMatches = async (userId, matches, generatingUntil) => {
   try {
     const userRef = ref(database, `users/${userId}/talentGraph`);
-    await update(userRef, {
+    const updates = {
       cachedMatches: matches || [],
       matchesUpdatedAt: new Date().toISOString()
-    });
+    };
+    if (generatingUntil !== undefined) {
+      updates.matchesGeneratingUntil = generatingUntil;
+    }
+    await update(userRef, updates);
   } catch (error) {
     console.error('Error saving AI matches:', error);
   }
@@ -78,15 +82,74 @@ export const saveAIMatches = async (userId, matches) => {
 /**
  * Save AI Opportunity Feed
  */
-export const saveOpportunityFeed = async (userId, feed) => {
+export const saveOpportunityFeed = async (userId, feed, generatingUntil) => {
+  try {
+    const userRef = ref(database, `users/${userId}/talentGraph`);
+    const updates = {
+      cachedOpportunities: feed || [],
+      opportunitiesUpdatedAt: new Date().toISOString()
+    };
+    if (generatingUntil !== undefined) {
+      updates.opportunitiesGeneratingUntil = generatingUntil;
+    }
+    await update(userRef, updates);
+  } catch (error) {
+    console.error('Error saving opportunity feed:', error);
+  }
+};
+
+/**
+ * Save AI Team Recommendations
+ */
+export const saveTeamRecommendations = async (userId, projectName, projectDesc, recommendations, generatingUntil) => {
+  try {
+    const userRef = ref(database, `users/${userId}/talentGraph`);
+    const updates = {
+      cachedTeam: recommendations || [],
+      teamProjectName: projectName || '',
+      teamProjectDesc: projectDesc || '',
+      teamRecommendationsUpdatedAt: new Date().toISOString()
+    };
+    if (generatingUntil !== undefined) {
+      updates.teamGeneratingUntil = generatingUntil;
+    }
+    await update(userRef, updates);
+  } catch (error) {
+    console.error('Error saving team recommendations:', error);
+  }
+};
+
+/**
+ * Save AI Hiring Recommendations
+ */
+export const saveHiringRecommendations = async (userId, hiringReq, recommendations, generatingUntil) => {
+  try {
+    const userRef = ref(database, `users/${userId}/talentGraph`);
+    const updates = {
+      cachedHiring: recommendations || [],
+      hiringReq: hiringReq || '',
+      hiringRecommendationsUpdatedAt: new Date().toISOString()
+    };
+    if (generatingUntil !== undefined) {
+      updates.hiringGeneratingUntil = generatingUntil;
+    }
+    await update(userRef, updates);
+  } catch (error) {
+    console.error('Error saving hiring recommendations:', error);
+  }
+};
+
+/**
+ * Update Generating Status for a specific TalentGraph feature
+ */
+export const updateGeneratingState = async (userId, key, generatingUntil) => {
   try {
     const userRef = ref(database, `users/${userId}/talentGraph`);
     await update(userRef, {
-      cachedOpportunities: feed || [],
-      opportunitiesUpdatedAt: new Date().toISOString()
+      [key]: generatingUntil
     });
   } catch (error) {
-    console.error('Error saving opportunity feed:', error);
+    console.error(`Error updating generating state for ${key}:`, error);
   }
 };
 

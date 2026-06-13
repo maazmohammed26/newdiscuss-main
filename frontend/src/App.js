@@ -257,7 +257,7 @@ function OnboardingWrapper({ children }) {
         {children}
       </div>
       <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
-      {user && <SkillsOnboardingModal />}
+      {user && location.pathname !== '/login-bridge' && <SkillsOnboardingModal />}
       {showNavbar && <div className="lg:hidden"><FloatingNavbar /></div>}
     </>
   );
