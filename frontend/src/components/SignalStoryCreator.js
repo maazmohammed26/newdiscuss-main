@@ -92,7 +92,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
     >
       <div
-        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-neutral-900 discuss:bg-[#1a1a1a] rounded-t-[20px] sm:rounded-[20px] shadow-2xl overflow-y-auto [&::-webkit-scrollbar]:hidden"
+        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-neutral-900 discuss:bg-[#1a1a1a] rounded-t-[20px] sm:rounded-[20px] shadow-2xl overflow-y-auto [&::-webkit-scrollbar]:hidden pb-28 sm:pb-0"
         style={{ minHeight: '420px', maxHeight: '90vh', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
         onClick={(e) => e.stopPropagation()}
       >
