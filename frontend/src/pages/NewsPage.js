@@ -215,6 +215,69 @@ export default function NewsPage() {
     }
   }, [location, navigate]);
 
+  // SEO & GEO Optimization for News Feed
+  useEffect(() => {
+    document.title = "Tech News & Articles | Discuss Platforms";
+    
+    const updateOrCreateMeta = (nameOrProperty, content, isProperty = false) => {
+      const attribute = isProperty ? 'property' : 'name';
+      let meta = document.querySelector(`meta[${attribute}="${nameOrProperty}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attribute, nameOrProperty);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    const desc = "Stay updated with the latest technology trends, career advice, AI advancements, and developer articles on Discuss Platforms. Seeded with premium Naukri Minis news portfolio curated by Mohammed Maaz A.";
+    updateOrCreateMeta('description', desc);
+    updateOrCreateMeta('keywords', "Tech News, Developer Articles, AI trends, Naukri Mini, Career guide, Discuss, Programming, Mohammed Maaz A");
+    updateOrCreateMeta('author', "Mohammed Maaz A");
+    updateOrCreateMeta('creator', "Mohammed Maaz A");
+
+    updateOrCreateMeta('og:title', "Tech News & Articles | Discuss Platforms", true);
+    updateOrCreateMeta('og:description', desc, true);
+    updateOrCreateMeta('og:url', window.location.href, true);
+    updateOrCreateMeta('og:type', 'website', true);
+
+    updateOrCreateMeta('twitter:title', "Tech News & Articles | Discuss Platforms");
+    updateOrCreateMeta('twitter:description', desc);
+
+    // Inject JSON-LD Structured Data
+    let jsonLdScript = document.getElementById('news-collection-jsonld');
+    if (!jsonLdScript) {
+      jsonLdScript = document.createElement('script');
+      jsonLdScript.id = 'news-collection-jsonld';
+      jsonLdScript.type = 'application/ld+json';
+      document.head.appendChild(jsonLdScript);
+    }
+    
+    const collectionSchema = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Discuss Tech News & Articles Portfolio",
+      "description": desc,
+      "url": "https://discussit.in/news",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Discuss",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://discussit.in/favicon-new.png"
+        }
+      }
+    };
+    jsonLdScript.textContent = JSON.stringify(collectionSchema);
+
+    return () => {
+      const schemaScript = document.getElementById('news-collection-jsonld');
+      if (schemaScript) {
+        schemaScript.remove();
+      }
+    };
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);

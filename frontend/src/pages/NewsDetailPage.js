@@ -51,6 +51,97 @@ export default function NewsDetailPage() {
     }
   }, [newsId]);
 
+  // SEO & GEO Optimization for dynamic news details
+  useEffect(() => {
+    if (!item) return;
+
+    const originalTitle = document.title;
+    document.title = `${item.title} | Discuss Tech News`;
+
+    const updateOrCreateMeta = (nameOrProperty, content, isProperty = false) => {
+      const attribute = isProperty ? 'property' : 'name';
+      let meta = document.querySelector(`meta[${attribute}="${nameOrProperty}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attribute, nameOrProperty);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    const description = item.description ? item.description.substring(0, 160).replace(/\n/g, ' ') : '';
+    const authorName = item.author || 'Discuss Team';
+    const currentUrl = window.location.href;
+
+    updateOrCreateMeta('description', description);
+    updateOrCreateMeta('author', authorName);
+    updateOrCreateMeta('creator', authorName);
+    updateOrCreateMeta('keywords', `Discuss, Tech News, ${item.tag || 'Naukri Mini'}, ${item.title}`);
+    
+    // Open Graph
+    updateOrCreateMeta('og:title', item.title, true);
+    updateOrCreateMeta('og:description', description, true);
+    updateOrCreateMeta('og:url', currentUrl, true);
+    updateOrCreateMeta('og:type', 'article', true);
+    if (item.image) {
+      updateOrCreateMeta('og:image', item.image, true);
+    }
+
+    // Twitter Card
+    updateOrCreateMeta('twitter:title', item.title);
+    updateOrCreateMeta('twitter:description', description);
+    if (item.image) {
+      updateOrCreateMeta('twitter:image', item.image);
+    }
+
+    // Inject JSON-LD Schema (Structured Data for search & AI engines)
+    let jsonLdScript = document.getElementById('news-detail-jsonld');
+    if (!jsonLdScript) {
+      jsonLdScript = document.createElement('script');
+      jsonLdScript.id = 'news-detail-jsonld';
+      jsonLdScript.type = 'application/ld+json';
+      document.head.appendChild(jsonLdScript);
+    }
+
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": item.title,
+      "description": description,
+      "datePublished": item.createdAt || new Date().toISOString(),
+      "dateModified": item.createdAt || new Date().toISOString(),
+      "author": {
+        "@type": "Person",
+        "name": authorName,
+        "url": "https://discussit.in"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Discuss",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://discussit.in/favicon-new.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": currentUrl
+      }
+    };
+    if (item.image) {
+      schemaData.image = [item.image];
+    }
+    jsonLdScript.textContent = JSON.stringify(schemaData);
+
+    return () => {
+      document.title = originalTitle;
+      const schemaScript = document.getElementById('news-detail-jsonld');
+      if (schemaScript) {
+        schemaScript.remove();
+      }
+    };
+  }, [item]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] flex flex-col">
