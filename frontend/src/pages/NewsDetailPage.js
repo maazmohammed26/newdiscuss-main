@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getNews } from '@/lib/firebaseSixth';
+import { NAUKRI_MINIS } from '@/assets/naukri_news_data';
 import Header from '@/components/Header';
 import LinkifiedText from '@/components/LinkifiedText';
 import ItemShareModal from '@/components/ItemShareModal';
@@ -32,8 +33,13 @@ export default function NewsDetailPage() {
     const fetchItem = async () => {
       setLoading(true);
       try {
-        const data = await getNews(newsId);
-        setItem(data);
+        const staticItem = NAUKRI_MINIS.find(n => n.id === newsId);
+        if (staticItem) {
+          setItem(staticItem);
+        } else {
+          const data = await getNews(newsId);
+          setItem(data);
+        }
       } catch (err) {
         console.error('Error fetching news detail:', err);
       } finally {
@@ -114,8 +120,13 @@ export default function NewsDetailPage() {
             {/* Header Meta info */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full uppercase tracking-wider shadow-sm select-none">
-                <ShieldCheck className="w-3.5 h-3.5" /> Discuss Team Verified
+                <ShieldCheck className="w-3.5 h-3.5" /> Created by {item.author || 'Discuss Team'}
               </span>
+              {item.tag && (
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider select-none">
+                  {item.tag}
+                </span>
+              )}
               <span className="text-neutral-300 dark:text-neutral-700 discuss:text-[#333333] hidden md:inline">|</span>
               <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
                 <Calendar className="w-3.5 h-3.5" />
@@ -141,10 +152,10 @@ export default function NewsDetailPage() {
             <div className="flex justify-between items-center mt-10 pt-6 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#262626]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm select-none">
-                  D
+                  {item.author ? item.author.charAt(0) : 'D'}
                 </div>
                 <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5]">
-                  Discuss Team
+                  {item.author || 'Discuss Team'}
                 </span>
               </div>
               

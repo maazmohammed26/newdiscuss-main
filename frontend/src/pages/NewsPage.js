@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Share2, Pencil, Trash2, ShieldCheck, ArrowUp, Newspaper, TrendingUp, Hash, ExternalLink, MessageSquare, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { NAUKRI_MINIS } from '@/assets/naukri_news_data';
 
 /* ─── Shimmer skeleton primitives ─────────────────────────────────────────── */
 const Shimmer = ({ className = '' }) => (
@@ -118,9 +119,16 @@ export default function NewsPage() {
   const [news, setNews] = useState(() => {
     try {
       const cached = localStorage.getItem('discuss_fast_techNews');
-      return cached ? JSON.parse(cached) : [];
+      const parsed = cached ? JSON.parse(cached) : [];
+      const merged = [...parsed];
+      for (const item of NAUKRI_MINIS) {
+        if (!merged.some(n => n.id === item.id)) {
+          merged.push(item);
+        }
+      }
+      return merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } catch {
-      return [];
+      return NAUKRI_MINIS;
     }
   });
   const [isSyncing, setIsSyncing] = useState(true);
@@ -222,9 +230,16 @@ export default function NewsPage() {
   useEffect(() => {
     setIsSyncing(true);
     const unsubscribe = subscribeToNews((data) => {
-      setNews(data);
+      const merged = [...data];
+      for (const item of NAUKRI_MINIS) {
+        if (!merged.some(n => n.id === item.id)) {
+          merged.push(item);
+        }
+      }
+      const sorted = merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setNews(sorted);
       try {
-        localStorage.setItem('discuss_fast_techNews', JSON.stringify(data));
+        localStorage.setItem('discuss_fast_techNews', JSON.stringify(sorted));
       } catch (e) {}
       setIsSyncing(false);
     });
@@ -409,10 +424,15 @@ export default function NewsPage() {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-2 mb-4">
+                        <div className="flex items-center flex-wrap gap-2 mb-4">
                           <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
-                            <ShieldCheck className="w-3 h-3" /> Created by Discuss Team
+                            <ShieldCheck className="w-3 h-3" /> Created by {item.author || 'Discuss Team'}
                           </span>
+                          {item.tag && (
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider select-none">
+                              {item.tag}
+                            </span>
+                          )}
                           <span className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
                             • {new Date(item.createdAt).toLocaleDateString()}
                           </span>
