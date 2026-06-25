@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import L from 'leaflet';
-import { getPosts, getUser } from '@/lib/db';
+import { getPosts, getUser, updateOnlineVisibility } from '@/lib/db';
 import { getUserPulses } from '@/lib/pulseDb';
 import { getEligibleDiscussionsCount, OFFICIAL_BADGES, BadgeIcon } from '@/components/Badges';
 import { getUserTalentGraph, updateUserSkills, saveAIInsights, logAIAction } from '@/lib/talentGraphDb';
@@ -142,6 +142,7 @@ export default function ProfilePage() {
   const [onlineVisibility, setOnlineVisibility] = useState(true);
   const [showOnlineVisibilityConfirm, setShowOnlineVisibilityConfirm] = useState(false);
   const [pendingVisibilityValue, setPendingVisibilityValue] = useState(true);
+
   // Collapsible settings categories toggles
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
@@ -496,6 +497,24 @@ export default function ProfilePage() {
       setShowConfirmPin(false);
     }
   }, [showPinModal, showChangePinModal, showVerifyPinModal]);
+
+  const handleToggleOnlineVisibility = (newValue) => {
+    setPendingVisibilityValue(newValue);
+    setShowOnlineVisibilityConfirm(true);
+  };
+
+  const handleConfirmOnlineVisibility = async () => {
+    if (!user?.id) return;
+    try {
+      await updateOnlineVisibility(user.id, pendingVisibilityValue);
+      setOnlineVisibility(pendingVisibilityValue);
+      setShowOnlineVisibilityConfirm(false);
+      toast.success(pendingVisibilityValue ? 'Online status is now visible' : 'Online status is now hidden');
+    } catch (error) {
+      console.error('Failed to update visibility:', error);
+      toast.error('Failed to update visibility');
+    }
+  };
 
   const handleToggleSecurity = () => {
     if (!localSettings?.enabled) {
@@ -1972,6 +1991,27 @@ export default function ProfilePage() {
                     <ThemeSelector />
                   </div>
                 </div>
+
+                {/* Online Status Visibility Section */}
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex flex-col">
+                      <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                        {onlineVisibility ? <Eye className="w-4 h-4 text-emerald-500" /> : <EyeOff className="w-4 h-4 text-[#EF4444]" />}
+                        Online Status Visibility
+                      </span>
+                      <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-1 pr-4">
+                        {onlineVisibility ? 'Your online status is visible to everyone.' : 'Your online status is completely hidden.'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleToggleOnlineVisibility(!onlineVisibility)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${onlineVisibility ? 'bg-emerald-500' : 'bg-neutral-200 dark:bg-neutral-700'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${onlineVisibility ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -2220,13 +2260,16 @@ export default function ProfilePage() {
                         <Button
                           onClick={handleOpenAdjustModal}
                           variant="outline"
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${onlineVisibility ? 'bg-emerald-500' : 'bg-neutral-200 dark:bg-neutral-700'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${onlineVisibility ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
+                          size="sm"
+                          className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 rounded-xl py-3 border-[#2563EB] text-[#2563EB] hover:bg-[#2563EB]/10"
+                        >
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>Calibrate Precise Node Pin</span>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
-
               </div>
             )}
           </div>
@@ -2468,38 +2511,1121 @@ export default function ProfilePage() {
 
         </div>
 
-      {/* Online Status Visibility Confirmation Modal */}
-      {showOnlineVisibilityConfirm && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-white/10 discuss:border-[#333333] rounded-2xl p-5 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-3">
-              <div className={`mt-0.5 p-2 rounded-full ${pendingVisibilityValue ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#EF4444]/10 text-[#EF4444]'}`}>
-                {pendingVisibilityValue ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+
+
+        {/* ==================== FRIENDS SECTION ==================== */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowFriends(!showFriends)}
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-[#10B981]/10 discuss:bg-[#10B981]/10 flex items-center justify-center rounded-lg relative">
+                <Users className="w-4 h-4 text-[#10B981]" />
+                {receivedRequests.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#F59E0B] text-white text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-1">
+                    <span>{receivedRequests.length}</span>
+                  </span>
+                )}
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
-                  {pendingVisibilityValue ? 'Show Online Status?' : 'Hide Online Status?'}
-                </h3>
-                <p className="mt-1.5 text-xs text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
-                  {pendingVisibilityValue 
-                    ? "If you turn this on, other users will be able to see when you are online and your last seen time across Discuss." 
-                    : "If you turn this off, you will appear completely offline to everyone. You won't have a green dot on DevRadar or anywhere else."}
+              <div className="text-left">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Friends</h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                  <span>{friends.length} friend{friends.length !== 1 ? 's' : ''}</span>
+                  {receivedRequests.length > 0 && <span> • {receivedRequests.length} pending</span>}
                 </p>
               </div>
             </div>
-            <div className="mt-5 flex gap-2">
+            {showFriends ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+          </button>
+
+          {showFriends && (
+            <div className="mt-4 space-y-4">
+              {/* Received Friend Requests */}
+              {receivedRequests.length > 0 && (
+                <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-[#92400E] dark:text-[#FCD34D] discuss:text-[#FCD34D] mb-3 flex items-center gap-2">
+                    <UserPlus className="w-4 h-4" />
+                    Friend Requests ({receivedRequests.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {receivedRequests.map((request) => {
+                      const reqUser = requestUserDetails[request.fromUserId];
+                      
+                      return (
+                        <div key={request.fromUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                          <button
+                            onClick={() => navigate(`/user/${request.fromUserId}`)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            <UserAvatar
+                              src={reqUser?.photo_url}
+                              username={reqUser?.username || 'User'}
+                              className="w-10 h-10"
+                            />
+                            <div className="text-left min-w-0">
+                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
+                                <span>@{reqUser?.username || 'Unknown'}</span>
+                              </span>
+                              <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                                <span>{new Date(request.createdAt).toLocaleDateString()}</span>
+                              </span>
+                            </div>
+                          </button>
+                          <div className="flex gap-2 shrink-0 ml-2">
+                            <Button
+                              onClick={() => handleAcceptRequest(request.fromUserId)}
+                              disabled={processingRequest === request.fromUserId}
+                              size="sm"
+                              className="bg-[#10B981] hover:bg-[#059669] text-white h-8 px-3"
+                            >
+                              {processingRequest === request.fromUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                            </Button>
+                            <Button
+                              onClick={() => handleDeclineRequest(request.fromUserId)}
+                              disabled={processingRequest === request.fromUserId}
+                              variant="outline"
+                              size="sm"
+                              className="border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 h-8 px-3"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Sent Requests */}
+              {sentRequests.length > 0 && (
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                  <h3 className="text-sm font-semibold text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>Sent Requests ({sentRequests.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {sentRequests.map((request) => {
+                      const reqUser = requestUserDetails[request.toUserId];
+                      
+                      return (
+                        <div key={request.toUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                          <button
+                            onClick={() => navigate(`/user/${request.toUserId}`)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            <UserAvatar
+                              src={reqUser?.photo_url}
+                              username={reqUser?.username || 'User'}
+                              className="w-10 h-10"
+                            />
+                            <div className="text-left min-w-0">
+                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
+                                <span>@{reqUser?.username || 'Unknown'}</span>
+                              </span>
+                              <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
+                            </div>
+                          </button>
+                          <Button
+                            onClick={() => handleCancelRequest(request.toUserId)}
+                            disabled={processingRequest === request.toUserId}
+                            variant="outline"
+                            size="sm"
+                            className="border-[#6275AF] text-[#6275AF] hover:bg-[#6275AF]/10 h-8 px-3 shrink-0 ml-2"
+                          >
+                            {processingRequest === request.toUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cancel'}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Find Friends Search */}
+              <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
+                  <Search className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <span>Find Friends</span>
+                </h3>
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />
+                  <Input
+                    value={friendSearchQuery}
+                    onChange={(e) => setFriendSearchQuery(e.target.value)}
+                    placeholder="Search users by username..."
+                    className="pl-10 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] placeholder:text-[#6275AF] dark:placeholder:text-[#94A3B8] discuss:placeholder:text-[#9CA3AF] text-sm"
+                  />
+                  {friendSearchQuery && (
+                    <button
+                      onClick={() => setFriendSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                
+                {searchingFriends ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#6275AF]" />
+                  </div>
+                ) : friendSearchResults.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                    {friendSearchResults.map((searchUser) => (
+                      <UserSearchResult
+                        key={searchUser.id}
+                        user={searchUser}
+                        currentUserId={user?.id}
+                        onClose={() => setFriendSearchQuery('')}
+                      />
+                    ))}
+                  </div>
+                ) : friendSearchQuery && !searchingFriends ? (
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm text-center py-4">
+                    <span>No users found</span>
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Friends List */}
+              {loadingFriends ? (
+                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm"><span>Loading friends list...</span></p>
+                </div>
+              ) : friends.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Suggested Friends Section */}
+                  {suggestedFriends.length > 0 && (
+                    <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
+                        <UserPlus className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                        <span>Suggested Friends</span>
+                      </h3>
+                      {loadingSuggestions ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm"><span>Finding suggestions...</span></span>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
+                          {suggestedFriends.map((suggested) => {
+                            
+                            return (
+                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-3 rounded-lg">
+                                <button
+                                  onClick={() => navigate(`/user/${suggested.id}`)}
+                                  className="flex items-center gap-3 flex-1 min-w-0"
+                                >
+                                  <UserAvatar
+                                    src={suggested?.photo_url}
+                                    username={suggested?.username || 'User'}
+                                    className="w-10 h-10"
+                                  />
+                                  <div className="text-left min-w-0">
+                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate flex items-center gap-1">
+                                      @{suggested.username}
+                                      {suggested.verified && <VerifiedBadge size="xs" />}
+                                    </span>
+                                    {suggested.mutualCount > 0 && (
+                                      <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                                        {suggested.mutualCount} mutual friend{suggested.mutualCount !== 1 ? 's' : ''}
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                                <Button
+                                  onClick={() => navigate(`/user/${suggested.id}`)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 px-3 shrink-0 ml-2 border-[#2563EB] discuss:border-[#EF4444] text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10"
+                                >
+                                  <UserPlus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Your Friends */}
+                  <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[#10B981]" />
+                    Your Friends ({friends.length})
+                  </h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                    {friends.map((friend) => {
+                      
+                      return (
+                        <div key={friend.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-3 rounded-lg">
+                          <button
+                            onClick={() => navigate(`/user/${friend.id}`)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            <UserAvatar
+                              src={friend?.photo_url}
+                              username={friend?.username || 'User'}
+                              className="w-10 h-10"
+                            />
+                            <div className="text-left min-w-0">
+                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
+                                @{friend.username}
+                              </span>
+                              {friend.verified && <VerifiedBadge size="xs" />}
+                            </div>
+                          </button>
+                          <Button
+                            onClick={() => navigate(`/chat/${friend.id}`)}
+                            size="sm"
+                            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white h-8 px-3 shrink-0 ml-2"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Suggested Friends for users without friends */}
+                  {suggestedFriends.length > 0 && (
+                    <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
+                        <UserPlus className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                        People You May Know
+                      </h3>
+                      {loadingSuggestions ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">Finding people...</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
+                          {suggestedFriends.map((suggested) => {
+                            
+                            return (
+                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-3 rounded-lg">
+                                <button
+                                  onClick={() => navigate(`/user/${suggested.id}`)}
+                                  className="flex items-center gap-3 flex-1 min-w-0"
+                                >
+                                  {suggested.photo_url ? (
+                                    <UserAvatar src={suggested.photo_url} username={suggested.username} className="w-10 h-10 rounded-full object-cover" />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] discuss:from-[#EF4444] discuss:to-[#F59E0B] flex items-center justify-center">
+                                      <span className="text-white text-sm font-bold">{initials}</span>
+                                    </div>
+                                  )}
+                                  <div className="text-left min-w-0">
+                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate flex items-center gap-1">
+                                      <span>@{suggested.username}</span>
+                                      {suggested.verified && <VerifiedBadge size="xs" />}
+                                    </span>
+                                  </div>
+                                </button>
+                                <Button
+                                  onClick={() => navigate(`/user/${suggested.id}`)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 px-3 shrink-0 ml-2 border-[#2563EB] discuss:border-[#EF4444] text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10"
+                                >
+                                  <UserPlus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                    <Users className="w-10 h-10 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-3" />
+                    <h3 className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] font-semibold mb-1"><span>No friends yet</span></h3>
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">
+                      <span>Search for users above to connect</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        {/* ==================== END FRIENDS SECTION ==================== */}
+
+        {/* ==================== AI INSIGHTS SECTION ==================== */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowAiInsights(!showAiInsights)}
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
+                <ShieldCheck className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">AI TalentGraph Insights</h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                  {aiInsights ? 'Analysis complete' : 'No insights generated yet'}
+                </p>
+              </div>
+            </div>
+            {showAiInsights ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+          </button>
+
+          {showAiInsights && (
+            <div className="mt-4 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl p-5 space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
+                <div className="text-left">
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Profile Insights</h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-generated understanding of your profile and posts</p>
+                </div>
+                <Button
+                  onClick={handleAnalyzeProfile}
+                  disabled={analyzingProfile}
+                  size="sm"
+                  className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-xs py-1.5 px-3 rounded-md border border-neutral-200 dark:border-neutral-800 cursor-pointer"
+                >
+                  {analyzingProfile ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    'Regenerate'
+                  )}
+                </Button>
+              </div>
+
+              {aiInsights ? (
+                <div className="space-y-4 text-sm text-left">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Main Skills</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {(aiInsights.mainSkills || []).map(s => (
+                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Secondary Skills</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {(aiInsights.secondarySkills || []).map(s => (
+                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Areas of Interest</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {(aiInsights.areasOfInterest || []).map(s => (
+                        <span key={s} className="bg-white dark:bg-neutral-850 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded text-xs border border-rose-200 dark:border-rose-900">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Project Categories</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {(aiInsights.projectCategories || []).map(c => (
+                        <span key={c} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Collaboration Preferences</h4>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-medium">
+                      {aiInsights.collaborationPreferences}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Growth Opportunities</h4>
+                    <ul className="list-disc list-inside space-y-1 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                      {(aiInsights.growthOpportunities || []).map((o, idx) => (
+                        <li key={idx} className="leading-relaxed">{o}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 text-right font-medium">
+                    Last analyzed: {aiInsights.updatedAt ? new Date(aiInsights.updatedAt).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 font-medium">Analyze your profile bio and posts to extract key technical domains, roles, and growth areas.</p>
+                  <Button
+                    onClick={handleAnalyzeProfile}
+                    disabled={analyzingProfile}
+                    className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-xs py-2 px-4 rounded-md border border-neutral-200 cursor-pointer"
+                  >
+                    {analyzingProfile ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      'Analyze Profile'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ==================== GLOBAL USER LOGOUT ==================== */}
+        <div className="mt-6">
+          <Button 
+            data-testid="profile-logout-btn" 
+            onClick={handleLogout} 
+            disabled={loggingOut}
+            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-4 h-14 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-[#EF4444]/10 hover:border-[#EF4444]/25"
+          >
+            {loggingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <><LogOut className="w-5 h-5" /> <span>Logout from Discuss</span></>}
+          </Button>
+        </div>
+
+        {/* Your Posts Section */}
+        <div className="mt-6">
+          <button
+            data-testid="your-posts-toggle"
+            onClick={() => setShowPosts(!showPosts)}
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
+                <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Your Posts</span></h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
+              </div>
+            </div>
+            {showPosts ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+          </button>
+
+          {showPosts && (
+            <div className="mt-4 space-y-4">
+              {/* Filter bar */}
+              <div data-testid="post-filter-bar" className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2.5">
+                <Filter className="w-3.5 h-3.5 text-[#6275AF] dark:text-[#94A3B8]" />
+                <select
+                  data-testid="filter-type-select"
+                  value={filterType}
+                  onChange={(e) => { setFilterType(e.target.value); setFilterMonth(''); setFilterYear(''); }}
+                  className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                >
+                  <option value="all"><span>All Posts</span></option>
+                  <option value="this_month"><span>This Month</span></option>
+                  <option value="month"><span>Select Month</span></option>
+                  <option value="year"><span>Select Year</span></option>
+                </select>
+
+                {filterType === 'month' && (
+                  <>
+                    <select
+                      data-testid="filter-month-select"
+                      value={filterMonth}
+                      onChange={(e) => setFilterMonth(e.target.value)}
+                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                    >
+                      <option value="">Month</option>
+                      {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                    </select>
+                    <select
+                      data-testid="filter-month-year-select"
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(e.target.value)}
+                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                    >
+                      <option value="">Year</option>
+                      {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </>
+                )}
+
+                {filterType === 'year' && (
+                  <select
+                    data-testid="filter-year-select"
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                  >
+                    <option value="">Year</option>
+                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                )}
+
+                {filterType !== 'all' && (
+                  <span className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] ml-auto">
+                    <span>{filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}</span>
+                  </span>
+                )}
+              </div>
+
+              {loadingPosts ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" />
+                </div>
+              ) : filteredPosts.length === 0 ? (
+                <div className="text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
+                  <Calendar className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] mx-auto mb-2" />
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
+                    <span>{filterType === 'all' ? "You haven't created any posts yet." : 'No posts found for this period.'}</span>
+                  </p>
+                </div>
+              ) : (
+                filteredPosts.map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    currentUser={user}
+                    onDeleted={handlePostDeleted}
+                    onUpdated={handlePostUpdated}
+                    onVoteChanged={handleVoteChanged}
+                    onTagClick={() => {}}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Your Pulses Section */}
+        <div className="mt-6">
+          <button
+            data-testid="your-pulses-toggle"
+            onClick={() => setShowPulses(!showPulses)}
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-[#EF4444]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
+                <PlayCircle className="w-4 h-4 text-[#EF4444] discuss:text-[#EF4444]" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Your Pulses</span></h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
+              </div>
+            </div>
+            {showPulses ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+          </button>
+
+          {showPulses && (
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {loadingPosts ? (
+                <div className="col-span-full flex items-center justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" />
+                </div>
+              ) : userPulses.length === 0 ? (
+                <div className="col-span-full text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
+                  <PlayCircle className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] mx-auto mb-2" />
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
+                    <span>You haven't posted any Pulse videos yet.</span>
+                  </p>
+                </div>
+              ) : (
+                userPulses.map(pulse => (
+                  <div key={pulse.id} className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all" onClick={() => navigate('/pulse')}>
+                    <video src={pulse.videoUrl} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <PlayCircle className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
+                      {pulse.caption || 'Pulse Video'}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        <p className="text-center text-[#94A3B8] dark:text-[#6275AF] text-xs mt-6 mb-24">
+          <span>Managed by </span><span className="font-semibold text-[#BC4800]">&lt;discuss&gt;</span>
+          <span className="text-[10px] mt-1 block">made in Bengaluru</span>
+        </p>
+          </div>
+        </div>
+      </div>
+
+      <VerificationRequestModal 
+        open={showVerificationModal} 
+        onClose={() => setShowVerificationModal(false)}
+        user={user}
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal 
+        open={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        imageUrl={user?.photo_url}
+        altText={user?.username}
+      />
+
+      {/* Delete Full Name Confirmation */}
+      <AlertDialog open={deleteFullNameConfirm} onOpenChange={setDeleteFullNameConfirm}>
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove full name?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+              <span>This will remove your full name from your profile.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+              <span>Cancel</span>
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFullName} disabled={savingFullName} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
+              {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Remove</span>}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Bio Confirmation */}
+      <AlertDialog open={deleteBioConfirm} onOpenChange={setDeleteBioConfirm}>
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove bio?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+              <span>This will remove your bio from your profile.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+              <span>Cancel</span>
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteBio} disabled={savingBio} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
+              {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Remove</span>}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Link Confirmation */}
+      <AlertDialog open={deleteLinkConfirm !== null} onOpenChange={(v) => { if (!v) setDeleteLinkConfirm(null); }}>
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove link?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+              <span>This will remove this social link from your profile.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+              <span>Cancel</span>
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDeleteLink(deleteLinkConfirm)} disabled={savingLink} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
+              {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Remove</span>}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Profile Share Modal */}
+      <ProfileShareModal 
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        username={user?.username}
+      />
+
+      
+      {/* PIN Modals */}
+      <AlertDialog open={showPinModal} onOpenChange={setShowPinModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">Set Security PIN</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px]">
+              Set a 6-digit PIN. This will protect your account on all devices.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-[#6275AF]">New PIN</label>
+              <div className="relative">
+                <Input 
+                  type={showNewPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={newPin} 
+                  onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPin(!showNewPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-[#6275AF]">Confirm PIN</label>
+              <div className="relative">
+                <Input 
+                  type={showConfirmPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={confirmPin} 
+                  onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPin(!showConfirmPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex flex-col gap-2">
+            <Button onClick={handleSavePinAndEnable} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Save & Enable
+            </Button>
+            <Button variant="ghost" onClick={() => setShowPinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showChangePinModal} onOpenChange={setShowChangePinModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">Change PIN</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px]">
+              Enter your old PIN and set a new 6-digit PIN.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-[#6275AF]">Old PIN</label>
+              <div className="relative">
+                <Input 
+                  type={showOldPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={oldPin} 
+                  onChange={e => setOldPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPin(!showOldPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showOldPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-[#6275AF]">New PIN</label>
+              <div className="relative">
+                <Input 
+                  type={showNewPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={newPin} 
+                  onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPin(!showNewPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-[#6275AF]">Confirm New PIN</label>
+              <div className="relative">
+                <Input 
+                  type={showConfirmPin ? "text" : "password"} 
+                  maxLength={6} 
+                  value={confirmPin} 
+                  onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))} 
+                  placeholder="••••••" 
+                  className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPin(!showConfirmPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                >
+                  {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-center -mt-2">
               <button
-                onClick={() => setShowOnlineVisibilityConfirm(false)}
-                className="flex-1 text-xs font-bold px-3 py-2.5 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] discuss:hover:bg-[#262626] rounded-xl transition-colors"
+                type="button"
+                onClick={() => {
+                  setShowChangePinModal(false);
+                  setShowForgotPinModal(true);
+                }}
+                className="text-[10px] font-bold text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors"
+              >
+                Forgot your PIN?
+              </button>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex flex-col gap-2">
+            <Button onClick={handleUpdatePin} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Update PIN
+            </Button>
+            <Button variant="ghost" onClick={() => setShowChangePinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Forgot PIN Recovery Modal */}
+      <AlertDialog open={showForgotPinModal} onOpenChange={setShowForgotPinModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex flex-col items-center gap-3">
+              <img
+                src="/favicon-new.png"
+                alt="Discuss"
+                className="w-16 h-16 rounded-2xl shadow-lg object-cover border-2 border-red-50"
+              />
+              <span className="text-red-600">PIN Recovery</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px] space-y-3 leading-relaxed">
+              <div className="bg-red-50 p-4 rounded-xl border border-red-200 mb-2 shadow-inner">
+                <p className="font-black mb-1 uppercase tracking-wider" style={{ color: '#991b1b' }}>IMPORTANT NOTICE</p>
+                <p className="leading-relaxed font-bold" style={{ color: '#b91c1c' }}>
+                  Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
+                </p>
+              </div>
+              <p className="text-[#6275AF] dark:text-[#94A3B8]">
+                Unauthorized attempts will result in the <strong>PERMANENT DISABLING</strong> of this account.
+              </p>
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] p-2 rounded-lg italic text-[#0F172A] dark:text-white border border-[#E2E8F0] dark:border-[#334155]">
+                &quot;I declare and accept the account recovery terms and confirm I am the rightful owner.&quot;
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col gap-2 mt-4">
+            <Button
+              onClick={() => {
+                const subject = encodeURIComponent(`PIN Recovery Request - ${user?.email}`);
+                const body = encodeURIComponent(
+                  `Hello Discuss Support,\n\n` +
+                  `I am writing to request recovery for my App Lock PIN.\n\n` +
+                  `I declare and accept that account recovery is only possible for the ethical owner of the account. I understand that any unauthorized attempt may result in the permanent disabling of my account.\n\n` +
+                  `I declare and accept the account recovery terms and confirm I am the rightful owner.\n\n` +
+                  `User Email: ${user?.email}\n` +
+                  `Device: ${navigator.userAgent}\n\n` +
+                  `Thank you.`
+                );
+                window.location.href = `mailto:support@discussit.in?subject=${subject}&body=${body}`;
+              }}
+              className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white text-xs font-bold py-2.5 rounded-xl shadow-md hover:scale-[1.02] transition-transform"
+            >
+              SEND RECOVERY EMAIL
+            </Button>
+            <Button variant="ghost" onClick={() => setShowForgotPinModal(false)} className="w-full text-xs font-bold py-2.5 rounded-xl">
+              CANCEL
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showVerifyPinModal} onOpenChange={setShowVerifyPinModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">Verify Identity</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px]">
+              Please enter your 6-digit PIN to confirm this security change.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="relative">
+              <Input 
+                type={showOldPin ? "text" : "password"} 
+                maxLength={6} 
+                value={oldPin} 
+                onChange={e => setOldPin(e.target.value.replace(/\D/g, ''))} 
+                placeholder="••••••" 
+                className="text-center text-xl tracking-[1em] font-mono pr-10" 
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOldPin(!showOldPin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+              >
+                {showOldPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex flex-col gap-2">
+            <Button onClick={handleVerifyAndEnableBiometric} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Verify PIN
+            </Button>
+            <Button variant="ghost" onClick={() => setShowVerifyPinModal(false)} disabled={savingPin} className="w-full">Cancel</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Disable App Lock Modal */}
+      <AlertDialog open={showDisableLockModal} onOpenChange={setShowDisableLockModal}>
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-red-600">Disable App Lock</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[11px]">
+              Enter your current PIN to confirm. This will remove your PIN from all devices.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="relative">
+              <Input
+                type={showDisablePin ? 'text' : 'password'}
+                maxLength={6}
+                value={disablePinInput}
+                onChange={e => setDisablePinInput(e.target.value.replace(/\D/g, ''))}
+                placeholder="Enter current PIN"
+                className="text-center text-xl tracking-[1em] font-mono pr-10"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowDisablePin(!showDisablePin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+              >
+                {showDisablePin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex flex-col gap-2">
+            <Button onClick={handleDisableLock} disabled={disablingLock} className="w-full bg-red-500 hover:bg-red-600 text-white">
+              {disablingLock ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Disable App Lock
+            </Button>
+            <Button variant="ghost" onClick={() => setShowDisableLockModal(false)} disabled={disablingLock} className="w-full">Cancel</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <CurrentLocationUpdateModal
+        open={showLocationUpdateModal}
+        status={locationUpdateStatus}
+        errorMessage={locationUpdateError}
+        theme={theme}
+        onClose={() => {
+          if (locationUpdateStatus === 'loading') return;
+          setShowLocationUpdateModal(false);
+          setLocationUpdateStatus('idle');
+        }}
+        onConfirm={handleConfirmLiveLocationUpdate}
+        onRetry={handleConfirmLiveLocationUpdate}
+      />
+
+      {/* Precise Location Adjust Modal */}
+      {showAdjustLocationModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg p-5 rounded-2xl bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] pb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                <h3 className="text-base font-black text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] uppercase tracking-tight">
+                  Adjust Precise Location
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowAdjustLocationModal(false)}
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-[#F1F5F9] transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Description */}
+            <div className="bg-blue-50 dark:bg-blue-950/30 discuss:bg-[#262626] border border-blue-200 dark:border-blue-800 discuss:border-[#333] rounded-xl px-3 py-2.5 flex items-start gap-2">
+              <span className="text-lg leading-none mt-0.5">📍</span>
+              <p className="text-xs text-blue-800 dark:text-blue-200 discuss:text-[#9CA3AF] leading-relaxed font-medium">
+                <strong>Tap anywhere on the map</strong> to drop your pin at that location, or <strong>drag the existing marker</strong> to move it. Once you're happy with the position, tap <strong>"Confirm Pin Location"</strong> to save.
+              </p>
+            </div>
+
+            {/* Coordinates Real-time Display */}
+            {tempCoords && (
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#111] p-3 rounded-xl border border-neutral-200 dark:border-white/5 discuss:border-black flex justify-between items-center text-xs">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Latitude</span>
+                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#EF4444]">
+                    {tempCoords.latitude.toFixed(6)}
+                  </span>
+                </div>
+                <div className="h-6 w-[1px] bg-neutral-300 dark:bg-white/10 discuss:bg-[#333]" />
+                <div className="flex flex-col text-right">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Longitude</span>
+                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#EF4444]">
+                    {tempCoords.longitude.toFixed(6)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Map Area */}
+            <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-white/10 discuss:border-black shadow-inner">
+              <div
+                ref={adjustMapContainerRef}
+                className={`w-full h-full ${
+                  theme === 'dark' ? 'dark-map' : theme === 'discuss-black' ? 'discuss-black-map' : ''
+                }`}
+              />
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex gap-3 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] pt-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowAdjustLocationModal(false)}
+                className="flex-1 text-xs font-bold uppercase py-2.5 discuss:border-black text-neutral-600 dark:text-neutral-300 discuss:text-black hover:bg-black/5 dark:hover:bg-white/5 rounded-xl active:scale-95 transition-all"
               >
                 Cancel
-              </button>
-              <button
-                onClick={handleConfirmOnlineVisibility}
-                className={`flex-1 text-xs font-bold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-white ${pendingVisibilityValue ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-[#EF4444] hover:bg-[#DC2626]'}`}
+              </Button>
+              <Button
+                onClick={handleSaveAdjustedLocation}
+                className="flex-1 text-xs font-bold uppercase py-2.5 rounded-xl bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-md shadow-blue-500/20 discuss:shadow-red-500/20 hover:brightness-105 active:scale-95 transition-all"
               >
-                {pendingVisibilityValue ? 'Show Status' : 'Hide Status'}
-              </button>
+                Confirm Pin Location
+              </Button>
             </div>
           </div>
         </div>
@@ -2583,6 +3709,43 @@ export default function ProfilePage() {
           )}
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Online Status Visibility Confirmation Modal */}
+      {showOnlineVisibilityConfirm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-white/10 discuss:border-[#333333] rounded-2xl p-5 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 p-2 rounded-full ${pendingVisibilityValue ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#EF4444]/10 text-[#EF4444]'}`}>
+                {pendingVisibilityValue ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                  {pendingVisibilityValue ? 'Show Online Status?' : 'Hide Online Status?'}
+                </h3>
+                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-1 leading-relaxed">
+                  {pendingVisibilityValue 
+                    ? "Other users will be able to see when you're online and your 'last seen' time across DevRadar and comments."
+                    : "You will appear completely offline to everyone. Your green dot and 'last seen' time will be hidden everywhere."}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => setShowOnlineVisibilityConfirm(false)}
+                className="flex-1 text-xs font-bold px-3 py-2.5 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] discuss:hover:bg-[#262626] rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmOnlineVisibility}
+                className={`flex-1 text-xs font-bold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-white ${pendingVisibilityValue ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-[#EF4444] hover:bg-[#DC2626]'}`}
+              >
+                {pendingVisibilityValue ? 'Show Status' : 'Hide Status'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
