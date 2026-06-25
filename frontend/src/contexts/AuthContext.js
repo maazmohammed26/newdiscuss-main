@@ -468,10 +468,13 @@ export function AuthProvider({ children }) {
     const updateOnline = () => {
       const now = Date.now();
       
+      // Respect user's online visibility preference
+      const isVisible = user.isOnlineVisible !== false;
+      
       // Update primary user node
       const updates = {
-        isOnline: true,
-        lastSeen: now,
+        isOnline: isVisible,
+        lastSeen: isVisible ? now : 0,
       };
       
       update(userRef, updates).catch(() => {});
@@ -483,8 +486,8 @@ export function AuthProvider({ children }) {
         get(sixthUserLocRef).then((snap) => {
           if (snap.exists()) {
             const sixthUpdates = {
-              isOnline: true,
-              lastSeen: now,
+              isOnline: isVisible,
+              lastSeen: isVisible ? now : 0,
             };
             update(sixthUserLocRef, sixthUpdates).catch(() => {});
             

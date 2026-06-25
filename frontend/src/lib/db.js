@@ -156,6 +156,12 @@ export const updateProfilePicture = async (userId, photoUrl) => {
   // (Assuming photo_url sync might be needed similar to verification)
 };
 
+export const updateOnlineVisibility = async (userId, isOnlineVisible) => {
+  const userRef = ref(database, `users/${userId}`);
+  await update(userRef, { isOnlineVisible });
+  invalidateUserCache(userId);
+};
+
 export const getUser = async (userId) => {
   // Return from cache if fresh
   const cached = _getUserFromCache(userId);

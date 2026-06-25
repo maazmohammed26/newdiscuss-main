@@ -45,6 +45,9 @@ export default function DevRadarPage() {
   const [updatingLocation, setUpdatingLocation] = useState(false);
   const [myCoordsLoaded, setMyCoordsLoaded] = useState(false);
 
+  const [isManualPinning, setIsManualPinning] = useState(false);
+  const [manualCoords, setManualCoords] = useState(null);
+  const tempMarkerRef = useRef(null);
   const centeredRef = useRef(false);
   const locationRequestCooldownRef = useRef(0);
   const autoPromptShownRef = useRef(false);
@@ -230,6 +233,43 @@ export default function DevRadarPage() {
     }
   }, [myCoords, mapReady]);
 
+  // Handle Map Clicks for Manual Pinning
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady) return;
+
+    const onMapClick = (e) => {
+      if (!isManualPinning) return;
+      const { lat, lng } = e.latlng;
+      setManualCoords({ lat, lng });
+
+      if (!tempMarkerRef.current) {
+        const markerIcon = L.divIcon({
+          className: 'custom-dev-marker-container',
+          html: `<div class="devradar-avatar-wrap"><div class="devradar-avatar-circle" style="border-color: #2563EB; background: #2563EB; width: 20px; height: 20px; border-radius: 50%;"></div></div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+        tempMarkerRef.current = L.marker([lat, lng], { icon: markerIcon }).addTo(map);
+      } else {
+        tempMarkerRef.current.setLatLng([lat, lng]);
+      }
+    };
+
+    if (isManualPinning) {
+      map.on('click', onMapClick);
+      if (map.getContainer()) map.getContainer().style.cursor = 'crosshair';
+    } else {
+      map.off('click', onMapClick);
+      if (map.getContainer()) map.getContainer().style.cursor = '';
+    }
+
+    return () => {
+      map.off('click', onMapClick);
+      if (map.getContainer()) map.getContainer().style.cursor = '';
+    };
+  }, [isManualPinning, mapReady]);
+
   // 5. Sync Markers on Map when locations list updates or map becomes ready
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -336,6 +376,69 @@ export default function DevRadarPage() {
       setTimeout(() => {
         toast.info('Go to DevRadar settings and turn on Location Sharing to see yourself on the map!');
       }, 300);
+    }
+  };
+
+  const handleStartManualPinning = () => {
+    setShowLocationUpdateModal(false);
+    setIsManualPinning(true);
+    toast.info('Click anywhere on the map to drop your pin.', { duration: 4000 });
+  };
+
+  const handleConfirmManualPin = async () => {
+    if (!manualCoords || !user?.id) return;
+    setUpdatingLocation(true);
+    setLocationUpdateStatus('loading');
+    
+    try {
+      const { lat: latitude, lng: longitude } = manualCoords;
+      const existingLoc = await getUserLocation(user.id);
+      const payload = {
+        latitude,
+        longitude,
+        isPublic: existingLoc?.isPublic ?? true,
+        username: existingLoc?.username || user.username || user.displayName || '',
+        fullName: existingLoc?.fullName || '',
+        bio: existingLoc?.bio || '',
+        photo_url: existingLoc?.photo_url || user.photo_url || user.photoURL || '',
+        verified: existingLoc?.verified ?? user.verified ?? false,
+      };
+
+      await saveUserLocation(user.id, payload);
+      setMyCoords({ lat: latitude, lng: longitude });
+      setLocations((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const meIndex = next.findIndex((loc) => loc.userId === user.id);
+        const meLocation = { userId: user.id, ...payload };
+        if (meIndex >= 0) {
+          next[meIndex] = { ...next[meIndex], ...meLocation };
+        } else {
+          next.push(meLocation);
+        }
+        return next;
+      });
+      toast.success('Manual location saved!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save manual location.');
+    } finally {
+      setUpdatingLocation(false);
+      setLocationUpdateStatus('success');
+      setIsManualPinning(false);
+      setManualCoords(null);
+      if (tempMarkerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(tempMarkerRef.current);
+        tempMarkerRef.current = null;
+      }
+    }
+  };
+  
+  const handleCancelManualPin = () => {
+    setIsManualPinning(false);
+    setManualCoords(null);
+    if (tempMarkerRef.current && mapInstanceRef.current) {
+      mapInstanceRef.current.removeLayer(tempMarkerRef.current);
+      tempMarkerRef.current = null;
     }
   };
 
@@ -811,6 +914,7 @@ export default function DevRadarPage() {
         status={locationUpdateStatus}
         errorMessage={locationUpdateError}
         theme={theme}
+        onManualPin={handleStartManualPinning}
         onClose={() => {
           if (locationUpdateStatus === 'loading') return;
           setShowLocationUpdateModal(false);
@@ -822,6 +926,35 @@ export default function DevRadarPage() {
         onConfirm={handleConfirmLiveLocationUpdate}
         onRetry={handleConfirmLiveLocationUpdate}
       />
+
+      {isManualPinning && (
+        <div className="fixed bottom-24 left-0 right-0 z-[1000] flex justify-center px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-2xl shadow-2xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] flex items-center gap-3 pointer-events-auto max-w-sm w-full">
+            <div className="flex-1">
+              <p className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Manual Pinning</p>
+              <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] mt-0.5">
+                {manualCoords ? 'Location selected. Ready to save?' : 'Tap anywhere on the map to place your pin.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCancelManualPin}
+                className="p-2 bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleConfirmManualPin}
+                disabled={!manualCoords || updatingLocation}
+                className="px-4 py-2 bg-[#2563EB] discuss:bg-[#EF4444] text-white font-bold text-xs rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              >
+                {updatingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global styling overrides for Leaflet map styling */}
       <style>{`
