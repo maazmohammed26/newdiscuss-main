@@ -110,11 +110,11 @@ function AppRoutes() {
 
     if (isPublicRoute || (!user && !isAppRoute)) {
       // Force default light theme (remove all active theme selectors)
-      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black');
+      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
       root.style.setProperty('--splash-bg', '#F5F5F7');
     } else {
       // Restore selected inside-app theme
-      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black');
+      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
       
       if (theme === 'dark') {
         root.classList.add('dark');
@@ -125,6 +125,9 @@ function AppRoutes() {
       } else if (theme === 'discuss-black') {
         root.classList.add('discuss-black');
         root.style.setProperty('--splash-bg', '#0D0D12');
+      } else if (theme === 'discuss-retro') {
+        root.classList.add('discuss-retro');
+        root.style.setProperty('--splash-bg', '#E8E0D0');
       } else {
         root.style.setProperty('--splash-bg', '#F5F5F7');
       }

@@ -872,3 +872,432 @@
   background-color: rgba(255, 0, 127, 0.18) !important;
   box-shadow: 0 0 24px rgba(255, 0, 127, 0.35) !important;
 }
+
+/* ============================================================
+   DISCUSS RETRO THEME — Y2K Retro-Futuristic Hardware UI
+   ────────────────────────────────────────────────────────
+   Design Language: Tactile 3D buttons, bevelled rounded panels,
+   layered plastic materials, thick frames, soft depth, satisfying
+   press animations. Inspired by 90s/2000s portable hardware.
+   
+   Primary Red:   #D32F2F / #B71C1C
+   Primary Blue:  #1565C0 / #0D47A1
+   Warm Gray:     #E8E0D0 (bg) / #D5CFC0 (surface)
+   Panel Gray:    #C8C0B0 (raised) / #B0A898 (recessed)
+   Text Dark:     #2D2520
+   Text Muted:    #8A8078
+   ============================================================ */
+
+/* CSS custom-property overrides for shadcn compatibility */
+.discuss-retro {
+  --dr-bg:         #E8E0D0;
+  --dr-surface:    #D5CFC0;
+  --dr-surface2:   #C8C0B0;
+  --dr-raised:     #EDE8DC;
+  --dr-border:     #B0A898;
+  --dr-border-lt:  #F0EBE0;
+  --dr-red:        #D32F2F;
+  --dr-red-dk:     #B71C1C;
+  --dr-blue:       #1565C0;
+  --dr-blue-dk:    #0D47A1;
+  --dr-text:       #2D2520;
+  --dr-muted:      #8A8078;
+  --dr-highlight:  linear-gradient(135deg, #D32F2F, #1565C0);
+
+  /* shadcn CSS vars */
+  --background: 36 24% 87%;
+  --foreground: 18 14% 15%;
+  --card: 36 18% 82%;
+  --card-foreground: 18 14% 15%;
+  --popover: 36 18% 85%;
+  --popover-foreground: 18 14% 15%;
+  --primary: 0 70% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 211 78% 42%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 30 12% 75%;
+  --muted-foreground: 18 8% 50%;
+  --accent: 30 12% 75%;
+  --accent-foreground: 18 14% 15%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 30 12% 70%;
+  --input: 36 18% 82%;
+  --ring: 0 70% 50%;
+  --radius: 1rem;
+}
+
+/* ── Background & base typography ── */
+.discuss-retro body {
+  background-color: #E8E0D0 !important;
+  color: #2D2520 !important;
+  font-family: 'DM Sans', 'Inter', sans-serif !important;
+}
+
+.discuss-retro h1,
+.discuss-retro h2,
+.discuss-retro h3,
+.discuss-retro h4,
+.discuss-retro h5,
+.discuss-retro h6,
+.discuss-retro .font-heading {
+  font-family: 'Sora', 'DM Sans', sans-serif !important;
+  letter-spacing: -0.02em;
+}
+
+.discuss-retro,
+.discuss-retro #root {
+  background-color: #E8E0D0;
+  color: #2D2520;
+}
+
+/* ── Surfaces / cards — Bevelled raised panels ── */
+.discuss-retro .bg-white,
+.discuss-retro .bg-neutral-50,
+.discuss-retro .bg-\[\#F5F5F7\] {
+  background-color: #EDE8DC !important;
+  border: 2px solid #F0EBE0 !important;
+  border-bottom-color: #B0A898 !important;
+  border-right-color: #B0A898 !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    3px 3px 6px rgba(0,0,0,0.12),
+    -2px -2px 4px rgba(255,255,255,0.7),
+    inset 1px 1px 0 rgba(255,255,255,0.5) !important;
+}
+
+.discuss-retro .bg-neutral-100,
+.discuss-retro .bg-\[\#F1F5F9\] {
+  background-color: #D5CFC0 !important;
+  border-radius: 12px !important;
+}
+
+.discuss-retro .bg-neutral-900,
+.discuss-retro .bg-\[\#0F172A\],
+.discuss-retro .bg-\[\#121212\] {
+  background-color: #C8C0B0 !important;
+  color: #2D2520 !important;
+}
+
+/* Hover on surface containers */
+.discuss-retro [class*="hover:bg-neutral-100"]:hover,
+.discuss-retro [class*="hover:bg-neutral-50"]:hover,
+.discuss-retro [class*="hover:bg-white"]:hover,
+.discuss-retro [class*="hover:bg-\[\#F5F5F7\]"]:hover,
+.discuss-retro [role="menuitem"]:focus,
+.discuss-retro [role="menuitem"]:hover {
+  background-color: #D5CFC0 !important;
+  color: #2D2520 !important;
+}
+
+/* ── Borders — Bevelled edges ── */
+.discuss-retro .border-neutral-200,
+.discuss-retro .border-\[\#E2E8F0\],
+.discuss-retro .border-\[\#334155\],
+.discuss-retro .border-\[\#333333\] {
+  border-color: #B0A898 !important;
+}
+
+/* ── TEXT COLORS ── */
+.discuss-retro .text-neutral-900,
+.discuss-retro .text-neutral-800,
+.discuss-retro .text-neutral-700,
+.discuss-retro .text-\[\#0F172A\] {
+  color: #2D2520 !important;
+}
+
+.discuss-retro .text-neutral-600,
+.discuss-retro .text-neutral-500 {
+  color: #5A5248 !important;
+}
+
+.discuss-retro .text-neutral-400,
+.discuss-retro .text-neutral-300,
+.discuss-retro .text-\[\#6275AF\],
+.discuss-retro .text-\[\#94A3B8\],
+.discuss-retro .text-\[\#64748B\] {
+  color: #8A8078 !important;
+}
+
+/* Primary accent → Red */
+.discuss-retro .text-\[\#2563EB\],
+.discuss-retro .text-\[\#1D7AFF\],
+.discuss-retro .text-\[\#60A5FA\] {
+  color: #D32F2F !important;
+}
+
+.discuss-retro .bg-\[\#2563EB\],
+.discuss-retro .bg-\[\#1D7AFF\] {
+  background-color: #D32F2F !important;
+}
+
+.discuss-retro .border-\[\#2563EB\] {
+  border-color: #D32F2F !important;
+}
+
+.discuss-retro .hover\:bg-\[\#2563EB\]\/10:hover,
+.discuss-retro .hover\:bg-\[\#1D4ED8\]:hover {
+  background-color: rgba(211, 47, 47, 0.12) !important;
+}
+
+/* ── BUTTONS — Tactile 3D with press effect ── */
+.discuss-retro button,
+.discuss-retro a[role="button"],
+.discuss-retro [class*="btn-"] {
+  border-radius: 14px !important;
+  transition: all 0.1s ease !important;
+}
+
+.discuss-retro button[data-primary="true"],
+.discuss-retro [type="submit"] {
+  background: linear-gradient(180deg, #E84040, #B71C1C) !important;
+  border: 2px solid #F0EBE0 !important;
+  border-bottom-color: #8B1A1A !important;
+  border-right-color: #8B1A1A !important;
+  border-radius: 14px !important;
+  box-shadow:
+    3px 3px 6px rgba(0,0,0,0.2),
+    -1px -1px 2px rgba(255,255,255,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.discuss-retro button[data-primary="true"]:hover {
+  background: linear-gradient(180deg, #EF5350, #C62828) !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    4px 4px 8px rgba(0,0,0,0.25),
+    -1px -1px 2px rgba(255,255,255,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+
+.discuss-retro button[data-primary="true"]:active {
+  transform: translateY(2px) !important;
+  box-shadow:
+    inset 3px 3px 6px rgba(0,0,0,0.3),
+    inset -1px -1px 2px rgba(255,255,255,0.1) !important;
+  border-top-color: #8B1A1A !important;
+  border-left-color: #8B1A1A !important;
+  border-bottom-color: #F0EBE0 !important;
+  border-right-color: #F0EBE0 !important;
+}
+
+/* Secondary / outline buttons → raised gray plastic */
+.discuss-retro .btn-secondary,
+.discuss-retro button:not([data-primary]):not([type="submit"]):not([class*="bg-"]) {
+  border: 2px solid #F0EBE0 !important;
+  border-bottom-color: #B0A898 !important;
+  border-right-color: #B0A898 !important;
+}
+
+/* ── Input / forms — Recessed panel look ── */
+.discuss-retro input,
+.discuss-retro textarea,
+.discuss-retro select {
+  background-color: #D5CFC0 !important;
+  border: 2px solid #B0A898 !important;
+  border-top-color: #9A9488 !important;
+  border-left-color: #9A9488 !important;
+  border-bottom-color: #F0EBE0 !important;
+  border-right-color: #F0EBE0 !important;
+  border-radius: 12px !important;
+  color: #2D2520 !important;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1), inset -1px -1px 2px rgba(255,255,255,0.4) !important;
+}
+
+.discuss-retro input:focus,
+.discuss-retro textarea:focus {
+  border-color: #D32F2F !important;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1), 0 0 0 3px rgba(211,47,47,0.2) !important;
+}
+
+.discuss-retro input::placeholder,
+.discuss-retro textarea::placeholder {
+  color: #8A8078 !important;
+}
+
+/* ── Scrollbars ── */
+.discuss-retro ::-webkit-scrollbar-thumb {
+  background: #B0A898;
+  border-radius: 8px;
+  border: 2px solid #D5CFC0;
+}
+.discuss-retro ::-webkit-scrollbar-thumb:hover {
+  background: #8A8078;
+}
+.discuss-retro ::-webkit-scrollbar-track {
+  background: #D5CFC0;
+  border-radius: 8px;
+}
+
+/* ── Focus ring ── */
+.discuss-retro *:focus-visible {
+  outline-color: #D32F2F;
+  outline-offset: 3px;
+}
+
+/* ── Selection ── */
+.discuss-retro ::selection {
+  background: rgba(211, 47, 47, 0.2);
+  color: #2D2520;
+}
+
+/* ── Card shadows — Chunky raised plastic ── */
+.discuss-retro .shadow-card,
+.discuss-retro [class*="shadow-"] {
+  box-shadow: 
+    3px 3px 6px rgba(0,0,0,0.12),
+    -2px -2px 4px rgba(255,255,255,0.7) !important;
+}
+
+.discuss-retro .hover\:shadow-card-hover:hover {
+  box-shadow:
+    4px 4px 10px rgba(0,0,0,0.15),
+    -2px -2px 4px rgba(255,255,255,0.8) !important;
+}
+
+/* ── Dropdown / Popover — Raised panel ── */
+.discuss-retro [data-radix-popper-content-wrapper] > div,
+.discuss-retro [role="menu"],
+.discuss-retro [role="listbox"] {
+  background-color: #EDE8DC !important;
+  border: 2px solid #F0EBE0 !important;
+  border-bottom-color: #B0A898 !important;
+  border-right-color: #B0A898 !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    4px 4px 10px rgba(0,0,0,0.15),
+    -2px -2px 4px rgba(255,255,255,0.7) !important;
+}
+
+/* ── Dialog — Thick bordered modal ── */
+.discuss-retro [role="dialog"] > div:first-child {
+  background-color: #EDE8DC !important;
+  border: 3px solid #F0EBE0 !important;
+  border-bottom-color: #B0A898 !important;
+  border-right-color: #B0A898 !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 16px rgba(0,0,0,0.2), -3px -3px 8px rgba(255,255,255,0.6) !important;
+}
+
+.discuss-retro [role="alertdialog"] div:first-child {
+  background-color: #EDE8DC !important;
+  border-radius: 20px !important;
+}
+
+/* ── Header — Bevelled panel bar ── */
+.discuss-retro header,
+.discuss-retro [data-testid="header"] {
+  background-color: #D5CFC0 !important;
+  border-bottom: 3px solid #B0A898 !important;
+  border-top: 2px solid #F0EBE0 !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+}
+
+/* ── Thread/divider lines ── */
+.discuss-retro hr,
+.discuss-retro [class*="border-t"],
+.discuss-retro [class*="border-b"] {
+  border-color: #B0A898 !important;
+}
+
+/* ── Gradient accents — Red-to-Blue team combo ── */
+.discuss-retro .bg-gradient-to-br,
+.discuss-retro .bg-gradient-to-r.from-\[\#DC2626\].to-\[\#2563EB\] {
+  background: linear-gradient(135deg, #D32F2F, #1565C0) !important;
+}
+
+/* Story portal ring for retro → Red-Blue bevelled */
+.discuss-retro .story-shining-portal-ring {
+  background: conic-gradient(from 0deg, #D32F2F, #1565C0, #D32F2F);
+  box-shadow: 0 0 8px rgba(211,47,47,0.4), 0 0 8px rgba(21,101,192,0.3);
+}
+
+/* ── Smooth transitions ── */
+.discuss-retro,
+.discuss-retro * {
+  transition-property: background-color, border-color, color, box-shadow, transform;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* ── Post card text overrides ── */
+.discuss-retro [data-testid^="post-content"] *,
+.discuss-retro [data-testid^="post-title"] {
+  color: #2D2520 !important;
+}
+
+.discuss-retro [data-testid^="post-content"] a,
+.discuss-retro [data-testid^="post-content"] a:visited {
+  color: #D32F2F !important;
+  text-decoration: underline !important;
+}
+
+.discuss-retro [data-testid^="post-content"] a:hover {
+  color: #1565C0 !important;
+}
+
+/* URL preview card */
+.discuss-retro .url-preview-card {
+  background-color: #D5CFC0 !important;
+  border: 2px solid #B0A898 !important;
+  border-radius: 14px !important;
+}
+
+.discuss-retro .url-preview-card:hover {
+  background-color: #C8C0B0 !important;
+}
+
+.discuss-retro .url-preview-card .url-preview-domain {
+  color: #D32F2F !important;
+}
+
+.discuss-retro .url-preview-card .url-preview-title {
+  color: #2D2520 !important;
+}
+
+.discuss-retro .url-preview-card .url-preview-desc {
+  color: #8A8078 !important;
+}
+
+/* ── Megaphone button ── */
+.discuss-retro button[title="Admin Message"] {
+  background-color: rgba(211,47,47,0.08) !important;
+  border-color: rgba(211,47,47,0.3) !important;
+  color: #D32F2F !important;
+}
+
+.discuss-retro button[title="Admin Message"] svg {
+  color: #D32F2F !important;
+}
+
+.discuss-retro button[title="Admin Message"]:hover {
+  background-color: rgba(211,47,47,0.15) !important;
+}
+
+/* ── Global text default ── */
+.discuss-retro * {
+  color: inherit;
+}
+
+/* ── Ensure all dark mode overrides don't bleed ── */
+.discuss-retro .dark .bg-white {
+  background-color: #EDE8DC !important;
+}
+
+/* ── Red danger buttons keep their color ── */
+.discuss-retro [class*="hover:bg-red-50"]:hover,
+.discuss-retro [class*="focus:bg-red-50"]:focus {
+  background-color: rgba(211, 47, 47, 0.1) !important;
+  color: #B71C1C !important;
+}
+
+/* ── Active nav items / tab highlights → Blue accent ── */
+.discuss-retro .bg-neutral-100.text-neutral-900 {
+  background-color: rgba(21,101,192,0.12) !important;
+  color: #0D47A1 !important;
+  border: 2px solid #1565C0 !important;
+  border-radius: 12px !important;
+}

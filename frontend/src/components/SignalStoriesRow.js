@@ -77,7 +77,7 @@ function AddStoryButton({ hasOwnStory, onClick }) {
           className="w-[58px] h-[58px] rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
           style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)', padding: '2px' }}
         >
-          <div className="w-full h-full rounded-full bg-white dark:bg-neutral-900 discuss:bg-[#1a1a1a] flex items-center justify-center">
+          <div className="w-full h-full rounded-full bg-[#FFFFFF] dark:bg-neutral-900 discuss:bg-[#1a1a1a] discuss-retro:bg-[#EDE8DC] flex items-center justify-center">
             <Plus className="w-5 h-5 text-purple-500" strokeWidth={2.5} />
           </div>
         </div>

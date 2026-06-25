@@ -11,8 +11,8 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    // Remove all theme classes (including new discuss-black)
-    root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black');
+    // Remove all theme classes
+    root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
 
     if (theme === 'dark') {
       root.classList.add('dark');
@@ -20,6 +20,8 @@ export function ThemeProvider({ children }) {
       root.classList.add('discuss', 'discuss-light');
     } else if (theme === 'discuss-black') {
       root.classList.add('discuss-black');
+    } else if (theme === 'discuss-retro') {
+      root.classList.add('discuss-retro');
     }
     // 'light' = no extra class (default)
 

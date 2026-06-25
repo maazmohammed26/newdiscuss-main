@@ -82,7 +82,7 @@ import {
   FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
-  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, Send, MapPin, Trophy
+  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
