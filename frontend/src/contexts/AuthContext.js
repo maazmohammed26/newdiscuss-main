@@ -264,6 +264,7 @@ export function AuthProvider({ children }) {
         verified:      dbUser.verified || false,
         admin_message: dbUser.admin_message || '',
         created_at:    dbUser.created_at,
+        isOnlineVisible: dbUser.isOnlineVisible !== false,
       };
 
       setUser(userData);
@@ -428,6 +429,7 @@ export function AuthProvider({ children }) {
           ...prev,
           verified:       newVerified,
           admin_message:  data.admin_message || '',
+          isOnlineVisible: data.isOnlineVisible !== false,
         }));
       } else if (sawProfile) {
         // Profile record was deleted → account removed by admin
@@ -452,6 +454,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user?.id) return;
 
+    const isVisible = user.isOnlineVisible !== false;
+
     // Database references
     const userRef = ref(database, `users/${user.id}`);
     const userPresenceRef = ref(database, `users/${user.id}/isOnline`);
@@ -462,14 +466,11 @@ export function AuthProvider({ children }) {
     const primaryLastSeenOnDisconnect = onDisconnect(userLastSeenRef);
 
     primaryPresenceOnDisconnect.set(false);
-    primaryLastSeenOnDisconnect.set(Date.now());
+    primaryLastSeenOnDisconnect.set(isVisible ? Date.now() : 0);
 
     // Update immediately on load
     const updateOnline = () => {
       const now = Date.now();
-      
-      // Respect user's online visibility preference
-      const isVisible = user.isOnlineVisible !== false;
       
       // Update primary user node
       const updates = {
@@ -499,7 +500,7 @@ export function AuthProvider({ children }) {
             const sixthLastSeenOnDisconnect = onDisconnect(sixthLastSeenRef);
             
             sixthPresenceOnDisconnect.set(false);
-            sixthLastSeenOnDisconnect.set(Date.now());
+            sixthLastSeenOnDisconnect.set(isVisible ? Date.now() : 0);
           }
         }).catch(() => {});
       }
@@ -522,12 +523,12 @@ export function AuthProvider({ children }) {
         const sixthUserLocRef = ref(devRadarDatabase, `devRadarLocations/${user.id}`);
         get(sixthUserLocRef).then((snap) => {
           if (snap.exists()) {
-            update(sixthUserLocRef, { isOnline: false, lastSeen: Date.now() }).catch(() => {});
+            update(sixthUserLocRef, { isOnline: false, lastSeen: isVisible ? Date.now() : 0 }).catch(() => {});
           }
         }).catch(() => {});
       }
     };
-  }, [user?.id]);
+  }, [user?.id, user?.isOnlineVisible]);
 
   // ── Auth methods ────────────────────────────────────────────────────────
 
