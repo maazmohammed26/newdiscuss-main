@@ -125,16 +125,8 @@ export default function AboutPage() {
               </a>
               , a solo developer and AI engineer passionate about performant web architectures. What started as an academic undertaking has evolved into a production-grade infrastructure aiming to set a gold standard for clean, responsive application design.
             </p>
-            <p id="hackathon" className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
-              This idea was developed by me, but during the hackathon I started developing it to production level during this hackathon{' '}
-              <span className="shining-purple-text font-black">
-                OpenAI x Outskill | AI Builders Hackathon
-              </span>
-              {' '}which was started by{' '}
-              <span className="font-extrabold text-[#3182CE]">
-                25th May 2026
-              </span>
-              .
+            <p id="about-me" className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
+              Every single line of code, design choice, and architectural decision in this platform was crafted purely by me. My vision is to push the boundaries of what a solo developer can build and deliver a world-class user experience.
             </p>
           </section>
 
