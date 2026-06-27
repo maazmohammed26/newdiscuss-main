@@ -5,7 +5,7 @@ import { getUserByEmail, updateUser, getPendingOTP, deletePendingOTP, savePendin
 import { Button } from '@/components/ui/button';
 import DiscussLogo from '@/components/DiscussLogo';
 import LoadingScreen from '@/components/LoadingScreen';
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, KeyRound, ShieldAlert, Sparkles, Send } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, KeyRound, ShieldAlert, Sparkles, Send, RefreshCw } from 'lucide-react';
 import { sendVerificationOTPDirectly, sendWelcomeEmailDirectly } from '@/lib/emailService';
 
 export default function VerifyEmailPage() {
