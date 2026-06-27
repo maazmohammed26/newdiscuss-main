@@ -95,8 +95,33 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('Standard registration is disabled due to security reasons. Please use Google Authentication to sign up.');
-    return;
+    setError('');
+    
+    if (!signupEnabled) return;
+    if (!username.trim()) return setError('Username is required');
+    if (usernameStatus?.type === 'taken') return setError('Username is already taken');
+    if (!email.trim()) return setError('Email is required');
+    if (emailStatus?.type === 'taken') return setError('Email is already registered');
+    
+    const isPasswordValid = passwordConditions.every(cond => cond.regex.test(password));
+    if (!isPasswordValid) return setError('Password must meet all complexity requirements');
+    if (!termsAccepted) return setError('Please accept the Terms and Conditions');
+    
+    setLoading(true);
+    const r = await register(username.trim(), email.trim(), password);
+    setLoading(false);
+    
+    if (r.success && r.needsVerification) {
+      navigate('/login', { 
+        state: { 
+          verificationMessage: "Account created successfully! We have sent a verification link to your email. Please check your inbox or spam folder (it may take 2 to 3 minutes to arrive)." 
+        } 
+      });
+    } else if (r.success) {
+      navigate(location.state?.from || '/feed', { replace: true });
+    } else {
+      setError(r.error);
+    }
   };
 
   const handleGoogle = async () => {
@@ -182,51 +207,70 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                {/* Security Announcement Banner */}
-                <div className="bg-[#EF4444]/10 border border-[#EF4444]/30 rounded-xl p-4 text-[#E1E0CC] text-[13px] mb-5 space-y-2">
-                  <div className="flex items-center gap-2 text-[#EF4444] font-bold">
-                    <Shield className="w-4 h-4 shrink-0" />
-                    <span>Security Announcement</span>
-                  </div>
-                  <p className="text-gray-400 font-medium leading-relaxed">
-                    Standard registration (Username, Email, Password) is temporarily disabled due to security reasons. Please use <strong>Google Authentication</strong> below to sign up.
-                  </p>
-                  <p className="text-gray-500 text-[11px] italic font-semibold">
-                    Soon adding more security features. Thank you! <br/>— Discuss Team
-                  </p>
-                </div>
-
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Username */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em] opacity-50">Username</label>
+                      <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Username</label>
                       {statusIcon(usernameStatus)}
                     </div>
-                    <Input disabled data-testid="register-username-input" id="username" name="username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Disabled due to security reasons"
-                      className="mt-1 bg-[#181818]/50 border-white/5 text-gray-500 placeholder:text-gray-600 rounded-xl h-11 cursor-not-allowed" />
+                    <Input data-testid="register-username-input" id="username" name="username" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Choose a username"
+                      className={`mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 ${statusColor(usernameStatus)}`} />
+                    {usernameStatus?.msg && (
+                      <p className={`text-[11px] mt-1 flex items-center gap-1 font-bold ${statusTextColor(usernameStatus)}`}>
+                        {usernameStatus.msg}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em] opacity-50">Email</label>
+                      <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email</label>
                       {statusIcon(emailStatus)}
                     </div>
-                    <Input disabled data-testid="register-email-input" type="email" id="email" name="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Disabled due to security reasons"
-                      className="mt-1 bg-[#181818]/50 border-white/5 text-gray-500 placeholder:text-gray-600 rounded-xl h-11 cursor-not-allowed" />
+                    <Input data-testid="register-email-input" type="email" id="email" name="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className={`mt-1 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 ${statusColor(emailStatus)}`} />
+                    {emailStatus?.msg && (
+                      <p className={`text-[11px] mt-1 flex items-center gap-1 font-bold ${statusTextColor(emailStatus)}`}>
+                        {emailStatus.msg}
+                      </p>
+                    )}
                   </div>
 
                   {/* Password */}
                   <div>
-                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em] opacity-50">Password</label>
+                    <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
                     <div className="relative mt-1">
-                      <Input disabled data-testid="register-password-input" type="password" id="password" name="password" autoComplete="new-password" value={password}
-                        onChange={(e) => setPassword(e.target.value)} placeholder="Disabled due to security reasons"
-                        className="bg-[#181818]/50 border-white/5 text-gray-500 placeholder:text-gray-600 rounded-xl h-11 cursor-not-allowed pr-10" />
+                      <Input data-testid="register-password-input" type={showPw ? 'text' : 'password'} id="password" name="password" autoComplete="new-password" value={password}
+                        onChange={(e) => setPassword(e.target.value)} placeholder="Enter password (8+ characters)"
+                        className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
+                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                        {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
+
+                    {/* Password Conditions Checklist */}
+                    {password && (
+                      <div className="mt-2.5 p-3 bg-[#181818] border border-white/5 rounded-xl space-y-1.5 animate-fade-in">
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Password Requirements</p>
+                        {passwordConditions.map((cond) => {
+                          const isMet = cond.regex.test(password);
+                          return (
+                            <div key={cond.id} className="flex items-center gap-2 text-xs font-semibold">
+                              {isMet ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+                              ) : (
+                                <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-600 shrink-0" />
+                              )}
+                              <span className={isMet ? 'text-[#10B981]' : 'text-gray-500'}>{cond.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Terms and Conditions */}
@@ -255,9 +299,10 @@ export default function RegisterPage() {
                     </label>
                   </div>
 
-                  <Button disabled type="submit" data-testid="register-submit-btn"
-                    className="w-full bg-[#181818] border border-white/5 text-gray-500 font-bold rounded-xl py-3 h-12 text-[15px] cursor-not-allowed opacity-40 mt-1">
-                    Create Account (Disabled)
+                  <Button type="submit" data-testid="register-submit-btn"
+                    disabled={loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
+                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all mt-1 disabled:opacity-40 disabled:cursor-not-allowed">
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>
                 </form>
 
