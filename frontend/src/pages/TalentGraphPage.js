@@ -691,7 +691,7 @@ export default function TalentGraphPage() {
                               {details?.verified && <VerifiedBadge size="sm" />}
                             </h3>
                             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 max-w-md line-clamp-1">
-                              {details?.talentGraph?.bio || details?.bio || 'No bio provided.'}
+                              {details?.talentGraph?.bio || details?.bio || 'Open profile to view full info about user.'}
                             </p>
                           </div>
                         </div>
