@@ -63,12 +63,9 @@ export const saveRemotePin = async (userId, pin) => {
 export const removeRemotePin = async (userId) => {
   if (!userId) return;
   if (!secondaryDatabase) return;
-  try {
-    const securityRef = ref(secondaryDatabase, `userSecurity/${userId}`);
-    await remove(securityRef);
-  } catch (error) {
-    console.error('Error removing remote PIN:', error);
-  }
+  const securityRef = ref(secondaryDatabase, `userSecurity/${userId}`);
+  // Use update to set pin to null to avoid permission issues with full node removal
+  await update(securityRef, { pin: null, failedAttempts: 0, lockoutUntil: null });
 };
 
 /**

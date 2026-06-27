@@ -52,23 +52,20 @@ export function SecurityProvider({ children }) {
 
     const securityRef = ref(secondaryDatabase, `userSecurity/${user.id}`);
     const unsub = onValue(securityRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        setRemoteSettings(data);
+      const data = snapshot.exists() ? snapshot.val() : null;
+      setRemoteSettings(data);
 
+      if (data && data.pin) {
         // ── Cross-device sync ──────────────────────────────────────────────
         // If a PIN exists in DB but this device doesn't have lock enabled yet,
-        // auto-enable it. This is the fix for "logs in on new device, no PIN".
-        if (data.pin) {
-          const currentLocal = localSettingsRef.current;
-          if (!currentLocal.enabled) {
-            const updated = { ...currentLocal, enabled: true, type: 'pin' };
-            setLocalSettings(updated);
-            saveLocalSecuritySettings(updated);
-            localSettingsRef.current = updated; // Keep ref in sync immediately
-          }
+        // auto-enable it.
+        const currentLocal = localSettingsRef.current;
+        if (!currentLocal.enabled) {
+          const updated = { ...currentLocal, enabled: true, type: 'pin' };
+          setLocalSettings(updated);
+          saveLocalSecuritySettings(updated);
+          localSettingsRef.current = updated;
         }
-        // ──────────────────────────────────────────────────────────────────
 
         if (data.lockoutUntil && data.lockoutUntil > Date.now()) {
           setLockoutUntil(data.lockoutUntil);
@@ -79,29 +76,25 @@ export function SecurityProvider({ children }) {
           if (loadingRemote.current) {
             loadingRemote.current = false;
             // ── Persistence Check ──────────────────────────────────────────
-            // If manual lock is set or no recent unlock, lock the screen
-            if (data.pin) {
-              const lastUnlocked = localStorage.getItem('discuss_last_unlocked');
-              const manualLock = localStorage.getItem('discuss_manual_lock') === 'true';
-              
-              if (manualLock || !lastUnlocked) {
-                setIsLocked(true);
-              } else {
-                const elapsed = Date.now() - parseInt(lastUnlocked);
-                if (elapsed > 5 * 60 * 1000) setIsLocked(true);
-              }
+            const lastUnlocked = localStorage.getItem('discuss_last_unlocked');
+            const manualLock = localStorage.getItem('discuss_manual_lock') === 'true';
+            
+            if (manualLock || !lastUnlocked) {
+              setIsLocked(true);
+            } else {
+              const elapsed = Date.now() - parseInt(lastUnlocked);
+              if (elapsed > 5 * 60 * 1000) setIsLocked(true);
             }
             setResolving(false);
           }
         }
       } else {
-        // No remote record — disable local lock if it was auto-enabled
-        setRemoteSettings(null);
+        // No remote PIN — disable local lock if it was enabled (cross-device sync for disabling)
+        setLockoutUntil(null);
         if (loadingRemote.current) {
           loadingRemote.current = false;
           setResolving(false);
         }
-        // If no DB record, ensure local is cleared too
         const currentLocal = localSettingsRef.current;
         if (currentLocal.enabled) {
           const updated = { enabled: false, type: 'none' };
