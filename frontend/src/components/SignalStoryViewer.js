@@ -642,7 +642,7 @@ function SignalStoryViewer({
                 className="w-full h-full object-contain"
               />
             )}
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent via-40% to-black/80 pointer-events-none" />
           </div>
         )}
 

@@ -129,6 +129,16 @@ function extractKeywords(text) {
 }
 
 /**
+ * Extract actual shared skills between two users for matching text
+ */
+function extractSharedSkills(userA, userB) {
+  const skillsA = (userA?.talentGraph?.skills || userA?.skills || []).map(s => s.toLowerCase());
+  const skillsB = (userB?.talentGraph?.skills || userB?.skills || []).map(s => s.toLowerCase());
+  const setB = new Set(skillsB);
+  return skillsA.filter(s => setB.has(s));
+}
+
+/**
  * Compute local match score (0-100) using Jaccard Similarity + Complementary bonus
  */
 function calculateLocalMatchScore(userA, userB) {
@@ -218,87 +228,140 @@ ${postSnippets || "No posts yet."}`;
   return askAI(prompt, 'json');
 }
 
-// 3. Prompt Builder for AI Developer Matchmaking
+// 3. AI Developer Matchmaking (Local Primary, AI Enhancement)
 export async function matchCollaborators(currentUser, otherUsers, pastMemory = []) {
-  // Pre-rank other developers locally using skills compatibility
+  // Compute local match scores and pick top 5
   const rankedCandidates = otherUsers
     .map(u => ({
       user: u,
       score: calculateLocalMatchScore(currentUser, u)
     }))
+    .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 12)
-    .map(item => item.user);
+    .slice(0, 5);
 
-  const otherUsersData = rankedCandidates.map(u => ({
-    id: u.id,
-    username: u.username,
-    bio: u.talentGraph?.bio || u.bio || "",
-    skills: u.talentGraph?.skills || u.skills || []
-  }));
+  const localResult = rankedCandidates.map(item => {
+    const shared = extractSharedSkills(currentUser, item.user);
+    const reason = shared.length > 0
+      ? `Strong match (${item.score}%). You both share skills in ${shared.slice(0, 3).join(", ")}.`
+      : `Good match based on complementary skills.`;
+    return {
+      userId: item.user.id,
+      username: item.user.username,
+      reason
+    };
+  });
 
-  const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
-  const memorySection = memoryText ? `\nPast Activity Memory:\n${memoryText}\n` : "";
+  if (localResult.length === 0) return [];
 
-  const prompt = `Identify top 5 developer collaborator matches for the current user from the list of other users. Return a JSON array of objects:
+  // Try to use AI to enhance the reasons, fallback to localResult immediately if it fails
+  try {
+    const otherUsersData = rankedCandidates.map(u => ({
+      id: u.user.id,
+      username: u.user.username,
+      bio: u.user.talentGraph?.bio || u.user.bio || "",
+      skills: u.user.talentGraph?.skills || u.user.skills || []
+    }));
+
+    const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
+    const memorySection = memoryText ? `\nPast Activity Memory:\n${memoryText}\n` : "";
+
+    const prompt = `The local matching algorithm has selected these top ${localResult.length} collaborator matches for the user.
+Return EXACTLY these same users, but rewrite the "reason" field in a professional networking tone without using emojis. Do NOT change the userIds.
+
+Return a JSON array:
 [
   {
-    "userId": "other_user_id",
-    "username": "other_username",
-    "reason": "Brief explanation of why they match (e.g. complementary skills, shared interest in AI)"
+    "userId": "exact_userId_from_list",
+    "username": "exact_username_from_list",
+    "reason": "Brief professional explanation of why they match based on their bio and skills."
   }
 ]
-Do not return users with no skills. Explain matches in a professional networking tone without using emojis. Return ONLY JSON.
 ${memorySection}
-Current User:
-Username: ${currentUser.username}
-Bio: ${currentUser.talentGraph?.bio || currentUser.bio || ""}
-Skills: ${(currentUser.talentGraph?.skills || currentUser.skills || []).join(", ")}
+Current User: ${currentUser.username} (Skills: ${(currentUser.talentGraph?.skills || currentUser.skills || []).join(", ")})
 
-Other Users (pre-sorted by skill similarity score):
+Selected Matches:
 ${JSON.stringify(otherUsersData)}`;
 
-  return askAI(prompt, 'json');
+    const aiResult = await askAI(prompt, 'json');
+    
+    // Validate AI result to ensure it didn't drop users
+    if (Array.isArray(aiResult) && aiResult.length > 0) {
+      return aiResult.map(aiItem => {
+        const localItem = localResult.find(l => l.userId === aiItem.userId);
+        return localItem ? { ...localItem, reason: aiItem.reason || localItem.reason } : aiItem;
+      }).filter(item => localResult.some(l => l.userId === item.userId));
+    }
+    return localResult;
+  } catch (err) {
+    console.warn("AI reason enhancement failed, falling back to local algorithm results.");
+    return localResult;
+  }
 }
 
-// 4. Prompt Builder for AI Team Builder
+// 4. Team Builder (Local Primary, AI Enhancement)
 export async function buildTeam(projectIdea, otherUsers, pastMemory = []) {
-  // Pre-filter developers locally based on skills matching project requirements
   const queryKeywords = extractKeywords(projectIdea);
   const rankedCandidates = otherUsers
     .map(u => ({
       user: u,
       score: scoreUserAgainstQuery(u, queryKeywords)
     }))
+    .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 12)
-    .map(item => item.user);
+    .slice(0, 4);
 
-  const otherUsersData = rankedCandidates.map(u => ({
-    id: u.id,
-    username: u.username,
-    bio: u.talentGraph?.bio || u.bio || "",
-    skills: u.talentGraph?.skills || u.skills || []
-  }));
+  const localResult = rankedCandidates.map(item => {
+    return {
+      userId: item.user.id,
+      username: item.user.username,
+      role: "Team Member",
+      reason: `Matched ${item.score}% of the required technical keywords.`
+    };
+  });
 
-  const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
-  const memorySection = memoryText ? `\nPast Team Building Context:\n${memoryText}\n` : "";
+  if (localResult.length === 0) return [];
 
-  const prompt = `You are an AI team builder. Suggest up to 4 developers from the user list who would be perfect for this project: "${projectIdea}". Return a JSON array of objects:
+  try {
+    const otherUsersData = rankedCandidates.map(u => ({
+      id: u.user.id,
+      username: u.user.username,
+      bio: u.user.talentGraph?.bio || u.user.bio || "",
+      skills: u.user.talentGraph?.skills || u.user.skills || []
+    }));
+
+    const memoryText = pastMemory.slice(0, 10).map(m => `- ${m.description} (${new Date(m.timestamp).toLocaleDateString()})`).join("\n");
+    const memorySection = memoryText ? `\nPast Team Building Context:\n${memoryText}\n` : "";
+
+    const prompt = `The local algorithm has selected these ${localResult.length} developers for the project: "${projectIdea}".
+Return EXACTLY these same users, but rewrite the "role" and "reason" fields based on their skills.
+
+Return a JSON array of objects:
 [
   {
-    "userId": "user_id",
-    "username": "username",
-    "role": "Proposed role (e.g. Frontend developer, Backend engineer)",
+    "userId": "exact_userId_from_list",
+    "username": "exact_username_from_list",
+    "role": "Specific role (e.g. Frontend developer, Database engineer)",
     "reason": "Why they fit this specific project based on their skills and bio"
   }
 ]
-Recommend actual users from the list only. Return ONLY JSON.
+Do not add any users not in the list. Return ONLY JSON.
 ${memorySection}
-Other Users:
+Selected Developers:
 ${JSON.stringify(otherUsersData)}`;
 
-  return askAI(prompt, 'json');
+    const aiResult = await askAI(prompt, 'json');
+    if (Array.isArray(aiResult) && aiResult.length > 0) {
+      return aiResult.map(aiItem => {
+        const localItem = localResult.find(l => l.userId === aiItem.userId);
+        return localItem ? { ...localItem, role: aiItem.role || localItem.role, reason: aiItem.reason || localItem.reason } : aiItem;
+      }).filter(item => localResult.some(l => l.userId === item.userId));
+    }
+    return localResult;
+  } catch (err) {
+    console.warn("AI enhancement failed, falling back to local team builder.");
+    return localResult;
+  }
 }
 
 // 5. Prompt Builder for AI Project Opportunity Feed
@@ -319,41 +382,66 @@ Do not use emojis. Return ONLY JSON.`;
   return askAI(prompt, 'json');
 }
 
-// 6. Prompt Builder for AI Founder & Hiring Assistant
+// 6. Founder & Hiring Assistant (Local Primary, AI Enhancement)
 export async function hireDevelopers(requirement, otherUsers) {
-  // Pre-filter developers locally based on skills matching hiring requirement
   const queryKeywords = extractKeywords(requirement);
   const rankedCandidates = otherUsers
     .map(u => ({
       user: u,
       score: scoreUserAgainstQuery(u, queryKeywords)
     }))
+    .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 12)
-    .map(item => item.user);
+    .slice(0, 4);
 
-  const otherUsersData = rankedCandidates.map(u => ({
-    id: u.id,
-    username: u.username,
-    bio: u.talentGraph?.bio || u.bio || "",
-    skills: u.talentGraph?.skills || u.skills || []
-  }));
+  const localResult = rankedCandidates.map(item => {
+    return {
+      userId: item.user.id,
+      username: item.user.username,
+      fitScore: item.score,
+      reason: `Matched based on technical requirement alignment.`
+    };
+  });
 
-  const prompt = `You are a startup hiring assistant. Recommend up to 4 developers from the user list matching this requirement: "${requirement}". Return a JSON array:
+  if (localResult.length === 0) return [];
+
+  try {
+    const otherUsersData = rankedCandidates.map(u => ({
+      id: u.user.id,
+      username: u.user.username,
+      bio: u.user.talentGraph?.bio || u.user.bio || "",
+      skills: u.user.talentGraph?.skills || u.user.skills || []
+    }));
+
+    const prompt = `The local hiring algorithm has selected these ${localResult.length} developers for the requirement: "${requirement}".
+Return EXACTLY these same users, but rewrite the "reason" field in a persuasive hiring tone.
+
+Return a JSON array:
 [
   {
-    "userId": "user_id",
-    "username": "username",
-    "fitScore": 85, // integer 0-100
+    "userId": "exact_user_id",
+    "username": "exact_username",
+    "fitScore": 85,
     "reason": "Why they fit the hiring requirement"
   }
 ]
-Return ONLY JSON.
+Return ONLY JSON. Do not hallucinate users.
 
-Users:
+Selected Users:
 ${JSON.stringify(otherUsersData)}`;
 
-  return askAI(prompt, 'json');
+    const aiResult = await askAI(prompt, 'json');
+    if (Array.isArray(aiResult) && aiResult.length > 0) {
+      return aiResult.map(aiItem => {
+        const localItem = localResult.find(l => l.userId === aiItem.userId);
+        return localItem ? { ...localItem, fitScore: aiItem.fitScore || localItem.fitScore, reason: aiItem.reason || localItem.reason } : aiItem;
+      }).filter(item => localResult.some(l => l.userId === item.userId));
+    }
+    return localResult;
+  } catch (err) {
+    console.warn("AI enhancement failed, falling back to local hiring builder.");
+    return localResult;
+  }
 }
 
 // 7. Prompt Builder for Discuss AI Chat Integration
