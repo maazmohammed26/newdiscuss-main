@@ -435,6 +435,9 @@ export default function GroupConversationPage() {
     }
     // ⚠️ ANDROID CHROME FIX: getCurrentPosition MUST be called here directly
     // as the very first thing — before setSending(true) or any other call.
+    if (window.median?.android?.geoLocation?.promptLocationServices) {
+      try { window.median.android.geoLocation.promptLocationServices(); } catch (e) {}
+    }
     setSending(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -459,7 +462,7 @@ export default function GroupConversationPage() {
           toast.error('Failed to get your location. Please try again.');
         }
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 

@@ -440,6 +440,9 @@ export default function ChatConversationPage() {
     // as the very first thing — before setSending(true) or any other call.
     // Any state update or async call before it breaks the gesture chain and
     // Android Chrome silently denies without showing the popup.
+    if (window.median?.android?.geoLocation?.promptLocationServices) {
+      try { window.median.android.geoLocation.promptLocationServices(); } catch (e) {}
+    }
     setSending(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -468,7 +471,7 @@ export default function ChatConversationPage() {
           toast.error('Failed to get your location. Please try again.');
         }
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 

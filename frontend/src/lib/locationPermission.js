@@ -1,7 +1,7 @@
 const DEFAULT_GEO_OPTIONS = {
-  enableHighAccuracy: false,
-  timeout: 10000,
-  maximumAge: 30000,
+  enableHighAccuracy: true,
+  timeout: 15000,
+  maximumAge: 0,
 };
 
 export const LOCATION_REQUEST_COOLDOWN_MS = 2500;
@@ -19,6 +19,11 @@ const queryGeolocationPermission = async () => {
 };
 
 export const getCurrentPositionWithAndroidSupport = ({ options = DEFAULT_GEO_OPTIONS } = {}) => {
+  // Support for median.co mobile wrappers
+  if (window.median?.android?.geoLocation?.promptLocationServices) {
+    try { window.median.android.geoLocation.promptLocationServices(); } catch (e) {}
+  }
+
   if (!navigator?.geolocation) {
     return Promise.resolve({
       ok: false,
