@@ -123,8 +123,6 @@ function AppRoutes() {
         root.classList.remove('dark');
         root.style.setProperty('--splash-bg', '#FFFFFF');
       }
-        root.style.setProperty('--splash-bg', '#F5F5F7');
-      }
     }
   }, [location.pathname, user, theme]);
 
