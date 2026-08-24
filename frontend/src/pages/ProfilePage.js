@@ -1323,12 +1323,6 @@ export default function ProfilePage() {
               <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Profile & Settings</span>
               <div className="w-10" />
             </div>
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
         {/* Edge-to-Edge Instagram-style Profile Hero */}
         <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] p-6 text-center relative select-none pb-8">
           
@@ -3170,7 +3164,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
 
       <VerificationRequestModal 
         open={showVerificationModal} 
