@@ -218,6 +218,29 @@
   }
 }
 
+@keyframes route-progress {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(420%); }
+}
+
+html, body, #root {
+  min-height: 100%;
+  background: #fff;
+}
+
+html.dark, html.dark body, html.dark #root {
+  background: #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
 }

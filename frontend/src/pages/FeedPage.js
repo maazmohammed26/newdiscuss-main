@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, startTransition, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { subscribeToPostsRealtime } from '@/lib/db';
-import { cachePosts } from '@/lib/cacheManager';
+import { cachePosts, getFastCachedPosts } from '@/lib/cacheManager';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
@@ -24,8 +24,9 @@ export default function FeedPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [allPosts, setAllPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const initialPostsRef = useRef(getFastCachedPosts());
+  const [allPosts, setAllPosts] = useState(() => initialPostsRef.current || []);
+  const [loading, setLoading] = useState(() => initialPostsRef.current === null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [activeTab, setActiveTab] = useState('discussion');
   const [showCreate, setShowCreate] = useState(false);
@@ -43,7 +44,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     const unsubscribe = subscribeToPostsRealtime(async (updatedPosts) => {
-      setAllPosts(updatedPosts);
+      startTransition(() => setAllPosts(updatedPosts));
       setLoading(false);
       await cachePosts(updatedPosts);
     });

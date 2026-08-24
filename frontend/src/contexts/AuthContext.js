@@ -64,8 +64,42 @@ const REDIRECT_RESULT_MS     = 4_000;   // Max wait for getRedirectResult
 const EMAIL_LINK_REDIRECT_URL = 'https://discussit.in/';
 const NATIVE_GOOGLE_BRIDGE_WAIT_MS = 1_500;
 const NATIVE_GOOGLE_LOGIN_TIMEOUT_MS = 90_000;
+const AUTH_SESSION_CACHE_KEY = 'discuss_auth_session_v1';
 
 const AuthContext = createContext(null);
+
+function readCachedAuthSession() {
+  try {
+    const raw = window.localStorage.getItem(AUTH_SESSION_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.id || !parsed?.email) return null;
+    return { ...parsed, _fromCache: true };
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeCachedAuthSession(userData) {
+  try {
+    if (!userData?.id) {
+      window.localStorage.removeItem(AUTH_SESSION_CACHE_KEY);
+      return;
+    }
+    const safeSnapshot = {
+      id: userData.id,
+      uid: userData.uid || userData.id,
+      email: userData.email || '',
+      username: userData.username || '',
+      photo_url: userData.photo_url || '',
+      verified: Boolean(userData.verified),
+      admin_message: userData.admin_message || '',
+      created_at: userData.created_at || null,
+      isOnlineVisible: userData.isOnlineVisible !== false,
+    };
+    window.localStorage.setItem(AUTH_SESSION_CACHE_KEY, JSON.stringify(safeSnapshot));
+  } catch (_) {}
+}
 
 // ─── Helper: resolve to `fallback` after `ms` instead of hanging ─────────────
 function withTimeout(promise, ms, fallback) {
@@ -180,14 +214,19 @@ function buildBasicUser(firebaseUser) {
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }) {
-  const [user, setUser]                         = useState(null);
-  const [loading, setLoading]                   = useState(true);
+  const [user, setUser]                         = useState(() => readCachedAuthSession());
+  const [loading, setLoading]                   = useState(() => !readCachedAuthSession());
   const [pendingVerification, setPendingVerification] = useState(false);
 
   // Ref guards to prevent double-resolution
   const hasResolved     = useRef(false);
   const hardTimeoutRef  = useRef(null);
   const sessionCleanupRef = useRef(null);
+  const hadCachedSessionRef = useRef(Boolean(user));
+
+  useEffect(() => {
+    writeCachedAuthSession(user);
+  }, [user]);
 
   // ── resolve: called exactly once per auth-state cycle ──────────────────
   const resolve = useCallback(() => {
@@ -400,8 +439,8 @@ export function AuthProvider({ children }) {
     // we resolve as "no user" so the app never spins forever.
     hardTimeoutRef.current = setTimeout(() => {
       if (!hasResolved.current) {
-        console.warn('[Auth] Hard timeout reached — resolving as unauthenticated.');
-        setUser(null);
+        console.warn('[Auth] Hard timeout reached — keeping the last safe session snapshot.');
+        if (!hadCachedSessionRef.current) setUser(null);
         resolve();
       }
     }, AUTH_TIMEOUT_MS);

@@ -26,6 +26,7 @@ import {
 } from '@/lib/chatsDb';
 import {
   getCachedMessages,
+  getFastCachedMessages,
   cacheMessages,
   clearDmThreadCaches,
   removeDmMessageFromCaches,
@@ -73,14 +74,19 @@ export default function ChatConversationPage() {
   const inputRef = useRef(null);
   const messageRefs = useRef({});
 
-  const [otherUser, setOtherUser] = useState(null);
+  const initialOtherUser = typeof window !== 'undefined' && window.__discuss_active_chat_user?.id === otherUserId
+    ? window.__discuss_active_chat_user
+    : null;
+  const initialChatId = user?.id && otherUserId ? generateChatId(user.id, otherUserId) : null;
+  const initialMessages = initialChatId ? getFastCachedMessages(user.id, initialChatId) : null;
+  const [otherUser, setOtherUser] = useState(initialOtherUser);
   const [otherUserProfile, setOtherUserProfile] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => initialMessages || []);
   const [deletedMessageIds, setDeletedMessageIds] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialOtherUser && !initialMessages);
   const [sending, setSending] = useState(false);
-  const [chatId, setChatId] = useState(null);
+  const [chatId, setChatId] = useState(initialChatId);
   const [chatEnabled, setChatEnabled] = useState(true);
   const [chatStatus, setChatStatus] = useState(CHAT_STATUS.ACTIVE);
   const [relationshipStatus, setRelationshipStatus] = useState(RELATIONSHIP_STATUS.NONE);
@@ -270,6 +276,9 @@ export default function ChatConversationPage() {
         }
         
         setOtherUser(userData);
+        if (typeof window !== 'undefined') {
+          window.__discuss_active_chat_user = { id: otherUserId, ...userData };
+        }
         setOtherUserProfile(profileData);
 
         // Check relationship and chat status with details
@@ -312,7 +321,7 @@ export default function ChatConversationPage() {
   useEffect(() => {
     setLiveMessagesSynced(false);
     prevSeenMessageIdsRef.current = new Set();
-  }, [chatId]);
+  }, [chatId, user?.id]);
 
   // Subscribe to chat settings
   useEffect(() => {
@@ -332,7 +341,7 @@ export default function ChatConversationPage() {
     });
     
     return () => unsubscribe();
-  }, [chatId]);
+  }, [chatId, user?.id]);
 
   // Subscribe to messages with IndexedDB + localStorage cache
   useEffect(() => {

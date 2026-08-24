@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
 import FloatingNavbar from '@/components/FloatingNavbar';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner';
 import LoadingScreen from '@/components/LoadingScreen';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
 import OfflineBanner from '@/components/OfflineBanner';
+import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialogProvider';
 import '@/App.css';
 
 // ── Lazy-loaded page components ──────────────────────────────────────────────
@@ -52,6 +53,21 @@ const DownloadPage     = lazy(() => import('@/pages/DownloadPage'));
 const SearchPage       = lazy(() => import('@/pages/SearchPage'));
 const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
 
+const PUBLIC_ROUTES = new Set([
+  '/', '/about', '/careers', '/blogs', '/contact', '/login', '/register',
+  '/terms', '/privacy', '/verify-email', '/login-bridge', '/download',
+]);
+
+const isPublicPath = (pathname) => PUBLIC_ROUTES.has(pathname);
+
+function RouteFallback() {
+  return (
+    <div className="fixed inset-x-0 top-0 z-[120] h-[2px] overflow-hidden bg-transparent" role="progressbar" aria-label="Opening page">
+      <div className="h-full w-1/3 animate-[route-progress_900ms_ease-in-out_infinite] bg-gradient-to-r from-[#ED4956] via-[#8B5CF6] to-[#0095F6]" />
+    </div>
+  );
+}
+
 // ── ProtectedRoute ────────────────────────────────────────────────────────────
 // Gate for authenticated routes. Shows a loading screen while auth resolves.
 // Once resolved, redirects to /login if no user, otherwise renders children.
@@ -60,7 +76,7 @@ function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <LoadingScreen message="Checking authentication…" />;
+    return <LoadingScreen message="Opening Discuss…" compact />;
   }
 
   if (!user) {
@@ -73,11 +89,7 @@ function ProtectedRoute({ children }) {
 // ── AuthRedirect ──────────────────────────────────────────────────────────────
 // Wraps login/register pages. Redirects already-authenticated users to /feed.
 function AuthRedirect({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingScreen message="Loading…" />;
-  }
+  const { user } = useAuth();
 
   if (user) {
     return <Navigate to="/feed" replace />;
@@ -86,26 +98,22 @@ function AuthRedirect({ children }) {
   return children;
 }
 
+function HomeRoute() {
+  const { user } = useAuth();
+  return user ? <Navigate to="/feed" replace /> : <LandingPage />;
+}
+
 // ── AppRoutes ─────────────────────────────────────────────────────────────────
 function AppRoutes() {
-  const { user, loading } = useAuth();
-  const [minLoading, setMinLoading] = useState(true);
+  const { user } = useAuth();
   const location = useLocation();
   const { theme } = useTheme();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
     
     // Public routes that should always render in default light theme
-    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge', '/download'];
-    const isPublicRoute = publicRoutes.includes(location.pathname);
+    const isPublicRoute = isPublicPath(location.pathname) && !(location.pathname === '/' && user);
 
     const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
 
@@ -127,15 +135,11 @@ function AppRoutes() {
     }
   }, [location.pathname, user, theme]);
 
-  if (loading || minLoading) {
-    return <LoadingScreen message="Checking authentication…" />;
-  }
-
   return (
-    <Suspense fallback={<LoadingScreen message="Opening Discuss…" />}>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/about"   element={<AboutPage />} />
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/blogs"   element={<BlogsPage />} />
@@ -183,6 +187,26 @@ function AppRoutes() {
 
 // ── App ───────────────────────────────────────────────────────────────────────
 function App() {
+  useEffect(() => {
+    // Warm the most frequently visited route chunks after first paint. This
+    // keeps navigation instant without making the initial bundle heavy.
+    const warmRoutes = () => Promise.allSettled([
+      import('@/pages/FeedPage'),
+      import('@/pages/ChatPage'),
+      import('@/pages/ChatConversationPage'),
+      import('@/pages/GroupConversationPage'),
+      import('@/pages/ProfilePage'),
+      import('@/pages/SearchPage'),
+    ]);
+    const idleId = window.requestIdleCallback
+      ? window.requestIdleCallback(warmRoutes, { timeout: 1800 })
+      : window.setTimeout(warmRoutes, 700);
+    return () => {
+      if (window.cancelIdleCallback && typeof idleId === 'number') window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
+  }, []);
+
   return (
     <AppErrorBoundary>
       <BrowserRouter>
@@ -190,14 +214,16 @@ function App() {
           <AuthProvider>
             <SecurityProvider>
               <HighlightsProvider>
-                <SecurityWrapper>
-                  <OnboardingWrapper>
-                    {/* Global offline indicator — always rendered */}
-                    <OfflineBanner />
-                    <AppRoutes />
-                    <Toaster position="top-right" />
-                  </OnboardingWrapper>
-                </SecurityWrapper>
+                <ConfirmDialogProvider>
+                  <SecurityWrapper>
+                    <OnboardingWrapper>
+                      {/* Global offline indicator — always rendered */}
+                      <OfflineBanner />
+                      <AppRoutes />
+                      <Toaster position="top-center" />
+                    </OnboardingWrapper>
+                  </SecurityWrapper>
+                </ConfirmDialogProvider>
               </HighlightsProvider>
             </SecurityProvider>
           </AuthProvider>
@@ -209,9 +235,10 @@ function App() {
 
 function SecurityWrapper({ children }) {
   const { isLocked, resolving } = useSecurity();
+  const { user } = useAuth();
 
-  if (resolving) {
-    return <LoadingScreen message="Securing your session..." />;
+  if (resolving && user) {
+    return <LoadingScreen message="Securing your session…" compact />;
   }
 
   if (isLocked) {

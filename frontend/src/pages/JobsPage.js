@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Share2, Pencil, Trash2, ShieldCheck, Briefcase, Building, MapPin, Calendar, ArrowUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { confirmAction } from '@/components/ui/ConfirmDialogProvider';
 
 /* ─── Shimmer skeleton primitives ─────────────────────────────────────────── */
 const Shimmer = ({ className = '' }) => (
@@ -156,7 +157,12 @@ export default function JobsPage() {
 
   const handleEdit = useCallback((item) => { setEditData(item); setShowAdminModal(true); }, []);
   const handleDelete = useCallback(async (id) => {
-    if (!window.confirm('Are you sure you want to delete this job?')) return;
+    const confirmed = await confirmAction({
+      title: 'Delete this job?',
+      description: 'This job listing will be permanently removed from Discuss.',
+      confirmLabel: 'Delete job',
+    });
+    if (!confirmed) return;
     try { await deleteJob(id); toast.success('Job deleted'); }
     catch { toast.error('Failed to delete job'); }
   }, []);

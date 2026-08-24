@@ -225,6 +225,12 @@ export const getCachedPosts = async () => {
 };
 
 /**
+ * Return the latest post snapshot synchronously for instant first paint.
+ * Stale data is intentionally allowed and replaced by the live subscription.
+ */
+export const getFastCachedPosts = () => fastCacheLoad('posts', CACHE_DURATION.POSTS)?.data ?? null;
+
+/**
  * Update single post in cache
  */
 export const updateCachedPost = async (post) => {
@@ -418,6 +424,14 @@ export const getCachedChats = async (userId) => {
 // ==================== MESSAGES CACHE ====================
 
 const dmMessagesFastKey = (userId, chatId) => `dm_messages_${userId}_${chatId}`;
+
+export const getFastCachedMessages = (userId, chatId) => {
+  if (!userId || !chatId) return null;
+  const cached = fastCacheLoad(dmMessagesFastKey(userId, chatId), Number.MAX_SAFE_INTEGER);
+  return Array.isArray(cached?.data)
+    ? normalizeMessagesForCache(cached.data).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    : null;
+};
 
 /**
  * Cache DM thread (IndexedDB + localStorage). Normalizes everyone-deleted text for storage.
@@ -821,6 +835,14 @@ export const getCachedGroups = async (userId) => {
 };
 
 const groupMessagesFastKey = (userId, groupId) => `group_messages_${userId}_${groupId}`;
+
+export const getFastCachedGroupMessages = (userId, groupId) => {
+  if (!userId || !groupId) return null;
+  const cached = fastCacheLoad(groupMessagesFastKey(userId, groupId), Number.MAX_SAFE_INTEGER);
+  return Array.isArray(cached?.data)
+    ? normalizeMessagesForCache(cached.data).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    : null;
+};
 
 /**
  * Cache group messages (IndexedDB + localStorage)

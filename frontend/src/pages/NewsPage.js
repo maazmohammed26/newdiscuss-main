@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Share2, Pencil, Trash2, ShieldCheck, ArrowUp, Newspaper, TrendingUp, Hash, ExternalLink, MessageSquare, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { confirmAction } from '@/components/ui/ConfirmDialogProvider';
 import { NAUKRI_MINIS } from '@/assets/naukri_news_data';
 
 /* ─── Shimmer skeleton primitives ─────────────────────────────────────────── */
@@ -315,13 +316,17 @@ export default function NewsPage() {
   }, []);
 
   const handleDelete = useCallback(async (id) => {
-    if (window.confirm('Are you sure you want to delete this news?')) {
-      try {
-        await deleteNews(id);
-        toast.success('News deleted');
-      } catch (err) {
-        toast.error('Failed to delete news');
-      }
+    const confirmed = await confirmAction({
+      title: 'Delete this news item?',
+      description: 'This story will be permanently removed from Discuss.',
+      confirmLabel: 'Delete story',
+    });
+    if (!confirmed) return;
+    try {
+      await deleteNews(id);
+      toast.success('News deleted');
+    } catch (err) {
+      toast.error('Failed to delete news');
     }
   }, []);
 

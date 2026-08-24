@@ -25,7 +25,9 @@ export function SecurityProvider({ children }) {
   const [localSettings, setLocalSettings] = useState(() => getLocalSecuritySettings());
   const [remoteSettings, setRemoteSettings] = useState(null);
   const [lockoutUntil, setLockoutUntil] = useState(null);
-  const [resolving, setResolving] = useState(true);
+  // Devices without an enabled local lock do not need a blocking security
+  // screen while remote settings refresh in the background.
+  const [resolving, setResolving] = useState(() => getLocalSecuritySettings().enabled === true);
   const loadingRemote = useRef(true);
   // Always-fresh ref — avoids stale closures in async callbacks
   const localSettingsRef = useRef(localSettings);

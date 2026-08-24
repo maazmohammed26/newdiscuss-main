@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import DiscussLogo from '@/components/DiscussLogo';
 import { Loader2, WifiOff } from 'lucide-react';
 
-export default function LoadingScreen({ message = 'Loading...' }) {
+export default function LoadingScreen({ message = 'Loading...', compact = false }) {
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef(null);
 
@@ -36,23 +36,23 @@ export default function LoadingScreen({ message = 'Loading...' }) {
       id="discuss-loading-screen"
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-white px-4 py-12 text-neutral-900 transition-colors dark:bg-black dark:text-white select-none animate-in fade-in duration-300"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-white px-4 py-12 text-neutral-900 transition-colors dark:bg-black dark:text-white select-none"
     >
       <div className="w-full flex-1" />
 
       {/* Centered Brand Mark */}
-      <div className="flex flex-col items-center justify-center gap-4 animate-in fade-in zoom-in-95 duration-300">
-        <div className="motion-safe:animate-[pulse_2s_ease-in-out_infinite]">
+      <div className="flex flex-col items-center justify-center gap-4 animate-in fade-in duration-150">
+        <div>
           <DiscussLogo size="xl" />
         </div>
 
-        <div className="flex items-center gap-2 mt-4 text-xs font-semibold text-neutral-400 dark:text-neutral-500">
+        <div className="flex items-center gap-2 mt-3 text-xs font-semibold text-neutral-400 dark:text-neutral-500">
           {!showRetry ? (
             <Loader2 className="w-4 h-4 animate-spin text-[#0095F6]" />
           ) : (
             <WifiOff className="w-4 h-4 text-[#ED4956]" />
           )}
-          <span style={{ color: showRetry ? '#ED4956' : undefined }}>{displayMessage}</span>
+          {!compact && <span style={{ color: showRetry ? '#ED4956' : undefined }}>{displayMessage}</span>}
         </div>
 
         {showRetry && (

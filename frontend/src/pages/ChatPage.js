@@ -1,5 +1,5 @@
 import UserAvatar from '@/components/UserAvatar';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
@@ -83,14 +83,18 @@ export default function ChatPage() {
     return fast?.data || [];
   });
   const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined' && (window.__discuss_chats_cache?.length > 0 || window.__discuss_friends_cache?.length > 0 || window.__discuss_groups_cache?.length > 0)) {
+    if (typeof window !== 'undefined' && (
+      Array.isArray(window.__discuss_chats_cache) ||
+      Array.isArray(window.__discuss_friends_cache) ||
+      Array.isArray(window.__discuss_groups_cache)
+    )) {
       return false;
     }
     if (!user?.id) return true;
     const c = fastCacheLoad(`chats_${user.id}`, Number.MAX_SAFE_INTEGER);
     const f = fastCacheLoad(`friends_${user.id}`, Number.MAX_SAFE_INTEGER);
     const g = fastCacheLoad(`groups_${user.id}`, Number.MAX_SAFE_INTEGER);
-    return !(c?.data?.length > 0 || f?.data?.length > 0 || g?.data?.length > 0);
+    return !(c || f || g);
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -103,22 +107,25 @@ export default function ChatPage() {
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [searchingGroups, setSearchingGroups] = useState(false);
   const [groupRequestStatus, setGroupRequestStatus] = useState({});
+  const chatsRef = useRef(chats);
+
+  useEffect(() => { chatsRef.current = chats; }, [chats]);
 
   // Sync state changes with in-memory cache for instant subsequent loads
   useEffect(() => {
-    if (chats && chats.length > 0 && typeof window !== 'undefined') {
+    if (Array.isArray(chats) && typeof window !== 'undefined') {
       window.__discuss_chats_cache = chats;
     }
   }, [chats]);
 
   useEffect(() => {
-    if (friends && friends.length > 0 && typeof window !== 'undefined') {
+    if (Array.isArray(friends) && typeof window !== 'undefined') {
       window.__discuss_friends_cache = friends;
     }
   }, [friends]);
 
   useEffect(() => {
-    if (groups && groups.length > 0 && typeof window !== 'undefined') {
+    if (Array.isArray(groups) && typeof window !== 'undefined') {
       window.__discuss_groups_cache = groups;
     }
   }, [groups]);
@@ -145,11 +152,7 @@ export default function ChatPage() {
         if (cachedGroupsData?.length > 0) {
           setGroups(cachedGroupsData);
         }
-        if (
-          (cachedChatsData && cachedChatsData.length > 0) ||
-          (cachedFriendsData && cachedFriendsData.length > 0) ||
-          (cachedGroupsData && cachedGroupsData.length > 0)
-        ) {
+        if (cachedChatsData || cachedFriendsData || cachedGroupsData) {
           setLoading(false);
         }
 
@@ -174,7 +177,8 @@ export default function ChatPage() {
           try {
             if (!chat.otherUser) return null;
             
-            const userData = await getUser(chat.otherUser);
+            const existing = chatsRef.current.find((item) => item.otherUser === chat.otherUser)?.otherUserDetails;
+            const userData = existing || await getUser(chat.otherUser);
             
             if (!userData || !userData.username) {
               return null;
@@ -203,13 +207,13 @@ export default function ChatPage() {
       );
       
       const validChats = chatsWithDetails.filter(chat => chat !== null && chat.otherUserDetails !== null);
-      setChats(validChats);
+      startTransition(() => setChats(validChats));
       cacheChats(user.id, validChats);
     });
 
     // Subscribe to real-time group updates
     const unsubscribeGroups = subscribeToUserGroups(user.id, (updatedGroups) => {
-      setGroups(updatedGroups);
+      startTransition(() => setGroups(updatedGroups));
       cacheGroups(user.id, updatedGroups);
     });
 
@@ -314,11 +318,21 @@ export default function ChatPage() {
     return () => clearTimeout(searchTimer);
   }, [searchQuery, user?.id, activeTab, chats, groups]);
 
-  const handleChatClick = (otherUserId) => {
+  const handleChatClick = (otherUserId, details) => {
+    if (typeof window !== 'undefined' && details) {
+      window.__discuss_active_chat_user = { id: otherUserId, ...details };
+    }
     navigate(`/chat/${otherUserId}`);
   };
 
-  const handleGroupClick = (groupId) => {
+  const handleGroupClick = (groupId, group) => {
+    if (typeof window !== 'undefined' && group) {
+      window.__discuss_active_group = {
+        ...group,
+        id: group.groupId,
+        name: group.name || group.groupName,
+      };
+    }
     navigate(`/group/${groupId}`);
   };
 
@@ -420,7 +434,7 @@ export default function ChatPage() {
     return (
       <button
         key={chat.chatId}
-        onClick={() => handleChatClick(chat.otherUser)}
+        onClick={() => handleChatClick(chat.otherUser, otherUser)}
         className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
           isBlocked 
             ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'
@@ -485,7 +499,7 @@ export default function ChatPage() {
     return (
       <button
         key={group.groupId}
-        onClick={() => handleGroupClick(group.groupId)}
+        onClick={() => handleGroupClick(group.groupId, group)}
         className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
           isDeleted 
             ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'

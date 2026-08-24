@@ -9,6 +9,7 @@ import {
 } from '@/lib/groupsDb';
 import {
   getCachedGroupMessages,
+  getFastCachedGroupMessages,
   cacheGroupMessages,
   removeGroupMessageFromCaches,
   patchGroupMessageDeletedInCaches,
@@ -40,11 +41,15 @@ export default function GroupConversationPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const [groupInfo, setGroupInfo] = useState(null);
+  const initialGroup = typeof window !== 'undefined' && window.__discuss_active_group?.id === groupId
+    ? window.__discuss_active_group
+    : null;
+  const initialMessages = user?.id ? getFastCachedGroupMessages(user.id, groupId) : null;
+  const [groupInfo, setGroupInfo] = useState(initialGroup);
   const [members, setMembers] = useState([]);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => initialMessages || []);
   const [messageText, setMessageText] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialGroup && !initialMessages);
   const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isMember, setIsMember] = useState(false);
@@ -222,6 +227,9 @@ export default function GroupConversationPage() {
 
         const info = await getGroupInfo(groupId);
         setGroupInfo(info);
+        if (typeof window !== 'undefined' && info) {
+          window.__discuss_active_group = { ...info, id: groupId };
+        }
 
         if (!info) {
           setLoading(false);
@@ -341,7 +349,14 @@ export default function GroupConversationPage() {
 
     loadGroupData();
 
-    membershipCheckRef.current = setInterval(checkMembershipStatus, 2000);
+    // Membership changes are uncommon. Keep the check in the background and
+    // refresh immediately when the user returns instead of polling every 2s.
+    const checkWhenVisible = () => {
+      if (!document.hidden) checkMembershipStatus();
+    };
+    window.addEventListener('focus', checkWhenVisible);
+    document.addEventListener('visibilitychange', checkWhenVisible);
+    membershipCheckRef.current = setInterval(checkMembershipStatus, 30000);
 
     return () => {
       cancelled = true;
@@ -352,6 +367,8 @@ export default function GroupConversationPage() {
       if (membershipCheckRef.current) {
         clearInterval(membershipCheckRef.current);
       }
+      window.removeEventListener('focus', checkWhenVisible);
+      document.removeEventListener('visibilitychange', checkWhenVisible);
     };
   }, [user?.id, groupId, checkMembershipStatus, messageLimit]);
 
@@ -571,7 +588,15 @@ export default function GroupConversationPage() {
     [combinedMessages]
   );
 
-  const groupedMessages = useMemo(() => groupMessagesByDate(combinedMessages), [combinedMessages]);
+  const groupedMessages = useMemo(() => {
+    const grouped = {};
+    combinedMessages.forEach((msg) => {
+      const date = formatDate(msg.timestamp);
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push(msg);
+    });
+    return grouped;
+  }, [combinedMessages]);
 
   const renderMessage = (message) => {
     const isOwn = message.sender === user.id;

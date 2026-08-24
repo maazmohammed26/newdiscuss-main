@@ -29,11 +29,9 @@ if ('serviceWorker' in navigator) {
           ) {
             // New content available — post a message to the SW to skip waiting
             worker.postMessage({ type: 'SKIP_WAITING' });
-            console.log('[SW] New version available. Reloading…');
-            // Gracefully reload all open tabs
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              window.location.reload();
-            }, { once: true });
+            // Activate silently. The fresh shell is used on the next natural
+            // launch instead of interrupting the current screen with a reload.
+            console.log('[SW] New version ready for the next launch.');
           }
         });
       });

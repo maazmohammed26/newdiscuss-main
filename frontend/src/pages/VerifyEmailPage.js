@@ -5,7 +5,7 @@ import { getUserByEmail, updateUser, getPendingOTP, deletePendingOTP, savePendin
 import { Button } from '@/components/ui/button';
 import DiscussLogo from '@/components/DiscussLogo';
 import LoadingScreen from '@/components/LoadingScreen';
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, KeyRound, ShieldAlert, Sparkles, Send, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Mail, KeyRound, ShieldAlert, Sparkles, Send, RefreshCw } from 'lucide-react';
 import { sendVerificationOTPDirectly, sendWelcomeEmailDirectly } from '@/lib/emailService';
 
 export default function VerifyEmailPage() {
@@ -13,7 +13,6 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState('otp-entry'); // 'verifying-link', 'otp-entry', 'success', 'error'
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [countdown, setCountdown] = useState(5);
   
   // OTP input and sending states
   const [otpValues, setOtpValues] = useState(Array(6).fill(''));
@@ -73,25 +72,6 @@ export default function VerifyEmailPage() {
 
     return () => clearInterval(timer);
   }, [status, resendCountdown]);
-
-  // Countdown timer for automatic redirect on success
-  useEffect(() => {
-    if (status !== 'success') return;
-
-    if (countdown <= 0) {
-      navigate('/login', { 
-        replace: true,
-        state: { verificationMessage: 'Your email has been verified successfully! You can now log in below.' } 
-      });
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setCountdown(prev => prev - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [status, countdown, navigate]);
 
   // Handle standard Firebase Action Link verification
   const handleLinkVerification = async (code) => {
@@ -299,7 +279,7 @@ export default function VerifyEmailPage() {
             )}
 
             {/* Success Message Banner */}
-            {successMessage && (
+            {successMessage && status !== 'success' && (
               <div className="bg-[#10B981]/10 border border-[#10B981]/25 rounded-xl p-3 text-[#10B981] text-[13px] mb-4 text-left flex items-start gap-2 font-medium">
                 <CheckCircle2 className="w-4.5 h-4.5 shrink-0 mt-0.5 text-[#10B981]" />
                 <span>{successMessage}</span>
@@ -307,32 +287,23 @@ export default function VerifyEmailPage() {
             )}
 
             {status === 'success' ? (
-              <div className="space-y-6 py-6 animate-fade-in">
-                <div className="w-20 h-20 bg-[#10B981]/10 rounded-full flex items-center justify-center mx-auto border border-[#10B981]/25 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
-                  <CheckCircle2 className="w-10 h-10 text-[#10B981]" />
-                </div>
-                
-                <div>
-                  <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2">Email Verified!</h2>
-                  <p className="text-gray-400 text-sm font-semibold max-w-xs mx-auto leading-relaxed">
-                    Success! Your email address <span className="text-white font-bold">{emailAddress}</span> is now active.
+              <div className="space-y-7 py-8 animate-fade-in">
+                <div className="mx-auto h-1 w-16 rounded-full bg-gradient-to-r from-[#ED4956] to-[#0095F6]" />
+
+                <div className="space-y-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">Verification complete</p>
+                  <h2 className="text-white font-extrabold text-3xl tracking-[-0.035em]">Your email is verified</h2>
+                  <p className="text-gray-400 text-sm font-medium max-w-sm mx-auto leading-relaxed">
+                    Please return to the Discuss app. You can now sign in using your email address and password.
                   </p>
                 </div>
 
-                <div className="bg-[#181818] border border-white/5 rounded-2xl p-4 max-w-sm mx-auto">
-                  <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Redirecting shortly</p>
-                  <p className="text-white text-sm font-bold">
-                    Redirecting to login in <span className="text-[#0095F6] text-base font-black px-1 animate-bounce inline-block">{countdown}</span> seconds...
-                  </p>
-                </div>
-
-                <div className="pt-2">
+                <div className="pt-1">
                   <Button 
-                    onClick={() => navigate('/login')}
-                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all flex items-center justify-center gap-2"
+                    onClick={() => navigate('/login', { replace: true, state: { verificationMessage: 'Your email has been verified. You can now sign in.' } })}
+                    className="w-full bg-white hover:bg-neutral-100 text-black font-bold rounded-xl py-3 h-12 text-[15px] transition-colors"
                   >
-                    <span>Login now</span>
-                    <ArrowRight className="w-4 h-4" />
+                    Continue to sign in
                   </Button>
                 </div>
               </div>

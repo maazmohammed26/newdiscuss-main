@@ -4,6 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Play, Download, Trash2, Cpu, Terminal, ShieldAlert, Code, Maximize2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { confirmAction } from '@/components/ui/ConfirmDialogProvider';
 
 // Default boilerplate templates for supported languages
 const templates = {
@@ -203,15 +204,19 @@ export default function EditorPage() {
     localStorage.setItem(`discuss_editor_code_${lang}`, newVal);
   };
 
-  const handleClear = () => {
-    if (window.confirm(`Are you sure you want to clear your ${lang.toUpperCase()} code draft?`)) {
-      setCode(templates[lang] || '');
-      localStorage.removeItem(`discuss_editor_code_${lang}`);
-      setOutput('');
-      setIframeSrc('');
-      setConsoleLogs([]);
-      toast.success('Editor reset successfully');
-    }
+  const handleClear = async () => {
+    const confirmed = await confirmAction({
+      title: `Clear ${lang.toUpperCase()} draft?`,
+      description: 'Your current code and console output will be removed from this device.',
+      confirmLabel: 'Clear draft',
+    });
+    if (!confirmed) return;
+    setCode(templates[lang] || '');
+    localStorage.removeItem(`discuss_editor_code_${lang}`);
+    setOutput('');
+    setIframeSrc('');
+    setConsoleLogs([]);
+    toast.success('Editor reset successfully');
   };
 
   const handleDownload = () => {
