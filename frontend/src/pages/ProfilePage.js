@@ -1306,7 +1306,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
+    <div className="min-h-screen bg-neutral-50 dark:bg-black  pb-28">
       <Header />
       <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 md:py-10 pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
@@ -1314,12 +1314,12 @@ export default function ProfilePage() {
           <div className="min-w-0 flex-1">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
+          className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        {/* Profile Card */}
-        <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:shadow-none discuss:shadow-none border discuss:border dark:border-[#262626] p-8 text-center relative rounded-2xl">
+        {/* Instagram-style Profile Hero */}
+        <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] p-6 text-center relative rounded-2xl mb-6 shadow-xs select-none">
           
           {/* Top Right Icons - Share & Info */}
           <div className="absolute top-4 right-4 flex items-center gap-1">
@@ -1327,48 +1327,41 @@ export default function ProfilePage() {
               <Popover open={adminPopoverOpen} onOpenChange={handleAdminPopoverToggle}>
                 <PopoverTrigger asChild>
                   <button
-                    className="relative p-2 rounded-full bg-[#EEF2FF] dark:bg-[#0F172A] dark:bg-[#1A1A1A] border border-[#C7D2FE]/70 dark:border-white/20 dark:border-[#262626] text-[#4338CA] dark:text-[#A5B4FC] dark:text-white hover:scale-105 transition-all shadow-[0_0_16px_rgba(99,102,241,0.18)]"
+                    className="relative p-2 rounded-full bg-[#EEF2FF] dark:bg-[#1A1A1A] border border-[#C7D2FE]/70 dark:border-[#262626] text-[#4338CA] dark:text-[#A5B4FC] hover:scale-105 transition-all"
                     title="Admin Message"
                     aria-label="Admin Message"
                   >
                     <Megaphone className="w-[18px] h-[18px]" />
                     {hasUnseenAdminMessage && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-[#1E293B]" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-black" />
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0 bg-white/95 dark:bg-[#101827]/95 discuss:bg-[#1E1E1E]/95 backdrop-blur-xl border border-[#C7D2FE]/50 dark:border-white/15 dark:border-[#262626] rounded-xl shadow-[0_24px_48px_rgba(15,23,42,0.32)]" align="end">
-                  <div className="p-3.5 border-b border-[#E2E8F0] dark:border-white/10 dark:border-[#262626] flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-gradient-to-tr from-[#EF4444] to-[#2563EB] text-white">
+                <PopoverContent className="w-80 p-0 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-xl border border-[#DBDBDB] dark:border-[#262626] rounded-xl shadow-2xl" align="end">
+                  <div className="p-3.5 border-b border-[#EFEFEF] dark:border-[#262626] flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-[#0095F6] text-white">
                       <Megaphone className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <p className="text-xs font-extrabold tracking-wide text-[#0F172A] dark:text-white dark:text-white">ADMIN UPDATE</p>
-                      <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] dark:text-neutral-400">Tech feed notification</p>
+                      <p className="text-xs font-bold text-neutral-900 dark:text-white">ADMIN UPDATE</p>
+                      <p className="text-[10px] text-neutral-400">Discuss announcements</p>
                     </div>
                   </div>
                   <div className="px-3.5 py-3">
-                    <div
-                      className="max-h-40 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 scrollbar-hide"
-                      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
-                    >
-                      <div className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] dark:text-neutral-200 break-words whitespace-pre-wrap">
+                    <div className="max-h-40 overflow-y-auto pr-1 scrollbar-hide">
+                      <div className="text-[13px] leading-relaxed text-neutral-800 dark:text-neutral-200 break-words whitespace-pre-wrap">
                         <LinkifiedText text={adminPreviewText} />
                       </div>
                     </div>
-                    {adminMessageNeedsScroll && (
-                      <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] dark:text-neutral-400">
-                        Scroll to read full message.
-                      </p>
-                    )}
                   </div>
                 </PopoverContent>
               </Popover>
             )}
+
             {/* Share Button */}
             <button 
               onClick={() => setShowShareModal(true)}
-              className="p-2 rounded-full hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors"
+              className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
               title="Share Profile"
             >
               <Share2 className="w-5 h-5" />
@@ -1377,28 +1370,21 @@ export default function ProfilePage() {
             {/* Info Icon */}
             <Popover>
               <PopoverTrigger asChild>
-                <button className="p-2 rounded-full hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors">
+                <button className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer">
                   <Info className="w-5 h-5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 bg-white dark:bg-[#1E293B] dark:bg-[#1A1A1A] border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]" align="end">
+              <PopoverContent className="w-72 p-4 bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-xl shadow-xl" align="end">
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm">Profile Settings</h4>
-                  
-                  <div className="flex items-start gap-2 text-[12px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400">
-                    <ImageIcon className="w-4 h-4 mt-0.5 shrink-0 text-[#0095F6] text-[#0095F6]" />
-                    <p>You can upload, replace, or remove your profile picture. All images are securely stored and optimized.</p>
+                  <h4 className="font-bold text-neutral-900 dark:text-white text-sm">Discuss Profile</h4>
+                  <div className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                    <ImageIcon className="w-4 h-4 mt-0.5 shrink-0 text-[#0095F6]" />
+                    <p>All avatar photos and media are securely stored and optimized.</p>
                   </div>
-                  
-                  <div className="flex items-start gap-2 text-[12px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400">
-                    <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-[#0095F6] text-[#0095F6]" />
-                    <p>Password change is currently disabled for security reasons.</p>
-                  </div>
-                  
-                  <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                  <div className="pt-2 border-t border-[#EFEFEF] dark:border-[#262626]">
                     <a
                       href="mailto:support@discussit.in"
-                      className="flex items-center justify-center gap-2 w-full bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white text-[12px] font-medium py-2 px-3 rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-2 w-full bg-[#0095F6] hover:bg-[#1877F2] text-white text-xs font-bold py-2 px-3 rounded-lg transition-colors"
                     >
                       <Mail className="w-3.5 h-3.5" />
                       Contact Support
@@ -1435,8 +1421,8 @@ export default function ProfilePage() {
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1E293B] dark:bg-[#1A1A1A] border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                <div className="p-3 border-b border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+              <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1E293B] dark:bg-[#1A1A1A] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                <div className="p-3 border-b border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
                   <h4 className="font-semibold text-sm">Update Profile Picture</h4>
                 </div>
                 <div className="p-3">
@@ -1502,26 +1488,26 @@ export default function ProfilePage() {
             </Popover>
           </div>
 
-          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white flex items-center justify-center gap-2">
+          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-neutral-900 dark:text-white dark:text-white flex items-center justify-center gap-2">
             <span>{user?.username}</span>
             {user?.verified && <VerifiedBadge size="md" />}
           </h1>
-          <p data-testid="profile-email" className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px] mt-0.5"><span>{user?.email}</span></p>
+          <p data-testid="profile-email" className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[13px] mt-0.5"><span>{user?.email}</span></p>
 
-          <div className="inline-flex items-center gap-2 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black discuss:border dark:border-[#262626] px-4 py-2 mt-4 rounded-lg">
+          <div className="inline-flex items-center gap-2 bg-neutral-50 dark:bg-black dark:bg-black discuss:border dark:border-[#262626] px-4 py-2 mt-4 rounded-lg">
             <FileText className="w-4 h-4 text-[#1D7AFF] text-[#0095F6]" />
-            <span data-testid="profile-post-count" className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[13px] font-semibold">
+            <span data-testid="profile-post-count" className="text-neutral-900 dark:text-white dark:text-white text-[13px] font-semibold">
               {loadingPosts ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : <span>{userPosts.length} Total Posts</span>}
             </span>
           </div>
 
           {/* Discord Section (Disabled) */}
           <div className="mt-4 opacity-50 cursor-not-allowed">
-             <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155]">
-               <div className="flex items-center gap-2 text-[#0F172A] dark:text-[#F1F5F9] text-sm">
+             <div className="flex items-center justify-between bg-neutral-50 dark:bg-black p-3 rounded-lg border border-[#DBDBDB] dark:border-[#262626]">
+               <div className="flex items-center gap-2 text-neutral-900 dark:text-white text-sm">
                  <span className="font-semibold">Discord Integration</span>
                </div>
-               <span className="text-[10px] font-bold uppercase bg-[#E2E8F0] dark:bg-[#334155] px-2 py-0.5 rounded text-[#6275AF] dark:text-[#94A3B8]">Coming Soon</span>
+               <span className="text-[10px] font-bold uppercase bg-[#E2E8F0] dark:bg-[#334155] px-2 py-0.5 rounded text-neutral-500 dark:text-neutral-400">Coming Soon</span>
              </div>
           </div>
 
@@ -1549,24 +1535,24 @@ export default function ProfilePage() {
         <div className="mt-6 bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
-            className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
                 <Trophy className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Discussion Achievements</h3>
-                <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
+                <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Discussion Achievements</h3>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
               </div>
             </div>
-            {showAchievements ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+            {showAchievements ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
           </button>
 
           {showAchievements && (
-            <div className="px-6 pb-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300 space-y-5">
-              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] px-4 py-2 rounded-xl shrink-0 inline-flex items-center gap-2">
-                <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 font-bold">Unlocked:</span>
+            <div className="px-6 pb-6 pt-5 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300 space-y-5">
+              <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] px-4 py-2 rounded-xl shrink-0 inline-flex items-center gap-2">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 font-bold">Unlocked:</span>
                 <span className="text-sm font-black text-blue-600 text-[#0095F6]">{unlockedBadgesCount} / 5</span>
               </div>
 
@@ -1578,7 +1564,7 @@ export default function ProfilePage() {
                     <button
                       key={badge.id}
                       onClick={() => handleBadgeClick(badge)}
-                      className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 dark:border-[#262626] hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
+                      className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-black/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 dark:border-[#262626] hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
                     >
                       <div className="relative mb-2 shrink-0">
                         <BadgeIcon badge={badge} isLocked={isLocked} size="md" className="group-hover:scale-105 transition-transform" />
@@ -1602,53 +1588,60 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== SETTINGS CATEGORIES STACK ==================== */}
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-6 select-none">
+        
+        {/* ==================== GROUP 1: ACCOUNT & IDENTITY ==================== */}
+        <div>
+          <h4 className="text-[11.5px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-2 mb-2">
+            Your Account
+          </h4>
+          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden divide-y divide-[#EFEFEF] dark:divide-[#262626]">
 
           {/* Category 1: Profile Details */}
-          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
             <button
               onClick={() => setShowProfileSettings(!showProfileSettings)}
-              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <User className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Profile Details</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Manage your display name, bio, social links, and theme</p>
+                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Profile Details</h3>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage your display name, bio, social links, and theme</p>
                 </div>
               </div>
-              {showProfileSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+              {showProfileSettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
             </button>
 
             {showProfileSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 {/* Loading indicator for profile data */}
                 {loadingProfile && (
                   <div className="flex items-center justify-center gap-2 py-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#6275AF]" />
-                    <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile details...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
+                    <span className="text-neutral-500 dark:text-neutral-400 text-xs">Loading profile details...</span>
                   </div>
                 )}
 
                 {/* Full Name Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <User className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Full Name
-                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(optional)</span>
+                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(optional)</span>
                     </label>
                     {!editingFullName && profileData?.fullName && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors">
+                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors">
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl shadow-lg">
-                          <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] dark:text-white focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl shadow-lg">
+                          <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-neutral-900 dark:text-white dark:text-white focus:bg-neutral-50 dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
                             <Pencil className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setDeleteFullNameConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
@@ -1665,19 +1658,19 @@ export default function ProfilePage() {
                         value={fullNameInput} 
                         onChange={(e) => setFullNameInput(e.target.value)}
                         placeholder="Enter your full name"
-                        className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm rounded-xl"
+                        className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white text-sm rounded-xl"
                       />
                       <Button onClick={handleSaveFullName} disabled={savingFullName || !fullNameInput.trim()} size="sm"
                         className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-xl px-3.5">
                         {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       </Button>
                       <Button onClick={() => setEditingFullName(false)} size="sm" variant="outline"
-                        className="border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] rounded-xl px-3.5">
+                        className="border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 rounded-xl px-3.5">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
                   ) : profileData?.fullName ? (
-                    <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm pl-6">{profileData.fullName}</p>
+                    <p className="text-neutral-900 dark:text-white dark:text-white text-sm pl-6">{profileData.fullName}</p>
                   ) : (
                     <button onClick={() => { setEditingFullName(true); setFullNameInput(''); }}
                       className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
@@ -1687,22 +1680,22 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Bio Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Bio
-                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {BIO_CHAR_LIMIT} chars)</span>
+                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(max {BIO_CHAR_LIMIT} chars)</span>
                     </label>
                     {!editingBio && profileData?.bio && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors">
+                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors">
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl shadow-lg">
-                          <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] dark:text-white focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl shadow-lg">
+                          <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-neutral-900 dark:text-white dark:text-white focus:bg-neutral-50 dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
                             <Pencil className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setDeleteBioConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
@@ -1720,10 +1713,10 @@ export default function ProfilePage() {
                         onChange={(e) => setBioInput(e.target.value.slice(0, BIO_CHAR_LIMIT))}
                         placeholder="Tell us about yourself..."
                         rows={3}
-                        className="w-full bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm resize-none rounded-xl p-3"
+                        className="w-full bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white text-sm resize-none rounded-xl p-3"
                       />
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs ${bioInput.length >= BIO_CHAR_LIMIT ? 'text-[#EF4444] font-bold' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>
+                        <span className={`text-xs ${bioInput.length >= BIO_CHAR_LIMIT ? 'text-[#EF4444] font-bold' : 'text-neutral-500 dark:text-neutral-400'}`}>
                           {bioInput.length}/{BIO_CHAR_LIMIT}
                         </span>
                         <div className="flex gap-2">
@@ -1732,14 +1725,14 @@ export default function ProfilePage() {
                             {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                           </Button>
                           <Button onClick={() => setEditingBio(false)} size="sm" variant="outline"
-                            className="border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] rounded-xl px-4">
+                            className="border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 rounded-xl px-4">
                             Cancel
                           </Button>
                         </div>
                       </div>
                     </div>
                   ) : profileData?.bio ? (
-                    <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm pl-6 whitespace-pre-wrap leading-relaxed">{profileData.bio}</p>
+                    <p className="text-neutral-900 dark:text-white dark:text-white text-sm pl-6 whitespace-pre-wrap leading-relaxed">{profileData.bio}</p>
                   ) : (
                     <button onClick={() => { setEditingBio(true); setBioInput(''); }}
                       className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
@@ -1749,14 +1742,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Social Links Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <Link2 className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Social Links
-                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {MAX_SOCIAL_LINKS})</span>
+                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(max {MAX_SOCIAL_LINKS})</span>
                     </label>
-                    <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-bold bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
+                    <span className="text-neutral-500 dark:text-neutral-400 text-xs font-bold bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
                       {profileData?.socialLinks?.length || 0}/{MAX_SOCIAL_LINKS}
                     </span>
                   </div>
@@ -1765,7 +1758,7 @@ export default function ProfilePage() {
                   {profileData?.socialLinks?.length > 0 && (
                     <div className="space-y-2 mb-3 pl-6">
                       {profileData.socialLinks.map((link, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] dark:bg-black p-2 px-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                        <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] dark:bg-black p-2 px-3 rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
                           {editingLinkIndex === index ? (
                             <>
                               <Input 
@@ -1796,12 +1789,12 @@ export default function ProfilePage() {
                               </a>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button className="p-1 rounded hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors">
+                                  <button className="p-1 rounded hover:bg-neutral-50 dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors">
                                     <MoreHorizontal className="w-4 h-4" />
                                   </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl">
-                                  <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] dark:text-white focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                                <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl">
+                                  <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-neutral-900 dark:text-white dark:text-white focus:bg-neutral-50 dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
                                     <Pencil className="w-4 h-4 mr-2" /> Edit
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => setDeleteLinkConfirm(index)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
@@ -1819,7 +1812,7 @@ export default function ProfilePage() {
                   {/* Add New Link */}
                   <div className="pl-6">
                     {addingLink ? (
-                      <div className="space-y-2 bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                      <div className="space-y-2 bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
                         <Input 
                           value={newLinkName} 
                           onChange={(e) => setNewLinkName(e.target.value)}
@@ -1838,7 +1831,7 @@ export default function ProfilePage() {
                             {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Link'}
                           </Button>
                           <Button onClick={() => { setAddingLink(false); setNewLinkName(''); setNewLinkUrl(''); }} size="sm" variant="outline"
-                            className="border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] rounded-lg px-3">
+                            className="border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 rounded-lg px-3">
                             Cancel
                           </Button>
                         </div>
@@ -1849,22 +1842,22 @@ export default function ProfilePage() {
                         <Plus className="w-4 h-4" /> <span>Add social link</span>
                       </button>
                     ) : (
-                      <p className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-bold"><span>Maximum links reached</span></p>
+                      <p className="text-neutral-500 dark:text-neutral-400 text-xs font-bold"><span>Maximum links reached</span></p>
                     )}
                   </div>
                 </div>
 
                 {/* Skills Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Skills
-                      <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max 6 skills)</span>
+                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(max 6 skills)</span>
                     </label>
                     {!editingSkills && skills.length > 0 && (
                       <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput(skills); }}
-                        className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors cursor-pointer">
+                        className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors cursor-pointer">
                         <Pencil className="w-4 h-4" />
                       </button>
                     )}
@@ -1898,10 +1891,10 @@ export default function ProfilePage() {
                           value={customSkillInput} 
                           onChange={(e) => setCustomSkillInput(e.target.value)}
                           placeholder="Custom skill"
-                          className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm h-8"
+                          className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white text-sm h-8"
                           maxLength={20}
                         />
-                        <Button onClick={handleAddCustomSkillInProfile} size="sm" variant="outline" className="h-8 text-xs border-[#E2E8F0] cursor-pointer">Add</Button>
+                        <Button onClick={handleAddCustomSkillInProfile} size="sm" variant="outline" className="h-8 text-xs border-[#DBDBDB] cursor-pointer">Add</Button>
                       </div>
                       
                       {selectedSkillsInput.length > 0 && (
@@ -1919,7 +1912,7 @@ export default function ProfilePage() {
                         <Button onClick={handleSaveSkills} disabled={savingSkills} size="sm" className="bg-[#0095F6] bg-[#0095F6] text-white cursor-pointer">
                           Save
                         </Button>
-                        <Button onClick={() => setEditingSkills(false)} size="sm" variant="outline" className="border-[#E2E8F0] cursor-pointer">
+                        <Button onClick={() => setEditingSkills(false)} size="sm" variant="outline" className="border-[#DBDBDB] cursor-pointer">
                           Cancel
                         </Button>
                       </div>
@@ -1981,9 +1974,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Display Theme Selector */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                    <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       🎨 Application Theme
                     </span>
                   </div>
@@ -1993,14 +1986,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Online Status Visibility Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex flex-col">
-                      <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                      <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                         {onlineVisibility ? <Eye className="w-4 h-4 text-emerald-500" /> : <EyeOff className="w-4 h-4 text-[#EF4444]" />}
                         Online Status Visibility
                       </span>
-                      <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-1 pr-4">
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1 pr-4">
                         {onlineVisibility ? 'Your online status is visible to everyone.' : 'Your online status is completely hidden.'}
                       </span>
                     </div>
@@ -2017,28 +2010,28 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 2: App Security */}
-          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
             <button
               onClick={() => setShowSecuritySettings(!showSecuritySettings)}
-              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <Shield className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">App Security</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
+                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">App Security</h3>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
                 </div>
               </div>
-              {showSecuritySettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+              {showSecuritySettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
             </button>
 
             {showSecuritySettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-bold">App Lock Protection</span>
+                    <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-bold">App Lock Protection</span>
                     <button
                       onClick={() => setShowSecurityInfo(prev => !prev)}
                       className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#0095F6] text-white shadow' : 'bg-[#0095F6]/10 text-[#0095F6] hover:bg-[#0095F6]/20'}`}
@@ -2085,14 +2078,14 @@ export default function ProfilePage() {
                 )}
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-4">
+                  <div className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-4">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${localSettings?.enabled ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
+                      <div className={`p-2.5 rounded-xl ${localSettings?.enabled ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-neutral-500'}`}>
                         <Smartphone className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">PIN Lock Status</p>
-                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">
+                        <p className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white">PIN Lock Status</p>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">
                           <span>{localSettings?.enabled
                             ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
                             : 'Protect app access with a secure PIN'}</span>
@@ -2110,14 +2103,14 @@ export default function ProfilePage() {
                   {localSettings?.enabled && (
                     <div className="space-y-3 pl-2 animate-in slide-in-from-top-2 duration-300">
                       {biometricAvailable && (
-                        <div className="flex items-center justify-between border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] rounded-xl p-4 bg-[#F8FAFC] dark:bg-slate-950/20">
+                        <div className="flex items-center justify-between border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] rounded-xl p-4 bg-[#F8FAFC] dark:bg-slate-950/20">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2.5 rounded-xl ${localSettings?.type === 'biometric' ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
+                            <div className={`p-2.5 rounded-xl ${localSettings?.type === 'biometric' ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-neutral-500'}`}>
                               <BiometricIcon className="w-5 h-5" />
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">FaceID / Fingerprint</p>
-                              <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">
+                              <p className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white">FaceID / Fingerprint</p>
+                              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">
                                 <span>{localSettings?.type === 'biometric' ? 'Active - PIN as backup fallback' : 'Tap to register biometric scanner'}</span>
                               </p>
                             </div>
@@ -2131,7 +2124,7 @@ export default function ProfilePage() {
                           </button>
                         </div>
                       )}
-                      <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-[#6275AF] flex items-center justify-center gap-2 rounded-xl py-4 hover:bg-neutral-50 border-neutral-200 dark:border-white/5">
+                      <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-neutral-500 flex items-center justify-center gap-2 rounded-xl py-4 hover:bg-neutral-50 border-neutral-200 dark:border-white/5">
                         <Key className="w-4 h-4" />
                         <span>Change Security PIN Code</span>
                       </Button>
@@ -2143,29 +2136,29 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 3: DevRadar Telemetry */}
-          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
             <button
               onClick={() => setShowLocationSettings(!showLocationSettings)}
-              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">DevRadar Telemetry</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
+                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">DevRadar Telemetry</h3>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
                 </div>
               </div>
-              {showLocationSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+              {showLocationSettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
             </button>
 
             {showLocationSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                    <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-bold">DevRadar Telemetry Network</span>
+                    <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-bold">DevRadar Telemetry Network</span>
                   </div>
                   
                   {/* Dynamic Status Live Pulse Indicator */}
@@ -2202,10 +2195,10 @@ export default function ProfilePage() {
                         <MapPin className="w-5 h-5 animate-pulse" />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-extrabold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">
+                        <p className="text-sm font-extrabold tracking-tight text-neutral-900 dark:text-white dark:text-white">
                           Geospatial Broadcast State
                         </p>
-                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5 leading-relaxed max-w-[220px]">
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5 leading-relaxed max-w-[220px]">
                           {updatingLocation ? (
                             <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#0095F6] text-[#0095F6]" /> Synchronizing coordinates...</span>
                           ) : shareLocation ? (
@@ -2233,7 +2226,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
-                    false ? 'border-black' : 'border-[#E2E8F0] dark:border-white/5'
+                    false ? 'border-black' : 'border-[#DBDBDB] dark:border-white/5'
                   }`}>
                     <Button
                       onClick={() => {
@@ -2252,7 +2245,7 @@ export default function ProfilePage() {
                     {shareLocation && locationCoords && (
                       <div className="flex flex-col gap-2.5">
                         <div className="flex justify-between items-center text-xs px-1">
-                          <span className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 font-bold">Node Coordinates:</span>
+                          <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 font-bold">Node Coordinates:</span>
                           <span className="font-mono font-bold text-blue-600 text-[#0095F6]">
                             {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
                           </span>
@@ -2275,42 +2268,42 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 4: Notifications & Integrations */}
-          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
             <button
               onClick={() => setShowNotificationSettings(!showNotificationSettings)}
-              className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <Bell className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Notifications & Integrations</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
+                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Notifications & Integrations</h3>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
                 </div>
               </div>
-              {showNotificationSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
+              {showNotificationSettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
             </button>
 
             {showNotificationSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 {/* Standard Notification Switch */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <NotificationToggle />
                 </div>
 
                 {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
                         <Send className="w-5 h-5 text-[#229ED9]" />
                       </div>
                       <div>
-                        <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Telegram Alerts</h3>
+                        <h3 className="text-[14px] font-bold text-neutral-900 dark:text-white dark:text-white">Telegram Alerts</h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                             {telegramConnected ? <span>Active & Verified</span> : <span>Disconnected</span>}
                           </span>
                         </div>
@@ -2326,20 +2319,20 @@ export default function ProfilePage() {
 
                   {/* Instructions panel */}
                   {showTelegramInstructions && (
-                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
                       <div className="flex items-center gap-2 text-[#229ED9]">
                         <MessageSquare className="w-4 h-4" />
                         <p className="text-xs font-bold">Bot Connectivity Guide</p>
                       </div>
                       
-                      <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                      <p className="text-[11px] text-[#475569] dark:text-neutral-400 leading-relaxed">
                         <span>Discuss uses an automated delivery bot on Telegram to bypass browser push limitations. Link your chat in seconds:</span>
                       </p>
 
                       <div className="grid grid-cols-1 gap-2.5">
                         <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. AUTHENTICATE WITH BOT</p>
-                          <p className="text-[10px] text-[#6275AF] mb-2">Send <span className="font-semibold text-[#229ED9]">/start</span> to retrieve your secure Chat ID.</p>
+                          <p className="text-[10px] font-bold text-neutral-900 dark:text-white mb-1">1. AUTHENTICATE WITH BOT</p>
+                          <p className="text-[10px] text-neutral-500 mb-2">Send <span className="font-semibold text-[#229ED9]">/start</span> to retrieve your secure Chat ID.</p>
                           <a href="https://t.me/DiscussNotifications_bot" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 bg-[#229ED9] hover:bg-[#1c80b0] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm">
                             <span>Launch Telegram Bot</span> <ExternalLink className="w-2.5 h-2.5" />
                           </a>
@@ -2347,7 +2340,7 @@ export default function ProfilePage() {
 
                         <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
                           <p className="text-[10px] font-bold text-amber-500 mb-1">ALTERNATIVE: GET ID INSTANTLY</p>
-                          <p className="text-[10px] text-[#6275AF]">Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@userinfobot</a> on Telegram and send a message. It returns your numeric ID immediately!</p>
+                          <p className="text-[10px] text-neutral-500">Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@userinfobot</a> on Telegram and send a message. It returns your numeric ID immediately!</p>
                         </div>
                       </div>
                     </div>
@@ -2367,10 +2360,10 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Active Link</p>
-                            <p className="text-[12px] font-mono font-bold text-[#475569] dark:text-[#94A3B8]">{telegramChatIdInput}</p>
+                            <p className="text-[12px] font-mono font-bold text-[#475569] dark:text-neutral-400">{telegramChatIdInput}</p>
                           </div>
                         </div>
-                        <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-[#6275AF] hover:text-[#EF4444] p-2 transition-colors">
+                        <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-neutral-500 hover:text-[#EF4444] p-2 transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -2379,10 +2372,10 @@ export default function ProfilePage() {
                       <div className="bg-white dark:bg-[#1E293B] border border-neutral-200 dark:border-white/5 rounded-xl p-3.5 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-[#6275AF]' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
+                            <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-neutral-500' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
                               {telegramPrivacy ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             </div>
-                            <span className="text-xs font-bold text-[#0F172A] dark:text-[#F1F5F9]">Message Previews</span>
+                            <span className="text-xs font-bold text-neutral-900 dark:text-white">Message Previews</span>
                           </div>
                           <button
                             onClick={handleToggleTelegramPrivacy}
@@ -2392,7 +2385,7 @@ export default function ProfilePage() {
                             <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-0.5' : 'translate-x-4.5'}`} />
                           </button>
                         </div>
-                        <p className="text-[10px] text-[#6275AF] dark:text-[#94A3B8] leading-relaxed">
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
                           {telegramPrivacy 
                             ? <span>Incognito Mode: Only notifies you of the message source. Full content is only visible inside the Discuss app.</span> 
                             : <span>Real-time Delivery: Pushes complete message text and image previews directly to your Telegram chat.</span>}
@@ -2401,7 +2394,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl focus-within:border-[#229ED9] transition-all">
+                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl focus-within:border-[#229ED9] transition-all">
                         <Input
                           value={telegramChatIdInput}
                           onChange={e => {
@@ -2419,7 +2412,7 @@ export default function ProfilePage() {
                           {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
                         </Button>
                       </div>
-                      <p className="text-center text-[10px] text-[#6275AF] font-semibold italic">
+                      <p className="text-center text-[10px] text-neutral-500 font-semibold italic">
                          <span>Note: Telegram notifications use industry-standard encryption for privacy.</span>
                       </p>
                     </div>
@@ -2427,7 +2420,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* ==================== DISCORD NOTIFICATIONS ==================== */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
@@ -2437,12 +2430,12 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Discord Alerts</h3>
+                          <h3 className="text-[14px] font-bold text-neutral-900 dark:text-white dark:text-white">Discord Alerts</h3>
                           <span className="bg-neutral-200 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md">Coming Soon</span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Disconnected</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Disconnected</span>
                         </div>
                       </div>
                     </div>
@@ -2456,28 +2449,28 @@ export default function ProfilePage() {
 
                   {/* Instructions panel */}
                   {showDiscordInstructions && (
-                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
                       <div className="flex items-center gap-2 text-[#5865F2]">
                         <ShieldCheck className="w-4 h-4" />
                         <p className="text-xs font-bold">Privacy & Security Protocol</p>
                       </div>
                       
-                      <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+                      <p className="text-[11px] text-[#475569] dark:text-neutral-400 leading-relaxed">
                         To maintain privacy, Discuss uses an encrypted notification bridge. Discord requires a mutual server connection before allowing encrypted DMs:
                       </p>
 
                       <div className="grid grid-cols-1 gap-2.5">
                         <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">1. JOIN OFFICIAL SERVER <span className="text-red-500 font-bold">(REQUIRED)</span></p>
-                          <p className="text-[10px] text-[#6275AF] mb-2">A shared server connection is mandatory for the bot to verify your identity.</p>
+                          <p className="text-[10px] font-bold text-neutral-900 dark:text-white mb-1">1. JOIN OFFICIAL SERVER <span className="text-red-500 font-bold">(REQUIRED)</span></p>
+                          <p className="text-[10px] text-neutral-500 mb-2">A shared server connection is mandatory for the bot to verify your identity.</p>
                           <a href="https://discord.gg/FNhRA5EK" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 bg-[#5865F2] hover:bg-[#4752c4] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm">
                             <span>Join Discuss Server</span> <ExternalLink className="w-2.5 h-2.5" />
                           </a>
                         </div>
 
                         <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-[#0F172A] dark:text-[#F1F5F9] mb-1">2. CONFIGURE USER ID</p>
-                          <p className="text-[10px] text-[#6275AF]">Enable Developer Mode in Discord settings, right-click your profile, and select <span className="font-semibold text-[#5865F2]">Copy User ID</span>.</p>
+                          <p className="text-[10px] font-bold text-neutral-900 dark:text-white mb-1">2. CONFIGURE USER ID</p>
+                          <p className="text-[10px] text-neutral-500">Enable Developer Mode in Discord settings, right-click your profile, and select <span className="font-semibold text-[#5865F2]">Copy User ID</span>.</p>
                         </div>
                       </div>
                     </div>
@@ -2486,7 +2479,7 @@ export default function ProfilePage() {
                   {/* Discord input */}
                   <div className="opacity-50 pointer-events-none select-none">
                     <div className="space-y-3">
-                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl">
+                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl">
                         <Input
                           disabled
                           placeholder="Discord User ID (e.g. 123456789...)"
@@ -2499,7 +2492,7 @@ export default function ProfilePage() {
                           <span>Connect</span>
                         </Button>
                       </div>
-                      <p className="text-center text-[10px] text-[#6275AF] font-semibold italic">
+                      <p className="text-center text-[10px] text-neutral-500 font-semibold italic">
                          <span>Note: Discord notifications are currently under development.</span>
                       </p>
                     </div>
@@ -2517,7 +2510,7 @@ export default function ProfilePage() {
         <div className="mt-6">
           <button
             onClick={() => setShowFriends(!showFriends)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-[#10B981]/10 discuss:bg-[#10B981]/10 flex items-center justify-center rounded-lg relative">
@@ -2529,14 +2522,14 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Friends</h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
+                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white">Friends</h2>
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
                   <span>{friends.length} friend{friends.length !== 1 ? 's' : ''}</span>
                   {receivedRequests.length > 0 && <span> • {receivedRequests.length} pending</span>}
                 </p>
               </div>
             </div>
-            {showFriends ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
+            {showFriends ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
           </button>
 
           {showFriends && (
@@ -2553,7 +2546,7 @@ export default function ProfilePage() {
                       const reqUser = requestUserDetails[request.fromUserId];
                       
                       return (
-                        <div key={request.fromUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                        <div key={request.fromUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
                           <button
                             onClick={() => navigate(`/user/${request.fromUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2564,10 +2557,10 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate">
+                              <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate">
                                 <span>@{reqUser?.username || 'Unknown'}</span>
                               </span>
-                              <span className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
+                              <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
                                 <span>{new Date(request.createdAt).toLocaleDateString()}</span>
                               </span>
                             </div>
@@ -2600,8 +2593,8 @@ export default function ProfilePage() {
 
               {/* Sent Requests */}
               {sentRequests.length > 0 && (
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                  <h3 className="text-sm font-semibold text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mb-3 flex items-center gap-2">
+                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                  <h3 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mb-3 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span>Sent Requests ({sentRequests.length})</span>
                   </h3>
@@ -2610,7 +2603,7 @@ export default function ProfilePage() {
                       const reqUser = requestUserDetails[request.toUserId];
                       
                       return (
-                        <div key={request.toUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                        <div key={request.toUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
                           <button
                             onClick={() => navigate(`/user/${request.toUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2621,7 +2614,7 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate">
+                              <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate">
                                 <span>@{reqUser?.username || 'Unknown'}</span>
                               </span>
                               <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
@@ -2632,7 +2625,7 @@ export default function ProfilePage() {
                             disabled={processingRequest === request.toUserId}
                             variant="outline"
                             size="sm"
-                            className="border-[#6275AF] text-[#6275AF] hover:bg-[#6275AF]/10 h-8 px-3 shrink-0 ml-2"
+                            className="border-[#6275AF] text-neutral-500 hover:bg-[#6275AF]/10 h-8 px-3 shrink-0 ml-2"
                           >
                             {processingRequest === request.toUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cancel'}
                           </Button>
@@ -2644,23 +2637,23 @@ export default function ProfilePage() {
               )}
 
               {/* Find Friends Search */}
-              <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+              <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                   <Search className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                   <span>Find Friends</span>
                 </h3>
                 <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />
                   <Input
                     value={friendSearchQuery}
                     onChange={(e) => setFriendSearchQuery(e.target.value)}
                     placeholder="Search users by username..."
-                    className="pl-10 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white placeholder:text-[#6275AF] dark:placeholder:text-[#94A3B8] discuss:placeholder:text-[#9CA3AF] text-sm"
+                    className="pl-10 bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white placeholder:text-neutral-500 dark:placeholder:text-[#94A3B8] discuss:placeholder:text-[#9CA3AF] text-sm"
                   />
                   {friendSearchQuery && (
                     <button
                       onClick={() => setFriendSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2669,7 +2662,7 @@ export default function ProfilePage() {
                 
                 {searchingFriends ? (
                   <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#6275AF]" />
+                    <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
                   </div>
                 ) : friendSearchResults.length > 0 ? (
                   <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
@@ -2683,7 +2676,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 ) : friendSearchQuery && !searchingFriends ? (
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm text-center py-4">
+                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm text-center py-4">
                     <span>No users found</span>
                   </p>
                 ) : null}
@@ -2691,30 +2684,30 @@ export default function ProfilePage() {
 
               {/* Friends List */}
               {loadingFriends ? (
-                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
                   <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6] mb-2" />
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm"><span>Loading friends list...</span></p>
+                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm"><span>Loading friends list...</span></p>
                 </div>
               ) : friends.length > 0 ? (
                 <div className="space-y-4">
                   {/* Suggested Friends Section */}
                   {suggestedFriends.length > 0 && (
-                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                         <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                         <span>Suggested Friends</span>
                       </h3>
                       {loadingSuggestions ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
-                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm"><span>Finding suggestions...</span></span>
+                          <span className="ml-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm"><span>Finding suggestions...</span></span>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
                           {suggestedFriends.map((suggested) => {
                             
                             return (
-                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-3 rounded-lg">
+                              <div key={suggested.id} className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-3 rounded-lg">
                                 <button
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -2725,12 +2718,12 @@ export default function ProfilePage() {
                                     className="w-10 h-10"
                                   />
                                   <div className="text-left min-w-0">
-                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate flex items-center gap-1">
+                                    <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate flex items-center gap-1">
                                       @{suggested.username}
                                       {suggested.verified && <VerifiedBadge size="xs" />}
                                     </span>
                                     {suggested.mutualCount > 0 && (
-                                      <span className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
+                                      <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
                                         {suggested.mutualCount} mutual friend{suggested.mutualCount !== 1 ? 's' : ''}
                                       </span>
                                     )}
@@ -2753,8 +2746,8 @@ export default function ProfilePage() {
                   )}
 
                   {/* Your Friends */}
-                  <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+                  <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#10B981]" />
                     Your Friends ({friends.length})
                   </h3>
@@ -2762,7 +2755,7 @@ export default function ProfilePage() {
                     {friends.map((friend) => {
                       
                       return (
-                        <div key={friend.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-3 rounded-lg">
+                        <div key={friend.id} className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-3 rounded-lg">
                           <button
                             onClick={() => navigate(`/user/${friend.id}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2773,7 +2766,7 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate">
+                              <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate">
                                 @{friend.username}
                               </span>
                               {friend.verified && <VerifiedBadge size="xs" />}
@@ -2796,22 +2789,22 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   {/* Suggested Friends for users without friends */}
                   {suggestedFriends.length > 0 && (
-                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                         <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                         People You May Know
                       </h3>
                       {loadingSuggestions ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
-                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm">Finding people...</span>
+                          <span className="ml-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Finding people...</span>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
                           {suggestedFriends.map((suggested) => {
                             
                             return (
-                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-3 rounded-lg">
+                              <div key={suggested.id} className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-3 rounded-lg">
                                 <button
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -2824,7 +2817,7 @@ export default function ProfilePage() {
                                     </div>
                                   )}
                                   <div className="text-left min-w-0">
-                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate flex items-center gap-1">
+                                    <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate flex items-center gap-1">
                                       <span>@{suggested.username}</span>
                                       {suggested.verified && <VerifiedBadge size="xs" />}
                                     </span>
@@ -2846,10 +2839,10 @@ export default function ProfilePage() {
                     </div>
                   )}
                   
-                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                    <Users className="w-10 h-10 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-3" />
-                    <h3 className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white font-semibold mb-1"><span>No friends yet</span></h3>
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm">
+                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                    <Users className="w-10 h-10 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mx-auto mb-3" />
+                    <h3 className="text-neutral-900 dark:text-white dark:text-white font-semibold mb-1"><span>No friends yet</span></h3>
+                    <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
                       <span>Search for users above to connect</span>
                     </p>
                   </div>
@@ -2864,24 +2857,24 @@ export default function ProfilePage() {
         <div className="mt-6">
           <button
             onClick={() => setShowAiInsights(!showAiInsights)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
                 <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">AI TalentGraph Insights</h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
+                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white">AI TalentGraph Insights</h2>
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
                   {aiInsights ? 'Analysis complete' : 'No insights generated yet'}
                 </p>
               </div>
             </div>
-            {showAiInsights ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
+            {showAiInsights ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
           </button>
 
           {showAiInsights && (
-            <div className="mt-4 bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl p-5 space-y-4">
+            <div className="mt-4 bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl p-5 space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="text-left">
                   <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Profile Insights</h3>
@@ -3002,30 +2995,30 @@ export default function ProfilePage() {
           <button
             data-testid="your-posts-toggle"
             onClick={() => setShowPosts(!showPosts)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
                 <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white"><span>Your Posts</span></h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
+                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white"><span>Your Posts</span></h2>
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
-            {showPosts ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
+            {showPosts ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
           </button>
 
           {showPosts && (
             <div className="mt-4 space-y-4">
               {/* Filter bar */}
-              <div data-testid="post-filter-bar" className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-xl px-3 py-2.5">
-                <Filter className="w-3.5 h-3.5 text-[#6275AF] dark:text-[#94A3B8]" />
+              <div data-testid="post-filter-bar" className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl px-3 py-2.5">
+                <Filter className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                 <select
                   data-testid="filter-type-select"
                   value={filterType}
                   onChange={(e) => { setFilterType(e.target.value); setFilterMonth(''); setFilterYear(''); }}
-                  className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                  className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                 >
                   <option value="all"><span>All Posts</span></option>
                   <option value="this_month"><span>This Month</span></option>
@@ -3039,7 +3032,7 @@ export default function ProfilePage() {
                       data-testid="filter-month-select"
                       value={filterMonth}
                       onChange={(e) => setFilterMonth(e.target.value)}
-                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                      className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                     >
                       <option value="">Month</option>
                       {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
@@ -3048,7 +3041,7 @@ export default function ProfilePage() {
                       data-testid="filter-month-year-select"
                       value={filterYear}
                       onChange={(e) => setFilterYear(e.target.value)}
-                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                      className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                     >
                       <option value="">Year</option>
                       {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -3061,7 +3054,7 @@ export default function ProfilePage() {
                     data-testid="filter-year-select"
                     value={filterYear}
                     onChange={(e) => setFilterYear(e.target.value)}
-                    className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                    className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                   >
                     <option value="">Year</option>
                     {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -3069,7 +3062,7 @@ export default function ProfilePage() {
                 )}
 
                 {filterType !== 'all' && (
-                  <span className="text-[#6275AF] dark:text-[#94A3B8] text-[11px] ml-auto">
+                  <span className="text-neutral-500 dark:text-neutral-400 text-[11px] ml-auto">
                     <span>{filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}</span>
                   </span>
                 )}
@@ -3077,12 +3070,12 @@ export default function ProfilePage() {
 
               {loadingPosts ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
                 </div>
               ) : filteredPosts.length === 0 ? (
-                <div className="text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
-                  <Calendar className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] mx-auto mb-2" />
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
+                <div className="text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#DBDBDB] dark:border-[#262626]">
+                  <Calendar className="w-8 h-8 text-neutral-500 dark:text-neutral-400 mx-auto mb-2" />
+                  <p className="text-neutral-500 dark:text-neutral-400 text-[13px]">
                     <span>{filterType === 'all' ? "You haven't created any posts yet." : 'No posts found for this period.'}</span>
                   </p>
                 </div>
@@ -3108,30 +3101,30 @@ export default function ProfilePage() {
           <button
             data-testid="your-pulses-toggle"
             onClick={() => setShowPulses(!showPulses)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-[#EF4444]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
                 <PlayCircle className="w-4 h-4 text-[#EF4444] text-[#0095F6]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white"><span>Your Pulses</span></h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
+                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white"><span>Your Pulses</span></h2>
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
-            {showPulses ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
+            {showPulses ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
           </button>
 
           {showPulses && (
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
               {loadingPosts ? (
                 <div className="col-span-full flex items-center justify-center py-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
                 </div>
               ) : userPulses.length === 0 ? (
-                <div className="col-span-full text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155]">
-                  <PlayCircle className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] mx-auto mb-2" />
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] text-[13px]">
+                <div className="col-span-full text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#DBDBDB] dark:border-[#262626]">
+                  <PlayCircle className="w-8 h-8 text-neutral-500 dark:text-neutral-400 mx-auto mb-2" />
+                  <p className="text-neutral-500 dark:text-neutral-400 text-[13px]">
                     <span>You haven't posted any Pulse videos yet.</span>
                   </p>
                 </div>
@@ -3190,15 +3183,15 @@ export default function ProfilePage() {
 
       {/* Delete Full Name Confirmation */}
       <AlertDialog open={deleteFullNameConfirm} onOpenChange={setDeleteFullNameConfirm}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#262626] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white"><span>Remove full name?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
+            <AlertDialogTitle className="dark:text-white dark:text-white"><span>Remove full name?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               <span>This will remove your full name from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-white dark:border-[#262626] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteFullName} disabled={savingFullName} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
@@ -3210,15 +3203,15 @@ export default function ProfilePage() {
 
       {/* Delete Bio Confirmation */}
       <AlertDialog open={deleteBioConfirm} onOpenChange={setDeleteBioConfirm}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#262626] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white"><span>Remove bio?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
+            <AlertDialogTitle className="dark:text-white dark:text-white"><span>Remove bio?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               <span>This will remove your bio from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-white dark:border-[#262626] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteBio} disabled={savingBio} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
@@ -3230,15 +3223,15 @@ export default function ProfilePage() {
 
       {/* Delete Link Confirmation */}
       <AlertDialog open={deleteLinkConfirm !== null} onOpenChange={(v) => { if (!v) setDeleteLinkConfirm(null); }}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#262626] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white"><span>Remove link?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
+            <AlertDialogTitle className="dark:text-white dark:text-white"><span>Remove link?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               <span>This will remove this social link from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-white dark:border-[#262626] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => handleDeleteLink(deleteLinkConfirm)} disabled={savingLink} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
@@ -3258,7 +3251,7 @@ export default function ProfilePage() {
       
       {/* PIN Modals */}
       <AlertDialog open={showPinModal} onOpenChange={setShowPinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Set Security PIN</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3267,7 +3260,7 @@ export default function ProfilePage() {
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-[11px] font-medium text-[#6275AF]">New PIN</label>
+              <label className="text-[11px] font-medium text-neutral-500">New PIN</label>
               <div className="relative">
                 <Input 
                   type={showNewPin ? "text" : "password"} 
@@ -3281,14 +3274,14 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowNewPin(!showNewPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
                 >
                   {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[11px] font-medium text-[#6275AF]">Confirm PIN</label>
+              <label className="text-[11px] font-medium text-neutral-500">Confirm PIN</label>
               <div className="relative">
                 <Input 
                   type={showConfirmPin ? "text" : "password"} 
@@ -3302,7 +3295,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPin(!showConfirmPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
                 >
                   {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -3320,7 +3313,7 @@ export default function ProfilePage() {
       </AlertDialog>
 
       <AlertDialog open={showChangePinModal} onOpenChange={setShowChangePinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Change PIN</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3329,7 +3322,7 @@ export default function ProfilePage() {
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-[11px] font-medium text-[#6275AF]">Old PIN</label>
+              <label className="text-[11px] font-medium text-neutral-500">Old PIN</label>
               <div className="relative">
                 <Input 
                   type={showOldPin ? "text" : "password"} 
@@ -3343,14 +3336,14 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowOldPin(!showOldPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
                 >
                   {showOldPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[11px] font-medium text-[#6275AF]">New PIN</label>
+              <label className="text-[11px] font-medium text-neutral-500">New PIN</label>
               <div className="relative">
                 <Input 
                   type={showNewPin ? "text" : "password"} 
@@ -3364,14 +3357,14 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowNewPin(!showNewPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
                 >
                   {showNewPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[11px] font-medium text-[#6275AF]">Confirm New PIN</label>
+              <label className="text-[11px] font-medium text-neutral-500">Confirm New PIN</label>
               <div className="relative">
                 <Input 
                   type={showConfirmPin ? "text" : "password"} 
@@ -3385,7 +3378,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPin(!showConfirmPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
                 >
                   {showConfirmPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -3398,7 +3391,7 @@ export default function ProfilePage() {
                   setShowChangePinModal(false);
                   setShowForgotPinModal(true);
                 }}
-                className="text-[10px] font-bold text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors"
+                className="text-[10px] font-bold text-neutral-500 hover:text-[#0095F6] hover:text-[#0095F6] transition-colors"
               >
                 Forgot your PIN?
               </button>
@@ -3416,7 +3409,7 @@ export default function ProfilePage() {
 
       {/* Forgot PIN Recovery Modal */}
       <AlertDialog open={showForgotPinModal} onOpenChange={setShowForgotPinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex flex-col items-center gap-3">
               <img
@@ -3433,10 +3426,10 @@ export default function ProfilePage() {
                   Account recovery is only possible if you are the <strong>ethical owner</strong> of this account.
                 </p>
               </div>
-              <p className="text-[#6275AF] dark:text-[#94A3B8]">
+              <p className="text-neutral-500 dark:text-neutral-400">
                 Unauthorized attempts will result in the <strong>PERMANENT DISABLING</strong> of this account.
               </p>
-              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] p-2 rounded-lg italic text-[#0F172A] dark:text-white border border-[#E2E8F0] dark:border-[#334155]">
+              <div className="bg-neutral-50 dark:bg-black p-2 rounded-lg italic text-neutral-900 dark:text-white border border-[#DBDBDB] dark:border-[#262626]">
                 &quot;I declare and accept the account recovery terms and confirm I am the rightful owner.&quot;
               </div>
             </AlertDialogDescription>
@@ -3468,7 +3461,7 @@ export default function ProfilePage() {
       </AlertDialog>
 
       <AlertDialog open={showVerifyPinModal} onOpenChange={setShowVerifyPinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Verify Identity</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3489,7 +3482,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowOldPin(!showOldPin)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
               >
                 {showOldPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -3507,7 +3500,7 @@ export default function ProfilePage() {
 
       {/* Disable App Lock Modal */}
       <AlertDialog open={showDisableLockModal} onOpenChange={setShowDisableLockModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-red-600">Disable App Lock</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3528,7 +3521,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowDisablePin(!showDisablePin)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 transition-colors"
               >
                 {showDisablePin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -3561,18 +3554,18 @@ export default function ProfilePage() {
       {/* Precise Location Adjust Modal */}
       {showAdjustLocationModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg p-5 rounded-2xl bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-lg p-5 rounded-2xl bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] pb-3">
+            <div className="flex items-center justify-between border-b border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
-                <h3 className="text-base font-black text-[#0F172A] dark:text-[#F1F5F9] dark:text-white uppercase tracking-tight">
+                <h3 className="text-base font-black text-neutral-900 dark:text-white dark:text-white uppercase tracking-tight">
                   Adjust Precise Location
                 </h3>
               </div>
               <button
                 onClick={() => setShowAdjustLocationModal(false)}
-                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-[#F1F5F9] transition-colors"
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-neutral-500 hover:text-neutral-900 dark:hover:text-[#F1F5F9] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3588,17 +3581,17 @@ export default function ProfilePage() {
 
             {/* Coordinates Real-time Display */}
             {tempCoords && (
-              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#111] p-3 rounded-xl border border-neutral-200 dark:border-white/5 discuss:border-black flex justify-between items-center text-xs">
+              <div className="bg-neutral-50 dark:bg-black discuss:bg-[#111] p-3 rounded-xl border border-neutral-200 dark:border-white/5 discuss:border-black flex justify-between items-center text-xs">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Latitude</span>
-                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] text-[#0095F6]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Latitude</span>
+                  <span className="font-mono font-bold text-sm text-neutral-900 dark:text-white text-[#0095F6]">
                     {tempCoords.latitude.toFixed(6)}
                   </span>
                 </div>
                 <div className="h-6 w-[1px] bg-neutral-300 dark:bg-white/10 discuss:bg-[#333]" />
                 <div className="flex flex-col text-right">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Longitude</span>
-                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] text-[#0095F6]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Longitude</span>
+                  <span className="font-mono font-bold text-sm text-neutral-900 dark:text-white text-[#0095F6]">
                     {tempCoords.longitude.toFixed(6)}
                   </span>
                 </div>
@@ -3616,7 +3609,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex gap-3 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] pt-3">
+            <div className="flex gap-3 border-t border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] pt-3">
               <Button
                 variant="outline"
                 onClick={() => setShowAdjustLocationModal(false)}
@@ -3637,11 +3630,11 @@ export default function ProfilePage() {
 
       {/* Badge Detail Dialog Modal */}
       <AlertDialog open={showBadgeModal} onOpenChange={setShowBadgeModal}>
-        <AlertDialogContent className="max-w-md bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-2xl shadow-2xl p-6">
+        <AlertDialogContent className="max-w-md bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-2xl shadow-2xl p-6">
           {selectedBadge && (
             <div className="space-y-6 text-left">
               <div className="flex justify-between items-start">
-                <h3 className="text-lg font-black text-[#0F172A] dark:text-[#F1F5F9] dark:text-white uppercase tracking-tight flex items-center gap-2">
+                <h3 className="text-lg font-black text-neutral-900 dark:text-white dark:text-white uppercase tracking-tight flex items-center gap-2">
                   🏅 Badge Details
                 </h3>
                 <button
@@ -3652,18 +3645,18 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 border border-neutral-100 dark:border-white/5 dark:border-[#262626]">
+              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-black/40 discuss:bg-[#222222]/30 border border-neutral-100 dark:border-white/5 dark:border-[#262626]">
                 <div className="relative mb-4">
                   <BadgeIcon badge={selectedBadge} isLocked={eligibleCount < selectedBadge.target} size="lg" />
                 </div>
-                <h4 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">
+                <h4 className="text-base font-extrabold text-neutral-900 dark:text-white dark:text-white">
                   {selectedBadge.name}
                 </h4>
-                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-2 px-4 leading-relaxed font-semibold">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-2 px-4 leading-relaxed font-semibold">
                   {selectedBadge.description}
                 </p>
                 
-                <div className="mt-4 bg-white dark:bg-[#0F172A] dark:bg-black border border-neutral-200 dark:border-[#334155] dark:border-[#262626] px-4 py-2 rounded-xl shadow-sm">
+                <div className="mt-4 bg-white dark:bg-black dark:bg-black border border-neutral-200 dark:border-[#262626] dark:border-[#262626] px-4 py-2 rounded-xl shadow-sm">
                   <span className="text-xs text-neutral-500 font-bold">Status: </span>
                   {eligibleCount >= selectedBadge.target ? (
                     <span className="text-emerald-500 text-xs font-black uppercase tracking-wider">Unlocked</span>
@@ -3717,16 +3710,16 @@ export default function ProfilePage() {
       {/* Online Status Visibility Confirmation Modal */}
       {showOnlineVisibilityConfirm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0F172A] dark:bg-black border border-[#E2E8F0] dark:border-white/10 dark:border-[#262626] rounded-2xl p-5 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-sm bg-white dark:bg-black dark:bg-black border border-[#DBDBDB] dark:border-white/10 dark:border-[#262626] rounded-2xl p-5 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-start gap-3">
               <div className={`mt-0.5 p-2 rounded-full ${pendingVisibilityValue ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#EF4444]/10 text-[#EF4444]'}`}>
                 {pendingVisibilityValue ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">
+                <h3 className="text-sm font-bold text-neutral-900 dark:text-white dark:text-white">
                   {pendingVisibilityValue ? 'Show Online Status?' : 'Hide Online Status?'}
                 </h3>
-                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-1 leading-relaxed">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1 leading-relaxed">
                   {pendingVisibilityValue 
                     ? "Other users will be able to see when you're online and your 'last seen' time across DevRadar and comments."
                     : "You will appear completely offline to everyone. Your green dot and 'last seen' time will be hidden everywhere."}
@@ -3736,7 +3729,7 @@ export default function ProfilePage() {
             <div className="flex gap-2 mt-5">
               <button
                 onClick={() => setShowOnlineVisibilityConfirm(false)}
-                className="flex-1 text-xs font-bold px-3 py-2.5 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] dark:hover:bg-[#1A1A1A] rounded-xl transition-colors"
+                className="flex-1 text-xs font-bold px-3 py-2.5 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-[#1E293B] dark:hover:bg-[#1A1A1A] rounded-xl transition-colors"
               >
                 Cancel
               </button>
