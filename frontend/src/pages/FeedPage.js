@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { subscribeToPostsRealtime } from '@/lib/db';
 import { cachePosts } from '@/lib/cacheManager';
-import { getTrendingTags } from '@/lib/trendingDb';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
@@ -23,14 +22,12 @@ const MemoPostCard = memo(PostCard);
 
 export default function FeedPage() {
   const { user } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
 
   const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [activeTab, setActiveTab] = useState('discussion');
-  const [trendingTags, setTrendingTags] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
@@ -44,34 +41,38 @@ export default function FeedPage() {
     };
   }, []);
 
-  const fetchTrendingTags = useCallback(async () => {
-    try {
-      const tags = await getTrendingTags();
-      setTrendingTags(tags || []);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    fetchTrendingTags();
-  }, [fetchTrendingTags]);
-
   useEffect(() => {
     const unsubscribe = subscribeToPostsRealtime(async (updatedPosts) => {
       setAllPosts(updatedPosts);
       setLoading(false);
       await cachePosts(updatedPosts);
-      fetchTrendingTags();
     });
     return () => unsubscribe();
-  }, [fetchTrendingTags]);
+  }, []);
 
   const filteredPosts = useMemo(() => {
     return allPosts.filter(p => p.type === activeTab);
   }, [allPosts, activeTab]);
 
+  const trendingTags = useMemo(() => {
+    const tagCounts = {};
+    allPosts.forEach(p => {
+      if (Array.isArray(p.hashtags)) {
+        p.hashtags.forEach(tag => {
+          if (tag) {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          }
+        });
+      }
+    });
+    return Object.entries(tagCounts)
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [allPosts]);
+
   const handlePostCreated = () => {
     setShowCreate(false);
-    fetchTrendingTags();
   };
 
   const handlePostDeleted = useCallback((postId) => {
@@ -105,7 +106,7 @@ export default function FeedPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_600px_300px] justify-center gap-6">
           
           {/* Left Sidebar (Desktop Only) */}
-          <Sidebar onPostCreated={fetchTrendingTags} />
+          <Sidebar onPostCreated={handlePostCreated} />
 
           {/* Main Instagram Stream (Centered) */}
           <main className="w-full max-w-[600px] mx-auto min-w-0 flex-1">
@@ -192,7 +193,7 @@ export default function FeedPage() {
                   </h3>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  {trendingTags.slice(0, 5).map((t) => (
+                  {trendingTags.map((t) => (
                     <div
                       key={t.tag}
                       className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 text-xs font-medium cursor-pointer"

@@ -5,13 +5,11 @@ import UserAvatar from '@/components/UserAvatar';
 import CreatePostModal from '@/components/CreatePostModal';
 import GuestAuthModal from '@/components/GuestAuthModal';
 import { 
-  Heart, 
   Plus, 
-  Menu, 
+  AlignRight, 
   X, 
   Newspaper, 
   Briefcase, 
-  Code, 
   Bookmark, 
   ShieldCheck, 
   Users, 
@@ -22,7 +20,6 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useHighlights } from '@/contexts/HighlightsContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Header() {
@@ -35,7 +32,6 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { unreadChatCount } = useHighlights();
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
@@ -58,7 +54,7 @@ export default function Header() {
   return (
     <>
       <header className={headerClass}>
-        {/* Mobile/Tablet Header: Left (+), Center (Discuss), Right (Heart + Menu) */}
+        {/* Mobile/Tablet Header: Left (+), Center (Discuss), Right (Modern Menu Drawer) */}
         <div className="lg:hidden max-w-5xl mx-auto px-4 h-12 flex items-center justify-between w-full relative">
           {/* Left: Plus Icon for Create Post */}
           <button
@@ -74,25 +70,18 @@ export default function Header() {
             <DiscussLogo size="md" />
           </Link>
 
-          {/* Right: Heart (Activity/Notifications) & Hamburger Menu */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => navigate(user ? '/chat' : '/login')}
-              className="relative p-1.5 text-neutral-900 dark:text-white hover:opacity-70 transition-opacity"
-              title="Activity"
-            >
-              <Heart className="w-6 h-6 stroke-[2px]" />
-              {unreadChatCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#ED4956] rounded-full ring-2 ring-white dark:ring-black" />
-              )}
-            </button>
-
+          {/* Right: Modern Menu Drawer Icon */}
+          <div className="flex items-center">
             <button
               onClick={() => setShowDrawer(!showDrawer)}
-              className="p-1.5 text-neutral-900 dark:text-white hover:opacity-70 transition-opacity"
+              className="p-1.5 text-neutral-900 dark:text-white hover:opacity-70 transition-transform active:scale-95 cursor-pointer"
               title="Menu"
             >
-              {showDrawer ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6 stroke-[2px]" />}
+              {showDrawer ? (
+                <X className="w-6 h-6 stroke-[2.2px] text-[#ED4956]" />
+              ) : (
+                <AlignRight className="w-6 h-6 stroke-[2.2px]" />
+              )}
             </button>
           </div>
         </div>
