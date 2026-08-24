@@ -57,6 +57,18 @@ export const createCommentFirestore = async (postId, text, user, postAuthorId = 
 };
 
 /**
+ * Add comment alias for compatibility
+ */
+export const addComment = async ({ postId, authorId, authorUsername, authorPhotoUrl, authorVerified, content }) => {
+  return createCommentFirestore(postId, content, {
+    id: authorId,
+    username: authorUsername,
+    photo_url: authorPhotoUrl,
+    verified: authorVerified
+  });
+};
+
+/**
  * Create a reply to a comment
  * @param {string} postId - Post ID
  * @param {string} parentCommentId - Parent comment ID

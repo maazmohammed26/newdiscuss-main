@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toggleVote, deletePost, updatePost } from '@/lib/db';
-import { checkContentSafety } from '@/lib/nvidiaApi';
-import { generateContentHash, computeFinalScore, classifyScore, localDiscussAlgorithmFallback } from '@/lib/scoringLogic';
-import { hasNewComments, addComment } from '@/lib/commentsDb';
+import { createCommentFirestore } from '@/lib/commentsDb';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
 import EditPostModal from '@/components/EditPostModal';
@@ -262,14 +260,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     }
     setSubmittingComment(true);
     try {
-      await addComment({
-        postId: post.id,
-        authorId: currentUser.id,
-        authorUsername: currentUser.username,
-        authorPhotoUrl: currentUser.photo_url || null,
-        authorVerified: !!currentUser.verified,
-        content: quickComment.trim(),
-      });
+      await createCommentFirestore(post.id, quickComment.trim(), currentUser, post.author_id);
       setQuickComment('');
       toast.success('Comment posted');
       setShowComments(true);
