@@ -29,8 +29,13 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
     const handleKey = (e) => {
       if (e.key === 'Escape') onClose();
     };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKey);
+    };
   }, [onClose]);
 
   const remaining = MAX_CHARS - text.length;
@@ -90,13 +95,12 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center"
       onClick={handleBackdropClick}
       style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
     >
       <div
-        className="relative mx-auto flex w-full flex-col overflow-hidden rounded-t-[24px] border border-[#DBDBDB] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] animate-in slide-in-from-bottom-4 duration-200 dark:border-[#262626] dark:bg-black sm:max-w-lg sm:rounded-[24px] sm:zoom-in-95"
-        style={{ minHeight: '420px', maxHeight: '92dvh' }}
+        className="relative mx-auto flex h-[calc(100vh-8px)] max-h-[calc(100vh-8px)] min-h-0 w-full flex-col overflow-hidden rounded-t-[24px] border border-[#DBDBDB] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] animate-in slide-in-from-bottom-4 duration-200 dark:border-[#262626] dark:bg-black sm:h-auto sm:max-h-[min(92vh,760px)] sm:max-w-lg sm:rounded-[24px] sm:zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -199,7 +203,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between border-t border-neutral-100 bg-white px-5 py-3.5 dark:border-neutral-800 dark:bg-black">
+        <div className="z-20 flex shrink-0 items-center justify-between border-t border-neutral-100 bg-white px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3.5 shadow-[0_-10px_30px_rgba(15,23,42,.05)] dark:border-neutral-800 dark:bg-black">
           {/* Char counter */}
           <div className="flex items-center gap-1.5">
             {isOverLimit && (
