@@ -45,8 +45,8 @@ export default function PrivacyPage() {
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-[#2563EB]/10 rounded-xl flex items-center justify-center border border-[#2563EB]/20">
-              <EyeOff className="w-5 h-5 text-[#2563EB]" />
+            <div className="w-10 h-10 bg-[#0095F6]/10 rounded-xl flex items-center justify-center border border-[#0095F6]/20">
+              <EyeOff className="w-5 h-5 text-[#0095F6]" />
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-white leading-tight">Privacy Policy</h1>
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
 
             <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
               <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <BellRing className="w-4 h-4 text-[#2563EB]" />
+                <BellRing className="w-4 h-4 text-[#0095F6]" />
                 2. Notification Bridge Security
               </h3>
               <p className="text-xs text-gray-400">
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
 
             <div className="bg-gradient-to-r from-[#DC2626]/10 to-[#2563EB]/10 rounded-xl p-4 border border-white/5">
               <p className="text-xs text-white font-semibold flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#2563EB] shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#0095F6] shrink-0" />
                 <span>
                   Discuss is a privacy-first utility platform. We guarantee zero telemetry profiling, zero advertising, and total user governance.
                 </span>

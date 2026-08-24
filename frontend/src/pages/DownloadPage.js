@@ -40,17 +40,17 @@ export default function DownloadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] pb-20 select-none">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  text-neutral-900 dark:text-neutral-50 dark:text-white pb-20 select-none">
       <Header />
 
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
         
         {/* Main App Store Layout Header */}
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[24px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 md:p-8 shadow-card flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 relative overflow-hidden">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[24px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 md:p-8 shadow-card flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 relative overflow-hidden">
           <div className="bg-noise absolute inset-0 opacity-[0.06] pointer-events-none" />
 
           {/* Large App Store Styled Icon */}
-          <div className="flex-shrink-0 w-28 h-28 md:w-36 md:h-36 rounded-[28px] bg-gradient-to-br from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB] discuss-black:from-[#FF007F] discuss-black:to-[#2563EB] flex items-center justify-center shadow-2xl relative border border-white/15">
+          <div className="flex-shrink-0 w-28 h-28 md:w-36 md:h-36 rounded-[28px] bg-gradient-to-br from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB]   flex items-center justify-center shadow-2xl relative border border-white/15">
             <span className="font-extrabold text-5xl md:text-6xl tracking-tighter text-white font-mono animate-pulse">D</span>
             <div className="absolute -bottom-2 bg-neutral-900/90 text-white text-[9px] font-bold tracking-widest px-2.5 py-0.5 rounded-full border border-white/10 uppercase shadow-md">
               Official
@@ -67,15 +67,15 @@ export default function DownloadPage() {
               </span>
             </div>
             
-            <p className="text-lg text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] font-medium mt-1">
+            <p className="text-lg text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 font-medium mt-1">
               Connect, Share & Discover
             </p>
-            <p className="text-sm font-semibold text-[#2563EB] discuss:text-[#EF4444] discuss-black:text-[#FF007F] mt-1.5">
+            <p className="text-sm font-semibold text-[#0095F6] text-[#0095F6]  mt-1.5">
               Discuss Official App
             </p>
 
             {/* Quick Specs Badges */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-5 py-3 border-t border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#333333]/50">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-5 py-3 border-t border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]/50">
               <div className="text-center px-2">
                 <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Rating</p>
                 <p className="text-sm font-bold mt-0.5 flex items-center gap-0.5 justify-center">
@@ -106,7 +106,7 @@ export default function DownloadPage() {
             <div className="flex flex-col sm:flex-row gap-3 mt-6">
               <button
                 onClick={handleAPKDownload}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB] discuss-black:from-[#FF007F] discuss-black:to-[#2563EB] hover:opacity-95 text-white font-extrabold text-sm rounded-xl transition-all shadow-lg active:scale-[0.98] w-full"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#2563EB] to-[#DC2626] discuss:from-[#EF4444] discuss:to-[#2563EB]   hover:opacity-95 text-white font-extrabold text-sm rounded-xl transition-all shadow-lg active:scale-[0.98] w-full"
               >
                 <Download className="w-5 h-5 animate-bounce" />
                 Download Direct APK (Android)
@@ -114,7 +114,7 @@ export default function DownloadPage() {
 
               <button
                 onClick={handlePWAInstall}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] hover:bg-neutral-200 dark:hover:bg-neutral-600 discuss:hover:bg-[#333333] border border-neutral-300 dark:border-neutral-600 discuss:border-[#404040] text-neutral-800 dark:text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98] w-full"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] hover:bg-neutral-200 dark:hover:bg-neutral-600 discuss:hover:bg-[#333333] border border-neutral-300 dark:border-neutral-600 discuss:border-[#404040] text-neutral-800 dark:text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98] w-full"
               >
                 <Smartphone className="w-5 h-5" />
                 Install Web App (PWA)
@@ -130,7 +130,7 @@ export default function DownloadPage() {
         {/* Dynamic Features Screenshots Slider */}
         <div className="mt-10">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+            <Sparkles className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
             App Screen Previews
           </h3>
 
@@ -220,11 +220,11 @@ export default function DownloadPage() {
           <div className="md:col-span-8 space-y-6">
             
             {/* Release notes block */}
-            <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-5 shadow-sm">
-              <h3 className="text-md font-bold border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#333333]/50 pb-2 mb-3">
+            <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-2xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-5 shadow-sm">
+              <h3 className="text-md font-bold border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]/50 pb-2 mb-3">
                 What's New in Version 1.2.0
               </h3>
-              <ul className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] space-y-2 leading-relaxed">
+              <ul className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                   <span><strong>Premium Auth Bridge</strong>: Smooth and secure Google Sign-in flow designed for wrapped mobile WebView apps.</span>
@@ -246,23 +246,23 @@ export default function DownloadPage() {
 
             {/* App Store Description Block */}
             <div className="space-y-4">
-              <h2 className="text-xl font-bold border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] pb-2">
+              <h2 className="text-xl font-bold border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] pb-2">
                 About Discuss
               </h2>
               
-              <p className="text-sm text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] leading-relaxed">
+              <p className="text-sm text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 leading-relaxed">
                 Discuss is a modern social platform built for real conversations, vibrant communities, and meaningful connections. Create posts, explore trending discussions, discover people nearby, and communicate securely in real time — all within a clean, fast, and modern experience.
               </p>
 
               {/* Sub-features grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                 
-                <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] space-y-1">
+                <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] space-y-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
                     <Flame className="w-3.5 h-3.5 text-orange-500" />
                     Social & Community
                   </h4>
-                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] list-disc list-inside space-y-1.5 pl-1 pt-1.5">
+                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 list-disc list-inside space-y-1.5 pl-1 pt-1.5">
                     <li>Create & share public posts</li>
                     <li>Explore trending discussions</li>
                     <li>Follow creators and discover people</li>
@@ -270,12 +270,12 @@ export default function DownloadPage() {
                   </ul>
                 </div>
 
-                <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] space-y-1">
+                <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] space-y-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <MessageSquare className="w-3.5 h-3.5 text-[#0095F6] text-[#0095F6]" />
                     Real-Time Chats
                   </h4>
-                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] list-disc list-inside space-y-1.5 pl-1 pt-1.5">
+                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 list-disc list-inside space-y-1.5 pl-1 pt-1.5">
                     <li>Secure private messaging</li>
                     <li>Instant push notifications</li>
                     <li>Instant local caching engine</li>
@@ -283,12 +283,12 @@ export default function DownloadPage() {
                   </ul>
                 </div>
 
-                <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] space-y-1">
+                <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] space-y-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
                     <PlayCircle className="w-3.5 h-3.5 text-[#EF4444]" />
                     Media Sharing & Pulse
                   </h4>
-                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] list-disc list-inside space-y-1.5 pl-1 pt-1.5">
+                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 list-disc list-inside space-y-1.5 pl-1 pt-1.5">
                     <li>Upload & share media content</li>
                     <li>High-performance Pulse videos</li>
                     <li>Interactive community layout</li>
@@ -296,12 +296,12 @@ export default function DownloadPage() {
                   </ul>
                 </div>
 
-                <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] space-y-1">
+                <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] space-y-1">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
                     Privacy & Security
                   </h4>
-                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] list-disc list-inside space-y-1.5 pl-1 pt-1.5">
+                  <ul className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 list-disc list-inside space-y-1.5 pl-1 pt-1.5">
                     <li>Secure Firebase credentials</li>
                     <li>Encrypted database bridges</li>
                     <li>Biometric screen locker</li>
@@ -311,12 +311,12 @@ export default function DownloadPage() {
 
               </div>
 
-              <div className="bg-[#2563EB]/5 dark:bg-neutral-800 discuss:bg-[#EF4444]/5 rounded-2xl border border-[#2563EB]/10 discuss:border-[#EF4444]/10 p-5 mt-6">
+              <div className="bg-[#0095F6]/5 dark:bg-neutral-800 bg-[#0095F6]/5 rounded-2xl border border-[#0095F6]/10 discuss:border-[#EF4444]/10 p-5 mt-6">
                 <h4 className="font-bold text-sm text-neutral-800 dark:text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444] animate-pulse" />
+                  <Zap className="w-4 h-4 text-[#0095F6] text-[#0095F6] animate-pulse" />
                   Why Choose Discuss?
                 </h4>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] leading-relaxed mt-2">
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 dark:text-neutral-400 leading-relaxed mt-2">
                   Discuss helps people connect, communicate, and share ideas through a safe, interactive, and community-driven social platform designed for modern conversations. Whether you want to express your thoughts, discover communities, collaborate with others, or build meaningful connections — Discuss brings everything together in one place.
                 </p>
               </div>
@@ -327,8 +327,8 @@ export default function DownloadPage() {
 
           {/* Right Information Specification Column */}
           <div className="md:col-span-4 space-y-6">
-            <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-5 shadow-sm space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-400 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#333333]/50 pb-2">
+            <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-2xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-5 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-400 border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]/50 pb-2">
                 Information
               </h3>
               

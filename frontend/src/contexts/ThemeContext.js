@@ -1,31 +1,32 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+﻿import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('discuss_theme') || 'light';
-    // Migrate old discuss-dark to discuss-light
-    return saved === 'discuss-dark' ? 'discuss-light' : saved;
+    try {
+      const saved = localStorage.getItem('discuss_theme');
+      if (saved === 'dark' || saved === 'discuss-black') return 'dark';
+      return 'light';
+    } catch (e) {
+      return 'light';
+    }
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    // Remove all theme classes
-    root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+    // Clean out all legacy theme classes
+    root.classList.remove('discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
 
     if (theme === 'dark') {
       root.classList.add('dark');
-    } else if (theme === 'discuss-light') {
-      root.classList.add('discuss', 'discuss-light');
-    } else if (theme === 'discuss-black') {
-      root.classList.add('discuss-black');
-    } else if (theme === 'discuss-retro') {
-      root.classList.add('discuss-retro');
+    } else {
+      root.classList.remove('dark');
     }
-    // 'light' = no extra class (default)
 
-    localStorage.setItem('discuss_theme', theme);
+    try {
+      localStorage.setItem('discuss_theme', theme);
+    } catch (e) {}
   }, [theme]);
 
   const toggleTheme = () => {
@@ -33,7 +34,8 @@ export function ThemeProvider({ children }) {
   };
 
   const changeTheme = (newTheme) => {
-    setTheme(newTheme);
+    const valid = (newTheme === 'dark') ? 'dark' : 'light';
+    setTheme(valid);
   };
 
   return (

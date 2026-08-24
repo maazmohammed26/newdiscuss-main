@@ -30,7 +30,7 @@ export default function SherlockSearchInput({ onSearch, isLoading }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="maaz123, dev (comma for bulk)"
-            className="flex-1 min-w-0 bg-transparent border-none outline-none px-2 sm:px-4 py-3 text-neutral-900 dark:text-neutral-50 discuss:text-white placeholder-neutral-400 font-mono text-[15px] sm:text-lg"
+            className="flex-1 min-w-0 bg-transparent border-none outline-none px-2 sm:px-4 py-3 text-neutral-900 dark:text-neutral-50 dark:text-white placeholder-neutral-400 font-mono text-[15px] sm:text-lg"
             disabled={isLoading}
           />
           <button
@@ -66,7 +66,7 @@ export default function SherlockSearchInput({ onSearch, isLoading }) {
             exit={{ opacity: 0, height: 0, y: -10 }}
             className="overflow-hidden"
           >
-            <div className="p-4 bg-white/60 dark:bg-[#1a1a1a]/60 discuss:bg-[#121212]/60 border border-neutral-200/50 dark:border-neutral-800/50 discuss:border-white/5 rounded-2xl flex flex-wrap gap-8 items-center backdrop-blur-md shadow-inner">
+            <div className="p-4 bg-white/60 dark:bg-[#1a1a1a]/60 /60 border border-neutral-200/50 dark:border-neutral-800/50 dark:border-[#262626] rounded-2xl flex flex-wrap gap-8 items-center backdrop-blur-md shadow-inner">
               <label className="flex items-center gap-3 cursor-pointer group select-none">
                 <input
                   type="checkbox"

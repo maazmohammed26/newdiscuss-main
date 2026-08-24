@@ -13,8 +13,8 @@ export default function SherlockResultCard({ result }) {
   return (
     <div className={`p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden group ${
       isFound 
-        ? 'bg-white dark:bg-[#1a1a1a] discuss:bg-[#1a1a1a] border-green-500/30 hover:border-green-500/60 shadow-sm hover:shadow-green-500/10' 
-        : 'bg-white/50 dark:bg-[#121212]/50 discuss:bg-[#0c0c12]/50 border-neutral-200 dark:border-neutral-800 discuss:border-white/5 opacity-80 hover:opacity-100'
+        ? 'bg-white dark:bg-[#1a1a1a] dark:bg-black border-green-500/30 hover:border-green-500/60 shadow-sm hover:shadow-green-500/10' 
+        : 'bg-white/50 dark:bg-[#121212]/50 discuss:bg-[#0c0c12]/50 border-neutral-200 dark:border-neutral-800 dark:border-[#262626] opacity-80 hover:opacity-100'
     }`}>
       {/* Found Background Glow */}
       {isFound && <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />}
@@ -28,7 +28,7 @@ export default function SherlockResultCard({ result }) {
             <IconComponent className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-[15px] text-neutral-900 dark:text-neutral-100 discuss:text-white leading-none mb-1">
+            <h3 className="font-bold text-[15px] text-neutral-900 dark:text-neutral-100 dark:text-white leading-none mb-1">
               {platform}
             </h3>
             <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">

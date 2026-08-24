@@ -81,8 +81,8 @@ export default function ContactPage() {
 
             {/* Right: Address Info */}
             <div className="flex items-start gap-4 p-6 bg-[#181818] rounded-xl border border-white/5 shadow-inner">
-              <div className="w-12 h-12 bg-[#2563EB]/10 rounded-xl flex items-center justify-center border border-[#2563EB]/20 shrink-0">
-                <MapPin className="w-6 h-6 text-[#2563EB]" />
+              <div className="w-12 h-12 bg-[#0095F6]/10 rounded-xl flex items-center justify-center border border-[#0095F6]/20 shrink-0">
+                <MapPin className="w-6 h-6 text-[#0095F6]" />
               </div>
               <div className="flex-1 pt-1">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Registered Address</h3>

@@ -326,7 +326,7 @@ export default function FeedPage() {
 
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-900 dark:text-white  pb-28">
       <Header />
       
       {isOffline && (
@@ -351,12 +351,12 @@ export default function FeedPage() {
             {user && <SignalStoriesRow />}
 
             {/* Discuss AI TalentGraph Discovery Banner */}
-            <div className="mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-sm text-left relative overflow-hidden">
+            <div className="mb-6 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl p-5 shadow-sm text-left relative overflow-hidden">
               <div className="absolute top-3 right-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-250 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px] font-bold">
                 New Feature
               </div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="h-2 w-2 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] animate-ping" />
+                <span className="h-2 w-2 rounded-full bg-[#0095F6] bg-[#0095F6] animate-ping" />
                 <h2 className="text-sm font-bold text-neutral-900 dark:text-white">Discuss AI TalentGraph</h2>
               </div>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 max-w-lg leading-relaxed font-medium">
@@ -371,14 +371,14 @@ export default function FeedPage() {
             </div>
 
             {/* Tabs */}
-            <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+            <div data-testid="feed-tabs" className="flex mb-4 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black rounded-[12px] p-1 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] shadow-card">
               <button
                 data-testid="tab-discussion"
                 onClick={() => setActiveTab('discussion')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all cursor-pointer ${
                   activeTab === 'discussion'
-                    ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                    : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                    ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-xs'
+                    : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]'
                 }`}
               >
                 <MessageSquare className="w-4 h-4" />
@@ -389,8 +389,8 @@ export default function FeedPage() {
                 onClick={() => setActiveTab('project')}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all cursor-pointer ${
                   activeTab === 'project'
-                    ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                    : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]'
+                    ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-xs'
+                    : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]'
                 }`}
               >
                 <FolderGit2 className="w-4 h-4" />
@@ -400,7 +400,7 @@ export default function FeedPage() {
                 <button
                   data-testid="tab-pulse"
                   onClick={() => navigate('/pulse')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] cursor-pointer`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-bold transition-all text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] cursor-pointer`}
                 >
                   <PlayCircle className="w-4 h-4 text-[#EF4444]" />
                   Pulse
@@ -409,15 +409,15 @@ export default function FeedPage() {
             </div>
 
             {/* Filter control bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-3 shadow-card">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-[16px] p-3 shadow-card">
               {/* Type switches */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => { setSearchType('posts'); setUserSearchResults([]); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     searchType === 'posts'
-                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
-                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                      ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-sm'
+                      : 'bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-400 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                   }`}
                 >
                   # Posts
@@ -426,8 +426,8 @@ export default function FeedPage() {
                   onClick={() => setSearchType('users')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     searchType === 'users'
-                      ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-sm'
-                      : 'bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                      ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-sm'
+                      : 'bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-400 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                   }`}
                 >
                   Users
@@ -441,7 +441,7 @@ export default function FeedPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={searchType === 'users' ? 'Search users...' : 'Search discussions...'}
-                  className="pl-9 pr-9 bg-neutral-50 dark:bg-neutral-900 discuss:bg-black/20 border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-full h-9 shadow-sm text-xs focus:ring-[#2563EB]/10"
+                  className="pl-9 pr-9 bg-neutral-50 dark:bg-neutral-900 dark:bg-black/40 border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-full h-9 shadow-sm text-xs focus:ring-[#2563EB]/10"
                 />
                 {searchQuery && (
                   <button onClick={handleClearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600">
@@ -452,12 +452,12 @@ export default function FeedPage() {
 
               {/* View Switches */}
               {searchType === 'posts' && (
-                <div className="flex items-center bg-neutral-100 dark:bg-neutral-900 discuss:bg-black/30 rounded-full p-0.5 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shadow-inner w-full sm:w-auto">
+                <div className="flex items-center bg-neutral-100 dark:bg-neutral-900 dark:bg-black/40 rounded-full p-0.5 border border-neutral-200/50 dark:border-neutral-700/50 dark:border-[#262626] shadow-inner w-full sm:w-auto">
                   <button
                     onClick={() => setViewMode('list')}
                     className={`flex-1 sm:flex-initial text-center px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                       viewMode === 'list'
-                        ? 'bg-white dark:bg-neutral-800 discuss:bg-[#EF4444] text-neutral-900 dark:text-white discuss:text-white shadow-sm'
+                        ? 'bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] bg-[#0095F6] text-neutral-900 dark:text-white dark:text-white shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
                     }`}
                   >
@@ -471,7 +471,7 @@ export default function FeedPage() {
                     }}
                     className={`flex-1 sm:flex-initial text-center px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                       viewMode === 'slide'
-                        ? 'bg-white dark:bg-neutral-800 discuss:bg-[#EF4444] text-neutral-900 dark:text-white discuss:text-white shadow-sm'
+                        ? 'bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] bg-[#0095F6] text-neutral-900 dark:text-white dark:text-white shadow-sm'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
                     }`}
                   >
@@ -483,12 +483,12 @@ export default function FeedPage() {
 
             {/* Active search type or query banner */}
             {searchType === 'posts' && debouncedSearch && (
-              <div data-testid="active-search-badge" className="flex items-center gap-2 mb-4 bg-[#2563EB]/10 dark:bg-[#2563EB]/15 border border-[#2563EB]/20 dark:border-[#2563EB]/30 rounded-[6px] px-3 py-2">
-                <Search className="w-3.5 h-3.5 text-[#2563EB]" />
-                <span className="text-[#2563EB] text-[13px] font-medium">
+              <div data-testid="active-search-badge" className="flex items-center gap-2 mb-4 bg-[#0095F6]/10 dark:bg-[#0095F6]/15 border border-[#0095F6]/20 dark:border-[#0095F6]/30 rounded-[6px] px-3 py-2">
+                <Search className="w-3.5 h-3.5 text-[#0095F6]" />
+                <span className="text-[#0095F6] text-[13px] font-medium">
                   {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''} for "{debouncedSearch}" in {activeTab === 'discussion' ? 'Discussions' : 'Projects'}
                 </span>
-                <button onClick={handleClearSearch} className="ml-auto text-[#2563EB] hover:text-[#1D4ED8] cursor-pointer">
+                <button onClick={handleClearSearch} className="ml-auto text-[#0095F6] hover:text-[#1D4ED8] cursor-pointer">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -499,11 +499,11 @@ export default function FeedPage() {
               <div className="mb-4">
                 {searchingUsers ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
                   </div>
                 ) : userSearchResults.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs mb-2">
+                    <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs mb-2">
                       {userSearchResults.length} user{userSearchResults.length !== 1 ? 's' : ''} found
                     </p>
                     {userSearchResults.map((searchUser) => (
@@ -516,9 +516,9 @@ export default function FeedPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
-                    <Users className="w-8 h-8 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-2" />
-                    <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+                  <div className="text-center py-8 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black rounded-[12px] border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] shadow-card">
+                    <Users className="w-8 h-8 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-2" />
+                    <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
                       No users found for "{debouncedSearch}"
                     </p>
                   </div>
@@ -530,22 +530,22 @@ export default function FeedPage() {
             {searchType === 'posts' && (
               loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
-                  <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading posts...</p>
+                  <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6] mb-2" />
+                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Loading posts...</p>
                 </div>
               ) : filteredPosts.length === 0 ? (
-                <div data-testid="empty-feed" className="text-center py-20 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] p-8 shadow-card">
-                  <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-800 discuss:bg-black/20 flex items-center justify-center mx-auto mb-4">
+                <div data-testid="empty-feed" className="text-center py-20 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-[12px] p-8 shadow-card">
+                  <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-800 dark:bg-black/40 flex items-center justify-center mx-auto mb-4">
                     {activeTab === 'discussion' ? (
-                      <MessageSquare className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+                      <MessageSquare className="w-7 h-7 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
                     ) : (
-                      <FolderGit2 className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+                      <FolderGit2 className="w-7 h-7 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
                     )}
                   </div>
-                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-1">
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white mb-1">
                     {debouncedSearch ? 'No results found' : `No ${activeTab === 'discussion' ? 'discussions' : 'projects'} yet`}
                   </h3>
-                  <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[13px] md:text-[15px]">
+                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[13px] md:text-[15px]">
                     {debouncedSearch ? `Try a different search term` : `Be the first to start a ${activeTab === 'discussion' ? 'discussion' : 'project post'}!`}
                   </p>
                 </div>
@@ -553,24 +553,24 @@ export default function FeedPage() {
                 /* Slide View (Tinder-style deck) */
                 <div className="space-y-6">
                   {slideIndex >= filteredPosts.length ? (
-                    <div className="w-full max-w-xl mx-auto bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-8 shadow-card text-center animate-fade-in">
-                      <div className="w-20 h-20 rounded-full bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-6 relative">
-                        <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-[#2563EB]/30 discuss:bg-[#EF4444]/30 opacity-75"></span>
-                        <Layers className="w-8 h-8 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <div className="w-full max-w-xl mx-auto bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-[16px] p-8 shadow-card text-center animate-fade-in">
+                      <div className="w-20 h-20 rounded-full bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center mx-auto mb-6 relative">
+                        <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-[#0095F6]/30 bg-[#0095F6]/30 opacity-75"></span>
+                        <Layers className="w-8 h-8 text-[#0095F6] text-[#0095F6]" />
                       </div>
 
-                      <h3 className="text-lg font-black text-neutral-900 dark:text-neutral-50 discuss:text-white mb-2 uppercase tracking-wide">
+                      <h3 className="text-lg font-black text-neutral-900 dark:text-neutral-50 dark:text-white mb-2 uppercase tracking-wide">
                         End of Feed Reached
                       </h3>
                       
-                      <p className="text-[13px] md:text-[14px] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] max-w-sm mx-auto mb-8 font-medium">
+                      <p className="text-[13px] md:text-[14px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 max-w-sm mx-auto mb-8 font-medium">
                         You've caught up with all {activeTab === 'discussion' ? 'discussions' : 'project posts'} for now. Swipe back or explore active developer tools!
                       </p>
 
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                         <Button
                           onClick={handleStartOver}
-                          className="w-full sm:w-auto h-10 px-5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white font-bold text-[13px] gap-1.5"
+                          className="w-full sm:w-auto h-10 px-5 rounded-xl bg-[#0095F6] hover:bg-[#1877F2] bg-[#0095F6] hover:bg-[#1877F2] text-white font-bold text-[13px] gap-1.5"
                         >
                           <RotateCcw className="w-4 h-4" />
                           <span>Start Over</span>
@@ -579,7 +579,7 @@ export default function FeedPage() {
                         <Button
                           onClick={() => setViewMode('list')}
                           variant="outline"
-                          className="w-full sm:w-auto h-10 px-5 rounded-xl border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] font-bold text-[13px] gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]"
+                          className="w-full sm:w-auto h-10 px-5 rounded-xl border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 font-bold text-[13px] gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]"
                         >
                           <span>Switch to List View</span>
                         </Button>
@@ -588,12 +588,12 @@ export default function FeedPage() {
                   ) : (
                     <div className="space-y-4">
                       {/* Swipeable deck tutorial */}
-                      <div className="flex items-start sm:items-center gap-3.5 justify-center mb-6 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-2xl p-4 shadow-card select-none max-w-xl mx-auto border-l-4 border-l-[#2563EB] discuss:border-l-[#EF4444]">
-                        <div className="p-2 rounded-xl bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] shrink-0 flex items-center justify-center">
+                      <div className="flex items-start sm:items-center gap-3.5 justify-center mb-6 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-2xl p-4 shadow-card select-none max-w-xl mx-auto border-l-4 border-l-[#2563EB] border-l-[#0095F6]">
+                        <div className="p-2 rounded-xl bg-[#0095F6]/10 bg-[#0095F6]/10 text-[#0095F6] text-[#0095F6] shrink-0 flex items-center justify-center">
                           <Cpu className="w-4 h-4 animate-pulse" />
                         </div>
-                        <div className="text-[11.5px] md:text-[12.5px] font-mono text-neutral-600 dark:text-neutral-300 discuss:text-[#E5E7EB] leading-relaxed flex-1">
-                          <span className="font-extrabold uppercase tracking-widest text-[#2563EB] discuss:text-[#EF4444] block mb-0.5 select-none">
+                        <div className="text-[11.5px] md:text-[12.5px] font-mono text-neutral-600 dark:text-neutral-300 dark:text-neutral-200 leading-relaxed flex-1">
+                          <span className="font-extrabold uppercase tracking-widest text-[#0095F6] text-[#0095F6] block mb-0.5 select-none">
                             ◈ DECK_NAVIGATION_ACTIVE
                           </span>
                           Swipe card <span className="font-extrabold text-[#10B981]">RIGHT</span> or tap <b>Skip</b> for next post | Swipe <span className="font-extrabold text-[#EF4444]">LEFT</span> or tap <b>Prev</b> to return
@@ -602,10 +602,10 @@ export default function FeedPage() {
 
                       <div className="relative w-full max-w-xl mx-auto min-h-[420px] pb-6">
                         {slideIndex + 2 < filteredPosts.length && (
-                          <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
+                          <div className="absolute inset-0 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-[12px] shadow-card opacity-40 transform scale-[0.92] translate-y-6 pointer-events-none -z-20 transition-all duration-300" />
                         )}
                         {slideIndex + 1 < filteredPosts.length && (
-                          <div className="absolute inset-0 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
+                          <div className="absolute inset-0 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-[12px] shadow-card opacity-75 transform scale-[0.96] translate-y-3 pointer-events-none -z-10 transition-all duration-300" />
                         )}
 
                         <AnimatePresence mode="popLayout">
@@ -631,14 +631,14 @@ export default function FeedPage() {
                       </div>
 
                       {/* Control bar */}
-                      <div className="flex items-center justify-between mt-8 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[16px] p-3 shadow-card animate-fade-in relative z-20">
+                      <div className="flex items-center justify-between mt-8 bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-[16px] p-3 shadow-card animate-fade-in relative z-20">
                         <Button
                           onClick={handleStartOver}
                           variant="outline"
-                          className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] cursor-pointer"
+                          className="h-10 rounded-[10px] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 cursor-pointer"
                           title="Start Over"
                         >
-                          <RotateCcw className="w-4 h-4 text-neutral-500 discuss:text-[#9CA3AF]" />
+                          <RotateCcw className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                           <span className="hidden sm:inline">Start Over</span>
                         </Button>
 
@@ -647,13 +647,13 @@ export default function FeedPage() {
                             onClick={handlePrev}
                             disabled={slideIndex === 0}
                             variant="outline"
-                            className="h-10 w-10 p-0 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] disabled:opacity-40 text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] cursor-pointer"
+                            className="h-10 w-10 p-0 rounded-[10px] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] disabled:opacity-40 text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 cursor-pointer"
                             title="Previous Post"
                           >
                             <ChevronLeft className="w-5 h-5" />
                           </Button>
 
-                          <span className="text-[12.5px] font-bold font-mono text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] px-2 select-none shrink-0">
+                          <span className="text-[12.5px] font-bold font-mono text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 px-2 select-none shrink-0">
                             {slideIndex + 1} / {filteredPosts.length}
                           </span>
 
@@ -663,7 +663,7 @@ export default function FeedPage() {
                               handleNext();
                             }}
                             variant="outline"
-                            className="h-10 rounded-[10px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] cursor-pointer"
+                            className="h-10 rounded-[10px] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-[12.5px] font-bold gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 cursor-pointer"
                             title="Skip Post"
                           >
                             <span>Skip</span>
@@ -697,10 +697,10 @@ export default function FeedPage() {
           <aside className="hidden xl:block w-[310px] shrink-0 sticky top-[72px] self-start space-y-6 animate-fade-in">
             {/* Trending Card */}
             {trendingTags.length > 0 && (
-              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
-                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
-                  <TrendingUp className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+              <div className="bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]">
+                  <TrendingUp className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 dark:text-neutral-400">
                     Trending Hashtags
                   </h3>
                 </div>
@@ -709,29 +709,29 @@ export default function FeedPage() {
                     <button
                       key={t.tag}
                       onClick={() => handleTagClick(t.tag)}
-                      className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 discuss:bg-black/30 hover:bg-[#2563EB]/5 dark:hover:bg-[#2563EB]/10 border border-transparent hover:border-[#2563EB]/20 text-[13px] font-medium text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-all duration-150 cursor-pointer"
+                      className="flex items-center justify-between w-full text-left px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-900/40 dark:bg-black/40 hover:bg-[#0095F6]/5 dark:hover:bg-[#0095F6]/10 border border-transparent hover:border-[#0095F6]/20 text-[13px] font-medium text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 hover:text-[#0095F6] hover:text-[#0095F6] transition-all duration-150 cursor-pointer"
                     >
                       <span className="flex items-center gap-1.5 truncate">
                         <Hash className="w-3.5 h-3.5 opacity-60 shrink-0" />
                         <span className="truncate">{t.tag}</span>
                       </span>
-                      <span className="text-xs bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] px-2 py-0.5 rounded-md opacity-70 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shrink-0 font-mono">
+                      <span className="text-xs bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] px-2 py-0.5 rounded-md opacity-70 border border-neutral-200/50 dark:border-neutral-700/50 dark:border-[#262626] shrink-0 font-mono">
                         {t.count} posts
                       </span>
                     </button>
                   ))}
                 </div>
-                <button onClick={() => navigate('/feed')} className="mt-3 text-xs font-bold text-[#2563EB] discuss:text-[#EF4444] hover:underline focus:outline-none cursor-pointer">
+                <button onClick={() => navigate('/feed')} className="mt-3 text-xs font-bold text-[#0095F6] text-[#0095F6] hover:underline focus:outline-none cursor-pointer">
                   View all hashtags
                 </button>
               </div>
             )}
 
             {/* Platform Status Card */}
-            <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
-                <Cpu className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+            <div className="bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]">
+                <Cpu className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 dark:text-neutral-400">
                   System Status
                 </h3>
               </div>
@@ -749,10 +749,10 @@ export default function FeedPage() {
                 </div>
 
                 {/* Tech Metrics */}
-                <div className="space-y-2 text-xs font-mono border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] pb-4">
+                <div className="space-y-2 text-xs font-mono border-b border-neutral-100 dark:border-neutral-800 dark:border-[#262626] pb-4">
                   <div className="flex justify-between">
                     <span className="text-neutral-400 dark:text-neutral-500">Uptime:</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold">99.98%</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 dark:text-white font-semibold">99.98%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-400 dark:text-neutral-500">Latency:</span>
@@ -760,15 +760,15 @@ export default function FeedPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-400 dark:text-neutral-500">Active Nodes:</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#F5F5F5] font-semibold font-mono">4 [Stable]</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 dark:text-white font-semibold font-mono">4 [Stable]</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-400 dark:text-neutral-500">Gateways:</span>
-                    <span className="text-[#2563EB] discuss:text-[#EF4444] font-semibold">Firebase, Brevo</span>
+                    <span className="text-[#0095F6] text-[#0095F6] font-semibold">Firebase, Brevo</span>
                   </div>
                 </div>
 
-                <button onClick={() => navigate('/feed')} className="text-xs font-bold text-[#2563EB] discuss:text-[#EF4444] hover:underline focus:outline-none cursor-pointer">
+                <button onClick={() => navigate('/feed')} className="text-xs font-bold text-[#0095F6] text-[#0095F6] hover:underline focus:outline-none cursor-pointer">
                   View status page
                 </button>
               </div>

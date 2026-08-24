@@ -257,7 +257,7 @@ export default function GroupConversationPage() {
       return (
         <div key={message.id} className="flex justify-center my-4">
           <div className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] px-4 py-2 rounded-full">
-            <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] text-center">
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 text-center">
               {message.text}
             </p>
           </div>
@@ -275,7 +275,7 @@ export default function GroupConversationPage() {
         <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
           {!isOwn && (
             <div className="flex items-center gap-1 mb-1 ml-1">
-              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white">
                 @{senderDetails?.username || 'User'}
               </span>
               {senderDetails?.verified && <VerifiedBadge size="xs" />}
@@ -286,8 +286,8 @@ export default function GroupConversationPage() {
             <div
               className={`rounded-[16px] px-4 py-2.5 ${
                 isOwn
-                  ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white'
-                  : 'bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]'
+                  ? 'bg-[#0095F6] bg-[#0095F6] text-white'
+                  : 'bg-white dark:bg-neutral-800 dark:bg-black text-neutral-900 dark:text-neutral-50 dark:text-white border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]'
               }`}
             >
               {/* Reply preview */}
@@ -297,7 +297,7 @@ export default function GroupConversationPage() {
                   className={`mb-2 p-2 rounded-[8px] border-l-2 text-left w-full ${
                     isOwn
                       ? 'bg-white/10 border-white/30'
-                      : 'bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] border-neutral-300 dark:border-neutral-600 discuss:border-[#404040]'
+                      : 'bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] border-neutral-300 dark:border-neutral-600 discuss:border-[#404040]'
                   }`}
                 >
                   <p className={`text-[10px] font-semibold mb-0.5 ${isOwn ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}>
@@ -328,7 +328,7 @@ export default function GroupConversationPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 rounded-full bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] mx-2"
+                      className="h-8 w-8 p-0 rounded-full bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] mx-2"
                     >
                       <MoreVertical className="w-4 h-4" />
                     </Button>
@@ -367,11 +367,11 @@ export default function GroupConversationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-3" />
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
             Loading group chat...
           </p>
         </div>
@@ -386,29 +386,29 @@ export default function GroupConversationPage() {
   const groupedMessages = groupMessagesByDate(messages);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  flex flex-col">
       <Header />
       
       {/* Group header */}
-      <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
+      <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/chat')}
-              className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] transition-colors"
+              className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                <h1 className="font-bold text-base text-neutral-900 dark:text-neutral-50 dark:text-white">
                   {groupInfo?.name || 'Group'}
                 </h1>
-                <span className="bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <span className="bg-[#0095F6]/10 bg-[#0095F6]/10 text-[#0095F6] text-[#0095F6] text-[10px] font-bold px-2 py-0.5 rounded-full">
                   Group Chat
                 </span>
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                 {isDeleted ? 'Group deleted' : `${members.length} members`}
               </p>
             </div>
@@ -416,7 +416,7 @@ export default function GroupConversationPage() {
           {!isDeleted && (
             <button
               onClick={() => navigate(`/group/${groupId}/info`)}
-              className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] transition-colors"
+              className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-colors"
             >
               <Info className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
             </button>
@@ -428,11 +428,11 @@ export default function GroupConversationPage() {
       <div className="flex-1 overflow-y-auto px-4 py-4" style={{ maxHeight: 'calc(100vh - 180px)' }}>
         <div className="max-w-2xl mx-auto">
           {!isMember ? (
-            <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
-              <p className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-2">
+            <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+              <p className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-2">
                 You are no longer part of this group
               </p>
-              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+              <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
                 You can view old messages but cannot send new ones
               </p>
             </div>
@@ -447,7 +447,7 @@ export default function GroupConversationPage() {
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+              <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                 No messages yet. Start the conversation!
               </p>
             </div>
@@ -458,7 +458,7 @@ export default function GroupConversationPage() {
             <div key={date}>
               <div className="flex justify-center my-4">
                 <div className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] px-3 py-1 rounded-full">
-                  <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] font-medium">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 font-medium">
                     {date}
                   </p>
                 </div>
@@ -473,17 +473,17 @@ export default function GroupConversationPage() {
 
       {/* Input area */}
       {canSendMessages && (
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
           <div className="max-w-2xl mx-auto">
             {/* Reply preview */}
             {replyTo && (
-              <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] p-2 rounded-[8px] border-l-2 border-[#2563EB] discuss:border-[#EF4444]">
+              <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] p-2 rounded-[8px] border-l-2 border-[#0095F6] discuss:border-[#EF4444]">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#2563EB] discuss:text-[#EF4444]">
+                    <p className="text-xs font-semibold text-[#0095F6] text-[#0095F6]">
                       Replying to @{userDetails[replyTo.sender]?.username || 'User'}
                     </p>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] truncate">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 truncate">
                       {replyTo.text}
                     </p>
                   </div>
@@ -503,14 +503,14 @@ export default function GroupConversationPage() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] border-neutral-200 dark:border-neutral-600 discuss:border-[#404040] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]"
+                className="flex-1 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] border-neutral-200 dark:border-neutral-600 discuss:border-[#404040] text-neutral-900 dark:text-neutral-50 dark:text-white"
                 disabled={sending}
                 maxLength={1000}
               />
               <Button
                 type="submit"
                 disabled={!messageText.trim() || sending}
-                className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white px-4"
+                className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white px-4"
               >
                 {sending ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

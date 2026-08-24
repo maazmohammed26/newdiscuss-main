@@ -142,7 +142,7 @@ export default function UserPostsPage() {
     : userBio;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
         <button
@@ -154,7 +154,7 @@ export default function UserPostsPage() {
               navigate(location.state?.from || '/feed');
             }
           }}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] text-[13px] font-medium mb-4 transition-colors"
+          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> {location.state?.fromMap ? 'Back to Map' : 'Back'}
         </button>
@@ -163,12 +163,12 @@ export default function UserPostsPage() {
           <div className="flex items-center justify-center py-32"><Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" /></div>
         ) : !userData ? (
           <div className="text-center py-16">
-            <h2 className="text-lg font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">User not found</h2>
+            <h2 className="text-lg font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">User not found</h2>
           </div>
         ) : (
           <>
             {/* User header card */}
-            <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-2xl p-5 mb-6">
+            <div className="bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-2xl p-5 mb-6">
               <div className="flex items-start gap-4">
                 {/* Profile Picture - Clickable if exists */}
                 {userData.photo_url && currentUser ? (
@@ -180,7 +180,7 @@ export default function UserPostsPage() {
                       userId={userId}
                       src={userData.photo_url}
                       username={userData.username}
-                      className="w-14 h-14 shadow-md discuss:shadow-none discuss:border discuss:border-[#333333] group-hover:opacity-90 transition-opacity"
+                      className="w-14 h-14 shadow-md discuss:shadow-none discuss:border dark:border-[#262626] group-hover:opacity-90 transition-opacity"
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                       <div className="bg-black/50 rounded-full p-1.5">
@@ -201,14 +201,14 @@ export default function UserPostsPage() {
                 <div className="flex-1 min-w-0">
                   {/* Full Name (if available) */}
                   {profileData?.fullName && (
-                    <h1 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[18px] flex items-center gap-1 no-copy">
+                    <h1 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[18px] flex items-center gap-1 no-copy">
                       {profileData.fullName}
                       {userData.verified && <VerifiedBadge size="sm" />}
                     </h1>
                   )}
                   
                   {/* Username */}
-                  <div data-testid="user-posts-username" className={`flex items-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[14px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[18px]'}`}>
+                  <div data-testid="user-posts-username" className={`flex items-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[14px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[18px]'}`}>
                     @{userData.username}
                     {!profileData?.fullName && userData.verified && <VerifiedBadge size="sm" />}
                   </div>
@@ -222,13 +222,13 @@ export default function UserPostsPage() {
                   )}
                   
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
+                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[12px]">
                       <Calendar className="w-3.5 h-3.5" /> Joined {joinDate}
                     </span>
-                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
+                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[12px]">
                       <FileText className="w-3.5 h-3.5" /> {posts.length} posts
                     </span>
-                    <span className="flex items-center gap-1.5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[12px]">
+                    <span className="flex items-center gap-1.5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[12px]">
                       <div className={`w-2 h-2 rounded-full ${formatLastSeen() === 'Online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-neutral-400 dark:bg-neutral-500'}`} />
                       <span className={formatLastSeen() === 'Online' ? 'text-emerald-500 font-semibold tracking-wide' : 'font-medium'}>
                         {formatLastSeen() === 'Online' ? 'Online' : formatLastSeen() === 'Offline' ? 'Offline' : `Last seen ${formatLastSeen()}`}
@@ -250,7 +250,7 @@ export default function UserPostsPage() {
                         className={`p-2 rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm ${
                           reportedLocally 
                             ? 'bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444] shadow-[#EF4444]/10' 
-                            : 'bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 border-neutral-200 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] discuss:text-[#9CA3AF]'
+                            : 'bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 border-neutral-200 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] dark:text-neutral-400'
                         }`}
                         title={reportedLocally ? 'Already Reported' : 'Report User'}
                       >
@@ -268,14 +268,14 @@ export default function UserPostsPage() {
                   <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile...</span>
                 </div>
               ) : userBio && currentUser && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] no-copy">
-                  <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[13px] leading-relaxed whitespace-pre-wrap">
+                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] no-copy">
+                  <p className="text-[#0F172A] dark:text-[#E2E8F0] dark:text-neutral-200 text-[13px] leading-relaxed whitespace-pre-wrap">
                     {displayBio}
                   </p>
                   {bioNeedsTruncation && (
                     <button
                       onClick={() => setBioExpanded(!bioExpanded)}
-                      className="text-[#2563EB] discuss:text-[#60A5FA] hover:underline text-[12px] mt-1 flex items-center gap-1"
+                      className="text-[#0095F6] discuss:text-[#60A5FA] hover:underline text-[12px] mt-1 flex items-center gap-1"
                     >
                       {bioExpanded ? (
                         <>Show less <ChevronUp className="w-3 h-3" /></>
@@ -289,7 +289,7 @@ export default function UserPostsPage() {
 
               {/* Social Links Section */}
               {!loadingProfile && currentUser && profileData?.socialLinks?.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                   <div className="flex flex-wrap gap-2">
                     {profileData.socialLinks.map((link, index) => (
                       <a
@@ -297,7 +297,7 @@ export default function UserPostsPage() {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#2563EB] discuss:text-[#60A5FA] text-[12px] font-medium px-3 py-1.5 rounded-full border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] transition-colors"
+                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#0095F6] discuss:text-[#60A5FA] text-[12px] font-medium px-3 py-1.5 rounded-full border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] transition-colors"
                       >
                         {link.name}
                         <ExternalLink className="w-3 h-3" />
@@ -308,7 +308,7 @@ export default function UserPostsPage() {
               )}
               
               {!currentUser && !loadingProfile && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                   <p className="text-[11px] text-[#EF4444] font-medium bg-[#EF4444]/10 rounded-md p-2 border border-[#EF4444]/20 inline-block">
                     For security reasons, we have blocked profile pictures, social media links, and Pulse posts for non-logged-in users.
                   </p>
@@ -319,13 +319,13 @@ export default function UserPostsPage() {
             {/* Pulse Videos */}
             {currentUser && (
               <div className="mb-6">
-                <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
+                <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-4 flex items-center gap-2">
                   <PlayCircle className="w-5 h-5 text-[#EF4444]" /> Pulse Videos
                 </h3>
                 {userPulses.length === 0 ? (
-                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                    <PlayCircle className="w-6 h-6 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-2" />
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]">No Pulse videos yet.</p>
+                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-2xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                    <PlayCircle className="w-6 h-6 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-2" />
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">No Pulse videos yet.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -346,13 +346,13 @@ export default function UserPostsPage() {
             )}
 
             {/* Posts */}
-            <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#2563EB]" /> Posts
+            <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#0095F6]" /> Posts
             </h3>
             {posts.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                <User className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-2" />
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]">This user hasn't posted anything yet.</p>
+              <div className="text-center py-16 bg-white dark:bg-[#1E293B] dark:bg-black rounded-2xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                <User className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-2" />
+                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">This user hasn't posted anything yet.</p>
               </div>
             ) : (
               <div className="space-y-4">

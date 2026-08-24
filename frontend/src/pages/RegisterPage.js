@@ -195,7 +195,7 @@ export default function RegisterPage() {
                 </div>
                 <h3 className="text-white font-bold text-lg mb-2">Sign Up Disabled</h3>
                 <p className="text-gray-400 text-[14px] font-medium">Admin has disabled the sign-up process. Thank you.</p>
-                <Link to="/login" className="inline-block mt-4 text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold text-[14px]">
+                <Link to="/login" className="inline-block mt-4 text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold text-[14px]">
                   Go to Login
                 </Link>
               </div>
@@ -291,7 +291,7 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={() => setShowTerms(true)}
-                        className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold transition-colors"
+                        className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold transition-colors"
                         data-testid="register-terms-link"
                       >
                         Terms and Conditions
@@ -318,7 +318,7 @@ export default function RegisterPage() {
 
                 <p className="text-center text-gray-500 text-[13px] mt-6 font-medium">
                   Already have an account?{' '}
-                  <Link to="/login" data-testid="register-to-login-link" className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold transition-colors">
+                  <Link to="/login" data-testid="register-to-login-link" className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold transition-colors">
                     Login
                   </Link>
                 </p>

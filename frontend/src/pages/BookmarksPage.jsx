@@ -140,7 +140,7 @@ export default function BookmarksPage() {
   const projectCount = bookmarkedPosts.filter(p => p.type === 'project').length;
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  pb-28">
       <Header />
 
       <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
@@ -150,13 +150,13 @@ export default function BookmarksPage() {
           <div className="space-y-6 min-w-0 flex-1">
             
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#262626]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800 dark:border-[#262626]">
               <div>
-                <h1 className="text-2xl font-black text-neutral-900 dark:text-neutral-50 discuss:text-white flex items-center gap-2">
+                <h1 className="text-2xl font-black text-neutral-900 dark:text-neutral-50 dark:text-white flex items-center gap-2">
                   <Bookmark className="w-6 h-6 text-yellow-500 fill-current" />
                   <span>Bookmarks</span>
                 </h1>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1 font-medium">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
                   {bookmarkedPosts.length} saved post{bookmarkedPosts.length !== 1 ? 's' : ''} in your local cache
                 </p>
               </div>
@@ -170,7 +170,7 @@ export default function BookmarksPage() {
                       setSelectedIds([]);
                     }}
                     variant="outline"
-                    className="h-9 rounded-[8px] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-[12px] font-bold gap-1.5"
+                    className="h-9 rounded-[8px] border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-[12px] font-bold gap-1.5"
                   >
                     {isSelectMode ? (
                       <>Cancel Select</>
@@ -215,7 +215,7 @@ export default function BookmarksPage() {
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={handleSelectAll}
-                    className="flex items-center gap-1.5 text-xs font-bold text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] hover:text-[#2563EB]"
+                    className="flex items-center gap-1.5 text-xs font-bold text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 hover:text-[#0095F6]"
                   >
                     {selectedIds.length === bookmarkedPosts.length ? (
                       <>
@@ -245,21 +245,21 @@ export default function BookmarksPage() {
             {/* Bookmarks List */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Synchronizing bookmarks...</p>
+                <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6] mb-2" />
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Synchronizing bookmarks...</p>
               </div>
             ) : bookmarkedPosts.length === 0 ? (
-              <div className="text-center py-20 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[16px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
-                <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#121212] flex items-center justify-center mx-auto mb-4 animate-pulse-subtle">
-                  <Bookmark className="w-7 h-7 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+              <div className="text-center py-20 bg-white dark:bg-neutral-800 dark:bg-black rounded-[16px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
+                <div className="w-16 h-16 rounded-[12px] bg-neutral-100 dark:bg-neutral-900  flex items-center justify-center mx-auto mb-4 animate-pulse-subtle">
+                  <Bookmark className="w-7 h-7 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
                 </div>
-                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 discuss:text-white mb-1.5">No bookmarks saved</h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[13px] md:text-[15px] max-w-sm mx-auto">
+                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-1.5">No bookmarks saved</h3>
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[13px] md:text-[15px] max-w-sm mx-auto">
                   Browse the developer feed and tap the bookmark icon on any post to persist it inside your drawer hub.
                 </p>
                 <Button 
                   onClick={() => navigate('/feed')}
-                  className="mt-6 bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white rounded-xl py-2.5 h-10 font-bold px-5"
+                  className="mt-6 bg-[#0095F6] hover:bg-[#1877F2] bg-[#0095F6] hover:bg-[#1877F2] text-white rounded-xl py-2.5 h-10 font-bold px-5"
                 >
                   Explore Feed
                 </Button>
@@ -287,10 +287,10 @@ export default function BookmarksPage() {
           <aside className="hidden xl:block w-[310px] shrink-0 sticky top-[72px] self-start space-y-6 animate-fade-in">
               
               {/* Stats Card */}
-              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card">
-                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
-                  <Activity className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 shadow-card">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]">
+                  <Activity className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 dark:text-neutral-400">
                     Storage Analytics
                   </h3>
                 </div>
@@ -302,19 +302,19 @@ export default function BookmarksPage() {
                   </div>
 
                   {/* Discussions count */}
-                  <div className="flex items-center justify-between text-xs font-mono border-t border-neutral-100 dark:border-neutral-800/80 discuss:border-white/5 pt-2">
+                  <div className="flex items-center justify-between text-xs font-mono border-t border-neutral-100 dark:border-neutral-800/80 dark:border-[#262626] pt-2">
                     <span className="text-neutral-400 dark:text-neutral-500">Discussions:</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 discuss:text-white font-bold">{discussionCount} posts</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 dark:text-white font-bold">{discussionCount} posts</span>
                   </div>
 
                   {/* Projects count */}
-                  <div className="flex items-center justify-between text-xs font-mono border-t border-neutral-100 dark:border-neutral-800/80 discuss:border-white/5 pt-2">
+                  <div className="flex items-center justify-between text-xs font-mono border-t border-neutral-100 dark:border-neutral-800/80 dark:border-[#262626] pt-2">
                     <span className="text-neutral-400 dark:text-neutral-500">Projects:</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 discuss:text-white font-bold">{projectCount} posts</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 dark:text-white font-bold">{projectCount} posts</span>
                   </div>
 
                   {/* Storage utilization */}
-                  <div className="flex items-center justify-between text-xs font-mono border-t border-neutral-100 dark:border-neutral-800/80 discuss:border-white/5 pt-2">
+                  <div className="flex items-center justify-between text-xs font-mono border-t border-neutral-100 dark:border-neutral-800/80 dark:border-[#262626] pt-2">
                     <span className="text-neutral-400 dark:text-neutral-500">Cache Limit:</span>
                     <span className="text-neutral-500 dark:text-neutral-500 font-bold">5MB (Unlimited Node)</span>
                   </div>
@@ -322,10 +322,10 @@ export default function BookmarksPage() {
               </div>
 
               {/* Security Watermark System */}
-              <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-xl p-5 shadow-card">
-                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 discuss:border-[#262626]">
-                  <Cpu className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 shadow-card">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-100 dark:border-neutral-700/50 dark:border-[#262626]">
+                  <Cpu className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 dark:text-neutral-400">
                     Watermark Node
                   </h3>
                 </div>
@@ -341,11 +341,11 @@ export default function BookmarksPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 bg-neutral-50 dark:bg-neutral-900/50 discuss:bg-black/35 border border-neutral-100 dark:border-neutral-800/60 discuss:border-[#262626] rounded-lg p-3 text-[11px] font-mono text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]">
+                  <div className="space-y-1.5 bg-neutral-50 dark:bg-neutral-900/50 dark:bg-black/40 border border-neutral-100 dark:border-neutral-800/60 dark:border-[#262626] rounded-lg p-3 text-[11px] font-mono text-neutral-400 dark:text-neutral-500 dark:text-neutral-400">
                     <div className="text-neutral-500 dark:text-neutral-600 font-bold select-none mb-1">◈ CACHE_STATUS:</div>
                     <div>// saved per browser local session</div>
                     <div>// user uid bound indexing active</div>
-                    <div className="text-[#2563EB] discuss:text-[#EF4444] font-bold">&lt;discuss_watermark/&gt;</div>
+                    <div className="text-[#0095F6] text-[#0095F6] font-bold">&lt;discuss_watermark/&gt;</div>
                   </div>
                 </div>
               </div>

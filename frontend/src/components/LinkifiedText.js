@@ -131,7 +131,7 @@ export default function LinkifiedText({ text, className = '' }) {
                 key={index}
                 href={part.href}
                 onClick={(e) => handleLinkClick(e, part.href, part.content)}
-                className="text-[#2563EB] discuss:text-[#60A5FA] hover:underline inline-flex items-center gap-0.5"
+                className="text-[#0095F6] discuss:text-[#60A5FA] hover:underline inline-flex items-center gap-0.5"
                 title={part.content} // Show full URL on hover
               >
                 {part.displayContent}
@@ -144,7 +144,7 @@ export default function LinkifiedText({ text, className = '' }) {
               <a
                 key={index}
                 href={part.href}
-                className="text-[#2563EB] discuss:text-[#60A5FA] hover:underline"
+                className="text-[#0095F6] discuss:text-[#60A5FA] hover:underline"
                 onClick={(e) => e.stopPropagation()} // Just allow default mailto behavior
               >
                 {part.content}
@@ -157,15 +157,15 @@ export default function LinkifiedText({ text, className = '' }) {
 
       {/* External Redirect Warning Dialog - Shows FULL URL */}
       <AlertDialog open={!!pendingUrl} onOpenChange={(v) => { if (!v) { setPendingUrl(null); setFullUrlForDialog(''); } }}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center gap-2">
+            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-[#F59E0B]" />
               External Link
             </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
               You are about to leave Discuss and visit an external website:
-              <span className="block mt-2 p-2 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] rounded text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-xs font-mono break-all">
+              <span className="block mt-2 p-2 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black rounded text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-xs font-mono break-all">
                 {fullUrlForDialog || pendingUrl}
               </span>
               <span className="block mt-2 text-xs">
@@ -174,10 +174,10 @@ export default function LinkifiedText({ text, className = '' }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRedirect} className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626]">
+            <AlertDialogAction onClick={handleConfirmRedirect} className="bg-[#0095F6] bg-[#0095F6] text-white hover:bg-[#1877F2] hover:bg-[#1877F2]">
               <ExternalLink className="w-4 h-4 mr-2" />
               Open Link
             </AlertDialogAction>

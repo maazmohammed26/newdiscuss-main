@@ -3,7 +3,7 @@ import { Sparkles, Shield, Tag } from 'lucide-react';
 export default function SherlockAiSummary({ summary, loading }) {
   if (loading) {
     return (
-      <div className="w-full p-6 rounded-2xl bg-white/5 dark:bg-[#121212]/50 discuss:bg-[#0c0c12]/80 border border-neutral-200 dark:border-neutral-800 discuss:border-white/5 animate-pulse flex flex-col gap-3">
+      <div className="w-full p-6 rounded-2xl bg-white/5 dark:bg-[#121212]/50 discuss:bg-[#0c0c12]/80 border border-neutral-200 dark:border-neutral-800 dark:border-[#262626] animate-pulse flex flex-col gap-3">
         <div className="h-4 w-32 bg-neutral-300 dark:bg-neutral-800 rounded-md" />
         <div className="h-10 w-full bg-neutral-200 dark:bg-neutral-800/50 rounded-md" />
       </div>
@@ -25,24 +25,24 @@ export default function SherlockAiSummary({ summary, loading }) {
         </h3>
       </div>
 
-      <p className="text-[15px] leading-relaxed text-indigo-950 dark:text-indigo-100/80 discuss:text-neutral-300 font-medium relative z-10 max-w-3xl">
+      <p className="text-[15px] leading-relaxed text-indigo-950 dark:text-indigo-100/80 dark:text-neutral-300 font-medium relative z-10 max-w-3xl">
         {summary.summary}
       </p>
 
       <div className="flex flex-wrap gap-4 mt-5 relative z-10">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/60 dark:bg-black/40 discuss:bg-black/60 border border-white/50 dark:border-white/10 discuss:border-white/5">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/60 dark:bg-black/40 dark:bg-black/40 border border-white/50 dark:border-white/10 dark:border-[#262626]">
           <Tag className="w-4 h-4 text-indigo-500 discuss:text-red-400" />
-          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 discuss:text-neutral-300">
+          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 dark:text-neutral-300">
             {summary.type}
           </span>
         </div>
         
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/60 dark:bg-black/40 discuss:bg-black/60 border border-white/50 dark:border-white/10 discuss:border-white/5">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/60 dark:bg-black/40 dark:bg-black/40 border border-white/50 dark:border-white/10 dark:border-[#262626]">
           <Shield className={`w-4 h-4 ${
             summary.score === 'Low' ? 'text-green-500' :
             summary.score === 'Medium' ? 'text-yellow-500' : 'text-red-500'
           }`} />
-          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 discuss:text-neutral-300">
+          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300 dark:text-neutral-300">
             Risk/Visibility: <span className={
               summary.score === 'Low' ? 'text-green-600 dark:text-green-400' :
               summary.score === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'

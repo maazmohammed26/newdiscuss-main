@@ -76,15 +76,15 @@ ${user?.username || ''}`
                   <Mail className="w-4 h-4 mt-0.5 text-[#1D7AFF]" />
                   <div>
                     <p className="font-medium mb-1"><span>How to request:</span></p>
-                    <p className="text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                    <p className="text-[#6B7280] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
                       <span>Click the button below to open your email client with a pre-filled verification request. </span>
                       <span>Send the email from your registered email address: </span><strong>{user?.email}</strong>
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-[#EEF3FB] dark:bg-[#1E293B] discuss:bg-[#262626] p-3 rounded-lg">
-                  <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                <div className="bg-[#EEF3FB] dark:bg-[#1E293B] dark:bg-[#1A1A1A] p-3 rounded-lg">
+                  <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] dark:text-neutral-400">
                     <strong>Important:</strong> <span>Please send the email from </span><strong>{user?.email}</strong><span> to verify your account ownership.</span>
                   </p>
                 </div>
@@ -92,7 +92,7 @@ ${user?.username || ''}`
 
               <Button
                 onClick={handleSendEmail}
-                className="w-full bg-[#1D7AFF] hover:bg-[#1560CC] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white"
+                className="w-full bg-[#1D7AFF] hover:bg-[#1560CC] bg-[#0095F6] hover:bg-[#1877F2] text-white"
                 data-primary="true"
               >
                 <Mail className="w-4 h-4 mr-2" />
@@ -105,10 +105,10 @@ ${user?.username || ''}`
                 <CheckCircle className="w-8 h-8 text-[#10B981]" />
               </div>
               <h3 className="font-semibold text-lg mb-2"><span>Email Client Opened</span></h3>
-              <p className="text-sm text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mb-4">
+              <p className="text-sm text-[#6B7280] dark:text-[#94A3B8] dark:text-neutral-400 mb-4">
                 <span>Please send the pre-filled email from your registered email address to complete your verification request.</span>
               </p>
-              <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+              <p className="text-xs text-[#6B7280] dark:text-[#94A3B8] dark:text-neutral-400">
                 <span>Our team will review your request and update your verification status within 2-3 business days.</span>
               </p>
             </div>
@@ -119,7 +119,7 @@ ${user?.username || ''}`
           <Button
             onClick={handleClose}
             variant="outline"
-            className="border-[#E2E6ED] dark:border-[#334155] discuss:border-[#333333]"
+            className="border-[#E2E6ED] dark:border-[#334155] dark:border-[#262626]"
           >
             <span>Close</span>
           </Button>
@@ -127,7 +127,7 @@ ${user?.username || ''}`
             <Button
               onClick={handleSendEmail}
               variant="link"
-              className="text-[#1D7AFF] discuss:text-[#EF4444]"
+              className="text-[#1D7AFF] text-[#0095F6]"
             >
               <ExternalLink className="w-4 h-4 mr-1" />
               <span>Send Email</span>

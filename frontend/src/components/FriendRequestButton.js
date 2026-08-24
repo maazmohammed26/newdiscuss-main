@@ -220,7 +220,7 @@ export default function FriendRequestButton({
           onClick={handleSendRequest}
           disabled={actionLoading}
           size={size}
-          className={`bg-[#2563EB] hover:bg-[#1D4ED8] text-white discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] rounded-[6px] shadow-button ${buttonSizeClass} ${className}`}
+          className={`bg-[#0095F6] hover:bg-[#1877F2] text-white bg-[#0095F6] hover:bg-[#1877F2] rounded-[6px] shadow-button ${buttonSizeClass} ${className}`}
         >
           {actionLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -284,7 +284,7 @@ export default function FriendRequestButton({
               onClick={handleStartChat}
               disabled={actionLoading}
               size={size}
-              className={`bg-[#2563EB] hover:bg-[#1D4ED8] text-white discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] ${buttonSizeClass}`}
+              className={`bg-[#0095F6] hover:bg-[#1877F2] text-white bg-[#0095F6] hover:bg-[#1877F2] ${buttonSizeClass}`}
             >
               {actionLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -308,17 +308,17 @@ export default function FriendRequestButton({
 
           {/* Unfollow Confirmation Dialog */}
           <AlertDialog open={showUnfollowConfirm} onOpenChange={setShowUnfollowConfirm}>
-            <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+            <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
               <AlertDialogHeader>
-                <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white">
                   Unfollow {targetUsername}?
                 </AlertDialogTitle>
-                <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
                   This will remove {targetUsername} from your friends list. You won't be able to chat with them anymore, but your chat history will be preserved.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+                <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction

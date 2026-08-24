@@ -67,7 +67,7 @@ export default function AboutPage() {
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-[#101010] p-6 sm:p-8 rounded-2xl border border-white/5 shadow-xl">
               <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+                <span className="w-2 h-2 rounded-full bg-[#0095F6]" />
                 Core Ecosystem Features
               </h2>
               <ul className="space-y-3.5">
@@ -110,7 +110,7 @@ export default function AboutPage() {
           <section className="bg-gradient-to-br from-[#101010] to-[#151515] p-6 sm:p-10 rounded-2xl border border-white/5 mt-12 relative overflow-hidden shadow-2xl">
             <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-[#DC2626]/10 to-[#2563EB]/10 rounded-full blur-2xl" />
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+              <span className="w-2 h-2 rounded-full bg-[#0095F6]" />
               The Story Behind the Code
             </h2>
             <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-4">

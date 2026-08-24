@@ -83,7 +83,7 @@ export default function ShareModal({ open, onClose, post }) {
       <DialogContent className="w-[calc(100vw-32px)] max-w-[420px] bg-white dark:bg-[#1E293B] dark:border-[#334155] overflow-hidden p-5">
         <DialogHeader>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 bg-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 bg-[#0095F6] rounded-xl flex items-center justify-center shrink-0">
               <img src={LOGO_URL} alt="Discuss" className="h-5 brightness-0 invert" />
             </div>
             <DialogTitle className="font-heading text-lg font-bold text-[#0F172A] dark:text-[#F1F5F9]">Share this post</DialogTitle>
@@ -93,7 +93,7 @@ export default function ShareModal({ open, onClose, post }) {
         {/* Preview Card — strict overflow control */}
         <div className="bg-[#F5F5F7] dark:bg-[#0F172A] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] mt-2 overflow-hidden">
           <div className="flex items-start gap-3 min-w-0">
-            <div className="w-12 h-12 bg-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-[#0095F6] rounded-xl flex items-center justify-center shrink-0">
               <img src={LOGO_URL} alt="Discuss" className="h-6 brightness-0 invert" />
             </div>
             {/* Text column — min-w-0 is critical for flex truncation to work */}
@@ -135,7 +135,7 @@ export default function ShareModal({ open, onClose, post }) {
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {post.github_link && (
                     <span
-                      className="text-[10px] text-[#2563EB] bg-[#2563EB]/10 px-2 py-0.5 rounded max-w-full overflow-hidden"
+                      className="text-[10px] text-[#0095F6] bg-[#0095F6]/10 px-2 py-0.5 rounded max-w-full overflow-hidden"
                       style={{ wordBreak: 'break-all' }}
                       title={post.github_link}
                     >
@@ -154,7 +154,7 @@ export default function ShareModal({ open, onClose, post }) {
                 </div>
               )}
 
-              <p className="text-[#2563EB] text-[11px] mt-1.5 font-medium truncate">
+              <p className="text-[#0095F6] text-[11px] mt-1.5 font-medium truncate">
                 by @{post.author_username}
               </p>
             </div>
@@ -191,11 +191,11 @@ export default function ShareModal({ open, onClose, post }) {
           <button
             data-testid="share-copy-link"
             onClick={handleCopy}
-            className="flex flex-col items-center justify-center gap-1 py-3 px-1 rounded-xl border border-[#E2E8F0] dark:border-[#334155] hover:bg-[#2563EB]/10 transition-all"
+            className="flex flex-col items-center justify-center gap-1 py-3 px-1 rounded-xl border border-[#E2E8F0] dark:border-[#334155] hover:bg-[#0095F6]/10 transition-all"
           >
             {copied
               ? <Check className="w-6 h-6 text-[#10B981] shrink-0" />
-              : <Copy className="w-6 h-6 text-[#2563EB] shrink-0" />}
+              : <Copy className="w-6 h-6 text-[#0095F6] shrink-0" />}
             <span className="text-[9px] leading-tight text-[#6275AF] dark:text-[#94A3B8] font-medium text-center">
               {copied ? '✓' : 'Copy'}
             </span>

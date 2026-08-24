@@ -268,10 +268,10 @@ export default function GroupInfoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-3" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
           <p className="text-neutral-500 dark:text-neutral-400 text-sm">Loading...</p>
         </div>
       </div>
@@ -287,25 +287,25 @@ export default function GroupInfoPage() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(`/group/${groupId}`)} className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+          <button onClick={() => navigate(`/group/${groupId}`)} className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
             <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
-          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">Group Info</h1>
+          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">Group Info</h1>
         </div>
 
         {/* Group Info Card */}
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 mb-4">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <span className="text-white font-bold text-xl">{groupInfo?.name?.slice(0, 2).toUpperCase()}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">{groupInfo?.name}</h2>
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">{groupInfo?.name}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${groupInfo?.type === 'public' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'}`}
@@ -331,7 +331,7 @@ export default function GroupInfoPage() {
               <button
                 onClick={handleGroupShare}
                 data-testid="group-share-btn"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-[8px] bg-[#2563EB]/8 dark:bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 border border-[#2563EB]/20 dark:border-[#2563EB]/30 discuss:border-[#EF4444]/20 text-[#2563EB] dark:text-[#60A5FA] discuss:text-[#EF4444] text-sm font-medium hover:bg-[#2563EB]/15 dark:hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/15 transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-[8px] bg-[#0095F6]/8 dark:bg-[#0095F6]/10 bg-[#0095F6]/10 border border-[#0095F6]/20 dark:border-[#0095F6]/30 discuss:border-[#EF4444]/20 text-[#0095F6] dark:text-[#60A5FA] text-[#0095F6] text-sm font-medium hover:bg-[#0095F6]/15 dark:hover:bg-[#0095F6]/20 discuss:hover:bg-[#EF4444]/15 transition-all"
               >
                 <Share2 className="w-4 h-4" />
                 Share Group
@@ -340,7 +340,7 @@ export default function GroupInfoPage() {
                 onClick={handleGroupCopy}
                 data-testid="group-copy-btn"
                 title="Copy invite message"
-                className="flex items-center justify-center p-2.5 rounded-[8px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] transition-all"
+                className="flex items-center justify-center p-2.5 rounded-[8px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:bg-neutral-50 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-all"
               >
                 {groupShareCopied
                   ? <Check className="w-4 h-4 text-[#10B981]" />
@@ -351,14 +351,14 @@ export default function GroupInfoPage() {
         </div>
 
         {isAdmin && !isDeleted && (
-          <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 mb-4">
-            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5" />Group Settings
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-medium">Admin-only messaging</Label>
+                  <Label className="text-neutral-900 dark:text-neutral-50 dark:text-white font-medium">Admin-only messaging</Label>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">Only admins can send messages</p>
                 </div>
                 <div style={document.documentElement.classList.contains('discuss-black') ? { '--switch-bg-off': '#2A2A38', '--switch-bg-on': '#FF007F' } : {}}>
@@ -378,7 +378,7 @@ export default function GroupInfoPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-medium flex items-center gap-1"><Clock className="w-4 h-4" />24h auto-delete</Label>
+                  <Label className="text-neutral-900 dark:text-neutral-50 dark:text-white font-medium flex items-center gap-1"><Clock className="w-4 h-4" />24h auto-delete</Label>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">Auto-delete messages after 24 hours</p>
                 </div>
                 <div style={document.documentElement.classList.contains('discuss-black') ? { '--switch-bg-off': '#2A2A38', '--switch-bg-on': '#FF007F' } : {}}>
@@ -400,11 +400,11 @@ export default function GroupInfoPage() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 mb-4">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">Members</h3>
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">Members</h3>
             {isAdmin && !isDeleted && (
-              <Button size="sm" onClick={() => { setAddMembersOpen(true); loadAvailableUsers(); }} className="bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+              <Button size="sm" onClick={() => { setAddMembersOpen(true); loadAvailableUsers(); }} className="bg-[#0095F6] bg-[#0095F6] text-white">
                 <UserPlus className="w-4 h-4 mr-1" />Add
               </Button>
             )}
@@ -417,7 +417,7 @@ export default function GroupInfoPage() {
                 {adminMembers.map(member => {
                   const details = userDetails[member.userId];
                   return (
-                    <div key={member.userId} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
+                    <div key={member.userId} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]">
                       <button onClick={() => handleUserClick(member.userId)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                         <UserAvatar
                           userId={member.userId}
@@ -427,7 +427,7 @@ export default function GroupInfoPage() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] truncate">@{details?.username || 'User'}</span>
+                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 dark:text-white truncate">@{details?.username || 'User'}</span>
                             {details?.verified && <VerifiedBadge size="sm" />}
                           </div>
                           <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1"><Crown className="w-3 h-3" />Admin</span>
@@ -456,7 +456,7 @@ export default function GroupInfoPage() {
                 {regularMembers.map(member => {
                   const details = userDetails[member.userId];
                   return (
-                    <div key={member.userId} className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
+                    <div key={member.userId} className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]">
                       <button onClick={() => handleUserClick(member.userId)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                         <UserAvatar
                           userId={member.userId}
@@ -466,7 +466,7 @@ export default function GroupInfoPage() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] truncate">@{details?.username || 'User'}</span>
+                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 dark:text-white truncate">@{details?.username || 'User'}</span>
                             {details?.verified && <VerifiedBadge size="sm" />}
                           </div>
                         </div>
@@ -556,7 +556,7 @@ export default function GroupInfoPage() {
                         </div>
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => handleAddMember(u.id)} className="bg-[#2563EB] text-white text-xs">Add</Button>
+                    <Button size="sm" onClick={() => handleAddMember(u.id)} className="bg-[#0095F6] text-white text-xs">Add</Button>
                   </div>
                 ))
               )}

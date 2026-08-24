@@ -120,9 +120,9 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
 
           <div className="grid grid-cols-2 gap-3">
             <button type="button" data-testid="create-post-type-discussion" onClick={() => setPostType('discussion')}
-              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${postType === 'discussion' ? 'border-[#2563EB] bg-[#2563EB]/5' : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#2563EB]/30'}`}>
-              <MessageSquare className={`w-5 h-5 ${postType === 'discussion' ? 'text-[#2563EB]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`} />
-              <span className={`text-[13px] md:text-[15px] font-medium ${postType === 'discussion' ? 'text-[#2563EB]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>Discussion</span>
+              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${postType === 'discussion' ? 'border-[#0095F6] bg-[#0095F6]/5' : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#0095F6]/30'}`}>
+              <MessageSquare className={`w-5 h-5 ${postType === 'discussion' ? 'text-[#0095F6]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`} />
+              <span className={`text-[13px] md:text-[15px] font-medium ${postType === 'discussion' ? 'text-[#0095F6]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>Discussion</span>
             </button>
             <button type="button" onClick={() => setPostType('project')}
               className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${postType === 'project' ? 'border-[#3B82F6] bg-[#3B82F6]/5' : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#3B82F6]/30'}`}>
@@ -171,7 +171,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 <button
                   type="button"
                   onClick={() => setShowCode(!showCode)}
-                  className="text-xs font-bold text-[#2563EB] dark:text-[#60A5FA] hover:underline flex items-center gap-1.5 select-none"
+                  className="text-xs font-bold text-[#0095F6] dark:text-[#60A5FA] hover:underline flex items-center gap-1.5 select-none"
                 >
                   {showCode ? 'Remove Code Support (-)' : 'Add Code Support (+)'}
                 </button>
@@ -239,7 +239,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 </>
               ) : (
                 <>
-                  <ImageIcon className="w-4 h-4 text-[#2563EB]" /> <span>Media</span>
+                  <ImageIcon className="w-4 h-4 text-[#0095F6]" /> <span>Media</span>
                 </>
               )}
             </Label>
@@ -270,7 +270,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
               }}
             />
             {media.length > 0 && (
-              <div className={`mt-3 flex flex-wrap gap-2 p-2 bg-[#F1F5F9] dark:bg-[#0F172A] discuss:bg-[#262626] rounded-lg ${postType === 'pulse' ? 'justify-center' : ''}`}>
+              <div className={`mt-3 flex flex-wrap gap-2 p-2 bg-[#F1F5F9] dark:bg-[#0F172A] dark:bg-[#1A1A1A] rounded-lg ${postType === 'pulse' ? 'justify-center' : ''}`}>
                 {media.map((m, idx) => (
                   <div key={idx} className={`relative rounded-md overflow-hidden group border border-neutral-200 dark:border-neutral-700 ${postType === 'pulse' ? 'w-full max-w-[200px] aspect-[9/16]' : 'w-16 h-16'}`}>
                     {m.type === 'video' || m.format === 'mp4' || m.url?.includes('video') ? (
@@ -337,7 +337,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
           )}
 
           <Button type="submit" data-testid="create-post-submit" disabled={loading}
-            className="w-full bg-[#2563EB] text-white hover:bg-[#1D4ED8] rounded-md py-2.5 font-medium shadow-sm">
+            className="w-full bg-[#0095F6] text-white hover:bg-[#1877F2] rounded-md py-2.5 font-medium shadow-sm">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Publish Post'}
           </Button>
         </form>

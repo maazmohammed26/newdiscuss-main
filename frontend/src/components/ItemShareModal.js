@@ -31,7 +31,7 @@ export default function ItemShareModal({ open, onClose, item, type }) {
   const isInternship = !isNews && item.jobType === 'Internship';
 
   let categoryLabel = 'SHARE';
-  let badgeColor = 'bg-[#2563EB]/10 text-[#2563EB]';
+  let badgeColor = 'bg-[#0095F6]/10 text-[#0095F6]';
   if (isNews) {
     categoryLabel = 'TECH NEWS';
     badgeColor = 'bg-[#EF4444]/10 text-[#EF4444]';
@@ -107,17 +107,17 @@ export default function ItemShareModal({ open, onClose, item, type }) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="w-[calc(100vw-32px)] max-w-[420px] bg-white dark:bg-[#1E293B] discuss:bg-[#121212] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#222222] overflow-hidden p-5 rounded-2xl">
+      <DialogContent className="w-[calc(100vw-32px)] max-w-[420px] bg-white dark:bg-[#1E293B]  border-[#E2E8F0] dark:border-[#334155] discuss:border-[#222222] overflow-hidden p-5 rounded-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 bg-[#2563EB] discuss:bg-[#EF4444] rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 bg-[#0095F6] bg-[#0095F6] rounded-xl flex items-center justify-center shrink-0">
               <img src={LOGO_URL} alt="Discuss Logo" className="h-5 brightness-0 invert" />
             </div>
             <div className="flex-1 min-w-0">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${badgeColor}`}>
                 {categoryLabel}
               </span>
-              <DialogTitle className="font-heading text-base font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-white mt-1 truncate">
+              <DialogTitle className="font-heading text-base font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mt-1 truncate">
                 Share this {isNews ? 'News' : isHackathon ? 'Hackathon' : 'Job'}
               </DialogTitle>
             </div>
@@ -187,7 +187,7 @@ export default function ItemShareModal({ open, onClose, item, type }) {
               <img src={LOGO_URL} alt="" className="h-3.5" />
               <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#8E8E8E] text-[10px] font-semibold">Discuss Tech</span>
             </div>
-            <span className="text-[10px] text-[#2563EB] discuss:text-[#EF4444] font-medium">discuss.team</span>
+            <span className="text-[10px] text-[#0095F6] text-[#0095F6] font-medium">discuss.team</span>
           </div>
         </div>
 
@@ -209,11 +209,11 @@ export default function ItemShareModal({ open, onClose, item, type }) {
           ))}
           <button
             onClick={handleCopy}
-            className="flex flex-col items-center justify-center gap-1 py-3 px-1 rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#222222] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 transition-all bg-neutral-50/50 dark:bg-neutral-900/30"
+            className="flex flex-col items-center justify-center gap-1 py-3 px-1 rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#222222] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10 transition-all bg-neutral-50/50 dark:bg-neutral-900/30"
           >
             {copied
               ? <Check className="w-6 h-6 text-[#10B981] shrink-0" />
-              : <Copy className="w-6 h-6 text-[#2563EB] discuss:text-[#EF4444] shrink-0" />}
+              : <Copy className="w-6 h-6 text-[#0095F6] text-[#0095F6] shrink-0" />}
             <span className="text-[9px] leading-tight text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#8E8E8E] font-medium text-center">
               {copied ? '✓' : 'Copy'}
             </span>
@@ -224,7 +224,7 @@ export default function ItemShareModal({ open, onClose, item, type }) {
         {typeof navigator !== 'undefined' && navigator.share && (
           <button
             onClick={handleNativeShare}
-            className="w-full mt-2 bg-[#F1F5F9] dark:bg-[#334155] discuss:bg-[#1A1A1A] hover:bg-[#E2E8F0] dark:hover:bg-[#475569] discuss:hover:bg-[#262626] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-white rounded-xl py-2.5 text-[12px] font-semibold transition-colors"
+            className="w-full mt-2 bg-[#F1F5F9] dark:bg-[#334155] discuss:bg-[#1A1A1A] hover:bg-[#E2E8F0] dark:hover:bg-[#475569] dark:hover:bg-[#1A1A1A] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white rounded-xl py-2.5 text-[12px] font-semibold transition-colors"
           >
             More sharing options…
           </button>

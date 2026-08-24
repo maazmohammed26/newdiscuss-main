@@ -105,9 +105,9 @@ export default function PWAInstallPrompt() {
               {platform === 'ios' ? (
                 <Smartphone className="h-7 w-7 text-[#DC2626]" />
               ) : platform === 'android' ? (
-                <Download className="h-7 w-7 text-[#2563EB]" />
+                <Download className="h-7 w-7 text-[#0095F6]" />
               ) : (
-                <Monitor className="h-7 w-7 text-[#2563EB]" />
+                <Monitor className="h-7 w-7 text-[#0095F6]" />
               )}
             </div>
             <div>
@@ -128,8 +128,8 @@ export default function PWAInstallPrompt() {
               <span>Real-time push notifications</span>
             </div>
             <div className="flex items-center gap-3 text-xs sm:text-sm">
-              <div className="p-1.5 rounded-full bg-[#2563EB]/10 border border-[#2563EB]/20">
-                <Download className="h-4 w-4 text-[#2563EB]" />
+              <div className="p-1.5 rounded-full bg-[#0095F6]/10 border border-[#0095F6]/20">
+                <Download className="h-4 w-4 text-[#0095F6]" />
               </div>
               <span>Works offline & loads instantly</span>
             </div>
@@ -151,7 +151,7 @@ export default function PWAInstallPrompt() {
                   <span>Tap the <Share className="inline h-3.5 w-3.5 mx-1" /> Share button below</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563EB]/20 text-[#2563EB] text-[10px] font-black">2</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#0095F6]/20 text-[#0095F6] text-[10px] font-black">2</span>
                   <span>Scroll down and tap <Plus className="inline h-3.5 w-3.5 mx-1" /> "Add to Home Screen"</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ export default function PWAInstallPrompt() {
                   <span>Tap the menu (⋮) in your browser</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563EB]/20 text-[#2563EB] text-[10px] font-black">2</span>
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#0095F6]/20 text-[#0095F6] text-[10px] font-black">2</span>
                   <span>Select "Add to Home screen" or "Install app"</span>
                 </div>
               </div>

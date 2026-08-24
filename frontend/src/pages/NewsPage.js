@@ -51,7 +51,7 @@ function NewsCardSkeleton() {
         </div>
         
         {/* footer buttons */}
-        <div className="flex justify-between items-center pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+        <div className="flex justify-between items-center pt-4 border-t border-neutral-100 dark:border-neutral-700 dark:border-[#262626]">
           <Shimmer className="h-9 w-28 rounded-xl" />
           <Shimmer className="h-9 w-20 rounded-xl" />
         </div>
@@ -89,7 +89,7 @@ const MarqueeBar = () => (
         <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
         <span>This is a beta version which is under development but you can use it in live prod.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
-        <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+        <span className="text-[9px] font-bold bg-[#0095F6] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
         <span>Currently both sections are handled by the Discuss Team directly.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
         <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
@@ -100,7 +100,7 @@ const MarqueeBar = () => (
         <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
         <span>This is a beta version which is under development but you can use it in live prod.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
-        <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+        <span className="text-[9px] font-bold bg-[#0095F6] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
         <span>Currently both sections are handled by the Discuss Team directly.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
         <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
@@ -340,15 +340,15 @@ export default function NewsPage() {
   }, [news, debouncedSearch]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       <MarqueeBar />
 
       {/* Syncing Indicator — only after first load (cached data exists) */}
       {isSyncing && !isFirstLoad && (
-        <div className="w-full bg-[#2563EB]/5 dark:bg-blue-500/10 discuss:bg-red-500/5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#222] py-1.5 flex items-center justify-center gap-2 select-none z-10 transition-all duration-300">
-          <div className="w-3 h-3 border-2 border-[#2563EB] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin shrink-0" />
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2563EB] discuss:text-[#EF4444] dark:text-[#94A3B8]">
+        <div className="w-full bg-[#0095F6]/5 dark:bg-blue-500/10 discuss:bg-red-500/5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#222] py-1.5 flex items-center justify-center gap-2 select-none z-10 transition-all duration-300">
+          <div className="w-3 h-3 border-2 border-[#0095F6] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0095F6] text-[#0095F6] dark:text-[#94A3B8]">
             Syncing latest tech news...
           </span>
         </div>
@@ -360,10 +360,10 @@ export default function NewsPage() {
           <div className="min-w-0 flex-1">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] tracking-tight flex items-center gap-2">
+            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 dark:text-white tracking-tight flex items-center gap-2">
               Tech News <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider select-none">BETA</span>
             </h1>
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1">
               Latest updates and tech news from the community.
             </p>
           </div>
@@ -374,13 +374,13 @@ export default function NewsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search news..." 
-                className="pl-9 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]"
+                className="pl-9 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white"
               />
             </div>
             {isDiscussTeam && (
               <Button 
                 onClick={() => { setEditData(null); setShowAdminModal(true); }}
-                className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] shrink-0"
+                className="bg-[#0095F6] bg-[#0095F6] text-white hover:bg-[#1877F2] hover:bg-[#1877F2] shrink-0"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add News
               </Button>
@@ -399,8 +399,8 @@ export default function NewsPage() {
               <div className="lg:hidden bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-3xl p-5 shadow-card animate-fade-in mb-6">
                 <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#222] mb-4">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+                    <TrendingUp className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 dark:text-neutral-400">
                       HN Dev Radar
                     </h3>
                   </div>
@@ -409,18 +409,18 @@ export default function NewsPage() {
                 
                 <div className="flex flex-col gap-3.5">
                   {hnStories.map((story) => (
-                    <div key={story.id} className="text-left group/hn border-b border-neutral-100/50 dark:border-neutral-800/50 discuss:border-white/5 pb-3 last:border-b-0 last:pb-0">
+                    <div key={story.id} className="text-left group/hn border-b border-neutral-100/50 dark:border-neutral-800/50 dark:border-[#262626] pb-3 last:border-b-0 last:pb-0">
                       <a 
                         href={story.url} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:text-[#2563EB] discuss:hover:text-[#EF4444] leading-snug line-clamp-2 transition-colors flex items-start gap-1"
+                        className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white hover:text-[#0095F6] hover:text-[#0095F6] leading-snug line-clamp-2 transition-colors flex items-start gap-1"
                       >
                         <span>{story.title}</span>
                         <ExternalLink className="w-3 h-3 shrink-0 opacity-50 transition-opacity mt-0.5" />
                       </a>
-                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mt-1.5 font-mono">
-                        <span className="bg-neutral-50 dark:bg-neutral-900 discuss:bg-black/30 border border-neutral-200/50 dark:border-neutral-800/40 discuss:border-white/5 px-1.5 py-0.5 rounded text-[9px]">{story.domain}</span>
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mt-1.5 font-mono">
+                        <span className="bg-neutral-50 dark:bg-neutral-900 dark:bg-black/40 border border-neutral-200/50 dark:border-neutral-800/40 dark:border-[#262626] px-1.5 py-0.5 rounded text-[9px]">{story.domain}</span>
                         <span>•</span>
                         <span>{story.score} pts</span>
                         <span>•</span>
@@ -428,7 +428,7 @@ export default function NewsPage() {
                           href={`https://news.ycombinator.com/item?id=${story.id}`} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="hover:underline hover:text-[#2563EB] discuss:hover:text-[#EF4444] flex items-center gap-0.5"
+                          className="hover:underline hover:text-[#0095F6] hover:text-[#0095F6] flex items-center gap-0.5"
                         >
                           <MessageSquare className="w-2.5 h-2.5" /> {story.commentsCount}
                         </a>
@@ -443,9 +443,9 @@ export default function NewsPage() {
               {isFirstLoad ? (
                 Array.from({ length: 3 }).map((_, i) => <NewsCardSkeleton key={i} />)
               ) : filteredNews.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+                <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
                   <Newspaper className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
-                  <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                     No news found.
                   </p>
                 </div>
@@ -472,15 +472,15 @@ export default function NewsPage() {
                       )}
                       <div className="p-5 md:p-6">
                         <div className="flex items-start justify-between gap-4 mb-3">
-                          <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] leading-tight">
+                          <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white leading-tight">
                             {item.title}
                           </h2>
                           {isDiscussTeam && (
                             <div className="flex gap-2 shrink-0">
-                              <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
+                              <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 dark:text-white hover:bg-[#0095F6]/10 hover:text-[#0095F6] rounded-lg transition-colors">
                                 <Pencil className="w-4 h-4" />
                               </button>
-                              <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
+                              <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 dark:text-white hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -496,7 +496,7 @@ export default function NewsPage() {
                               {item.tag}
                             </span>
                           )}
-                          <span className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                          <span className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                             • {new Date(item.createdAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -507,11 +507,11 @@ export default function NewsPage() {
                           </ExpandableText>
                         </div>
      
-                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-700 dark:border-[#262626]">
                           <Button
                             variant="ghost"
                             onClick={() => navigate(`/news/${item.id}`)}
-                            className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-lg font-bold text-sm"
+                            className="text-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10 rounded-lg font-bold text-sm"
                           >
                             Read Full News
                           </Button>
@@ -550,8 +550,8 @@ export default function NewsPage() {
               <div className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-3xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
                 <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#222] mb-4">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
+                    <TrendingUp className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 dark:text-neutral-400">
                       HN Dev Radar
                     </h3>
                   </div>
@@ -560,7 +560,7 @@ export default function NewsPage() {
 
                 {hnLoading ? (
                   <div className="flex flex-col items-center justify-center py-10">
-                    <div className="w-5 h-5 border-2 border-[#2563EB] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin mb-2" />
+                    <div className="w-5 h-5 border-2 border-[#0095F6] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin mb-2" />
                     <span className="text-[10px] font-mono text-neutral-500">Fetching tech_pulse...</span>
                   </div>
                 ) : hnError ? (
@@ -570,18 +570,18 @@ export default function NewsPage() {
                 ) : (
                   <div className="flex flex-col gap-3.5">
                     {hnStories.map((story) => (
-                      <div key={story.id} className="text-left group/hn border-b border-neutral-100/50 dark:border-neutral-800/50 discuss:border-white/5 pb-3 last:border-b-0 last:pb-0">
+                      <div key={story.id} className="text-left group/hn border-b border-neutral-100/50 dark:border-neutral-800/50 dark:border-[#262626] pb-3 last:border-b-0 last:pb-0">
                         <a 
                           href={story.url} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:text-[#2563EB] discuss:hover:text-[#EF4444] leading-snug line-clamp-2 transition-colors flex items-start gap-1"
+                          className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white hover:text-[#0095F6] hover:text-[#0095F6] leading-snug line-clamp-2 transition-colors flex items-start gap-1"
                         >
                           <span>{story.title}</span>
                           <ExternalLink className="w-3 h-3 shrink-0 opacity-0 group-hover/hn:opacity-50 transition-opacity mt-0.5" />
                         </a>
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mt-1.5 font-mono">
-                          <span className="bg-neutral-50 dark:bg-neutral-900 discuss:bg-black/30 border border-neutral-200/50 dark:border-neutral-800/40 discuss:border-white/5 px-1.5 py-0.5 rounded text-[9px]">{story.domain}</span>
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mt-1.5 font-mono">
+                          <span className="bg-neutral-50 dark:bg-neutral-900 dark:bg-black/40 border border-neutral-200/50 dark:border-neutral-800/40 dark:border-[#262626] px-1.5 py-0.5 rounded text-[9px]">{story.domain}</span>
                           <span>•</span>
                           <span>{story.score} pts</span>
                           <span>•</span>
@@ -589,7 +589,7 @@ export default function NewsPage() {
                             href={`https://news.ycombinator.com/item?id=${story.id}`} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="hover:underline hover:text-[#2563EB] discuss:hover:text-[#EF4444] flex items-center gap-0.5"
+                            className="hover:underline hover:text-[#0095F6] hover:text-[#0095F6] flex items-center gap-0.5"
                           >
                             <MessageSquare className="w-2.5 h-2.5" /> {story.commentsCount}
                           </a>
@@ -601,7 +601,7 @@ export default function NewsPage() {
               </div>
 
               {/* Ecosystem Disclaimer Banner */}
-              <div className="bg-neutral-50 dark:bg-neutral-900/40 discuss:bg-black/35 border border-neutral-100 dark:border-neutral-800/50 discuss:border-[#222] rounded-3xl p-4 text-[11px] font-mono text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] space-y-1">
+              <div className="bg-neutral-50 dark:bg-neutral-900/40 dark:bg-black/40 border border-neutral-100 dark:border-neutral-800/50 discuss:border-[#222] rounded-3xl p-4 text-[11px] font-mono text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 space-y-1">
                 <div className="text-neutral-500 dark:text-neutral-600 font-bold mb-1">◈ ECOSYSTEM_INFO:</div>
                 <div>// items in main feed are verified</div>
                 <div>// compiled by discuss administration</div>

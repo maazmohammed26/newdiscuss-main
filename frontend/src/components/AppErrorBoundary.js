@@ -38,8 +38,8 @@ export default class AppErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] px-4">
-          <h1 className="text-lg font-semibold text-neutral-900 dark:text-white discuss:text-white mb-2">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-900  px-4">
+          <h1 className="text-lg font-semibold text-neutral-900 dark:text-white dark:text-white mb-2">
             Something went wrong
           </h1>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 text-center max-w-md mb-6">

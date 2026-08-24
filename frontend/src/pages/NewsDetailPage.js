@@ -144,10 +144,10 @@ export default function NewsDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] flex flex-col">
+      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6]" />
         </div>
       </div>
     );
@@ -155,19 +155,19 @@ export default function NewsDetailPage() {
 
   if (!item) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] flex flex-col">
+      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  flex flex-col">
         <Header />
         <div className="w-full max-w-3xl mx-auto px-4 py-12 flex-1 flex flex-col justify-center">
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-4">
+          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-2xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
+            <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-4">
               News Not Found
             </h2>
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mb-6">
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mb-6">
               The tech news post you are looking for does not exist or has been removed.
             </p>
             <Button 
               onClick={() => navigate('/news')}
-              className="bg-[#2563EB] discuss:bg-[#EF4444] text-white"
+              className="bg-[#0095F6] bg-[#0095F6] text-white"
             >
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to News Feed
             </Button>
@@ -178,21 +178,21 @@ export default function NewsDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Back navigation */}
         <button
           onClick={() => navigate('/news')}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] font-medium transition-colors mb-6 group text-sm"
+          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0095F6] hover:text-[#0095F6] font-medium transition-colors mb-6 group text-sm"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to News Feed
         </button>
 
         {/* Dedicated Premium News Card */}
-        <article className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-3xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card overflow-hidden">
+        <article className="bg-white dark:bg-neutral-800 dark:bg-black rounded-3xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card overflow-hidden">
           {item.image && (
             <div className="w-full h-64 md:h-[400px] bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000] relative overflow-hidden flex items-center justify-center">
               <img 
@@ -219,7 +219,7 @@ export default function NewsDetailPage() {
                 </span>
               )}
               <span className="text-neutral-300 dark:text-neutral-700 discuss:text-[#333333] hidden md:inline">|</span>
-              <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+              <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                 <Calendar className="w-3.5 h-3.5" />
                 {new Date(item.createdAt).toLocaleDateString(undefined, {
                   year: 'numeric',
@@ -230,29 +230,29 @@ export default function NewsDetailPage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl md:text-4xl font-extrabold text-neutral-900 dark:text-neutral-50 discuss:text-white tracking-tight leading-tight mb-6">
+            <h1 className="text-2xl md:text-4xl font-extrabold text-neutral-900 dark:text-neutral-50 dark:text-white tracking-tight leading-tight mb-6">
               {item.title}
             </h1>
 
             {/* Description / Body */}
-            <div className="text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] text-base leading-relaxed whitespace-pre-wrap font-normal border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#262626] pt-6 md:pt-8 min-h-[150px]">
+            <div className="text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] text-base leading-relaxed whitespace-pre-wrap font-normal border-t border-neutral-100 dark:border-neutral-700 dark:border-[#262626] pt-6 md:pt-8 min-h-[150px]">
               <LinkifiedText text={item.description} />
             </div>
 
             {/* Footer and sharing */}
-            <div className="flex justify-between items-center mt-10 pt-6 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#262626]">
+            <div className="flex justify-between items-center mt-10 pt-6 border-t border-neutral-100 dark:border-neutral-700 dark:border-[#262626]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm select-none">
+                <div className="w-8 h-8 rounded-full bg-[#0095F6] bg-[#0095F6] flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm select-none">
                   {item.author ? item.author.charAt(0) : 'D'}
                 </div>
-                <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5]">
+                <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white">
                   {item.author || 'Discuss Team'}
                 </span>
               </div>
               
               <Button 
                 onClick={() => setShowShareModal(true)}
-                className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm"
+                className="bg-[#0095F6] bg-[#0095F6] text-white hover:bg-[#1877F2] hover:bg-[#1877F2] rounded-xl px-4 py-2 text-sm font-semibold transition-all shadow-sm"
               >
                 <Share2 className="w-4 h-4 mr-2" /> Share News
               </Button>

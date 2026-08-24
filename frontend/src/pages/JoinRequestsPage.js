@@ -162,29 +162,29 @@ export default function JoinRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-3" />
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading requests...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Loading requests...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate('/chat')}
-            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]"
           >
             <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
-          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">
             View / Manage Requests
           </h1>
           {totalRequests > 0 && (
@@ -195,8 +195,8 @@ export default function JoinRequestsPage() {
         </div>
 
         {totalRequests === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
               No pending requests
             </p>
           </div>
@@ -213,15 +213,15 @@ export default function JoinRequestsPage() {
                     const group = groups.find(g => g.groupId === groupId);
                     
                     return (
-                      <div key={groupId} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-4">
-                        <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-3">
+                      <div key={groupId} className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-4">
+                        <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-3">
                           {group?.groupName}
                         </h3>
                         <div className="space-y-2">
                           {groupRequests.map(request => {
                             const details = userDetails[request.userId];
                             return (
-                              <div key={request.userId} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700 discuss:bg-[#262626] rounded-lg">
+                              <div key={request.userId} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700 dark:bg-[#1A1A1A] rounded-lg">
                                 <div className="flex items-center gap-3">
                                   <UserAvatar
                                     userId={request.userId}
@@ -231,7 +231,7 @@ export default function JoinRequestsPage() {
                                   />
                                   <div>
                                     <div className="flex items-center gap-1">
-                                      <button onClick={() => navigate(`/user/${request.userId}`, { state: { from: location.pathname } })} className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] hover:underline text-left">
+                                      <button onClick={() => navigate(`/user/${request.userId}`, { state: { from: location.pathname } })} className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 dark:text-white hover:underline text-left">
                                         @{details?.username || 'User'}
                                       </button>
                                       {details?.verified && <VerifiedBadge size="sm" />}
@@ -269,14 +269,14 @@ export default function JoinRequestsPage() {
                     const gInfo = inviteGroupDetails[inv.groupId];
                     const adminInfo = userDetails[inv.invitedBy];
                     return (
-                      <div key={inv.groupId} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div key={inv.groupId} className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                          <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                          <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">
                             {gInfo?.name || 'Loading group...'}
                           </h3>
                           <p className="text-sm flex items-center gap-1 mt-1">
                             <span className="text-neutral-500 dark:text-neutral-400">Invited by </span>
-                            <button onClick={() => adminInfo?.id && navigate(`/user/${adminInfo.id}`, { state: { from: location.pathname } })} className="font-medium text-[#2563EB] discuss:text-[#EF4444] hover:underline">
+                            <button onClick={() => adminInfo?.id && navigate(`/user/${adminInfo.id}`, { state: { from: location.pathname } })} className="font-medium text-[#0095F6] text-[#0095F6] hover:underline">
                               @{adminInfo?.username || 'Admin'}
                             </button>
                             {adminInfo?.verified && <VerifiedBadge size="sm" />}

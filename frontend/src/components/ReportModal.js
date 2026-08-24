@@ -65,11 +65,11 @@ export default function ReportModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && !submitting && onClose()}>
-      <DialogContent className="max-w-md w-[95vw] rounded-2xl bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-[#334155] discuss:border-[#333333] p-6 shadow-2xl overflow-hidden">
+      <DialogContent className="max-w-md w-[95vw] rounded-2xl bg-white dark:bg-[#1E293B] dark:bg-black border border-neutral-200 dark:border-[#334155] dark:border-[#262626] p-6 shadow-2xl overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-red-600 to-indigo-600" />
         
         <DialogHeader className="space-y-2">
-          <DialogTitle className="text-lg font-bold text-neutral-900 dark:text-neutral-50 discuss:text-white flex items-center gap-2">
+          <DialogTitle className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
             <span>Confirm Community Report</span>
           </DialogTitle>
@@ -79,12 +79,12 @@ export default function ReportModal({
         </DialogHeader>
 
         <div className="my-4 space-y-4 no-copy">
-          <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/40 discuss:bg-[#262626] rounded-xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#333333]">
+          <div className="p-3.5 bg-neutral-50 dark:bg-neutral-800/40 dark:bg-[#1A1A1A] rounded-xl border border-neutral-100 dark:border-neutral-800 dark:border-[#262626]">
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 block mb-1">
               Report Target Details
             </span>
-            <div className="text-[13px] text-neutral-700 dark:text-neutral-200 discuss:text-[#E5E7EB] font-bold leading-snug">
-              <span className="text-[#2563EB] discuss:text-[#EF4444] font-medium mr-1.5">[{getTargetTypeLabel()}]</span>
+            <div className="text-[13px] text-neutral-700 dark:text-neutral-200 dark:text-neutral-200 font-bold leading-snug">
+              <span className="text-[#0095F6] text-[#0095F6] font-medium mr-1.5">[{getTargetTypeLabel()}]</span>
               {targetTitleOrName || 'Unnamed Content'}
             </div>
             <div className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 font-mono">
@@ -106,7 +106,7 @@ export default function ReportModal({
               onChange={(e) => setComment(e.target.value.slice(0, 100))}
               placeholder="Why are you reporting this? Add additional context (up to 100 characters)..."
               disabled={submitting}
-              className="bg-neutral-50 dark:bg-[#0F172A] border-neutral-200 dark:border-[#334155] focus:border-[#3B82F6] dark:text-[#F1F5F9] discuss:text-[#E5E7EB] text-[13px] rounded-xl placeholder:text-neutral-400 resize-none h-24"
+              className="bg-neutral-50 dark:bg-[#0F172A] border-neutral-200 dark:border-[#334155] focus:border-[#3B82F6] dark:text-[#F1F5F9] dark:text-neutral-200 text-[13px] rounded-xl placeholder:text-neutral-400 resize-none h-24"
             />
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function ReportModal({
             variant="outline"
             disabled={submitting}
             onClick={onClose}
-            className="rounded-xl border-neutral-200 dark:border-neutral-700 dark:text-[#F1F5F9] discuss:bg-[#262626] discuss:border-[#333333] hover:bg-neutral-100 font-bold text-xs"
+            className="rounded-xl border-neutral-200 dark:border-neutral-700 dark:text-[#F1F5F9] dark:bg-[#1A1A1A] dark:border-[#262626] hover:bg-neutral-100 font-bold text-xs"
           >
             Cancel
           </Button>

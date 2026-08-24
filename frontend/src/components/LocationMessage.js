@@ -16,7 +16,7 @@ export default function LocationMessage({ location, isOwn }) {
         className={`cursor-pointer rounded-xl overflow-hidden border transition-all hover:scale-[1.02] active:scale-[0.98] ${
           isOwn 
             ? 'bg-white/10 border-white/20' 
-            : 'bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#262626] border-neutral-200 dark:border-neutral-800'
+            : 'bg-neutral-50 dark:bg-neutral-900 dark:bg-[#1A1A1A] border-neutral-200 dark:border-neutral-800'
         }`}
       >
         {/* Map Placeholder/Preview */}

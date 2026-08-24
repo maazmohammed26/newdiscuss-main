@@ -290,13 +290,13 @@ Instructions:
             absolute md:static inset-y-0 left-0 z-50
             w-72 shrink-0 flex flex-col
             bg-white dark:bg-[#1E293B] discuss:bg-[#111116]
-            border-r border-neutral-200 dark:border-neutral-800 discuss:border-white/5
+            border-r border-neutral-200 dark:border-neutral-800 dark:border-[#262626]
             transition-transform duration-300 ease-in-out
             ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}
         >
           {/* Sidebar New Chat */}
-          <div className="p-4 flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 discuss:border-white/5">
+          <div className="p-4 flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 dark:border-[#262626]">
             <button
               onClick={() => handleNewChat()}
               className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-blue-600 hover:opacity-90 text-white rounded-xl font-semibold transition-all shadow-sm text-sm"
@@ -351,7 +351,7 @@ Instructions:
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
           {/* Mobile Sub-Header */}
-          <div className="md:hidden flex items-center px-3 py-2.5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-white/5 bg-white dark:bg-neutral-900 discuss:bg-[#111116] shrink-0 gap-2">
+          <div className="md:hidden flex items-center px-3 py-2.5 border-b border-neutral-200 dark:border-neutral-800 dark:border-[#262626] bg-white dark:bg-neutral-900 discuss:bg-[#111116] shrink-0 gap-2">
             <button
               onClick={() => setShowSidebar(true)}
               className="p-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
@@ -382,18 +382,18 @@ Instructions:
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white dark:border-neutral-900" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-neutral-900 dark:text-white discuss:text-white mb-2">How can I help you today?</h2>
+                  <h2 className="text-xl font-bold text-neutral-900 dark:text-white dark:text-white mb-2">How can I help you today?</h2>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed mb-4">
                     Ask me to write code, debug issues, explain concepts, or summarize posts. I am also connected to your <span className="font-bold text-[#8B5CF6]">TalentGraph</span>: ask me to match developers, suggest co-founders, or recall past activity memory.
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-sm mx-auto">
-                    <button type="button" onClick={() => sendMessage("Recommend collaborator matches based on my skills")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 discuss:border-white/5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
+                    <button type="button" onClick={() => sendMessage("Recommend collaborator matches based on my skills")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
                       👥 Matches
                     </button>
-                    <button type="button" onClick={() => sendMessage("Help me build a team for a Python AI project")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 discuss:border-white/5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
+                    <button type="button" onClick={() => sendMessage("Help me build a team for a Python AI project")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
                       🚀 Team Builder
                     </button>
-                    <button type="button" onClick={() => sendMessage("What was my last action recorded in my memory?")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 discuss:border-white/5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
+                    <button type="button" onClick={() => sendMessage("What was my last action recorded in my memory?")} className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 cursor-pointer transition-all">
                       🧠 Recall Memory
                     </button>
                   </div>
@@ -416,7 +416,7 @@ Instructions:
                     <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words break-all shadow-sm ${
                       msg.role === 'user'
                         ? 'bg-gradient-to-br from-[#8B5CF6] to-blue-600 text-white rounded-tr-sm'
-                        : 'bg-white dark:bg-neutral-800 discuss:bg-[#1A1A24] text-neutral-800 dark:text-neutral-200 discuss:text-neutral-300 border border-neutral-100 dark:border-neutral-700 discuss:border-white/5 rounded-tl-sm'
+                        : 'bg-white dark:bg-neutral-800 discuss:bg-[#1A1A24] text-neutral-800 dark:text-neutral-200 dark:text-neutral-300 border border-neutral-100 dark:border-neutral-700 dark:border-[#262626] rounded-tl-sm'
                     }`}>
                       {msg.content}
                     </div>
@@ -430,7 +430,7 @@ Instructions:
                 <div className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-[#8B5CF6] to-blue-600 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="px-5 py-4 rounded-2xl bg-white dark:bg-neutral-800 discuss:bg-[#1A1A24] border border-neutral-100 dark:border-neutral-700 discuss:border-white/5 rounded-tl-sm flex items-center gap-1.5 shadow-sm">
+                <div className="px-5 py-4 rounded-2xl bg-white dark:bg-neutral-800 discuss:bg-[#1A1A24] border border-neutral-100 dark:border-neutral-700 dark:border-[#262626] rounded-tl-sm flex items-center gap-1.5 shadow-sm">
                   <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} className="w-2 h-2 bg-[#8B5CF6] rounded-full" />
                   <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-[#8B5CF6] rounded-full" />
                   <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-[#8B5CF6] rounded-full" />
@@ -441,7 +441,7 @@ Instructions:
           </div>
 
           {/* Input Area — always sticks to bottom */}
-          <div className="shrink-0 px-3 py-3 bg-white dark:bg-neutral-900 discuss:bg-[#0c0c12] border-t border-neutral-200 dark:border-neutral-800 discuss:border-white/5">
+          <div className="shrink-0 px-3 py-3 bg-white dark:bg-neutral-900 discuss:bg-[#0c0c12] border-t border-neutral-200 dark:border-neutral-800 dark:border-[#262626]">
             <div className="max-w-3xl mx-auto mb-2 flex justify-between items-center px-1">
               <span className="text-[10px] text-neutral-400 font-medium">Powered by AI Models</span>
               <select 
@@ -488,7 +488,7 @@ Instructions:
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
-        <AlertDialogContent className="bg-white dark:bg-neutral-900 discuss:bg-[#121212] border-neutral-200 dark:border-neutral-800 discuss:border-neutral-800 rounded-2xl max-w-sm">
+        <AlertDialogContent className="bg-white dark:bg-neutral-900  border-neutral-200 dark:border-neutral-800 discuss:border-neutral-800 rounded-2xl max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-neutral-900 dark:text-neutral-100 font-bold">Delete Conversation</AlertDialogTitle>
             <AlertDialogDescription className="text-neutral-500 dark:text-neutral-400 font-medium">

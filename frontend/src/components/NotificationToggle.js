@@ -34,7 +34,7 @@ export default function NotificationToggle({ compact = false }) {
   const [previewEnabled, setPreviewEnabled] = useState(isNotificationPreviewEnabled());
   const [isAndroidApp, setIsAndroidApp] = useState(false);
   const { theme } = useTheme();
-  const isBlack = theme === 'discuss-black';
+  const isBlack = false;
   
   useEffect(() => {
     const checkStatus = async () => {
@@ -207,9 +207,9 @@ export default function NotificationToggle({ compact = false }) {
                     <Info className="h-4 w-4" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72 text-sm bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] p-4 text-left" align="start">
+                <PopoverContent className="w-72 text-sm bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] p-4 text-left" align="start">
                   <div className="space-y-2">
-                    <p className="font-medium text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">About Notifications</p>
+                    <p className="font-medium text-neutral-900 dark:text-neutral-50 dark:text-white">About Notifications</p>
                     <ul className="text-muted-foreground text-xs space-y-1">
                       <li>• Notifications are synced in real-time.</li>
                       <li>• Firebase auth-linked device segments are delivered automatically.</li>
@@ -261,7 +261,7 @@ export default function NotificationToggle({ compact = false }) {
               {previewEnabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
             </div>
             <div>
-              <p className="font-semibold text-xs text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5]" style={titleStyle}>Message Previews</p>
+              <p className="font-semibold text-xs text-neutral-800 dark:text-neutral-200 dark:text-white" style={titleStyle}>Message Previews</p>
               <p className="text-[10px] text-muted-foreground leading-relaxed max-w-[200px]" style={subStyle}>
                 {previewEnabled ? 'Display sender names and text previews in alerts' : 'Hide alert details for secure lock screen privacy'}
               </p>

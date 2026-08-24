@@ -118,7 +118,7 @@ export default function DiscussSherlockPage() {
           <div className="flex justify-center mt-6">
             <button 
               onClick={() => setHistoryOpen(true)}
-              className="flex items-center gap-2 text-sm font-bold text-neutral-500 hover:text-blue-600 discuss:hover:text-red-500 transition-colors bg-white/50 dark:bg-black/20 discuss:bg-white/5 px-5 py-2.5 rounded-full border border-neutral-200 dark:border-neutral-800 discuss:border-white/5 shadow-sm active:scale-95"
+              className="flex items-center gap-2 text-sm font-bold text-neutral-500 hover:text-blue-600 discuss:hover:text-red-500 transition-colors bg-white/50 dark:bg-black/20 discuss:bg-white/5 px-5 py-2.5 rounded-full border border-neutral-200 dark:border-neutral-800 dark:border-[#262626] shadow-sm active:scale-95"
             >
               <History className="w-4 h-4" />
               View Search History
@@ -140,7 +140,7 @@ export default function DiscussSherlockPage() {
                   <div>
                     <h2 className="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-3">
                       @{username}
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 discuss:bg-white/10 text-neutral-600 dark:text-neutral-300 border border-neutral-200/50 dark:border-neutral-700/50 discuss:border-white/5 shadow-sm">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 discuss:bg-white/10 text-neutral-600 dark:text-neutral-300 border border-neutral-200/50 dark:border-neutral-700/50 dark:border-[#262626] shadow-sm">
                         {foundCount} Found
                       </span>
                     </h2>

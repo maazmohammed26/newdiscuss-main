@@ -56,7 +56,7 @@ export default function TermsModal({ open, onClose, onAccept, showAcceptButton =
 
             <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
               <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <Database className="w-4 h-4 text-[#2563EB]" />
+                <Database className="w-4 h-4 text-[#0095F6]" />
                 Firebase Database Usage
               </h3>
               <p className="text-xs text-gray-400">
@@ -81,7 +81,7 @@ export default function TermsModal({ open, onClose, onAccept, showAcceptButton =
 
             <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
               <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <Smartphone className="w-4 h-4 text-[#2563EB]" />
+                <Smartphone className="w-4 h-4 text-[#0095F6]" />
                 Progressive Web App (PWA) Enabled
               </h3>
               <p className="text-xs text-gray-400">
@@ -117,7 +117,7 @@ export default function TermsModal({ open, onClose, onAccept, showAcceptButton =
 
             <div className="bg-gradient-to-r from-[#DC2626]/10 to-[#2563EB]/10 rounded-xl p-4 border border-white/5">
               <p className="text-xs text-white font-semibold flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#2563EB]" />
+                <CheckCircle className="w-4 h-4 text-[#0095F6]" />
                 By accepting these terms, you acknowledge that you have read, understood, and agree to be bound by all the conditions stated above.
               </p>
             </div>

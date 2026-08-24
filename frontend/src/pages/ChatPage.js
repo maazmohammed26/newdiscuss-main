@@ -423,11 +423,11 @@ export default function ChatPage() {
         onClick={() => handleChatClick(chat.otherUser)}
         className={`w-full flex items-center gap-3 p-3 rounded-[12px] transition-all ${
           isBlocked 
-            ? 'bg-neutral-50/50 dark:bg-neutral-800/50 discuss:bg-[#1a1a1a]/50 opacity-60'
+            ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'
             : hasUnread
-              ? 'bg-[#2563EB]/5 dark:bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 border-[#2563EB]/30 dark:border-[#2563EB]/30 discuss:border-[#EF4444]/30'
-              : 'bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:shadow-card-hover dark:hover:shadow-none'
-        } border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
+              ? 'bg-[#0095F6]/5 dark:bg-[#0095F6]/10 bg-[#0095F6]/10 border-[#0095F6]/30 dark:border-[#0095F6]/30 discuss:border-[#EF4444]/30'
+              : 'bg-white dark:bg-neutral-800 dark:bg-black hover:shadow-card-hover dark:hover:shadow-none'
+        } border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
       >
         <div className="relative shrink-0">
           <UserAvatar
@@ -445,7 +445,7 @@ export default function ChatPage() {
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 min-w-0">
-              <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white discuss:text-white' : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'}`}>
+              <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white dark:text-white' : 'text-neutral-900 dark:text-neutral-50 dark:text-white'}`}>
                 <span>@{otherUser.username}</span>
               </span>
               {otherUser.verified && <VerifiedBadge size="sm" />}
@@ -456,12 +456,12 @@ export default function ChatPage() {
                 </span>
               )}
             </div>
-            <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs shrink-0">
+            <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs shrink-0">
               <span>{formatTime(chat.lastMessageTime)}</span>
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
-            <p className={`text-xs truncate ${isDeletedMessage ? 'italic text-neutral-400 dark:text-neutral-500' : ''} ${hasUnread ? 'text-neutral-900 dark:text-neutral-200 discuss:text-[#E5E7EB] font-medium' : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]'}`}>
+            <p className={`text-xs truncate ${isDeletedMessage ? 'italic text-neutral-400 dark:text-neutral-500' : ''} ${hasUnread ? 'text-neutral-900 dark:text-neutral-200 dark:text-neutral-200 font-medium' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400'}`}>
               {displayMessage}
             </p>
           </div>
@@ -488,11 +488,11 @@ export default function ChatPage() {
         onClick={() => handleGroupClick(group.groupId)}
         className={`w-full flex items-center gap-3 p-3 rounded-[12px] transition-all ${
           isDeleted 
-            ? 'bg-neutral-50/50 dark:bg-neutral-800/50 discuss:bg-[#1a1a1a]/50 opacity-60'
+            ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'
             : hasUnread
-              ? 'bg-[#2563EB]/5 dark:bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 border-[#2563EB]/30 dark:border-[#2563EB]/30 discuss:border-[#EF4444]/30'
-              : 'bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:shadow-card-hover dark:hover:shadow-none'
-        } border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
+              ? 'bg-[#0095F6]/5 dark:bg-[#0095F6]/10 bg-[#0095F6]/10 border-[#0095F6]/30 dark:border-[#0095F6]/30 discuss:border-[#EF4444]/30'
+              : 'bg-white dark:bg-neutral-800 dark:bg-black hover:shadow-card-hover dark:hover:shadow-none'
+        } border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
       >
         <div className="relative shrink-0">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -508,7 +508,7 @@ export default function ChatPage() {
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white discuss:text-white' : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'}`}>
+              <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white dark:text-white' : 'text-neutral-900 dark:text-neutral-50 dark:text-white'}`}>
                 <span>{group.groupName}</span>
               </span>
               <span
@@ -520,12 +520,12 @@ export default function ChatPage() {
                 <span>Group Chat</span>
               </span>
             </div>
-            <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs shrink-0">
+            <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs shrink-0">
               <span>{formatTime(group.lastMessageTime || group.joinedAt)}</span>
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
-            <p className={`text-xs truncate ${isDeletedMessage ? 'italic text-neutral-400 dark:text-neutral-500' : ''} ${hasUnread ? 'text-neutral-900 dark:text-neutral-200 discuss:text-[#E5E7EB] font-medium' : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]'}`}>
+            <p className={`text-xs truncate ${isDeletedMessage ? 'italic text-neutral-400 dark:text-neutral-500' : ''} ${hasUnread ? 'text-neutral-900 dark:text-neutral-200 dark:text-neutral-200 font-medium' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400'}`}>
               {displayMessage}
             </p>
           </div>
@@ -541,7 +541,7 @@ export default function ChatPage() {
       <button
         key={friend.id}
         onClick={() => handleStartNewChat(friend.id)}
-        className="w-full flex items-center gap-3 p-3 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] hover:shadow-card-hover dark:hover:shadow-none transition-all border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card"
+        className="w-full flex items-center gap-3 p-3 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] hover:shadow-card-hover dark:hover:shadow-none transition-all border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card"
       >
         <UserAvatar
           src={friend.photo_url}
@@ -551,17 +551,17 @@ export default function ChatPage() {
         
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-1">
-            <span className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-sm truncate">
+            <span className="font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white text-sm truncate">
               <span>@{friend.username}</span>
             </span>
             {friend.verified && <VerifiedBadge size="sm" />}
           </div>
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs">
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
             <span>Friends since {new Date(friend.since).toLocaleDateString([], { month: 'short', year: 'numeric' })}</span>
           </p>
         </div>
 
-        <MessageSquarePlus className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444] shrink-0" />
+        <MessageSquarePlus className="w-5 h-5 text-[#0095F6] text-[#0095F6] shrink-0" />
       </button>
     );
   };
@@ -584,7 +584,7 @@ export default function ChatPage() {
                       groups.reduce((sum, g) => sum + (g.unreadCount || 0), 0);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  pb-28">
       <Header />
       
       <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
@@ -595,18 +595,18 @@ export default function ChatPage() {
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => navigate('/feed')}
-            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] transition-colors border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] flex-1">
+          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white flex-1">
             <span>Messages</span>
           </h1>
           
           {/* Three-dot menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] transition-colors border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+              <button className="relative p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
                 <MoreVertical className="w-5 h-5" />
                 {pendingGroupRequests > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-neutral-50 dark:border-neutral-900 discuss:border-[#121212]"></span>
@@ -634,13 +634,13 @@ export default function ChatPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+        <div className="flex mb-4 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
           <button
             onClick={() => { setActiveTab('chats'); setSearchQuery(''); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
               activeTab === 'chats'
-                ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]'
+                ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
+                : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
             }`}
           >
             <MessageCircle className="w-4 h-4" />
@@ -655,13 +655,13 @@ export default function ChatPage() {
             onClick={() => { setActiveTab('friends'); setSearchQuery(''); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
               activeTab === 'friends'
-                ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]'
+                ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
+                : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
             }`}
           >
             <Users className="w-4 h-4" />
             <span>Friends</span>
-            <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[10px] px-1.5 py-0.5 rounded-full">
+            <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[10px] px-1.5 py-0.5 rounded-full">
               {friends.length}
             </span>
           </button>
@@ -670,17 +670,17 @@ export default function ChatPage() {
         {/* Search bar */}
         <div className="mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'chats' ? 'Search chats and groups...' : 'Search friends...'}
-              className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-[6px] text-sm h-10"
+              className="pl-10 pr-10 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-[6px] text-sm h-10"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -691,49 +691,49 @@ export default function ChatPage() {
         {/* Content */}
         {loading ? (
           <div className="space-y-2 py-4">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mb-3 flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mb-3 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-[#0095F6] text-[#0095F6]" />
               <span>{activeTab === 'chats' ? 'Syncing chats…' : 'Loading friends…'}</span>
             </p>
             {(activeTab === 'chats' ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4]).map((i) => (
               <div
                 key={i}
-                className="w-full flex items-center gap-3 p-3 rounded-[12px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] animate-pulse"
+                className="w-full flex items-center gap-3 p-3 rounded-[12px] bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] animate-pulse"
               >
                 <div className="w-12 h-12 rounded-full bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 w-1/3 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] rounded" />
-                  <div className="h-2 w-2/3 bg-neutral-100 dark:bg-neutral-600 discuss:bg-[#262626] rounded" />
+                  <div className="h-2 w-2/3 bg-neutral-100 dark:bg-neutral-600 dark:bg-[#1A1A1A] rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : displayData.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
             {searchQuery ? (
               <>
-                <Search className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
-                <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
+                <Search className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
+                <h3 className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-1">
                   <span>No results found</span>
                 </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
                   <span>Try a different search term</span>
                 </p>
               </>
             ) : activeTab === 'chats' ? (
               <>
-                <MessageCircle className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
-                <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
+                <MessageCircle className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
+                <h3 className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-1">
                   <span>No chats yet</span>
                 </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm mb-4">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm mb-4">
                   <span>Start a conversation with friends or create a group</span>
                 </p>
                 <div className="flex gap-2 justify-center">
                   {friends.length > 0 && (
                     <Button
                       onClick={() => setActiveTab('friends')}
-                      className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-[6px] shadow-button"
+                      className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-[6px] shadow-button"
                     >
                       <Users className="w-4 h-4 mr-2" />
                       <span>View Friends</span>
@@ -742,7 +742,7 @@ export default function ChatPage() {
                   <Button
                     onClick={() => setCreateGroupOpen(true)}
                     variant="outline"
-                    className="border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[6px]"
+                    className="border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-[6px]"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     <span>Create Group</span>
@@ -751,16 +751,16 @@ export default function ChatPage() {
               </>
             ) : (
               <>
-                <Users className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
-                <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
+                <Users className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
+                <h3 className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-1">
                   <span>No friends yet</span>
                 </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm mb-4">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm mb-4">
                   <span>Find people to connect with</span>
                 </p>
                 <Button
                   onClick={() => navigate('/profile')}
-                  className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-[6px] shadow-button"
+                  className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-[6px] shadow-button"
                 >
                   <span>Find Friends</span>
                 </Button>
@@ -793,9 +793,9 @@ export default function ChatPage() {
 
       {/* Search Public Groups Dialog */}
       <Dialog open={searchGroupsOpen} onOpenChange={setSearchGroupsOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a]">
+        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-neutral-800 dark:bg-black">
           <DialogHeader>
-            <DialogTitle className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+            <DialogTitle className="text-neutral-900 dark:text-neutral-50 dark:text-white">
               Search Public Groups
             </DialogTitle>
             <DialogDescription className="text-neutral-500 dark:text-neutral-400">
@@ -813,14 +813,14 @@ export default function ChatPage() {
                   handleSearchGroups(e.target.value);
                 }}
                 placeholder="Search groups..."
-                className="pl-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a]"
+                className="pl-10 bg-white dark:bg-neutral-800 dark:bg-black"
               />
             </div>
             
             <div className="max-h-[400px] overflow-y-auto space-y-2">
               {searchingGroups ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6]" />
                 </div>
               ) : publicGroups.length === 0 ? (
                 <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
@@ -830,7 +830,7 @@ export default function ChatPage() {
                 publicGroups.map(group => (
                   <div
                     key={group.id}
-                    className="p-3 bg-neutral-50 dark:bg-neutral-700 discuss:bg-[#262626] rounded-lg flex items-center justify-between"
+                    className="p-3 bg-neutral-50 dark:bg-neutral-700 dark:bg-[#1A1A1A] rounded-lg flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -839,7 +839,7 @@ export default function ChatPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                        <p className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 dark:text-white">
                           {group.name}
                         </p>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -861,7 +861,7 @@ export default function ChatPage() {
                       <Button
                         size="sm"
                         onClick={() => handleJoinRequest(group.id)}
-                        className="bg-[#2563EB] discuss:bg-[#EF4444] text-white text-xs"
+                        className="bg-[#0095F6] bg-[#0095F6] text-white text-xs"
                       >
                         Request to Join
                       </Button>

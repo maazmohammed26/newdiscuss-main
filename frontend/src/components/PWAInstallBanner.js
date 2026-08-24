@@ -123,7 +123,7 @@ export default function PWAInstallBanner() {
             onClick={handleInstall}
             disabled={isInstalling}
             size="sm"
-            className="bg-[#181818] border border-white/5 text-white hover:bg-[#202020] hover:border-[#2563EB]/40 rounded-xl font-bold transition-all shadow-inner h-9"
+            className="bg-[#181818] border border-white/5 text-white hover:bg-[#202020] hover:border-[#0095F6]/40 rounded-xl font-bold transition-all shadow-inner h-9"
           >
             {isInstalling ? (
               <span className="flex items-center gap-1.5">

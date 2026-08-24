@@ -84,7 +84,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
         {!showRetry && (
           <Loader2
             size={16}
-            className="animate-spin flex-shrink-0 text-[#2563EB]"
+            className="animate-spin flex-shrink-0 text-[#0095F6]"
           />
         )}
         {showRetry && (
@@ -132,7 +132,7 @@ export default function LoadingScreen({ message = 'Loading...' }) {
             }}
           />
           <div
-            className="w-3.5 h-3.5 bg-[#2563EB] rounded-full animate-bounce shadow-[0_0_12px_rgba(37,99,235,0.5)]"
+            className="w-3.5 h-3.5 bg-[#0095F6] rounded-full animate-bounce shadow-[0_0_12px_rgba(37,99,235,0.5)]"
             style={{
               animationDelay: '150ms',
               opacity: showSlowWarning ? 0.35 : 1,

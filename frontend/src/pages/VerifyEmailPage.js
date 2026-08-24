@@ -322,7 +322,7 @@ export default function VerifyEmailPage() {
                 <div className="bg-[#181818] border border-white/5 rounded-2xl p-4 max-w-sm mx-auto">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Redirecting shortly</p>
                   <p className="text-white text-sm font-bold">
-                    Redirecting to login in <span className="text-[#2563EB] text-base font-black px-1 animate-bounce inline-block">{countdown}</span> seconds...
+                    Redirecting to login in <span className="text-[#0095F6] text-base font-black px-1 animate-bounce inline-block">{countdown}</span> seconds...
                   </p>
                 </div>
 
@@ -352,14 +352,14 @@ export default function VerifyEmailPage() {
                 <div className="flex flex-col gap-3 pt-4">
                   <Button 
                     onClick={() => { setStatus('otp-entry'); setErrorMessage(''); }}
-                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#2563EB]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all"
+                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#0095F6]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all"
                   >
                     Go Back to Verification Screen
                   </Button>
                   
                   <Link 
                     to="/register" 
-                    className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold text-xs transition-colors"
+                    className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold text-xs transition-colors"
                   >
                     Create a new account
                   </Link>
@@ -368,8 +368,8 @@ export default function VerifyEmailPage() {
             ) : (
               /* Verification Screen */
               <div className="space-y-6 py-4 animate-fade-in">
-                <div className="w-14 h-14 bg-[#2563EB]/10 rounded-2xl flex items-center justify-center mx-auto border border-[#2563EB]/25 mb-2">
-                  <Mail className="w-6 h-6 text-[#2563EB]" />
+                <div className="w-14 h-14 bg-[#0095F6]/10 rounded-2xl flex items-center justify-center mx-auto border border-[#0095F6]/25 mb-2">
+                  <Mail className="w-6 h-6 text-[#0095F6]" />
                 </div>
 
                 <div>
@@ -443,7 +443,7 @@ export default function VerifyEmailPage() {
                     <Button
                       onClick={handleTriggerOtp}
                       disabled={!canSendOtp || sendingOtp}
-                      className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[14px] hover:border-[#2563EB]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[14px] hover:border-[#0095F6]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {sendingOtp ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -454,7 +454,7 @@ export default function VerifyEmailPage() {
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-3.5 h-3.5 text-[#2563EB]" />
+                          <Sparkles className="w-3.5 h-3.5 text-[#0095F6]" />
                           <span>Send OTP to Email</span>
                         </>
                       )}

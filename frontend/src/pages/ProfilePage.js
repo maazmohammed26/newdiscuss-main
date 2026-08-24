@@ -1306,7 +1306,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 md:py-10 pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
@@ -1314,12 +1314,12 @@ export default function ProfilePage() {
           <div className="min-w-0 flex-1">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] text-[13px] font-medium mb-4 transition-colors"
+          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
         {/* Profile Card */}
-        <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:shadow-none discuss:shadow-none border discuss:border discuss:border-[#333333] p-8 text-center relative rounded-2xl">
+        <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:shadow-none discuss:shadow-none border discuss:border dark:border-[#262626] p-8 text-center relative rounded-2xl">
           
           {/* Top Right Icons - Share & Info */}
           <div className="absolute top-4 right-4 flex items-center gap-1">
@@ -1327,7 +1327,7 @@ export default function ProfilePage() {
               <Popover open={adminPopoverOpen} onOpenChange={handleAdminPopoverToggle}>
                 <PopoverTrigger asChild>
                   <button
-                    className="relative p-2 rounded-full bg-[#EEF2FF] dark:bg-[#0F172A] discuss:bg-[#262626] border border-[#C7D2FE]/70 dark:border-white/20 discuss:border-[#333333] text-[#4338CA] dark:text-[#A5B4FC] discuss:text-[#F5F5F5] hover:scale-105 transition-all shadow-[0_0_16px_rgba(99,102,241,0.18)]"
+                    className="relative p-2 rounded-full bg-[#EEF2FF] dark:bg-[#0F172A] dark:bg-[#1A1A1A] border border-[#C7D2FE]/70 dark:border-white/20 dark:border-[#262626] text-[#4338CA] dark:text-[#A5B4FC] dark:text-white hover:scale-105 transition-all shadow-[0_0_16px_rgba(99,102,241,0.18)]"
                     title="Admin Message"
                     aria-label="Admin Message"
                   >
@@ -1337,14 +1337,14 @@ export default function ProfilePage() {
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0 bg-white/95 dark:bg-[#101827]/95 discuss:bg-[#1E1E1E]/95 backdrop-blur-xl border border-[#C7D2FE]/50 dark:border-white/15 discuss:border-[#333333] rounded-xl shadow-[0_24px_48px_rgba(15,23,42,0.32)]" align="end">
-                  <div className="p-3.5 border-b border-[#E2E8F0] dark:border-white/10 discuss:border-[#333333] flex items-center gap-2">
+                <PopoverContent className="w-80 p-0 bg-white/95 dark:bg-[#101827]/95 discuss:bg-[#1E1E1E]/95 backdrop-blur-xl border border-[#C7D2FE]/50 dark:border-white/15 dark:border-[#262626] rounded-xl shadow-[0_24px_48px_rgba(15,23,42,0.32)]" align="end">
+                  <div className="p-3.5 border-b border-[#E2E8F0] dark:border-white/10 dark:border-[#262626] flex items-center gap-2">
                     <div className="p-1.5 rounded-md bg-gradient-to-tr from-[#EF4444] to-[#2563EB] text-white">
                       <Megaphone className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <p className="text-xs font-extrabold tracking-wide text-[#0F172A] dark:text-white discuss:text-[#F5F5F5]">ADMIN UPDATE</p>
-                      <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">Tech feed notification</p>
+                      <p className="text-xs font-extrabold tracking-wide text-[#0F172A] dark:text-white dark:text-white">ADMIN UPDATE</p>
+                      <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] dark:text-neutral-400">Tech feed notification</p>
                     </div>
                   </div>
                   <div className="px-3.5 py-3">
@@ -1352,12 +1352,12 @@ export default function ProfilePage() {
                       className="max-h-40 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 scrollbar-hide"
                       style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                     >
-                      <div className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] break-words whitespace-pre-wrap">
+                      <div className="text-[13px] leading-relaxed text-[#0F172A] dark:text-[#E2E8F0] dark:text-neutral-200 break-words whitespace-pre-wrap">
                         <LinkifiedText text={adminPreviewText} />
                       </div>
                     </div>
                     {adminMessageNeedsScroll && (
-                      <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+                      <p className="mt-2 text-[10px] font-semibold text-[#64748B] dark:text-[#94A3B8] dark:text-neutral-400">
                         Scroll to read full message.
                       </p>
                     )}
@@ -1368,7 +1368,7 @@ export default function ProfilePage() {
             {/* Share Button */}
             <button 
               onClick={() => setShowShareModal(true)}
-              className="p-2 rounded-full hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] discuss:hover:bg-[#262626] text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors"
+              className="p-2 rounded-full hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors"
               title="Share Profile"
             >
               <Share2 className="w-5 h-5" />
@@ -1377,28 +1377,28 @@ export default function ProfilePage() {
             {/* Info Icon */}
             <Popover>
               <PopoverTrigger asChild>
-                <button className="p-2 rounded-full hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] discuss:hover:bg-[#262626] text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors">
+                <button className="p-2 rounded-full hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors">
                   <Info className="w-5 h-5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 bg-white dark:bg-[#1E293B] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]" align="end">
+              <PopoverContent className="w-72 p-4 bg-white dark:bg-[#1E293B] dark:bg-[#1A1A1A] border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]" align="end">
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm">Profile Settings</h4>
+                  <h4 className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm">Profile Settings</h4>
                   
-                  <div className="flex items-start gap-2 text-[12px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                    <ImageIcon className="w-4 h-4 mt-0.5 shrink-0 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <div className="flex items-start gap-2 text-[12px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400">
+                    <ImageIcon className="w-4 h-4 mt-0.5 shrink-0 text-[#0095F6] text-[#0095F6]" />
                     <p>You can upload, replace, or remove your profile picture. All images are securely stored and optimized.</p>
                   </div>
                   
-                  <div className="flex items-start gap-2 text-[12px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
-                    <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <div className="flex items-start gap-2 text-[12px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400">
+                    <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-[#0095F6] text-[#0095F6]" />
                     <p>Password change is currently disabled for security reasons.</p>
                   </div>
                   
-                  <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                  <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                     <a
                       href="mailto:support@discussit.in"
-                      className="flex items-center justify-center gap-2 w-full bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white text-[12px] font-medium py-2 px-3 rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-2 w-full bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white text-[12px] font-medium py-2 px-3 rounded-lg transition-colors"
                     >
                       <Mail className="w-3.5 h-3.5" />
                       Contact Support
@@ -1413,7 +1413,7 @@ export default function ProfilePage() {
           <div className="relative group mx-auto mb-5 w-24 h-24 overflow-visible">
             <button 
               onClick={() => user?.photo_url ? setShowImagePreview(true) : null}
-              className="w-full h-full rounded-full overflow-hidden block discuss:border discuss:border-[#333333] shadow-lg discuss:shadow-none"
+              className="w-full h-full rounded-full overflow-hidden block discuss:border dark:border-[#262626] shadow-lg discuss:shadow-none"
             >
               <UserAvatar
                 src={user?.photo_url}
@@ -1431,12 +1431,12 @@ export default function ProfilePage() {
             
             <Popover>
               <PopoverTrigger asChild>
-                <button className="absolute -bottom-1 -right-1 p-1.5 bg-[#2563EB] discuss:bg-[#EF4444] text-white rounded-full shadow-lg hover:scale-110 transition-transform border-2 border-white dark:border-[#1E293B] discuss:border-[#121212] z-10">
+                <button className="absolute -bottom-1 -right-1 p-1.5 bg-[#0095F6] bg-[#0095F6] text-white rounded-full shadow-lg hover:scale-110 transition-transform border-2 border-white dark:border-[#1E293B] discuss:border-[#121212] z-10">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1E293B] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                <div className="p-3 border-b border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+              <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1E293B] dark:bg-[#1A1A1A] border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                <div className="p-3 border-b border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                   <h4 className="font-semibold text-sm">Update Profile Picture</h4>
                 </div>
                 <div className="p-3">
@@ -1489,7 +1489,7 @@ export default function ProfilePage() {
                               setSavingProfilePic(false);
                             }
                           }} 
-                          className="flex-1 bg-[#2563EB] text-white hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626]"
+                          className="flex-1 bg-[#0095F6] text-white hover:bg-[#1877F2] bg-[#0095F6] hover:bg-[#1877F2]"
                           disabled={savingProfilePic}
                         >
                           {savingProfilePic ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
@@ -1502,15 +1502,15 @@ export default function ProfilePage() {
             </Popover>
           </div>
 
-          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center justify-center gap-2">
+          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white flex items-center justify-center gap-2">
             <span>{user?.username}</span>
             {user?.verified && <VerifiedBadge size="md" />}
           </h1>
-          <p data-testid="profile-email" className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px] mt-0.5"><span>{user?.email}</span></p>
+          <p data-testid="profile-email" className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px] mt-0.5"><span>{user?.email}</span></p>
 
-          <div className="inline-flex items-center gap-2 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] discuss:border discuss:border-[#333333] px-4 py-2 mt-4 rounded-lg">
-            <FileText className="w-4 h-4 text-[#1D7AFF] discuss:text-[#EF4444]" />
-            <span data-testid="profile-post-count" className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[13px] font-semibold">
+          <div className="inline-flex items-center gap-2 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black discuss:border dark:border-[#262626] px-4 py-2 mt-4 rounded-lg">
+            <FileText className="w-4 h-4 text-[#1D7AFF] text-[#0095F6]" />
+            <span data-testid="profile-post-count" className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[13px] font-semibold">
               {loadingPosts ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : <span>{userPosts.length} Total Posts</span>}
             </span>
           </div>
@@ -1529,7 +1529,7 @@ export default function ProfilePage() {
             <Button
               onClick={() => setShowVerificationModal(true)}
               variant="outline"
-              className="mt-4 border-[#E63946] text-[#E63946] hover:bg-[#E63946]/10 dark:border-[#E63946] dark:hover:bg-[#E63946]/10 discuss:border-[#EF4444] discuss:text-[#EF4444] discuss:hover:bg-[#EF4444]/10"
+              className="mt-4 border-[#E63946] text-[#E63946] hover:bg-[#E63946]/10 dark:border-[#E63946] dark:hover:bg-[#E63946]/10 discuss:border-[#EF4444] text-[#0095F6] discuss:hover:bg-[#EF4444]/10"
             >
               <ShieldCheck className="w-4 h-4 mr-2" />
               Request Verification
@@ -1546,28 +1546,28 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== ACHIEVEMENTS & BADGES ==================== */}
-        <div className="mt-6 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+        <div className="mt-6 bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
             className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
                 <Trophy className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Discussion Achievements</h3>
-                <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
+                <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Discussion Achievements</h3>
+                <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
               </div>
             </div>
             {showAchievements ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
           </button>
 
           {showAchievements && (
-            <div className="px-6 pb-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300 space-y-5">
-              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] px-4 py-2 rounded-xl shrink-0 inline-flex items-center gap-2">
-                <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Unlocked:</span>
-                <span className="text-sm font-black text-blue-600 discuss:text-[#EF4444]">{unlockedBadgesCount} / 5</span>
+            <div className="px-6 pb-6 pt-5 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300 space-y-5">
+              <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] px-4 py-2 rounded-xl shrink-0 inline-flex items-center gap-2">
+                <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 font-bold">Unlocked:</span>
+                <span className="text-sm font-black text-blue-600 text-[#0095F6]">{unlockedBadgesCount} / 5</span>
               </div>
 
               {/* Badges Grid */}
@@ -1578,12 +1578,12 @@ export default function ProfilePage() {
                     <button
                       key={badge.id}
                       onClick={() => handleBadgeClick(badge)}
-                      className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 discuss:border-white/5 hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
+                      className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 dark:border-[#262626] hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
                     >
                       <div className="relative mb-2 shrink-0">
                         <BadgeIcon badge={badge} isLocked={isLocked} size="md" className="group-hover:scale-105 transition-transform" />
                       </div>
-                      <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 discuss:text-neutral-300 text-center line-clamp-1">
+                      <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 dark:text-neutral-300 text-center line-clamp-1">
                         {badge.badgeText}
                       </span>
                       <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-500 discuss:text-neutral-500 mt-1">
@@ -1605,25 +1605,25 @@ export default function ProfilePage() {
         <div className="mt-6 space-y-4">
 
           {/* Category 1: Profile Details */}
-          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
             <button
               onClick={() => setShowProfileSettings(!showProfileSettings)}
               className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <User className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Profile Details</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Manage your display name, bio, social links, and theme</p>
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Profile Details</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Manage your display name, bio, social links, and theme</p>
                 </div>
               </div>
               {showProfileSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
             </button>
 
             {showProfileSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 {/* Loading indicator for profile data */}
                 {loadingProfile && (
                   <div className="flex items-center justify-center gap-2 py-2">
@@ -1633,22 +1633,22 @@ export default function ProfilePage() {
                 )}
 
                 {/* Full Name Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Full Name
                       <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(optional)</span>
                     </label>
                     {!editingFullName && profileData?.fullName && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
+                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors">
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl shadow-lg">
-                          <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl shadow-lg">
+                          <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] dark:text-white focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
                             <Pencil className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setDeleteFullNameConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
@@ -1665,44 +1665,44 @@ export default function ProfilePage() {
                         value={fullNameInput} 
                         onChange={(e) => setFullNameInput(e.target.value)}
                         placeholder="Enter your full name"
-                        className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm rounded-xl"
+                        className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm rounded-xl"
                       />
                       <Button onClick={handleSaveFullName} disabled={savingFullName || !fullNameInput.trim()} size="sm"
-                        className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-xl px-3.5">
+                        className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-xl px-3.5">
                         {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       </Button>
                       <Button onClick={() => setEditingFullName(false)} size="sm" variant="outline"
-                        className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] rounded-xl px-3.5">
+                        className="border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] rounded-xl px-3.5">
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
                   ) : profileData?.fullName ? (
-                    <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm pl-6">{profileData.fullName}</p>
+                    <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm pl-6">{profileData.fullName}</p>
                   ) : (
                     <button onClick={() => { setEditingFullName(true); setFullNameInput(''); }}
-                      className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
+                      className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
                       <Plus className="w-4 h-4" /> Add full name
                     </button>
                   )}
                 </div>
 
                 {/* Bio Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Bio
                       <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {BIO_CHAR_LIMIT} chars)</span>
                     </label>
                     {!editingBio && profileData?.bio && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
+                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors">
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl shadow-lg">
-                          <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl shadow-lg">
+                          <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] dark:text-white focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
                             <Pencil className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setDeleteBioConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
@@ -1720,7 +1720,7 @@ export default function ProfilePage() {
                         onChange={(e) => setBioInput(e.target.value.slice(0, BIO_CHAR_LIMIT))}
                         placeholder="Tell us about yourself..."
                         rows={3}
-                        className="w-full bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm resize-none rounded-xl p-3"
+                        className="w-full bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm resize-none rounded-xl p-3"
                       />
                       <div className="flex items-center justify-between">
                         <span className={`text-xs ${bioInput.length >= BIO_CHAR_LIMIT ? 'text-[#EF4444] font-bold' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>
@@ -1728,31 +1728,31 @@ export default function ProfilePage() {
                         </span>
                         <div className="flex gap-2">
                           <Button onClick={handleSaveBio} disabled={savingBio || !bioInput.trim()} size="sm"
-                            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-xl px-4">
+                            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-xl px-4">
                             {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                           </Button>
                           <Button onClick={() => setEditingBio(false)} size="sm" variant="outline"
-                            className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] rounded-xl px-4">
+                            className="border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] rounded-xl px-4">
                             Cancel
                           </Button>
                         </div>
                       </div>
                     </div>
                   ) : profileData?.bio ? (
-                    <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm pl-6 whitespace-pre-wrap leading-relaxed">{profileData.bio}</p>
+                    <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm pl-6 whitespace-pre-wrap leading-relaxed">{profileData.bio}</p>
                   ) : (
                     <button onClick={() => { setEditingBio(true); setBioInput(''); }}
-                      className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
+                      className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
                       <Plus className="w-4 h-4" /> Add bio
                     </button>
                   )}
                 </div>
 
                 {/* Social Links Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
-                      <Link2 className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Social Links
                       <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max {MAX_SOCIAL_LINKS})</span>
                     </label>
@@ -1765,7 +1765,7 @@ export default function ProfilePage() {
                   {profileData?.socialLinks?.length > 0 && (
                     <div className="space-y-2 mb-3 pl-6">
                       {profileData.socialLinks.map((link, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-2 px-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                        <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] dark:bg-black p-2 px-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                           {editingLinkIndex === index ? (
                             <>
                               <Input 
@@ -1780,7 +1780,7 @@ export default function ProfilePage() {
                                 placeholder="URL"
                                 className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
                               />
-                              <Button onClick={() => handleEditLink(index)} disabled={savingLink} size="sm" className="h-7 px-2.5 bg-[#2563EB] discuss:bg-[#EF4444] rounded-lg">
+                              <Button onClick={() => handleEditLink(index)} disabled={savingLink} size="sm" className="h-7 px-2.5 bg-[#0095F6] bg-[#0095F6] rounded-lg">
                                 {savingLink ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                               </Button>
                               <Button onClick={() => setEditingLinkIndex(null)} size="sm" variant="ghost" className="h-7 px-2.5 rounded-lg">
@@ -1790,18 +1790,18 @@ export default function ProfilePage() {
                           ) : (
                             <>
                               <a href={link.url} target="_blank" rel="noopener noreferrer"
-                                className="flex-1 text-[#2563EB] discuss:text-[#60A5FA] hover:underline text-sm font-semibold flex items-center gap-1.5 truncate">
+                                className="flex-1 text-[#0095F6] discuss:text-[#60A5FA] hover:underline text-sm font-semibold flex items-center gap-1.5 truncate">
                                 {link.name}
                                 <ExternalLink className="w-3 h-3" />
                               </a>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button className="p-1 rounded hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] discuss:hover:bg-[#262626] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors">
+                                  <button className="p-1 rounded hover:bg-[#F5F5F7] dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors">
                                     <MoreHorizontal className="w-4 h-4" />
                                   </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl">
-                                  <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
+                                <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl">
+                                  <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-[#0F172A] dark:text-[#F1F5F9] dark:text-white focus:bg-[#F5F5F7] dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
                                     <Pencil className="w-4 h-4 mr-2" /> Edit
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => setDeleteLinkConfirm(index)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
@@ -1819,7 +1819,7 @@ export default function ProfilePage() {
                   {/* Add New Link */}
                   <div className="pl-6">
                     {addingLink ? (
-                      <div className="space-y-2 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                      <div className="space-y-2 bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                         <Input 
                           value={newLinkName} 
                           onChange={(e) => setNewLinkName(e.target.value)}
@@ -1834,18 +1834,18 @@ export default function ProfilePage() {
                         />
                         <div className="flex gap-2 justify-end">
                           <Button onClick={handleAddLink} disabled={savingLink || !newLinkName.trim() || !newLinkUrl.trim()} size="sm"
-                            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-lg px-3">
+                            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-lg px-3">
                             {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Link'}
                           </Button>
                           <Button onClick={() => { setAddingLink(false); setNewLinkName(''); setNewLinkUrl(''); }} size="sm" variant="outline"
-                            className="border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] rounded-lg px-3">
+                            className="border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] rounded-lg px-3">
                             Cancel
                           </Button>
                         </div>
                       </div>
                     ) : !maxLinksReached ? (
                       <button onClick={() => setAddingLink(true)}
-                        className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 font-medium">
+                        className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 font-medium">
                         <Plus className="w-4 h-4" /> <span>Add social link</span>
                       </button>
                     ) : (
@@ -1855,16 +1855,16 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Skills Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <label className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                       Skills
                       <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs font-normal">(max 6 skills)</span>
                     </label>
                     {!editingSkills && skills.length > 0 && (
                       <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput(skills); }}
-                        className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] transition-colors cursor-pointer">
+                        className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 transition-colors cursor-pointer">
                         <Pencil className="w-4 h-4" />
                       </button>
                     )}
@@ -1898,7 +1898,7 @@ export default function ProfilePage() {
                           value={customSkillInput} 
                           onChange={(e) => setCustomSkillInput(e.target.value)}
                           placeholder="Custom skill"
-                          className="flex-1 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm h-8"
+                          className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm h-8"
                           maxLength={20}
                         />
                         <Button onClick={handleAddCustomSkillInProfile} size="sm" variant="outline" className="h-8 text-xs border-[#E2E8F0] cursor-pointer">Add</Button>
@@ -1916,7 +1916,7 @@ export default function ProfilePage() {
                       )}
 
                       <div className="flex gap-2 justify-end pt-2">
-                        <Button onClick={handleSaveSkills} disabled={savingSkills} size="sm" className="bg-[#2563EB] discuss:bg-[#EF4444] text-white cursor-pointer">
+                        <Button onClick={handleSaveSkills} disabled={savingSkills} size="sm" className="bg-[#0095F6] bg-[#0095F6] text-white cursor-pointer">
                           Save
                         </Button>
                         <Button onClick={() => setEditingSkills(false)} size="sm" variant="outline" className="border-[#E2E8F0] cursor-pointer">
@@ -1927,14 +1927,14 @@ export default function ProfilePage() {
                   ) : skills.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5 pl-6">
                       {skills.map(s => (
-                        <span key={s} className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-xs font-semibold">
+                        <span key={s} className="bg-white dark:bg-[#1E293B] dark:bg-black text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-xs font-semibold">
                           {s}
                         </span>
                       ))}
                     </div>
                   ) : (
                     <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput([]); }}
-                      className="text-[#2563EB] discuss:text-[#EF4444] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium cursor-pointer">
+                      className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium cursor-pointer">
                       <Plus className="w-4 h-4" /> <span>Add skills</span>
                     </button>
                   )}
@@ -1950,7 +1950,7 @@ export default function ProfilePage() {
                           <div className="flex flex-wrap gap-1.5">
                             {suggestedSkills.map(s => (
                               <button key={s} onClick={() => handleAddSuggestedSkill(s)}
-                                className="bg-white dark:bg-neutral-850 hover:bg-neutral-100 text-[#2563EB] dark:text-[#60A5FA] px-2 py-0.5 rounded text-xs border border-blue-200 dark:border-blue-900 font-semibold transition-colors cursor-pointer">
+                                className="bg-white dark:bg-neutral-850 hover:bg-neutral-100 text-[#0095F6] dark:text-[#60A5FA] px-2 py-0.5 rounded text-xs border border-blue-200 dark:border-blue-900 font-semibold transition-colors cursor-pointer">
                                 + {s}
                               </button>
                             ))}
@@ -1970,7 +1970,7 @@ export default function ProfilePage() {
                             </>
                           ) : (
                             <>
-                              <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB] discuss:text-[#EF4444]" />
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#0095F6] text-[#0095F6]" />
                               <span>Scan profile for technical skills (AI)</span>
                             </>
                           )}
@@ -1981,9 +1981,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Display Theme Selector */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                    <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
                       🎨 Application Theme
                     </span>
                   </div>
@@ -1993,14 +1993,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Online Status Visibility Section */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex flex-col">
-                      <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-semibold flex items-center gap-2">
+                      <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-semibold flex items-center gap-2">
                         {onlineVisibility ? <Eye className="w-4 h-4 text-emerald-500" /> : <EyeOff className="w-4 h-4 text-[#EF4444]" />}
                         Online Status Visibility
                       </span>
-                      <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-1 pr-4">
+                      <span className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-1 pr-4">
                         {onlineVisibility ? 'Your online status is visible to everyone.' : 'Your online status is completely hidden.'}
                       </span>
                     </div>
@@ -2017,31 +2017,31 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 2: App Security */}
-          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
             <button
               onClick={() => setShowSecuritySettings(!showSecuritySettings)}
               className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <Shield className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">App Security</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">App Security</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
                 </div>
               </div>
               {showSecuritySettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
             </button>
 
             {showSecuritySettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">App Lock Protection</span>
+                    <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-bold">App Lock Protection</span>
                     <button
                       onClick={() => setShowSecurityInfo(prev => !prev)}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#2563EB] text-white shadow' : 'bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20'}`}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#0095F6] text-white shadow' : 'bg-[#0095F6]/10 text-[#0095F6] hover:bg-[#0095F6]/20'}`}
                       aria-label="Security info"
                     >
                       <Info className="w-3.5 h-3.5" />
@@ -2050,7 +2050,7 @@ export default function ProfilePage() {
                   {remoteSettings?.pin && (
                     <button
                       onClick={lockNow}
-                      className="flex items-center gap-1.5 text-[11px] font-bold text-[#2563EB] discuss:text-[#EF4444] px-3 py-1.5 rounded-xl bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20 transition-all shadow-sm active:scale-95"
+                      className="flex items-center gap-1.5 text-[11px] font-bold text-[#0095F6] text-[#0095F6] px-3 py-1.5 rounded-xl bg-[#0095F6]/10 bg-[#0095F6]/10 hover:bg-[#0095F6]/20 discuss:hover:bg-[#EF4444]/20 transition-all shadow-sm active:scale-95"
                       title="Lock the app now"
                     >
                       <Lock className="w-3.5 h-3.5" />
@@ -2085,14 +2085,14 @@ export default function ProfilePage() {
                 )}
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-4">
+                  <div className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-4">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${localSettings?.enabled ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
+                      <div className={`p-2.5 rounded-xl ${localSettings?.enabled ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
                         <Smartphone className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">PIN Lock Status</p>
-                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">
+                        <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">PIN Lock Status</p>
+                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">
                           <span>{localSettings?.enabled
                             ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
                             : 'Protect app access with a secure PIN'}</span>
@@ -2101,7 +2101,7 @@ export default function ProfilePage() {
                     </div>
                     <button
                       onClick={handleToggleSecurity}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.enabled ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.enabled ? 'bg-[#0095F6] bg-[#0095F6]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
                     >
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
@@ -2110,14 +2110,14 @@ export default function ProfilePage() {
                   {localSettings?.enabled && (
                     <div className="space-y-3 pl-2 animate-in slide-in-from-top-2 duration-300">
                       {biometricAvailable && (
-                        <div className="flex items-center justify-between border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] rounded-xl p-4 bg-[#F8FAFC] dark:bg-slate-950/20">
+                        <div className="flex items-center justify-between border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] rounded-xl p-4 bg-[#F8FAFC] dark:bg-slate-950/20">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2.5 rounded-xl ${localSettings?.type === 'biometric' ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
+                            <div className={`p-2.5 rounded-xl ${localSettings?.type === 'biometric' ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-[#6275AF]'}`}>
                               <BiometricIcon className="w-5 h-5" />
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">FaceID / Fingerprint</p>
-                              <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">
+                              <p className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">FaceID / Fingerprint</p>
+                              <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">
                                 <span>{localSettings?.type === 'biometric' ? 'Active - PIN as backup fallback' : 'Tap to register biometric scanner'}</span>
                               </p>
                             </div>
@@ -2125,7 +2125,7 @@ export default function ProfilePage() {
                           <button
                             onClick={handleBiometricToggle}
                             disabled={testingBiometric}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.type === 'biometric' ? 'bg-[#2563EB] discuss:bg-[#EF4444]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.type === 'biometric' ? 'bg-[#0095F6] bg-[#0095F6]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
                           >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.type === 'biometric' ? 'translate-x-6' : 'translate-x-1'}`} />
                           </button>
@@ -2143,29 +2143,29 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 3: DevRadar Telemetry */}
-          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
             <button
               onClick={() => setShowLocationSettings(!showLocationSettings)}
               className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">DevRadar Telemetry</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">DevRadar Telemetry</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
                 </div>
               </div>
               {showLocationSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
             </button>
 
             {showLocationSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                    <span className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm font-bold">DevRadar Telemetry Network</span>
+                    <MapPin className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                    <span className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm font-bold">DevRadar Telemetry Network</span>
                   </div>
                   
                   {/* Dynamic Status Live Pulse Indicator */}
@@ -2184,9 +2184,9 @@ export default function ProfilePage() {
 
                 {/* Theme-Tailored Premium Layout Panel */}
                 <div className={`p-5 transition-all duration-300 ${
-                  theme === 'discuss-black'
+                  false
                     ? 'border border-[#FF007F]/20 bg-[#13131A]/90 hover:border-[#FF007F]/35 shadow-[0_4px_25px_rgba(255,0,127,0.06)] rounded-2xl'
-                    : theme === 'discuss-light'
+                    : false
                     ? 'border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none'
                     : theme === 'dark'
                     ? 'border border-white/10 bg-slate-950/40 shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md rounded-2xl'
@@ -2196,18 +2196,18 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-3.5">
                       <div className={`p-2.5 rounded-xl transition-all duration-300 ${
                         shareLocation 
-                          ? 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]' 
+                          ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' 
                           : 'bg-neutral-500/10 text-neutral-400 dark:text-neutral-500'
                       }`}>
                         <MapPin className="w-5 h-5 animate-pulse" />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-extrabold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                        <p className="text-sm font-extrabold tracking-tight text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">
                           Geospatial Broadcast State
                         </p>
-                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5 leading-relaxed max-w-[220px]">
+                        <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5 leading-relaxed max-w-[220px]">
                           {updatingLocation ? (
-                            <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#2563EB] discuss:text-[#EF4444]" /> Synchronizing coordinates...</span>
+                            <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#0095F6] text-[#0095F6]" /> Synchronizing coordinates...</span>
                           ) : shareLocation ? (
                             <span>Your node specification is broadcasted publicly on the interactive map.</span>
                           ) : (
@@ -2222,7 +2222,7 @@ export default function ProfilePage() {
                       disabled={updatingLocation}
                       className={`relative inline-flex h-6 w-11 items-center transition-all duration-300 focus:outline-none rounded-full ${
                         shareLocation 
-                          ? theme === 'discuss-black'
+                          ? false
                             ? 'bg-[#FF007F]'
                             : 'bg-[#EF4444]'
                           : 'bg-neutral-200 dark:bg-neutral-700'
@@ -2233,7 +2233,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
-                    theme === 'discuss-light' ? 'border-black' : 'border-[#E2E8F0] dark:border-white/5'
+                    false ? 'border-black' : 'border-[#E2E8F0] dark:border-white/5'
                   }`}>
                     <Button
                       onClick={() => {
@@ -2243,7 +2243,7 @@ export default function ProfilePage() {
                       }}
                       variant="outline"
                       size="sm"
-                      className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all rounded-xl py-3 border-[#2563EB] text-[#2563EB] hover:bg-[#2563EB]/10"
+                      className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
                     >
                       <MapPin className="w-3.5 h-3.5" />
                       <span>Update Current Coordinates</span>
@@ -2252,8 +2252,8 @@ export default function ProfilePage() {
                     {shareLocation && locationCoords && (
                       <div className="flex flex-col gap-2.5">
                         <div className="flex justify-between items-center text-xs px-1">
-                          <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] font-bold">Node Coordinates:</span>
-                          <span className="font-mono font-bold text-blue-600 discuss:text-[#EF4444]">
+                          <span className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 font-bold">Node Coordinates:</span>
+                          <span className="font-mono font-bold text-blue-600 text-[#0095F6]">
                             {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
                           </span>
                         </div>
@@ -2261,7 +2261,7 @@ export default function ProfilePage() {
                           onClick={handleOpenAdjustModal}
                           variant="outline"
                           size="sm"
-                          className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 rounded-xl py-3 border-[#2563EB] text-[#2563EB] hover:bg-[#2563EB]/10"
+                          className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
                         >
                           <MapPin className="w-3.5 h-3.5" />
                           <span>Calibrate Precise Node Pin</span>
@@ -2275,39 +2275,39 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 4: Notifications & Integrations */}
-          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] shadow-[0_4px_24px_rgba(0,0,0,0.03)] border discuss:border-[#333333] rounded-2xl overflow-hidden transition-all duration-300">
+          <div className="bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
             <button
               onClick={() => setShowNotificationSettings(!showNotificationSettings)}
               className="w-full flex items-center justify-between px-6 py-5 hover:bg-neutral-50/50 dark:hover:bg-[#0F172A]/40 discuss:hover:bg-[#222222]/40 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 discuss:bg-[#EF4444]/10 discuss:text-[#EF4444]">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
                   <Bell className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Notifications & Integrations</h3>
-                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
+                  <h3 className="font-extrabold text-[15px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Notifications & Integrations</h3>
+                  <p className="text-[11px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
                 </div>
               </div>
               {showNotificationSettings ? <ChevronUp className="w-5 h-5 text-[#6275AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF]" />}
             </button>
 
             {showNotificationSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
                 {/* Standard Notification Switch */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333]">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <NotificationToggle />
                 </div>
 
                 {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333] space-y-4">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
                         <Send className="w-5 h-5 text-[#229ED9]" />
                       </div>
                       <div>
-                        <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Telegram Alerts</h3>
+                        <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Telegram Alerts</h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
                           <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">
@@ -2326,7 +2326,7 @@ export default function ProfilePage() {
 
                   {/* Instructions panel */}
                   {showTelegramInstructions && (
-                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
                       <div className="flex items-center gap-2 text-[#229ED9]">
                         <MessageSquare className="w-4 h-4" />
                         <p className="text-xs font-bold">Bot Connectivity Guide</p>
@@ -2427,7 +2427,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* ==================== DISCORD NOTIFICATIONS ==================== */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-4 rounded-xl discuss:border discuss:border-[#333333] space-y-4">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
@@ -2437,7 +2437,7 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Discord Alerts</h3>
+                          <h3 className="text-[14px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Discord Alerts</h3>
                           <span className="bg-neutral-200 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md">Coming Soon</span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -2456,7 +2456,7 @@ export default function ProfilePage() {
 
                   {/* Instructions panel */}
                   {showDiscordInstructions && (
-                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-white dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
                       <div className="flex items-center gap-2 text-[#5865F2]">
                         <ShieldCheck className="w-4 h-4" />
                         <p className="text-xs font-bold">Privacy & Security Protocol</p>
@@ -2517,7 +2517,7 @@ export default function ProfilePage() {
         <div className="mt-6">
           <button
             onClick={() => setShowFriends(!showFriends)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-[#10B981]/10 discuss:bg-[#10B981]/10 flex items-center justify-center rounded-lg relative">
@@ -2529,14 +2529,14 @@ export default function ProfilePage() {
                 )}
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Friends</h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Friends</h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
                   <span>{friends.length} friend{friends.length !== 1 ? 's' : ''}</span>
                   {receivedRequests.length > 0 && <span> • {receivedRequests.length} pending</span>}
                 </p>
               </div>
             </div>
-            {showFriends ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+            {showFriends ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
           </button>
 
           {showFriends && (
@@ -2553,7 +2553,7 @@ export default function ProfilePage() {
                       const reqUser = requestUserDetails[request.fromUserId];
                       
                       return (
-                        <div key={request.fromUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                        <div key={request.fromUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                           <button
                             onClick={() => navigate(`/user/${request.fromUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2564,10 +2564,10 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
+                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate">
                                 <span>@{reqUser?.username || 'Unknown'}</span>
                               </span>
-                              <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                              <span className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
                                 <span>{new Date(request.createdAt).toLocaleDateString()}</span>
                               </span>
                             </div>
@@ -2600,8 +2600,8 @@ export default function ProfilePage() {
 
               {/* Sent Requests */}
               {sentRequests.length > 0 && (
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                  <h3 className="text-sm font-semibold text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mb-3 flex items-center gap-2">
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                  <h3 className="text-sm font-semibold text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mb-3 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span>Sent Requests ({sentRequests.length})</span>
                   </h3>
@@ -2610,7 +2610,7 @@ export default function ProfilePage() {
                       const reqUser = requestUserDetails[request.toUserId];
                       
                       return (
-                        <div key={request.toUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+                        <div key={request.toUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                           <button
                             onClick={() => navigate(`/user/${request.toUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2621,7 +2621,7 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
+                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate">
                                 <span>@{reqUser?.username || 'Unknown'}</span>
                               </span>
                               <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
@@ -2644,23 +2644,23 @@ export default function ProfilePage() {
               )}
 
               {/* Find Friends Search */}
-              <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
-                  <Search className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+                  <Search className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                   <span>Find Friends</span>
                 </h3>
                 <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />
                   <Input
                     value={friendSearchQuery}
                     onChange={(e) => setFriendSearchQuery(e.target.value)}
                     placeholder="Search users by username..."
-                    className="pl-10 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] placeholder:text-[#6275AF] dark:placeholder:text-[#94A3B8] discuss:placeholder:text-[#9CA3AF] text-sm"
+                    className="pl-10 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white placeholder:text-[#6275AF] dark:placeholder:text-[#94A3B8] discuss:placeholder:text-[#9CA3AF] text-sm"
                   />
                   {friendSearchQuery && (
                     <button
                       onClick={() => setFriendSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2683,7 +2683,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 ) : friendSearchQuery && !searchingFriends ? (
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm text-center py-4">
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm text-center py-4">
                     <span>No users found</span>
                   </p>
                 ) : null}
@@ -2691,30 +2691,30 @@ export default function ProfilePage() {
 
               {/* Friends List */}
               {loadingFriends ? (
-                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-2" />
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm"><span>Loading friends list...</span></p>
+                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6] mb-2" />
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm"><span>Loading friends list...</span></p>
                 </div>
               ) : friends.length > 0 ? (
                 <div className="space-y-4">
                   {/* Suggested Friends Section */}
                   {suggestedFriends.length > 0 && (
-                    <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
-                        <UserPlus className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+                        <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                         <span>Suggested Friends</span>
                       </h3>
                       {loadingSuggestions ? (
                         <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
-                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm"><span>Finding suggestions...</span></span>
+                          <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
+                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm"><span>Finding suggestions...</span></span>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
                           {suggestedFriends.map((suggested) => {
                             
                             return (
-                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-3 rounded-lg">
+                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-3 rounded-lg">
                                 <button
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -2725,12 +2725,12 @@ export default function ProfilePage() {
                                     className="w-10 h-10"
                                   />
                                   <div className="text-left min-w-0">
-                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate flex items-center gap-1">
+                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate flex items-center gap-1">
                                       @{suggested.username}
                                       {suggested.verified && <VerifiedBadge size="xs" />}
                                     </span>
                                     {suggested.mutualCount > 0 && (
-                                      <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                                      <span className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
                                         {suggested.mutualCount} mutual friend{suggested.mutualCount !== 1 ? 's' : ''}
                                       </span>
                                     )}
@@ -2740,7 +2740,7 @@ export default function ProfilePage() {
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   size="sm"
                                   variant="outline"
-                                  className="h-8 px-3 shrink-0 ml-2 border-[#2563EB] discuss:border-[#EF4444] text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10"
+                                  className="h-8 px-3 shrink-0 ml-2 border-[#0095F6] discuss:border-[#EF4444] text-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10"
                                 >
                                   <UserPlus className="w-3 h-3" />
                                 </Button>
@@ -2753,8 +2753,8 @@ export default function ProfilePage() {
                   )}
 
                   {/* Your Friends */}
-                  <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
+                  <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#10B981]" />
                     Your Friends ({friends.length})
                   </h3>
@@ -2762,7 +2762,7 @@ export default function ProfilePage() {
                     {friends.map((friend) => {
                       
                       return (
-                        <div key={friend.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-3 rounded-lg">
+                        <div key={friend.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-3 rounded-lg">
                           <button
                             onClick={() => navigate(`/user/${friend.id}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2773,7 +2773,7 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate">
+                              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate">
                                 @{friend.username}
                               </span>
                               {friend.verified && <VerifiedBadge size="xs" />}
@@ -2782,7 +2782,7 @@ export default function ProfilePage() {
                           <Button
                             onClick={() => navigate(`/chat/${friend.id}`)}
                             size="sm"
-                            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white h-8 px-3 shrink-0 ml-2"
+                            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white h-8 px-3 shrink-0 ml-2"
                           >
                             <MessageCircle className="w-3 h-3" />
                           </Button>
@@ -2796,22 +2796,22 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   {/* Suggested Friends for users without friends */}
                   {suggestedFriends.length > 0 && (
-                    <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] mb-3 flex items-center gap-2">
-                        <UserPlus className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                      <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-3 flex items-center gap-2">
+                        <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                         People You May Know
                       </h3>
                       {loadingSuggestions ? (
                         <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
-                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">Finding people...</span>
+                          <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
+                          <span className="ml-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm">Finding people...</span>
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
                           {suggestedFriends.map((suggested) => {
                             
                             return (
-                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] p-3 rounded-lg">
+                              <div key={suggested.id} className="flex items-center justify-between bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] p-3 rounded-lg">
                                 <button
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -2824,7 +2824,7 @@ export default function ProfilePage() {
                                     </div>
                                   )}
                                   <div className="text-left min-w-0">
-                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm block truncate flex items-center gap-1">
+                                    <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm block truncate flex items-center gap-1">
                                       <span>@{suggested.username}</span>
                                       {suggested.verified && <VerifiedBadge size="xs" />}
                                     </span>
@@ -2834,7 +2834,7 @@ export default function ProfilePage() {
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   size="sm"
                                   variant="outline"
-                                  className="h-8 px-3 shrink-0 ml-2 border-[#2563EB] discuss:border-[#EF4444] text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10"
+                                  className="h-8 px-3 shrink-0 ml-2 border-[#0095F6] discuss:border-[#EF4444] text-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10"
                                 >
                                   <UserPlus className="w-3 h-3" />
                                 </Button>
@@ -2846,10 +2846,10 @@ export default function ProfilePage() {
                     </div>
                   )}
                   
-                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] rounded-xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-                    <Users className="w-10 h-10 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-3" />
-                    <h3 className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] font-semibold mb-1"><span>No friends yet</span></h3>
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm">
+                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+                    <Users className="w-10 h-10 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-3" />
+                    <h3 className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white font-semibold mb-1"><span>No friends yet</span></h3>
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm">
                       <span>Search for users above to connect</span>
                     </p>
                   </div>
@@ -2864,24 +2864,24 @@ export default function ProfilePage() {
         <div className="mt-6">
           <button
             onClick={() => setShowAiInsights(!showAiInsights)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
-                <ShieldCheck className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              <div className="w-9 h-9 bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
+                <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">AI TalentGraph Insights</h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs">
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">AI TalentGraph Insights</h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs">
                   {aiInsights ? 'Analysis complete' : 'No insights generated yet'}
                 </p>
               </div>
             </div>
-            {showAiInsights ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+            {showAiInsights ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
           </button>
 
           {showAiInsights && (
-            <div className="mt-4 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl p-5 space-y-4">
+            <div className="mt-4 bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl p-5 space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="text-left">
                   <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Profile Insights</h3>
@@ -3012,18 +3012,18 @@ export default function ProfilePage() {
           <button
             data-testid="your-posts-toggle"
             onClick={() => setShowPosts(!showPosts)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
-                <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
+              <div className="w-9 h-9 bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
+                <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Your Posts</span></h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white"><span>Your Posts</span></h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
-            {showPosts ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+            {showPosts ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
           </button>
 
           {showPosts && (
@@ -3035,7 +3035,7 @@ export default function ProfilePage() {
                   data-testid="filter-type-select"
                   value={filterType}
                   onChange={(e) => { setFilterType(e.target.value); setFilterMonth(''); setFilterYear(''); }}
-                  className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                  className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                 >
                   <option value="all"><span>All Posts</span></option>
                   <option value="this_month"><span>This Month</span></option>
@@ -3049,7 +3049,7 @@ export default function ProfilePage() {
                       data-testid="filter-month-select"
                       value={filterMonth}
                       onChange={(e) => setFilterMonth(e.target.value)}
-                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                     >
                       <option value="">Month</option>
                       {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
@@ -3058,7 +3058,7 @@ export default function ProfilePage() {
                       data-testid="filter-month-year-select"
                       value={filterYear}
                       onChange={(e) => setFilterYear(e.target.value)}
-                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                      className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                     >
                       <option value="">Year</option>
                       {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -3071,7 +3071,7 @@ export default function ProfilePage() {
                     data-testid="filter-year-select"
                     value={filterYear}
                     onChange={(e) => setFilterYear(e.target.value)}
-                    className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#2563EB]"
+                    className="bg-[#F5F5F7] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#334155] text-[#0F172A] dark:text-[#F1F5F9] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                   >
                     <option value="">Year</option>
                     {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -3118,18 +3118,18 @@ export default function ProfilePage() {
           <button
             data-testid="your-pulses-toggle"
             onClick={() => setShowPulses(!showPulses)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#EF4444]/10 discuss:bg-[#EF4444]/10 flex items-center justify-center rounded-lg">
-                <PlayCircle className="w-4 h-4 text-[#EF4444] discuss:text-[#EF4444]" />
+              <div className="w-9 h-9 bg-[#EF4444]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
+                <PlayCircle className="w-4 h-4 text-[#EF4444] text-[#0095F6]" />
               </div>
               <div className="text-left">
-                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Your Pulses</span></h2>
-                <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
+                <h2 className="text-[15px] font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white"><span>Your Pulses</span></h2>
+                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
-            {showPulses ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF]" />}
+            {showPulses ? <ChevronUp className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400" />}
           </button>
 
           {showPulses && (
@@ -3186,15 +3186,15 @@ export default function ProfilePage() {
 
       {/* Delete Full Name Confirmation */}
       <AlertDialog open={deleteFullNameConfirm} onOpenChange={setDeleteFullNameConfirm}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove full name?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white"><span>Remove full name?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
               <span>This will remove your full name from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteFullName} disabled={savingFullName} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
@@ -3206,15 +3206,15 @@ export default function ProfilePage() {
 
       {/* Delete Bio Confirmation */}
       <AlertDialog open={deleteBioConfirm} onOpenChange={setDeleteBioConfirm}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove bio?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white"><span>Remove bio?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
               <span>This will remove your bio from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteBio} disabled={savingBio} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
@@ -3226,15 +3226,15 @@ export default function ProfilePage() {
 
       {/* Delete Link Confirmation */}
       <AlertDialog open={deleteLinkConfirm !== null} onOpenChange={(v) => { if (!v) setDeleteLinkConfirm(null); }}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Remove link?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white"><span>Remove link?</span></AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
               <span>This will remove this social link from your profile.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               <span>Cancel</span>
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => handleDeleteLink(deleteLinkConfirm)} disabled={savingLink} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
@@ -3254,7 +3254,7 @@ export default function ProfilePage() {
       
       {/* PIN Modals */}
       <AlertDialog open={showPinModal} onOpenChange={setShowPinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Set Security PIN</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3306,7 +3306,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
-            <Button onClick={handleSavePinAndEnable} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+            <Button onClick={handleSavePinAndEnable} disabled={savingPin} className="w-full bg-[#0095F6] bg-[#0095F6] text-white">
               {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Save & Enable
             </Button>
@@ -3316,7 +3316,7 @@ export default function ProfilePage() {
       </AlertDialog>
 
       <AlertDialog open={showChangePinModal} onOpenChange={setShowChangePinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Change PIN</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3394,14 +3394,14 @@ export default function ProfilePage() {
                   setShowChangePinModal(false);
                   setShowForgotPinModal(true);
                 }}
-                className="text-[10px] font-bold text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors"
+                className="text-[10px] font-bold text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors"
               >
                 Forgot your PIN?
               </button>
             </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
-            <Button onClick={handleUpdatePin} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+            <Button onClick={handleUpdatePin} disabled={savingPin} className="w-full bg-[#0095F6] bg-[#0095F6] text-white">
               {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Update PIN
             </Button>
@@ -3412,7 +3412,7 @@ export default function ProfilePage() {
 
       {/* Forgot PIN Recovery Modal */}
       <AlertDialog open={showForgotPinModal} onOpenChange={setShowForgotPinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex flex-col items-center gap-3">
               <img
@@ -3452,7 +3452,7 @@ export default function ProfilePage() {
                 );
                 window.location.href = `mailto:support@discussit.in?subject=${subject}&body=${body}`;
               }}
-              className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white text-xs font-bold py-2.5 rounded-xl shadow-md hover:scale-[1.02] transition-transform"
+              className="w-full bg-[#0095F6] bg-[#0095F6] text-white text-xs font-bold py-2.5 rounded-xl shadow-md hover:scale-[1.02] transition-transform"
             >
               SEND RECOVERY EMAIL
             </Button>
@@ -3464,7 +3464,7 @@ export default function ProfilePage() {
       </AlertDialog>
 
       <AlertDialog open={showVerifyPinModal} onOpenChange={setShowVerifyPinModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center">Verify Identity</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3492,7 +3492,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <AlertDialogFooter className="flex flex-col gap-2">
-            <Button onClick={handleVerifyAndEnableBiometric} disabled={savingPin} className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white">
+            <Button onClick={handleVerifyAndEnableBiometric} disabled={savingPin} className="w-full bg-[#0095F6] bg-[#0095F6] text-white">
               {savingPin ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Verify PIN
             </Button>
@@ -3503,7 +3503,7 @@ export default function ProfilePage() {
 
       {/* Disable App Lock Modal */}
       <AlertDialog open={showDisableLockModal} onOpenChange={setShowDisableLockModal}>
-        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+        <AlertDialogContent className="max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-red-600">Disable App Lock</AlertDialogTitle>
             <AlertDialogDescription className="text-center text-[11px]">
@@ -3557,12 +3557,12 @@ export default function ProfilePage() {
       {/* Precise Location Adjust Modal */}
       {showAdjustLocationModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg p-5 rounded-2xl bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-lg p-5 rounded-2xl bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] pb-3">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] pb-3">
               <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
-                <h3 className="text-base font-black text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] uppercase tracking-tight">
+                <MapPin className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
+                <h3 className="text-base font-black text-[#0F172A] dark:text-[#F1F5F9] dark:text-white uppercase tracking-tight">
                   Adjust Precise Location
                 </h3>
               </div>
@@ -3575,9 +3575,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Description */}
-            <div className="bg-blue-50 dark:bg-blue-950/30 discuss:bg-[#262626] border border-blue-200 dark:border-blue-800 discuss:border-[#333] rounded-xl px-3 py-2.5 flex items-start gap-2">
+            <div className="bg-blue-50 dark:bg-blue-950/30 dark:bg-[#1A1A1A] border border-blue-200 dark:border-blue-800 discuss:border-[#333] rounded-xl px-3 py-2.5 flex items-start gap-2">
               <span className="text-lg leading-none mt-0.5">📍</span>
-              <p className="text-xs text-blue-800 dark:text-blue-200 discuss:text-[#9CA3AF] leading-relaxed font-medium">
+              <p className="text-xs text-blue-800 dark:text-blue-200 dark:text-neutral-400 leading-relaxed font-medium">
                 <strong>Tap anywhere on the map</strong> to drop your pin at that location, or <strong>drag the existing marker</strong> to move it. Once you're happy with the position, tap <strong>"Confirm Pin Location"</strong> to save.
               </p>
             </div>
@@ -3587,14 +3587,14 @@ export default function ProfilePage() {
               <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#111] p-3 rounded-xl border border-neutral-200 dark:border-white/5 discuss:border-black flex justify-between items-center text-xs">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Latitude</span>
-                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#EF4444]">
+                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] text-[#0095F6]">
                     {tempCoords.latitude.toFixed(6)}
                   </span>
                 </div>
                 <div className="h-6 w-[1px] bg-neutral-300 dark:bg-white/10 discuss:bg-[#333]" />
                 <div className="flex flex-col text-right">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#6275AF] dark:text-[#94A3B8]">Longitude</span>
-                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#EF4444]">
+                  <span className="font-mono font-bold text-sm text-[#0F172A] dark:text-[#F1F5F9] text-[#0095F6]">
                     {tempCoords.longitude.toFixed(6)}
                   </span>
                 </div>
@@ -3606,13 +3606,13 @@ export default function ProfilePage() {
               <div
                 ref={adjustMapContainerRef}
                 className={`w-full h-full ${
-                  theme === 'dark' ? 'dark-map' : theme === 'discuss-black' ? 'discuss-black-map' : ''
+                  theme === 'dark' ? 'dark-map' : false ? 'discuss-black-map' : ''
                 }`}
               />
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex gap-3 border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] pt-3">
+            <div className="flex gap-3 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] pt-3">
               <Button
                 variant="outline"
                 onClick={() => setShowAdjustLocationModal(false)}
@@ -3622,7 +3622,7 @@ export default function ProfilePage() {
               </Button>
               <Button
                 onClick={handleSaveAdjustedLocation}
-                className="flex-1 text-xs font-bold uppercase py-2.5 rounded-xl bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-md shadow-blue-500/20 discuss:shadow-red-500/20 hover:brightness-105 active:scale-95 transition-all"
+                className="flex-1 text-xs font-bold uppercase py-2.5 rounded-xl bg-[#0095F6] bg-[#0095F6] text-white shadow-md shadow-blue-500/20 discuss:shadow-red-500/20 hover:brightness-105 active:scale-95 transition-all"
               >
                 Confirm Pin Location
               </Button>
@@ -3633,33 +3633,33 @@ export default function ProfilePage() {
 
       {/* Badge Detail Dialog Modal */}
       <AlertDialog open={showBadgeModal} onOpenChange={setShowBadgeModal}>
-        <AlertDialogContent className="max-w-md bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-2xl shadow-2xl p-6">
+        <AlertDialogContent className="max-w-md bg-white dark:bg-[#1E293B] dark:bg-black border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-2xl shadow-2xl p-6">
           {selectedBadge && (
             <div className="space-y-6 text-left">
               <div className="flex justify-between items-start">
-                <h3 className="text-lg font-black text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] uppercase tracking-tight flex items-center gap-2">
+                <h3 className="text-lg font-black text-[#0F172A] dark:text-[#F1F5F9] dark:text-white uppercase tracking-tight flex items-center gap-2">
                   🏅 Badge Details
                 </h3>
                 <button
                   onClick={() => setShowBadgeModal(false)}
-                  className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors"
+                  className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 border border-neutral-100 dark:border-white/5 discuss:border-white/5">
+              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-[#0F172A]/40 discuss:bg-[#222222]/30 border border-neutral-100 dark:border-white/5 dark:border-[#262626]">
                 <div className="relative mb-4">
                   <BadgeIcon badge={selectedBadge} isLocked={eligibleCount < selectedBadge.target} size="lg" />
                 </div>
-                <h4 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                <h4 className="text-base font-extrabold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">
                   {selectedBadge.name}
                 </h4>
-                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-2 px-4 leading-relaxed font-semibold">
+                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-2 px-4 leading-relaxed font-semibold">
                   {selectedBadge.description}
                 </p>
                 
-                <div className="mt-4 bg-white dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-[#334155] discuss:border-[#333333] px-4 py-2 rounded-xl shadow-sm">
+                <div className="mt-4 bg-white dark:bg-[#0F172A] dark:bg-black border border-neutral-200 dark:border-[#334155] dark:border-[#262626] px-4 py-2 rounded-xl shadow-sm">
                   <span className="text-xs text-neutral-500 font-bold">Status: </span>
                   {eligibleCount >= selectedBadge.target ? (
                     <span className="text-emerald-500 text-xs font-black uppercase tracking-wider">Unlocked</span>
@@ -3674,7 +3674,7 @@ export default function ProfilePage() {
                 <h5 className="text-xs font-black uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                   How to achieve:
                 </h5>
-                <div className="bg-[#EF4444]/5 dark:bg-[#EF4444]/10 discuss:bg-[#EF4444]/5 border border-[#EF4444]/10 rounded-2xl p-4">
+                <div className="bg-[#EF4444]/5 dark:bg-[#EF4444]/10 bg-[#0095F6]/5 border border-[#EF4444]/10 rounded-2xl p-4">
                   <p className="text-xs text-[#b91c1c] dark:text-[#EF4444] discuss:text-[#F87171] leading-relaxed font-semibold">
                     {selectedBadge.rules}
                   </p>
@@ -3701,7 +3701,7 @@ export default function ProfilePage() {
 
               <Button
                 onClick={() => setShowBadgeModal(false)}
-                className="w-full bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white font-bold py-3 rounded-xl text-xs uppercase"
+                className="w-full bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white font-bold py-3 rounded-xl text-xs uppercase"
               >
                 Got It
               </Button>
@@ -3713,16 +3713,16 @@ export default function ProfilePage() {
       {/* Online Status Visibility Confirmation Modal */}
       {showOnlineVisibilityConfirm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-white/10 discuss:border-[#333333] rounded-2xl p-5 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0F172A] dark:bg-black border border-[#E2E8F0] dark:border-white/10 dark:border-[#262626] rounded-2xl p-5 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-start gap-3">
               <div className={`mt-0.5 p-2 rounded-full ${pendingVisibilityValue ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[#EF4444]/10 text-[#EF4444]'}`}>
                 {pendingVisibilityValue ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">
+                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">
                   {pendingVisibilityValue ? 'Show Online Status?' : 'Hide Online Status?'}
                 </h3>
-                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mt-1 leading-relaxed">
+                <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mt-1 leading-relaxed">
                   {pendingVisibilityValue 
                     ? "Other users will be able to see when you're online and your 'last seen' time across DevRadar and comments."
                     : "You will appear completely offline to everyone. Your green dot and 'last seen' time will be hidden everywhere."}
@@ -3732,7 +3732,7 @@ export default function ProfilePage() {
             <div className="flex gap-2 mt-5">
               <button
                 onClick={() => setShowOnlineVisibilityConfirm(false)}
-                className="flex-1 text-xs font-bold px-3 py-2.5 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] discuss:hover:bg-[#262626] rounded-xl transition-colors"
+                className="flex-1 text-xs font-bold px-3 py-2.5 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] text-[#6275AF] dark:text-[#94A3B8] hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B] dark:hover:bg-[#1A1A1A] rounded-xl transition-colors"
               >
                 Cancel
               </button>

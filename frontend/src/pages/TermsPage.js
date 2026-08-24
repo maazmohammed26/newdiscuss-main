@@ -71,7 +71,7 @@ export default function TermsPage() {
 
             <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
               <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <Database className="w-4 h-4 text-[#2563EB]" />
+                <Database className="w-4 h-4 text-[#0095F6]" />
                 2. Database Governance
               </h3>
               <p className="text-xs text-gray-400">
@@ -109,7 +109,7 @@ export default function TermsPage() {
 
             <div className="bg-gradient-to-r from-[#DC2626]/10 to-[#2563EB]/10 rounded-xl p-4 border border-white/5">
               <p className="text-xs text-white font-semibold flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#2563EB] shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#0095F6] shrink-0" />
                 <span>
                   Using Discuss constitutes full acceptance of these terms. If you do not agree, please discontinue service usage.
                 </span>

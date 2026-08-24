@@ -123,7 +123,7 @@ export default function LoginPage() {
                   <button 
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-[#2563EB] hover:text-[#DC2626] text-[12px] font-bold hover:underline"
+                    className="text-[#0095F6] hover:text-[#DC2626] text-[12px] font-bold hover:underline"
                     data-testid="login-forgot-password"
                   >
                     Forgot?
@@ -159,7 +159,7 @@ export default function LoginPage() {
             </Button>
 
             <p className="text-center text-gray-500 text-[13px] mt-6 font-medium">
-              <span>New to discuss? </span><Link to="/register" data-testid="login-to-register-link" className="text-[#2563EB] hover:text-[#DC2626] hover:underline font-bold transition-colors">Create account</Link>
+              <span>New to discuss? </span><Link to="/register" data-testid="login-to-register-link" className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold transition-colors">Create account</Link>
             </p>
           </div>
 

@@ -137,17 +137,17 @@ export default function ChatLinkText({ text, className = '', isOwn = false }) {
 
       {/* HTTP Warning Dialog */}
       <AlertDialog open={showHttpWarning} onOpenChange={setShowHttpWarning}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center gap-2">
+            <AlertDialogTitle className="dark:text-[#F1F5F9] dark:text-white flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-[#F59E0B]" />
               Insecure Link Warning
             </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]">
+            <AlertDialogDescription className="dark:text-[#94A3B8] dark:text-neutral-400">
               <p className="mb-2">
                 This link uses <strong className="text-[#F59E0B]">HTTP</strong> instead of HTTPS, which is not secure.
               </p>
-              <p className="text-xs break-all bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] p-2 rounded border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
+              <p className="text-xs break-all bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black p-2 rounded border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
                 {pendingUrl}
               </p>
               <p className="mt-2 text-xs">
@@ -156,7 +156,7 @@ export default function ChatLinkText({ text, className = '', isOwn = false }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]">
+            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] dark:text-white dark:border-[#262626]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

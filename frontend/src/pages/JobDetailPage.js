@@ -75,10 +75,10 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] flex flex-col">
+      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6]" />
         </div>
       </div>
     );
@@ -86,19 +86,19 @@ export default function JobDetailPage() {
 
   if (!item) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] flex flex-col">
+      <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  flex flex-col">
         <Header />
         <div className="w-full max-w-3xl mx-auto px-4 py-12 flex-1 flex flex-col justify-center">
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-4">
+          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-2xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
+            <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-4">
               Posting Not Found
             </h2>
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mb-6">
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mb-6">
               The job or hackathon listing you are looking for does not exist or has been removed.
             </p>
             <Button 
               onClick={() => navigate('/jobs')}
-              className="bg-[#2563EB] discuss:bg-[#EF4444] text-white"
+              className="bg-[#0095F6] bg-[#0095F6] text-white"
             >
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Jobs List
             </Button>
@@ -113,21 +113,21 @@ export default function JobDetailPage() {
   const isInternship = item.jobType === 'Internship';
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-6 pb-32">
         {/* Back navigation */}
         <button
           onClick={() => navigate('/jobs')}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] font-medium transition-colors mb-6 group text-sm"
+          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0095F6] hover:text-[#0095F6] font-medium transition-colors mb-6 group text-sm"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to Jobs List
         </button>
 
         {/* Dedicated Premium Job/Hackathon Card */}
-        <article className={`bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-3xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card overflow-hidden ${!active ? 'opacity-90' : ''}`}>
+        <article className={`bg-white dark:bg-neutral-800 dark:bg-black rounded-3xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card overflow-hidden ${!active ? 'opacity-90' : ''}`}>
           
           {/* Header Banner - Colorful and elegant depending on type */}
           <div className={`h-4 md:h-6 ${
@@ -178,11 +178,11 @@ export default function JobDetailPage() {
             {/* Title & Company Name */}
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl md:text-4xl font-extrabold text-neutral-900 dark:text-neutral-50 discuss:text-white tracking-tight leading-tight">
+                <h1 className="text-2xl md:text-4xl font-extrabold text-neutral-900 dark:text-neutral-50 dark:text-white tracking-tight leading-tight">
                   {item.title}
                 </h1>
                 
-                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] mt-3 font-semibold text-lg">
+                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 mt-3 font-semibold text-lg">
                   <Building className="w-5 h-5 text-neutral-400" />
                   {item.companyName}
                 </div>
@@ -192,7 +192,7 @@ export default function JobDetailPage() {
                 <Button 
                   onClick={handleApply}
                   disabled={!active}
-                  className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white font-bold px-6 py-5 rounded-2xl text-base shadow-sm min-w-[140px]"
+                  className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white font-bold px-6 py-5 rounded-2xl text-base shadow-sm min-w-[140px]"
                 >
                   {active ? (isHackathon ? 'Register Now' : 'Apply Now') : 'Closed'}
                 </Button>
@@ -200,46 +200,46 @@ export default function JobDetailPage() {
             </div>
 
             {/* Quick specifications grid */}
-            <div className={`grid grid-cols-1 ${item.location ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 p-5 bg-neutral-50 dark:bg-neutral-900/50 discuss:bg-[#1f1f1f] rounded-2xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] mb-8`}>
+            <div className={`grid grid-cols-1 ${item.location ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 p-5 bg-neutral-50 dark:bg-neutral-900/50 discuss:bg-[#1f1f1f] rounded-2xl border border-neutral-100 dark:border-neutral-800 dark:border-[#262626] mb-8`}>
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-neutral-200/50 dark:bg-neutral-800 discuss:bg-[#2a2a2a] rounded-xl text-neutral-500 dark:text-neutral-400 shrink-0">
-                  <Briefcase className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <Briefcase className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
                 </div>
                 <div>
                   <p className="text-[11px] text-neutral-400 uppercase font-bold tracking-wider">Experience</p>
-                  <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] mt-0.5">{item.experienceType || 'Not specified'}</p>
+                  <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white mt-0.5">{item.experienceType || 'Not specified'}</p>
                 </div>
               </div>
 
               {item.location && (
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-neutral-200/50 dark:bg-neutral-800 discuss:bg-[#2a2a2a] rounded-xl text-neutral-500 dark:text-neutral-400 shrink-0">
-                    <MapPin className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                    <MapPin className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
                   </div>
                   <div>
                     <p className="text-[11px] text-neutral-400 uppercase font-bold tracking-wider">Location</p>
-                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] mt-0.5">{item.location}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white mt-0.5">{item.location}</p>
                   </div>
                 </div>
               )}
 
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-neutral-200/50 dark:bg-neutral-800 discuss:bg-[#2a2a2a] rounded-xl text-neutral-500 dark:text-neutral-400 shrink-0">
-                  <Calendar className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <Calendar className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
                 </div>
                 <div>
                   <p className="text-[11px] text-neutral-400 uppercase font-bold tracking-wider">Posted Date</p>
-                  <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] mt-0.5">{new Date(item.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white mt-0.5">{new Date(item.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-neutral-200/50 dark:bg-neutral-800 discuss:bg-[#2a2a2a] rounded-xl text-neutral-500 dark:text-neutral-400 shrink-0">
-                  <ShieldCheck className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                  <ShieldCheck className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
                 </div>
                 <div>
                   <p className="text-[11px] text-neutral-400 uppercase font-bold tracking-wider">Posted By</p>
-                  <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] mt-0.5">Discuss Team</p>
+                  <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white mt-0.5">Discuss Team</p>
                 </div>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function JobDetailPage() {
             <div className="space-y-8">
               {/* Job description */}
               <div>
-                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 discuss:text-white border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] pb-2 mb-4">
+                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white border-b border-neutral-100 dark:border-neutral-800 dark:border-[#262626] pb-2 mb-4">
                   {isHackathon ? 'Hackathon Information & JD' : 'Job Description & Requirements'}
                 </h3>
                 <div className="text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] text-base leading-relaxed whitespace-pre-wrap font-normal">
@@ -259,7 +259,7 @@ export default function JobDetailPage() {
               {/* About company (optional) */}
               {item.aboutCompany && (
                 <div>
-                  <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 discuss:text-white border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] pb-2 mb-4">
+                  <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white border-b border-neutral-100 dark:border-neutral-800 dark:border-[#262626] pb-2 mb-4">
                     About {item.companyName}
                   </h3>
                   <div className="text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] text-base leading-relaxed whitespace-pre-wrap font-normal">
@@ -270,18 +270,18 @@ export default function JobDetailPage() {
             </div>
 
             {/* Footer action buttons */}
-            <div className="flex justify-between items-center mt-12 pt-6 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#262626]">
+            <div className="flex justify-between items-center mt-12 pt-6 border-t border-neutral-100 dark:border-neutral-700 dark:border-[#262626]">
               <Button 
                 onClick={handleApply}
                 disabled={!active}
-                className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white font-bold px-5 py-4 rounded-xl text-sm shadow-sm"
+                className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white font-bold px-5 py-4 rounded-xl text-sm shadow-sm"
               >
                 {active ? (isHackathon ? 'Register Now' : 'Apply Now') : 'Closed'}
               </Button>
               
               <Button 
                 onClick={() => setShowShareModal(true)}
-                className="bg-transparent text-[#6275AF] dark:text-[#94A3B8] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#262626] rounded-xl px-4 py-2 text-sm font-semibold border border-neutral-200 dark:border-neutral-700 discuss:border-[#2a2a2a] transition-all"
+                className="bg-transparent text-[#6275AF] dark:text-[#94A3B8] hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:bg-[#1A1A1A] rounded-xl px-4 py-2 text-sm font-semibold border border-neutral-200 dark:border-neutral-700 discuss:border-[#2a2a2a] transition-all"
               >
                 <Share2 className="w-4 h-4 mr-2" /> Share {isHackathon ? 'Hackathon' : 'Job'}
               </Button>

@@ -111,7 +111,7 @@ export default function SecurityLockScreen() {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-white dark:bg-[#0F172A] discuss:bg-[#121212] overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] bg-white dark:bg-[#0F172A]  overflow-y-auto">
       <div className="min-h-full flex flex-col items-center justify-center p-6 py-10">
         <div className="max-w-xs w-full flex flex-col items-center">
 
@@ -124,21 +124,21 @@ export default function SecurityLockScreen() {
             />
           </div>
 
-          <h1 className="text-2xl font-bold text-[#0F172A] dark:text-white discuss:text-[#F5F5F5] mb-2 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[#0F172A] dark:text-white dark:text-white mb-2 tracking-tight flex items-center gap-2">
             {isBiometricLoading ? (
-              <Fingerprint className="w-6 h-6 text-[#2563EB] discuss:text-[#EF4444] animate-pulse" />
+              <Fingerprint className="w-6 h-6 text-[#0095F6] text-[#0095F6] animate-pulse" />
             ) : lockoutUntil ? (
               <Clock className="w-6 h-6 text-yellow-500 animate-pulse" />
             ) : error ? (
               <ShieldAlert className="w-6 h-6 text-red-500" />
             ) : (
-              <Lock className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+              <Lock className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
             )}
             {isBiometricLoading ? 'Verifying...' : lockoutUntil ? 'Locked Out' : 'Discuss Secure'}
           </h1>
 
           <div className="h-6 mb-8 overflow-hidden">
-            <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-sm text-center italic">
+            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-sm text-center italic">
               {isBiometricLoading
                 ? 'Please verify your identity'
                 : lockoutUntil
@@ -159,7 +159,7 @@ export default function SecurityLockScreen() {
             </div>
           ) : isBiometricLoading ? (
             <div className="w-full bg-[#F5F5F7]/50 dark:bg-[#1E293B]/20 rounded-2xl p-8 mb-6 border border-[#E2E8F0]/50 flex flex-col items-center gap-4">
-              <Fingerprint className="w-16 h-16 text-[#2563EB] discuss:text-[#EF4444] animate-pulse" />
+              <Fingerprint className="w-16 h-16 text-[#0095F6] text-[#0095F6] animate-pulse" />
               <p className="text-sm text-[#6275AF] dark:text-[#94A3B8] text-center">
                 Touch the fingerprint sensor or look at the camera
               </p>
@@ -173,7 +173,7 @@ export default function SecurityLockScreen() {
                       key={i}
                       className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
                         i < pin.length
-                          ? 'bg-[#2563EB] discuss:bg-[#EF4444] scale-125 shadow-[0_0_10px_rgba(37,99,235,0.3)]'
+                          ? 'bg-[#0095F6] bg-[#0095F6] scale-125 shadow-[0_0_10px_rgba(37,99,235,0.3)]'
                           : 'bg-[#E2E8F0] dark:bg-[#334155] discuss:bg-[#333333]'
                       } ${error ? 'bg-red-500 scale-100' : ''}`}
                     />
@@ -192,7 +192,7 @@ export default function SecurityLockScreen() {
               <button
                 key={num}
                 onClick={() => handlePinInput(num.toString())}
-                className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold bg-[#F5F5F7] dark:bg-[#1E293B] discuss:bg-[#1a1a1a] text-[#0F172A] dark:text-white discuss:text-[#F5F5F5] hover:bg-[#E2E8F0] dark:hover:bg-[#334155] discuss:hover:bg-[#262626] transition-all active:scale-90"
+                className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold bg-[#F5F5F7] dark:bg-[#1E293B] dark:bg-black text-[#0F172A] dark:text-white dark:text-white hover:bg-[#E2E8F0] dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] transition-all active:scale-90"
               >
                 {num}
               </button>
@@ -202,7 +202,7 @@ export default function SecurityLockScreen() {
               {localSettings?.type === 'biometric' && (
                 <button
                   onClick={handleBiometricUnlock}
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#F0F7FF] discuss:hover:bg-[#EF4444]/10 transition-all active:scale-90"
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-[#0095F6] text-[#0095F6] hover:bg-[#F0F7FF] discuss:hover:bg-[#EF4444]/10 transition-all active:scale-90"
                   disabled={verifying}
                   aria-label="Verify with biometrics"
                 >
@@ -212,7 +212,7 @@ export default function SecurityLockScreen() {
             </div>
             <button
               onClick={() => handlePinInput('0')}
-              className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold bg-[#F5F5F7] dark:bg-[#1E293B] discuss:bg-[#1a1a1a] text-[#0F172A] dark:text-white discuss:text-[#F5F5F5] hover:bg-[#E2E8F0] dark:hover:bg-[#334155] discuss:hover:bg-[#262626] transition-all active:scale-90"
+              className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold bg-[#F5F5F7] dark:bg-[#1E293B] dark:bg-black text-[#0F172A] dark:text-white dark:text-white hover:bg-[#E2E8F0] dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] transition-all active:scale-90"
             >
               0
             </button>
@@ -238,7 +238,7 @@ export default function SecurityLockScreen() {
             {/* Forgot PIN link */}
             <button
               onClick={() => setShowForgotPinModal(true)}
-              className="text-[11px] font-bold text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] transition-colors mb-2"
+              className="text-[11px] font-bold text-[#6275AF] hover:text-[#0095F6] hover:text-[#0095F6] transition-colors mb-2"
             >
               Forgot your PIN?
             </button>
@@ -285,7 +285,7 @@ export default function SecurityLockScreen() {
       {/* Forgot PIN Recovery Modal */}
       {showForgotPinModal && (
         <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="max-w-xs w-full bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
+          <div className="max-w-xs w-full bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-3xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 flex flex-col items-center">
                 <img
@@ -326,7 +326,7 @@ export default function SecurityLockScreen() {
                     );
                     window.location.href = `mailto:support@discussit.in?subject=${subject}&body=${body}`;
                   }}
-                  className="w-full bg-[#2563EB] discuss:bg-[#EF4444] text-white text-xs font-bold py-3 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform"
+                  className="w-full bg-[#0095F6] bg-[#0095F6] text-white text-xs font-bold py-3 rounded-2xl shadow-lg hover:scale-[1.02] transition-transform"
                 >
                   SEND RECOVERY EMAIL
                 </Button>

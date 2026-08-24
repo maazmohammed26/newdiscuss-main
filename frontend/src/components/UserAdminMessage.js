@@ -160,47 +160,28 @@ export default function UserAdminMessage({ message }) {
         .dark .msg-scroll-hint { color: #94A3B8; }
 
         /* Retro / Discuss Light Theme */
-        .discuss-light .user-admin-msg-box {
-          background-color: #ffffff !important;
-          border: 2px solid #000000 !important;
-          box-shadow: 3px 3px 0 #000000 !important;
-          border-radius: 0 !important;
-        }
-        .discuss-light .msg-tag-left { color: #000000 !important; }
-        .discuss-light .msg-tag-right { color: #EF4444 !important; }
-        .discuss-light .msg-label { color: #000000 !important; }
-        .discuss-light .msg-content { color: #EF4444 !important; font-weight: 700 !important; }
-        .discuss-light .msg-close-btn {
-          color: #000000 !important;
-          border-radius: 0 !important;
-        }
-        .discuss-light .msg-close-btn:hover {
-          background-color: rgba(0, 0, 0, 0.05) !important;
-        }
-        .discuss-light .msg-link { color: #B91C1C !important; }
-        .discuss-light .msg-link:hover { color: #7F1D1D !important; }
-        .discuss-light .msg-scroll-hint { color: #334155 !important; }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
         /* Cyberpunk / Discuss Black Theme */
-        .discuss-black .user-admin-msg-box {
-          background-color: rgba(255, 0, 127, 0.04) !important;
-          border: 1px solid rgba(255, 0, 127, 0.25) !important;
-          box-shadow: 0 0 15px rgba(255, 0, 127, 0.05) !important;
-        }
-        .discuss-black .msg-tag-left { color: #FF007F !important; }
-        .discuss-black .msg-tag-right { color: #9333EA !important; }
-        .discuss-black .msg-label { color: #FFFFFF !important; }
-        .discuss-black .msg-content { color: #FF007F !important; font-weight: 600 !important; text-shadow: 0 0 8px rgba(255, 0, 127, 0.4) !important; }
-        .discuss-black .msg-close-btn {
-          color: #9090A8 !important;
-        }
-        .discuss-black .msg-close-btn:hover {
-          background-color: rgba(255, 0, 127, 0.1) !important;
-          color: #FF007F !important;
-        }
-        .discuss-black .msg-link { color: #FF007F !important; }
-        .discuss-black .msg-link:hover { color: #FDA4AF !important; }
-        .discuss-black .msg-scroll-hint { color: #A1A1AA !important; }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
       `}</style>
     </>
   );

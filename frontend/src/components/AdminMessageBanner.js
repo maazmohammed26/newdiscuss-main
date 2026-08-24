@@ -7,7 +7,7 @@ export default function AdminMessageBanner() {
   const [message, setMessage] = useState(null);
   const [dismissed, setDismissed] = useState(false);
   const { theme } = useTheme();
-  const isBlack = theme === 'discuss-black';
+  const isBlack = false;
 
   useEffect(() => {
     const unsubscribe = subscribeToAdminMessage((msg) => {
@@ -32,7 +32,7 @@ export default function AdminMessageBanner() {
   return (
     <div
       data-testid="admin-message-banner"
-      className="bg-[#EFF6FF] dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-b border-[#3B82F6]/20 dark:border-[#334155] discuss:border-[#333333]"
+      className="bg-[#EFF6FF] dark:bg-[#1E293B] dark:bg-black border-b border-[#3B82F6]/20 dark:border-[#334155] dark:border-[#262626]"
       style={bannerStyle}
     >
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -42,14 +42,14 @@ export default function AdminMessageBanner() {
         </div>
         <p className="flex-1 text-[13px] md:text-[14px]">
           <span
-            className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] font-medium"
+            className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white font-medium"
             style={textStyle}
           >
             Message from{' '}
           </span>
           <span className="text-[#3B82F6] font-bold">&lt;Discuss Admin&gt;</span>
           <span
-            className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] font-medium"
+            className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white font-medium"
             style={textStyle}
           >
             {' '}: {' '}
@@ -58,7 +58,7 @@ export default function AdminMessageBanner() {
         </p>
         <button
           onClick={() => setDismissed(true)}
-          className="p-1.5 rounded-lg hover:bg-[#3B82F6]/10 text-[#64748B] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#3B82F6] transition-colors shrink-0"
+          className="p-1.5 rounded-lg hover:bg-[#3B82F6]/10 text-[#64748B] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#3B82F6] transition-colors shrink-0"
           style={dismissStyle}
           aria-label="Dismiss message"
         >

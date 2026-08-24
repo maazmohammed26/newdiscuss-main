@@ -202,11 +202,11 @@ export default function UrlPreviewCard({ url }) {
           {/* Domain / site name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
             <Globe
-              className="url-preview-domain text-[#2563EB] dark:text-[#60A5FA]"
+              className="url-preview-domain text-[#0095F6] dark:text-[#60A5FA]"
               style={{ width: '10px', height: '10px', flexShrink: 0 }}
             />
             <span
-              className="url-preview-domain text-[#2563EB] dark:text-[#60A5FA]"
+              className="url-preview-domain text-[#0095F6] dark:text-[#60A5FA]"
               style={{
                 fontSize: '10px',
                 fontWeight: 600,

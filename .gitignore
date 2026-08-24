@@ -262,3 +262,9 @@ credentials.json
 
 # Local databases/JSON stores
 users.json
+
+# Local scratch and temporary files
+scratch/
+newdiscuss-main/
+old_postcard.txt
+very_old_postcard.txt

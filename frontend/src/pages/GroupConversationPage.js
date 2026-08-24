@@ -588,7 +588,7 @@ export default function GroupConversationPage() {
               : {}}
           >
             <p
-              className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] text-center"
+              className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 text-center"
               style={document.documentElement.classList.contains('discuss-black') ? { color: '#C8C8E0' } : {}}
             >{message.text}</p>
           </div>
@@ -601,15 +601,15 @@ export default function GroupConversationPage() {
         <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
           {!isOwn && (
             <div className="flex items-center gap-1 mb-1 ml-1">
-              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">@{senderDetails?.username || 'User'}</span>
+              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white">@{senderDetails?.username || 'User'}</span>
               {senderDetails?.verified && <VerifiedBadge size="xs" />}
             </div>
           )}
           
           <div className="relative group">
-            <div className={`rounded-[16px] px-4 py-2.5 ${isOwn ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white' : 'bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]'}`}>
+            <div className={`rounded-[16px] px-4 py-2.5 ${isOwn ? 'bg-[#0095F6] bg-[#0095F6] text-white' : 'bg-white dark:bg-neutral-800 dark:bg-black text-neutral-900 dark:text-neutral-50 dark:text-white border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]'}`}>
               {message.replyTo && (
-                <button onClick={() => scrollToMessage(message.replyTo.id)} className={`mb-2 p-2 rounded-[8px] border-l-2 text-left w-full ${isOwn ? 'bg-white/10 border-white/30' : 'bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] border-neutral-300 dark:border-neutral-600 discuss:border-[#404040]'}`}>
+                <button onClick={() => scrollToMessage(message.replyTo.id)} className={`mb-2 p-2 rounded-[8px] border-l-2 text-left w-full ${isOwn ? 'bg-white/10 border-white/30' : 'bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] border-neutral-300 dark:border-neutral-600 discuss:border-[#404040]'}`}>
                   <p className={`text-[10px] font-semibold mb-0.5 ${isOwn ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}>@{userDetails[message.replyTo.sender]?.username || 'User'}</p>
                   <p className={`text-xs truncate ${isOwn ? 'text-white/90' : 'text-neutral-600 dark:text-neutral-300'}`}>
                     {replyPreviewText(message.replyTo, messageById)}
@@ -655,7 +655,7 @@ export default function GroupConversationPage() {
               )}
 
               {message.forwarded && message.originalSender && message.originalSender !== message.sender && (
-                <div className={`flex items-center gap-1 text-[10px] opacity-75 mb-1 italic ${isOwn ? 'text-white/80' : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]'}`}>
+                <div className={`flex items-center gap-1 text-[10px] opacity-75 mb-1 italic ${isOwn ? 'text-white/80' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400'}`}>
                   <Reply className="w-3 h-3 transform scale-x-[-1]" />
                   <span>Forwarded</span>
                 </div>
@@ -706,7 +706,7 @@ export default function GroupConversationPage() {
               <div className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] mx-2">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] mx-2">
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -735,11 +735,11 @@ export default function GroupConversationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-3" />
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading group chat...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Loading group chat...</p>
         </div>
       </div>
     );
@@ -749,20 +749,20 @@ export default function GroupConversationPage() {
   const isAdminOnlyMode = groupInfo?.settings?.adminOnlyMessaging;
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  flex flex-col">
       <Header />
       
-      <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
+      <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
         <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/chat')} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] transition-colors">
+            <button onClick={() => navigate('/chat')} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-colors">
               <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">{groupInfo?.name || 'Group'}</h1>
+                <h1 className="font-bold text-base text-neutral-900 dark:text-neutral-50 dark:text-white">{groupInfo?.name || 'Group'}</h1>
                 <span
-                  className="bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  className="bg-[#0095F6]/10 bg-[#0095F6]/10 text-[#0095F6] text-[#0095F6] text-[10px] font-bold px-2 py-0.5 rounded-full"
                   style={document.documentElement.classList.contains('discuss-black')
                     ? { backgroundColor: 'rgba(255,0,127,0.15)', color: '#FF007F' }
                     : {}}
@@ -770,10 +770,10 @@ export default function GroupConversationPage() {
                 {groupInfo?.settings?.autoDelete24h && <span className="bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1" title="24h auto-delete enabled"><Clock className="w-3 h-3" />24h</span>}
                 {isAdminOnlyMode && <span className="bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Admin-only messaging">Admin Only</span>}
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">{members.length} members</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">{members.length} members</p>
             </div>
           </div>
-          <button onClick={() => navigate(`/group/${groupId}/info`)} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] transition-colors">
+          <button onClick={() => navigate(`/group/${groupId}/info`)} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-colors">
             <Info className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
         </div>
@@ -788,8 +788,8 @@ export default function GroupConversationPage() {
       >
         <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
           {loadingOld && (
-            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm animate-pulse">
-              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin text-[#0095F6] text-[#0095F6]" />
               <span>Loading old messages, please wait...</span>
             </div>
           )}
@@ -820,8 +820,8 @@ export default function GroupConversationPage() {
           )}
 
           {liveMessagesSynced && messages.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
-              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">No messages yet</p>
+            <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+              <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">No messages yet</p>
             </div>
           ) : messages.length > 0 ? (
             Object.entries(groupedMessages).map(([date, dateMessages]) => (
@@ -834,7 +834,7 @@ export default function GroupConversationPage() {
                       : {}}
                   >
                     <p
-                      className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] font-medium"
+                      className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 font-medium"
                       style={document.documentElement.classList.contains('discuss-black') ? { color: '#C8C8E0' } : {}}
                     >{date}</p>
                   </div>
@@ -852,7 +852,7 @@ export default function GroupConversationPage() {
       {showScrollDown && (
         <button
           onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-28 right-6 p-2.5 rounded-full bg-white dark:bg-neutral-800 discuss:bg-[#262626] text-[#2563EB] dark:text-neutral-200 discuss:text-[#EF4444] shadow-lg border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:scale-110 active:scale-95 transition-all z-10 animate-bounce"
+          className="absolute bottom-28 right-6 p-2.5 rounded-full bg-white dark:bg-neutral-800 dark:bg-[#1A1A1A] text-[#0095F6] dark:text-neutral-200 text-[#0095F6] shadow-lg border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:scale-110 active:scale-95 transition-all z-10 animate-bounce"
           style={document.documentElement.classList.contains('discuss-black')
             ? { backgroundColor: '#1A1A24', borderColor: 'rgba(255, 0, 127, 0.3)', color: '#FF007F' }
             : {}}
@@ -863,14 +863,14 @@ export default function GroupConversationPage() {
       )}
 
       {canSendMessages ? (
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
           <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
             {replyTo && (
-              <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] p-2 rounded-[8px] border-l-2 border-[#2563EB] discuss:border-[#EF4444]">
+              <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] p-2 rounded-[8px] border-l-2 border-[#0095F6] discuss:border-[#EF4444]">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#2563EB] discuss:text-[#EF4444]">Replying to @{userDetails[replyTo.sender]?.username || 'User'}</p>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] truncate">{replyPreviewText(replyTo, messageById)}</p>
+                    <p className="text-xs font-semibold text-[#0095F6] text-[#0095F6]">Replying to @{userDetails[replyTo.sender]?.username || 'User'}</p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 truncate">{replyPreviewText(replyTo, messageById)}</p>
                   </div>
                   <button onClick={() => setReplyTo(null)} className="ml-2 p-1 hover:bg-neutral-200 dark:hover:bg-neutral-600 discuss:hover:bg-[#333333] rounded"><X className="w-4 h-4" /></button>
                 </div>
@@ -900,7 +900,7 @@ export default function GroupConversationPage() {
             )}
 
             {pendingMedia.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2 p-2 bg-neutral-50 dark:bg-neutral-800 discuss:bg-[#262626] rounded-lg">
+              <div className="flex flex-wrap gap-2 mb-2 p-2 bg-neutral-50 dark:bg-neutral-800 dark:bg-[#1A1A1A] rounded-lg">
                 {pendingMedia.map((m, idx) => (
                   <div key={idx} className="relative w-16 h-16 rounded-md overflow-hidden group border border-neutral-200 dark:border-neutral-700">
                     {m.format === 'mp4' || m.url?.includes('video') ? (
@@ -924,7 +924,7 @@ export default function GroupConversationPage() {
               <button
                 type="button"
                 onClick={() => setShowMediaUpload(!showMediaUpload)}
-                className={`p-2 rounded-lg transition-colors ${showMediaUpload ? 'bg-[#2563EB] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
+                className={`p-2 rounded-lg transition-colors ${showMediaUpload ? 'bg-[#0095F6] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500'}`}
               >
                 <IoImage size={22} />
               </button>
@@ -932,7 +932,7 @@ export default function GroupConversationPage() {
                 type="button"
                 onClick={handleSendLocation}
                 disabled={sending || (isAdminOnlyMode && !isAdmin)}
-                className={`p-2 rounded-lg transition-colors ${sending ? 'opacity-50' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
+                className={`p-2 rounded-lg transition-colors ${sending ? 'opacity-50' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500'}`}
                 title="Send Location"
               >
                 <IoLocationSharp size={22} />
@@ -960,7 +960,7 @@ export default function GroupConversationPage() {
                   }
                 }}
                 placeholder={isAdminOnlyMode && !isAdmin ? "Only admins can send messages" : "Type a message..."}
-                className="flex-1 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 rounded-2xl px-4 py-2.5 text-[14px] md:text-[15px] focus:outline-none resize-none max-h-[130px] input-textarea-scroll"
+                className="flex-1 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] border-0 text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 rounded-2xl px-4 py-2.5 text-[14px] md:text-[15px] focus:outline-none resize-none max-h-[130px] input-textarea-scroll"
                 style={{
                   height: '40px',
                   scrollbarWidth: 'none',
@@ -969,14 +969,14 @@ export default function GroupConversationPage() {
                 disabled={sending || (isAdminOnlyMode && !isAdmin)}
                 maxLength={1000}
               />
-              <Button type="submit" disabled={(!messageText.trim() && pendingMedia.length === 0 && !showMediaUpload) || (isAdminOnlyMode && !isAdmin)} className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white px-4">
+              <Button type="submit" disabled={(!messageText.trim() && pendingMedia.length === 0 && !showMediaUpload) || (isAdminOnlyMode && !isAdmin)} className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white px-4">
                 <Send className="w-5 h-5" />
               </Button>
             </form>
           </div>
         </div>
       ) : (
-        <div className="bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
+        <div className="bg-neutral-100 dark:bg-neutral-800 dark:bg-black border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
           <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto text-center">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{isAdminOnlyMode ? 'Only admins can send messages in this group' : 'You cannot send messages in this group'}</p>
           </div>
@@ -1005,11 +1005,11 @@ export default function GroupConversationPage() {
 
       {showForwardModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-between">
-              <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] flex items-center gap-2">
-                <Send className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444] transform rotate-45" />
+            <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex items-center justify-between">
+              <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white flex items-center gap-2">
+                <Send className="w-5 h-5 text-[#0095F6] text-[#0095F6] transform rotate-45" />
                 Forward Message
               </h3>
               <button
@@ -1017,20 +1017,20 @@ export default function GroupConversationPage() {
                   setShowForwardModal(false);
                   setForwardSearch('');
                 }}
-                className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400"
+                className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-400"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             {/* Search Input */}
-            <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+            <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
               <input
                 type="text"
                 value={forwardSearch}
                 onChange={(e) => setForwardSearch(e.target.value)}
                 placeholder="Search friends or groups..."
-                className="w-full bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                className="w-full bg-neutral-100 dark:bg-neutral-900 dark:bg-[#1A1A1A] border-0 text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 rounded-lg px-3 py-2 text-sm focus:outline-none"
               />
             </div>
             
@@ -1049,13 +1049,13 @@ export default function GroupConversationPage() {
                      return (
                        <div className="space-y-2">
                          {filteredChats.map(c => (
-                           <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                           <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                              <div className="flex items-center gap-2.5 min-w-0">
-                               <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-center bg-neutral-100 text-xs">
+                               <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex items-center justify-center bg-neutral-100 text-xs">
                                  {c.otherUserDetails?.username?.substring(0,2).toUpperCase()}
                                </div>
                                <div className="min-w-0">
-                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                    {c.otherUserDetails?.fullName || c.otherUserDetails?.username}
                                  </p>
                                  <p className="text-[10px] text-neutral-400 truncate">@{c.otherUserDetails?.username}</p>
@@ -1063,7 +1063,7 @@ export default function GroupConversationPage() {
                              </div>
                              <button
                                onClick={() => handleForwardToTarget(c.chatId, 'dm')}
-                               className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                               className="bg-[#0095F6]/10 hover:bg-[#0095F6] bg-[#0095F6]/10 discuss:hover:bg-[#EF4444] text-[#0095F6] hover:text-white text-[#0095F6] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                              >
                                Forward
                              </button>
@@ -1082,13 +1082,13 @@ export default function GroupConversationPage() {
                      return (
                        <div className="space-y-2">
                          {filteredUsers.map(u => (
-                           <div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                           <div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                              <div className="flex items-center gap-2.5 min-w-0">
-                               <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-center bg-neutral-100 text-xs">
+                               <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex items-center justify-center bg-neutral-100 text-xs">
                                  {u.username?.substring(0,2).toUpperCase()}
                                </div>
                                <div className="min-w-0">
-                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                    {u.username}
                                  </p>
                                  <p className="text-[10px] text-neutral-400 truncate">@{u.username}</p>
@@ -1096,7 +1096,7 @@ export default function GroupConversationPage() {
                              </div>
                              <button
                                onClick={() => handleForwardToTarget(u.id, 'dm')}
-                               className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                               className="bg-[#0095F6]/10 hover:bg-[#0095F6] bg-[#0095F6]/10 discuss:hover:bg-[#EF4444] text-[#0095F6] hover:text-white text-[#0095F6] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                              >
                                Forward
                              </button>
@@ -1122,13 +1122,13 @@ export default function GroupConversationPage() {
                      {forwardTargets.groups.filter(g =>
                        g.groupName?.toLowerCase().includes(forwardSearch.toLowerCase())
                      ).map(g => (
-                       <div key={g.groupId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                       <div key={g.groupId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                          <div className="flex items-center gap-2.5 min-w-0">
                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#2563EB] flex items-center justify-center text-white text-xs font-bold font-mono">
                              G
                            </div>
                            <div className="min-w-0">
-                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                {g.groupName}
                              </p>
                              <p className="text-[10px] text-neutral-400 truncate">{g.groupType === 'public' ? '🌍 Public Group' : '🔒 Private Group'}</p>
@@ -1136,7 +1136,7 @@ export default function GroupConversationPage() {
                          </div>
                          <button
                            onClick={() => handleForwardToTarget(g.groupId, 'group')}
-                           className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                           className="bg-[#0095F6]/10 hover:bg-[#0095F6] bg-[#0095F6]/10 discuss:hover:bg-[#EF4444] text-[#0095F6] hover:text-white text-[#0095F6] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                          >
                            Forward
                          </button>

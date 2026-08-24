@@ -87,7 +87,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-        <DialogContent aria-describedby={undefined} hideClose={true} className="sm:max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] dark:border-[#334155] discuss:border-[#333333] p-0 overflow-hidden">
+        <DialogContent aria-describedby={undefined} hideClose={true} className="sm:max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black dark:border-[#334155] dark:border-[#262626] p-0 overflow-hidden">
           <DialogTitle className="sr-only">User Profile Preview</DialogTitle>
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -95,7 +95,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
             </div>
           ) : !userData ? (
             <div className="text-center py-12 px-6">
-              <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]">User not found</p>
+              <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">User not found</p>
             </div>
           ) : (
             <>
@@ -103,7 +103,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
               <div className="flex items-center justify-between px-3 pt-3">
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
@@ -132,7 +132,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                     userId={userId}
                     src={userData.photo_url || null}
                     username={userData.username}
-                    className={`w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] transition-opacity ${!currentUserId ? 'opacity-70 grayscale' : 'group-hover:opacity-90'}`}
+                    className={`w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border dark:border-[#262626] transition-opacity ${!currentUserId ? 'opacity-70 grayscale' : 'group-hover:opacity-90'}`}
                   />
                   {currentUserId && userData.photo_url && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full pointer-events-none">
@@ -151,20 +151,20 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                 
                 {/* Full Name */}
                 {profileData?.fullName && (
-                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px] flex items-center justify-center gap-1 no-copy">
+                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[16px] flex items-center justify-center gap-1 no-copy">
                     {profileData.fullName}
                     {userData.verified && <VerifiedBadge size="xs" />}
                   </h3>
                 )}
                 
                 {/* Username */}
-                <p data-testid="user-preview-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px]'}`}>
+                <p data-testid="user-preview-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[16px]'}`}>
                   @{userData.username}
                   {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
                 </p>
 
                 {/* Achievements Badges */}
-                <div className="flex flex-wrap items-center justify-center gap-2 mt-3 pt-2 border-t border-dashed border-[#E2E8F0] dark:border-[#334155]/60 discuss:border-[#333333]/50">
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-3 pt-2 border-t border-dashed border-[#E2E8F0] dark:border-[#334155]/60 dark:border-[#262626]/50">
                   {OFFICIAL_BADGES.map((badge) => {
                     const isLocked = eligiblePostCount < badge.target;
                     return (
@@ -198,14 +198,14 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                     <span className="text-[#6275AF] text-xs">Loading...</span>
                   </div>
                 ) : profileData?.bio && (
-                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 no-copy">
-                    <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[11px] leading-relaxed whitespace-pre-wrap">
+                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-3 no-copy">
+                    <p className="text-[#0F172A] dark:text-[#E2E8F0] dark:text-neutral-200 text-[11px] leading-relaxed whitespace-pre-wrap">
                       {displayBio}
                     </p>
                     {bioNeedsTruncation && (
                       <button
                         onClick={() => setBioExpanded(!bioExpanded)}
-                        className="text-[#2563EB] discuss:text-[#60A5FA] hover:underline text-[10px] mt-1 flex items-center gap-0.5"
+                        className="text-[#0095F6] discuss:text-[#60A5FA] hover:underline text-[10px] mt-1 flex items-center gap-0.5"
                       >
                         {bioExpanded ? (
                           <>Less <ChevronUp className="w-2.5 h-2.5" /></>
@@ -226,7 +226,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#2563EB] discuss:text-[#60A5FA] text-[10px] font-medium px-2 py-1 rounded-full border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] transition-colors"
+                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#0095F6] discuss:text-[#60A5FA] text-[10px] font-medium px-2 py-1 rounded-full border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] transition-colors"
                       >
                         {link.name}
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -240,15 +240,15 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 text-center">
-                    <Calendar className="w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-1" />
-                    <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[12px] font-semibold">{joinDate}</p>
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[10px]">Joined</p>
+                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-3 text-center">
+                    <Calendar className="w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-1" />
+                    <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[12px] font-semibold">{joinDate}</p>
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[10px]">Joined</p>
                   </div>
-                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 text-center">
-                    <FileText className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444] mx-auto mb-1" />
-                    <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[12px] font-semibold">{postCount}</p>
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[10px]">Posts</p>
+                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-3 text-center">
+                    <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6] mx-auto mb-1" />
+                    <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[12px] font-semibold">{postCount}</p>
+                    <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[10px]">Posts</p>
                   </div>
                 </div>
 
@@ -267,7 +267,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                 <Button
                   data-testid="user-preview-view-posts"
                   onClick={handleViewPosts}
-                  className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white font-medium rounded-full py-2.5 text-[13px]"
+                  className="w-full bg-[#0095F6] hover:bg-[#1877F2] bg-[#0095F6] hover:bg-[#1877F2] text-white font-medium rounded-full py-2.5 text-[13px]"
                 >
                   View All Posts <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                 </Button>

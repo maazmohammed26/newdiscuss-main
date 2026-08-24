@@ -130,7 +130,7 @@ export default function BlogsPage() {
                   e.stopPropagation();
                   setExpandedBlog(expandedBlog === index ? null : index);
                 }}
-                className="mt-6 flex items-center text-xs sm:text-sm font-bold text-[#2563EB] hover:text-[#DC2626] transition-colors group/btn"
+                className="mt-6 flex items-center text-xs sm:text-sm font-bold text-[#0095F6] hover:text-[#DC2626] transition-colors group/btn"
               >
                 <span>{expandedBlog === index ? 'Collapse Article' : 'Read Full Article'}</span>
                 {expandedBlog === index 

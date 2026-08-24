@@ -139,16 +139,16 @@ export default function UserAvatar({
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[280px] p-5 bg-white/95 dark:bg-[#1E293B]/95 discuss:bg-[#1a1a1a]/95 border border-neutral-200 dark:border-white/10 discuss:border-[#333333] rounded-2xl shadow-2xl backdrop-blur-2xl"
+            className="w-full max-w-[280px] p-5 bg-white/95 dark:bg-[#1E293B]/95 dark:bg-black/95 border border-neutral-200 dark:border-white/10 dark:border-[#262626] rounded-2xl shadow-2xl backdrop-blur-2xl"
           >
             {/* Header row with Title and Close X Button */}
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200/50 dark:border-white/10 discuss:border-[#333333]">
-              <span className="text-xs font-extrabold tracking-tight text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5]">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-200/50 dark:border-white/10 dark:border-[#262626]">
+              <span className="text-xs font-extrabold tracking-tight text-neutral-800 dark:text-neutral-200 dark:text-white">
                 @{username}
               </span>
               <button 
                 onClick={() => setShowOptions(false)}
-                className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#262626] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer"
+                className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:bg-[#1A1A1A] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors cursor-pointer"
                 aria-label="Close options"
               >
                 <X className="w-3.5 h-3.5" />

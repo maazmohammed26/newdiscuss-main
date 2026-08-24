@@ -92,7 +92,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
     >
       <div
-        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-neutral-900 discuss:bg-[#1a1a1a] rounded-t-[20px] sm:rounded-[20px] shadow-2xl overflow-y-auto [&::-webkit-scrollbar]:hidden pb-28 sm:pb-0"
+        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-neutral-900 dark:bg-black rounded-t-[20px] sm:rounded-[20px] shadow-2xl overflow-y-auto [&::-webkit-scrollbar]:hidden pb-28 sm:pb-0"
         style={{ minHeight: '420px', maxHeight: '90vh', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -108,13 +108,13 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             >
               <Zap className="w-3.5 h-3.5 text-white fill-white" />
             </div>
-            <span className="font-semibold text-[15px] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+            <span className="font-semibold text-[15px] text-neutral-900 dark:text-neutral-50 dark:text-white">
               New Signal
             </span>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 discuss:hover:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#262626] transition-all"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:bg-[#1A1A1A] transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -128,10 +128,10 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             className="w-8 h-8 ring-2 ring-purple-400/40"
           />
           <div>
-            <p className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-100 discuss:text-[#F5F5F5]">
+            <p className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-100 dark:text-white">
               {user?.username}
             </p>
-            <p className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]">
+            <p className="text-[11px] text-neutral-400 dark:text-neutral-400">
               Visible to everyone · 24h
             </p>
           </div>
@@ -148,7 +148,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             onChange={(e) => setText(e.target.value)}
             placeholder="What's your signal? Share a thought, link, or update…"
             rows={6}
-            className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-600 discuss:placeholder:text-[#555] outline-none"
+            className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 discuss:placeholder:text-[#555] outline-none"
           />
         </div>
 
@@ -205,7 +205,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
                   ? 'text-red-500'
                   : remaining <= 50
                   ? 'text-amber-500'
-                  : 'text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]'
+                  : 'text-neutral-400 dark:text-neutral-500 dark:text-neutral-400'
               }`}
             >
               {remaining}

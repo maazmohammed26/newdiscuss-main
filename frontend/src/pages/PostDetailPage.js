@@ -205,14 +205,14 @@ export default function PostDetailPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={isProject
                   ? 'bg-[#BC4800]/10 text-[#BC4800] border border-[#BC4800]/20 rounded-full px-2.5 py-0.5 text-xs font-semibold'
-                  : 'bg-[#2563EB]/10 text-[#2563EB] border border-[#2563EB]/20 rounded-full px-2.5 py-0.5 text-xs font-semibold'
+                  : 'bg-[#0095F6]/10 text-[#0095F6] border border-[#0095F6]/20 rounded-full px-2.5 py-0.5 text-xs font-semibold'
                 }>
                   {isProject ? 'Project' : 'Discussion'}
                 </span>
                 <button
                   data-testid="post-detail-author"
                   onClick={handleUsernameClick}
-                  className="font-semibold text-[#2563EB] hover:underline text-[14px] cursor-pointer"
+                  className="font-semibold text-[#0095F6] hover:underline text-[14px] cursor-pointer"
                 >
                   {post.author_username}
                 </button>
@@ -238,7 +238,7 @@ export default function PostDetailPage() {
                   </>
                 )}
                 <div className="flex gap-2">
-                  <Button onClick={handleSaveEdit} disabled={saving} className="bg-[#2563EB] text-white hover:bg-[#1D4ED8] rounded-full px-4 text-[13px]">
+                  <Button onClick={handleSaveEdit} disabled={saving} className="bg-[#0095F6] text-white hover:bg-[#1877F2] rounded-full px-4 text-[13px]">
                     {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Check className="w-3.5 h-3.5 mr-1" /> Save</>}
                   </Button>
                   <Button onClick={() => setEditing(false)} variant="ghost" className="text-[#6275AF] rounded-full px-4 text-[13px]"><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
@@ -293,7 +293,7 @@ export default function PostDetailPage() {
                       </button>
                     )}
                     {post.preview_link && (
-                      <button onClick={e => handleExternalLink(post.preview_link, e)} className="inline-flex items-center gap-1.5 bg-[#2563EB] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#1D4ED8]">
+                      <button onClick={e => handleExternalLink(post.preview_link, e)} className="inline-flex items-center gap-1.5 bg-[#0095F6] text-white rounded-lg px-3 py-1.5 text-xs font-medium hover:bg-[#1877F2]">
                         <ExternalLink className="w-3.5 h-3.5" /> Live Preview
                       </button>
                     )}

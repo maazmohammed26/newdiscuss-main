@@ -1,28 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getComments, subscribeToCommentsRealtime } from '@/lib/db';
 import { 
   createCommentFirestore, 
-  getCommentsFirestore, 
   deleteCommentFirestore,
   subscribeToCommentsFirestore,
   createReply,
-  getReplies,
   subscribeToReplies,
   deleteReply,
   clearCommentBadge,
   clearReplyBadge,
   hasNewReplies
 } from '@/lib/commentsDb';
-import { 
-  getCachedComments, 
-  cacheComments
-} from '@/lib/cacheManager';
 import ExpandableText from '@/components/ExpandableText';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import CommentUserInfoModal from '@/components/CommentUserInfoModal';
 import LinkifiedText from '@/components/LinkifiedText';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import UserAvatar from '@/components/UserAvatar';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -30,7 +22,7 @@ import {
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
-import { Send, Trash2, Loader2, MessageSquare, ChevronDown, ChevronUp, Reply, MoreVertical } from 'lucide-react';
+import { Send, Trash2, Loader2, MessageCircle, ChevronDown, ChevronUp, MoreHorizontal, Reply } from 'lucide-react';
 import { toast } from 'sonner';
 import { notifyTelegramComment, notifyTelegramReply } from '@/lib/telegramService';
 import { notifyDiscordComment, notifyDiscordReply } from '@/lib/discordService';
@@ -41,58 +33,61 @@ function timeAgo(iso) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}h`;
   const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
+  if (days < 30) return `${days}d`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// Reply Component
+// Single Reply Item
 function CommentReply({ reply, currentUser, postId, commentId, postAuthorId, onDelete }) {
   const isCurrentUser = reply.author_id === currentUser?.id;
   const isPostAuthor = reply.author_id === postAuthorId;
   
   return (
-    <div className={`ml-6 mt-2 pl-3 border-l-2 ${isPostAuthor ? 'border-[#BC4800] discuss:border-[#EF4444] bg-[#BC4800]/5 dark:bg-[#BC4800]/10 discuss:bg-[#EF4444]/5' : 'border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]'} rounded-r-md pr-2 py-1`}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-[#1D7AFF] discuss:text-[#60A5FA] text-[12px]">
-            <span>{reply.author_username}</span>
+    <div className="flex items-start gap-2.5 ml-8 mt-2.5 text-xs">
+      <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 mt-0.5">
+        <UserAvatar 
+          src={reply.author_photo_url || null} 
+          username={reply.author_username || 'User'} 
+          className="w-full h-full object-cover" 
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="leading-snug">
+          <span className="font-bold mr-1.5 text-neutral-900 dark:text-white">
+            {reply.author_username}
           </span>
           {reply.author_verified && <VerifiedBadge size="xs" />}
           {isPostAuthor && (
-            <span className="bg-[#BC4800]/15 discuss:bg-[#EF4444]/15 text-[#BC4800] discuss:text-[#EF4444] text-[9px] font-bold uppercase px-1 py-0.5 rounded"><span>Author</span></span>
+            <span className="ml-1 text-[10px] font-bold text-[#0095F6] bg-blue-500/10 px-1 py-0.2 rounded">Author</span>
           )}
-          <span className="text-[#6275AF] dark:text-[#94A3B8] text-[10px]"><span>{timeAgo(reply.timestamp)}</span></span>
+          <span className="text-neutral-900 dark:text-neutral-200 ml-1">
+            <ExpandableText text={reply.text} maxLines={3}>
+              <LinkifiedText text={reply.text} className="whitespace-pre-wrap" />
+            </ExpandableText>
+          </span>
         </div>
-        {isCurrentUser && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
-                <MoreVertical className="w-3.5 h-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(reply.id); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-[11px]">
-                <Trash2 className="w-3 h-3" /> <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-      <div className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[12px] mt-0.5">
-        <ExpandableText text={reply.text} maxLines={4}>
-          <LinkifiedText text={reply.text} className="whitespace-pre-wrap" />
-        </ExpandableText>
+        <div className="flex items-center gap-3 mt-1 text-[11px] text-neutral-400 font-medium">
+          <span>{timeAgo(reply.timestamp)}</span>
+          {isCurrentUser && (
+            <button
+              onClick={() => onDelete(reply.id)}
+              className="text-[#ED4956] hover:underline cursor-pointer"
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// Comment with Replies Component
+// Single Comment Item
 function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onUserClick, onAuthRequired }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
@@ -104,17 +99,14 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
   
   const isPostAuthor = comment.author_id === postAuthorId;
   const isCurrentUser = comment.author_id === currentUser?.id;
-  const isClickable = !isCurrentUser;
   const replyCount = comment.replyCount || 0;
-  
-  // Check for new reply badge
+
   useEffect(() => {
     if (isCurrentUser && currentUser?.id) {
       hasNewReplies(postId, comment.id, currentUser.id).then(setHasNewReply);
     }
   }, [postId, comment.id, currentUser?.id, isCurrentUser]);
   
-  // Load replies when opened
   useEffect(() => {
     if (!showReplies) return;
     
@@ -124,7 +116,6 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
       setLoadingReplies(false);
     });
     
-    // Clear badge when viewing replies
     if (isCurrentUser && currentUser?.id) {
       clearReplyBadge(postId, comment.id, currentUser.id);
       setHasNewReply(false);
@@ -135,372 +126,282 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
   
   const handleSubmitReply = async (e) => {
     e.preventDefault();
-    const text = replyText.trim();
+    if (!replyText.trim()) return;
+    if (!currentUser) {
+      onAuthRequired();
+      return;
+    }
     setSubmittingReply(true);
     try {
-      await createReply(postId, comment.id, text, currentUser, comment.author_id);
+      await createReply(postId, comment.id, replyText.trim(), currentUser, comment.author_id);
       setReplyText('');
       setShowReplyInput(false);
       if (!showReplies) setShowReplies(true);
       
-      // Notify comment author (fire-and-forget)
       if (comment.author_id && currentUser?.id !== comment.author_id) {
-        notifyTelegramReply(comment.author_id, currentUser?.username, text).catch(() => {});
-        notifyDiscordReply(comment.author_id, currentUser?.username, text).catch(() => {});
-        
-        import('@/lib/pushNotificationService').then(({ sendOneSignalNotification }) => {
-          sendOneSignalNotification(
-            comment.author_id,
-            `New Reply on Your Comment`,
-            `@${currentUser?.username || 'Someone'} replied: "${text}"`,
-            { url: `/post/${postId}`, type: 'comment_reply' }
-          );
-        }).catch(() => {});
+        notifyTelegramReply(comment.author_id, currentUser?.username, replyText.trim()).catch(() => {});
+        notifyDiscordReply(comment.author_id, currentUser?.username, replyText.trim()).catch(() => {});
       }
+      toast.success('Reply posted');
     } catch (err) {
-      toast.error('Failed to add reply');
+      toast.error('Failed to post reply');
     } finally {
       setSubmittingReply(false);
     }
   };
-  
+
   const handleDeleteReply = async (replyId) => {
     try {
-      await deleteReply(postId, comment.id, replyId, currentUser.id);
+      await deleteReply(postId, comment.id, replyId);
       toast.success('Reply deleted');
     } catch (err) {
       toast.error('Failed to delete reply');
     }
   };
-  
+
   return (
-    <div 
-      className={`border-l-4 rounded-r-md pl-4 py-3 pr-3 shadow-sm dark:shadow-none discuss:shadow-none ${
-        isPostAuthor 
-          ? 'border-[#BC4800] discuss:border-[#EF4444] bg-[#BC4800]/5 dark:bg-[#BC4800]/10 discuss:bg-[#EF4444]/10' 
-          : 'border-[#2563EB] discuss:border-[#EF4444] bg-white dark:bg-[#1E293B] discuss:bg-[#262626]'
-      }`}
-    >
-      {/* Comment Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <div className="flex items-center gap-1">
-            {isClickable ? (
-              <button onClick={() => onUserClick(comment.author_id)} className="font-semibold text-[#1D7AFF] discuss:text-[#60A5FA] hover:underline text-[13px]">
-                <span>{comment.author_username}</span>
-              </button>
-            ) : (
-              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[13px]">
-                <span>{comment.author_username}</span>
-              </span>
-            )}
-            {comment.author_verified && <VerifiedBadge size="xs" />}
-          </div>
-          {isPostAuthor && (
-            <span className="bg-[#BC4800]/15 discuss:bg-[#EF4444]/15 text-[#BC4800] discuss:text-[#EF4444] text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"><span>Author</span></span>
-          )}
-          <span className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs"><span>{timeAgo(comment.timestamp)}</span></span>
-        </div>
-        {isCurrentUser && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(comment.id); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
-                <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-      
-      {/* Comment Text */}
-      <div className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[13px] md:text-[15px] mt-1 leading-relaxed">
-        <ExpandableText text={comment.text} maxLines={4}>
-          <LinkifiedText text={comment.text} className="whitespace-pre-wrap" />
-        </ExpandableText>
-      </div>
-      
-      {/* Reply Actions */}
-      <div className="flex items-center gap-3 mt-2">
-        <button 
-          onClick={() => { if (!currentUser) { onAuthRequired?.(); return; } setShowReplyInput(!showReplyInput); }}
-          className="flex items-center gap-1 text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] text-[11px] transition-colors"
+    <div className="py-2.5">
+      <div className="flex items-start gap-2.5">
+        <div 
+          onClick={() => onUserClick(comment)}
+          className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <Reply className="w-3.5 h-3.5" />
-          <span>Reply</span>
-        </button>
-        
-        {replyCount > 0 && (
-          <button 
-            onClick={() => setShowReplies(!showReplies)}
-            className="flex items-center gap-1 text-[#6275AF] hover:text-[#2563EB] discuss:hover:text-[#EF4444] text-[11px] transition-colors"
-          >
-            {showReplies ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            <span>{showReplies ? 'Hide' : 'View'} {replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
-            {hasNewReply && !showReplies && (
-              <span className="w-2 h-2 bg-[#EF4444] rounded-full animate-pulse" />
-            )}
-          </button>
-        )}
-      </div>
-      
-      {/* Reply Input */}
-      {showReplyInput && (
-        <form onSubmit={handleSubmitReply} className="mt-2 ml-6">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Write a reply..."
-              className="flex-1 text-[12px] px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] dark:text-[#F1F5F9] focus:outline-none focus:border-[#2563EB] discuss:focus:border-[#EF4444]"
-            />
-            <Button 
-              type="submit" 
-              size="sm" 
-              disabled={submittingReply || !replyText.trim()}
-              className="bg-[#2563EB] discuss:bg-[#EF4444] text-white px-3 py-1 h-auto text-[11px]"
+          <UserAvatar 
+            src={comment.author_photo_url || null} 
+            username={comment.author_username || 'User'} 
+            className="w-full h-full object-cover" 
+          />
+        </div>
+
+        <div className="flex-1 min-w-0 text-xs">
+          <div className="leading-snug">
+            <span 
+              onClick={() => onUserClick(comment)}
+              className="font-bold mr-1.5 text-neutral-900 dark:text-white hover:underline cursor-pointer"
             >
-              {submittingReply ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-            </Button>
+              {comment.author_username}
+            </span>
+            {comment.author_verified && <VerifiedBadge size="xs" />}
+            {isPostAuthor && (
+              <span className="ml-1 text-[10px] font-bold text-[#0095F6] bg-blue-500/10 px-1 py-0.2 rounded">Author</span>
+            )}
+            <span className="text-neutral-900 dark:text-neutral-200 ml-1">
+              <ExpandableText text={comment.content} maxLines={4}>
+                <LinkifiedText text={comment.content} className="whitespace-pre-wrap" />
+              </ExpandableText>
+            </span>
           </div>
-        </form>
-      )}
-      
-      {/* Replies */}
-      {showReplies && (
-        <div className="mt-2">
-          {loadingReplies ? (
-            <div className="ml-6 flex items-center gap-2 text-[#6275AF] text-[11px]">
-              <Loader2 className="w-3 h-3 animate-spin" /> <span>Loading replies...</span>
-            </div>
-          ) : replies.length === 0 ? (
-            <div className="ml-6 text-[#6275AF] text-[11px]"><span>No replies yet</span></div>
-          ) : (
-            replies.map((reply) => (
-              <CommentReply 
-                key={reply.id} 
-                reply={reply} 
-                currentUser={currentUser} 
-                postId={postId}
-                commentId={comment.id}
-                postAuthorId={postAuthorId}
-                onDelete={handleDeleteReply}
+
+          <div className="flex items-center gap-3.5 mt-1.5 text-[11px] text-neutral-400 font-medium">
+            <span>{timeAgo(comment.timestamp)}</span>
+            <button
+              onClick={() => {
+                if (!currentUser) onAuthRequired();
+                else setShowReplyInput(!showReplyInput);
+              }}
+              className="font-semibold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white cursor-pointer"
+            >
+              Reply
+            </button>
+            {isCurrentUser && (
+              <button
+                onClick={() => onDelete(comment.id)}
+                className="text-[#ED4956] hover:underline cursor-pointer"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+
+          {/* Reply input */}
+          {showReplyInput && (
+            <form onSubmit={handleSubmitReply} className="flex items-center gap-2 mt-2">
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder={`Reply to @${comment.author_username}...`}
+                className="flex-1 px-3 py-1.5 text-xs bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-white focus:outline-none focus:border-[#0095F6]"
+                autoFocus
               />
-            ))
+              <button
+                type="submit"
+                disabled={submittingReply || !replyText.trim()}
+                className="text-xs font-bold text-[#0095F6] disabled:opacity-40 cursor-pointer"
+              >
+                {submittingReply ? '...' : 'Post'}
+              </button>
+            </form>
+          )}
+
+          {/* Show / Hide Replies */}
+          {replyCount > 0 && (
+            <div className="mt-2">
+              <button
+                onClick={() => setShowReplies(!showReplies)}
+                className="flex items-center gap-2 text-[11px] font-semibold text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 cursor-pointer"
+              >
+                <span className="w-6 h-px bg-neutral-300 dark:bg-neutral-700" />
+                <span>{showReplies ? 'Hide replies' : `View replies (${replyCount})`}</span>
+              </button>
+
+              {showReplies && (
+                <div className="space-y-1 mt-1">
+                  {loadingReplies ? (
+                    <div className="py-2 text-[11px] text-neutral-400">Loading replies...</div>
+                  ) : (
+                    replies.map((reply) => (
+                      <CommentReply
+                        key={reply.id}
+                        reply={reply}
+                        currentUser={currentUser}
+                        postId={postId}
+                        commentId={comment.id}
+                        postAuthorId={postAuthorId}
+                        onDelete={handleDeleteReply}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
+// Main CommentsSection Component
 export default function CommentsSection({ postId, postAuthorId, currentUser, onBadgeClear, onAuthRequired }) {
-  const [oldComments, setOldComments] = useState([]);
-  const [newComments, setNewComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [loadingOld, setLoadingOld] = useState(true);
-  const [loadingNew, setLoadingNew] = useState(true);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [userInfoModal, setUserInfoModal] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
-  const allComments = [...oldComments, ...newComments].sort(
-    (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-  );
-
-  const loading = loadingOld || loadingNew;
-  const charCount = newComment.length;
-  const isOverLimit = charCount > COMMENT_CHAR_LIMIT;
-
-  // Clear comment badge when section is opened (for post owner)
   useEffect(() => {
-    if (currentUser?.id === postAuthorId) {
-      clearCommentBadge(postId, currentUser.id);
-      onBadgeClear?.();
-    }
-  }, [postId, currentUser?.id, postAuthorId, onBadgeClear]);
-
-  // Fetch old comments
-  useEffect(() => {
-    getComments(postId).then(data => {
-      setOldComments(data.map(c => ({ ...c, source: 'realtime' })));
-      setLoadingOld(false);
-    }).catch(() => setLoadingOld(false));
-
-    const unsubscribe = subscribeToCommentsRealtime(postId, (updatedComments) => {
-      setOldComments(updatedComments.map(c => ({ ...c, source: 'realtime' })));
-      setLoadingOld(false);
+    if (!postId) return;
+    const unsub = subscribeToCommentsFirestore(postId, (items) => {
+      setComments(items);
+      setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, [postId]);
 
-  // Fetch new comments with caching
   useEffect(() => {
-    const loadComments = async () => {
-      const cached = await getCachedComments(postId);
-      if (cached?.length > 0) {
-        setNewComments(cached.map(c => ({ ...c, source: 'firestore' })));
-        setLoadingNew(false);
-      }
+    if (onBadgeClear) onBadgeClear();
+  }, [onBadgeClear]);
 
-      try {
-        const data = await getCommentsFirestore(postId);
-        const commentsWithSource = data.map(c => ({ ...c, source: 'firestore' }));
-        setNewComments(commentsWithSource);
-        await cacheComments(postId, commentsWithSource);
-      } catch {}
-      setLoadingNew(false);
-    };
-
-    loadComments();
-
-    const unsubscribe = subscribeToCommentsFirestore(postId, async (updatedComments) => {
-      const commentsWithSource = updatedComments.map(c => ({ ...c, source: 'firestore' }));
-      setNewComments(commentsWithSource);
-      await cacheComments(postId, commentsWithSource);
-      setLoadingNew(false);
-    });
-
-    return () => unsubscribe();
-  }, [postId]);
-
-  const handleSubmit = async (e) => {
+  const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim() || isOverLimit) return;
+    if (!commentText.trim()) return;
+    if (!currentUser) {
+      if (onAuthRequired) onAuthRequired();
+      return;
+    }
     setSubmitting(true);
     try {
-      const text = newComment.trim();
-      await createCommentFirestore(postId, text, currentUser, postAuthorId);
-      setNewComment('');
-      // Notify post author (fire-and-forget, skip if author is commenter)
-      if (postAuthorId && currentUser?.id !== postAuthorId) {
-        notifyTelegramComment(postAuthorId, currentUser?.username, text).catch(() => {});
-        notifyDiscordComment(postAuthorId, currentUser?.username, text).catch(() => {});
-        
-        import('@/lib/pushNotificationService').then(({ sendOneSignalNotification }) => {
-          sendOneSignalNotification(
-            postAuthorId,
-            `New Comment on Your Post`,
-            `@${currentUser?.username || 'Someone'} commented: "${text}"`,
-            { url: `/post/${postId}`, type: 'comment' }
-          );
-        }).catch(() => {});
-      }
+      await createCommentFirestore(postId, {
+        author_id: currentUser.id,
+        author_username: currentUser.username,
+        author_photo_url: currentUser.photo_url || null,
+        author_verified: !!currentUser.verified,
+        content: commentText.trim(),
+      });
+      setCommentText('');
+      toast.success('Comment posted');
     } catch (err) {
-      toast.error(err.message || 'Failed to add comment');
-    } finally { 
-      setSubmitting(false); 
+      toast.error('Failed to post comment');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    
-    const targetComment = allComments.find(c => c.id === deleteTarget);
-    
+  const handleDeleteComment = async () => {
+    if (!deleteTargetId) return;
     try {
-      if (targetComment?.source === 'firestore') {
-        await deleteCommentFirestore(deleteTarget, currentUser.id, postId);
-        setNewComments(prev => prev.filter(c => c.id !== deleteTarget));
-      } else {
-        const { deleteComment } = await import('@/lib/db');
-        await deleteComment(postId, deleteTarget, currentUser.id);
-        setOldComments(prev => prev.filter(c => c.id !== deleteTarget));
-      }
+      await deleteCommentFirestore(postId, deleteTargetId);
       toast.success('Comment deleted');
     } catch (err) {
-      toast.error(err.message || 'Failed to delete comment');
-    } finally { 
-      setDeleting(false); 
-      setDeleteTarget(null); 
+      toast.error('Failed to delete comment');
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
   return (
-    <div className="border-t border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] bg-[#F8FAFC]/30 dark:bg-[#0F172A]/30 discuss:bg-[#1a1a1a]/30">
-      <div className="p-4 space-y-3">
+    <div className="p-3.5 space-y-3">
+      {/* Comments List */}
+      <div className="divide-y divide-[#EFEFEF] dark:divide-[#262626] max-h-[360px] overflow-y-auto scrollbar-hide">
         {loading ? (
-          <div className="flex justify-center items-center gap-2 py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-[#6275AF]" />
-            <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs"><span>Loading comments...</span></span>
-          </div>
-        ) : allComments.length === 0 ? (
-          <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px] text-center py-3"><span>No comments yet. Be the first!</span></p>
+          <div className="py-6 text-center text-xs text-neutral-400">Loading comments...</div>
+        ) : comments.length === 0 ? (
+          <div className="py-6 text-center text-xs text-neutral-400">No comments yet. Start the conversation!</div>
         ) : (
-          allComments.map((c) => (
+          comments.map((c) => (
             <CommentItem
               key={c.id}
               comment={c}
               postAuthorId={postAuthorId}
               currentUser={currentUser}
               postId={postId}
-              onDelete={setDeleteTarget}
-              onUserClick={setUserInfoModal}
+              onDelete={(id) => setDeleteTargetId(id)}
+              onUserClick={(user) => setSelectedUser(user)}
               onAuthRequired={onAuthRequired}
             />
           ))
         )}
-        
-        {/* Comment Input */}
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <div className="relative" onClick={(e) => { if (!currentUser) { e.preventDefault(); onAuthRequired?.(); } }}>
-            <Textarea 
-              value={newComment} 
-              onChange={(e) => { if (currentUser) setNewComment(e.target.value); }}
-              placeholder={currentUser ? "Write a comment... (URLs will be clickable)" : "Sign in to write a comment..."}
-              rows={2}
-              readOnly={!currentUser}
-              className="w-full bg-white dark:bg-[#0F172A] discuss:bg-[#262626] border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] focus:border-[#2563EB] discuss:focus:border-[#EF4444] rounded-xl text-[13px] resize-none pr-12 cursor-text"
-            />
-            <Button 
-              type={currentUser ? "submit" : "button"} 
-              disabled={submitting || (currentUser && (!newComment.trim() || isOverLimit))}
-              className="absolute right-2 bottom-2 bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] rounded-lg px-3 py-1.5 h-auto shadow-sm"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </Button>
-          </div>
-          <div className="flex justify-between items-center px-1">
-            <span className="text-[#6275AF] dark:text-[#94A3B8] text-[10px]"><span>URLs will be clickable</span></span>
-            <span className={`text-[10px] ${isOverLimit ? 'text-[#EF4444] font-medium' : 'text-[#6275AF]'}`}>
-              {charCount}/{COMMENT_CHAR_LIMIT}
-            </span>
-          </div>
-        </form>
       </div>
-      
-      {/* Delete Dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
-        <AlertDialogContent className="dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+
+      {/* Main Comment Input */}
+      <form onSubmit={handleAddComment} className="flex items-center gap-2 pt-2 border-t border-[#EFEFEF] dark:border-[#262626]">
+        <input
+          type="text"
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          placeholder={currentUser ? "Add a comment..." : "Sign in to join discussion"}
+          disabled={!currentUser || submitting}
+          maxLength={COMMENT_CHAR_LIMIT}
+          className="flex-1 px-3.5 py-2 text-xs bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-xl text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:border-[#0095F6]"
+        />
+        <button
+          type="submit"
+          disabled={!commentText.trim() || submitting || !currentUser}
+          className="px-3.5 py-2 bg-[#0095F6] hover:bg-[#1877F2] text-white text-xs font-semibold rounded-xl disabled:opacity-40 cursor-pointer transition-colors"
+        >
+          {submitting ? '...' : 'Post'}
+        </button>
+      </form>
+
+      {/* Delete Comment Confirm Dialog */}
+      <AlertDialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
+        <AlertDialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"><span>Delete comment?</span></AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-[#94A3B8] discuss:text-[#9CA3AF]"><span>This will permanently delete your comment and all its replies.</span></AlertDialogDescription>
+            <AlertDialogTitle className="text-neutral-900 dark:text-white text-base">Delete comment?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-500 text-xs">
+              Are you sure you want to delete this comment?
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-[#334155] dark:text-[#F1F5F9] dark:border-[#334155] discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333]"><span>Cancel</span></AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-[#EF4444] text-white hover:bg-[#DC2626]">
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Delete</span>}
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteComment} 
+              className="rounded-xl bg-[#ED4956] text-white text-xs font-semibold"
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* User Info Modal */}
-      {userInfoModal && (
+      {selectedUser && (
         <CommentUserInfoModal
-          open={!!userInfoModal}
-          onClose={() => setUserInfoModal(null)}
-          userId={userInfoModal}
-          currentUserId={currentUser?.id}
-          currentUser={currentUser}
+          open={!!selectedUser}
+          onClose={() => setSelectedUser(null)}
+          userId={selectedUser.author_id}
+          username={selectedUser.author_username}
         />
       )}
     </div>

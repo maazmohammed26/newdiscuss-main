@@ -1,16 +1,20 @@
-export default function DiscussLogo({ size = 'md', className = '' }) {
+﻿export default function DiscussLogo({ size = 'md', className = '', dark = false }) {
   const sizes = {
-    sm: 'text-lg',
-    md: 'text-2xl',
-    lg: 'text-3xl',
-    xl: 'text-4xl'
+    xs: 'text-xl',
+    sm: 'text-2xl',
+    md: 'text-[28px] sm:text-3xl',
+    lg: 'text-4xl',
+    xl: 'text-5xl'
   };
 
   return (
-    <span className={`font-heading font-black italic select-none tracking-tight ${sizes[size]} ${className}`}>
-      <span className="text-[#E53E3E] font-black">&lt;</span>
-      <span className="text-white font-extrabold tracking-tight">discuss</span>
-      <span className="text-[#3182CE] font-black">&gt;</span>
+    <span 
+      className={`font-script tracking-wide font-normal select-none inline-block transform -rotate-[1deg] leading-none transition-colors duration-200 ${sizes[size] || sizes.md} ${
+        dark ? 'text-white' : 'text-neutral-900 dark:text-white'
+      } ${className}`}
+      style={{ fontFamily: "'Grand Hotel', 'Pacifico', cursive, sans-serif" }}
+    >
+      Discuss
     </span>
   );
 }

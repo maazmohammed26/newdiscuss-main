@@ -37,7 +37,7 @@ export default function MapSelectorModal({ isOpen, onOpenChange, location }) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-xs rounded-2xl dark:bg-neutral-900 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-800">
+      <AlertDialogContent className="max-w-xs rounded-2xl dark:bg-neutral-900 dark:bg-black border-neutral-200 dark:border-neutral-800">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-center text-lg font-bold">
             Open with
@@ -47,7 +47,7 @@ export default function MapSelectorModal({ isOpen, onOpenChange, location }) {
         <div className="grid gap-3 py-2">
           <button
             onClick={openGoogleMaps}
-            className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] hover:opacity-80 transition-all text-left"
+            className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] hover:opacity-80 transition-all text-left"
           >
             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Globe className="w-6 h-6" />
@@ -61,7 +61,7 @@ export default function MapSelectorModal({ isOpen, onOpenChange, location }) {
           {isIOS && (
             <button
               onClick={openAppleMaps}
-              className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] hover:opacity-80 transition-all text-left"
+              className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] hover:opacity-80 transition-all text-left"
             >
               <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
                 <Map className="w-6 h-6" />
@@ -75,7 +75,7 @@ export default function MapSelectorModal({ isOpen, onOpenChange, location }) {
 
           <button
             onClick={openWaze}
-            className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] hover:opacity-80 transition-all text-left"
+            className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] hover:opacity-80 transition-all text-left"
           >
             <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
               <Navigation className="w-6 h-6" />
@@ -88,7 +88,7 @@ export default function MapSelectorModal({ isOpen, onOpenChange, location }) {
 
           <button
             onClick={openBrowser}
-            className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] hover:opacity-80 transition-all text-left"
+            className="flex items-center gap-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] hover:opacity-80 transition-all text-left"
           >
             <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-700 dark:text-neutral-300">
               <ExternalLink className="w-6 h-6" />

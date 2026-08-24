@@ -26,14 +26,14 @@ module.exports = {
                                 foreground: 'hsl(var(--popover-foreground))'
                         },
                         primary: {
-                                DEFAULT: '#2563EB',
-                                hover: '#1D4ED8',
-                                light: '#DBEAFE',
-                                foreground: 'hsl(var(--primary-foreground))'
+                                DEFAULT: '#0095F6',
+                                hover: '#1877F2',
+                                light: '#E0F1FF',
+                                foreground: '#FFFFFF'
                         },
                         secondary: {
-                                DEFAULT: '#6275AF',
-                                light: '#EEF2FF',
+                                DEFAULT: '#737373',
+                                light: '#F5F5F5',
                                 foreground: 'hsl(var(--secondary-foreground))'
                         },
                         muted: {
@@ -45,24 +45,35 @@ module.exports = {
                                 foreground: 'hsl(var(--accent-foreground))'
                         },
                         destructive: {
-                                DEFAULT: '#EF4444',
+                                DEFAULT: '#ED4956',
                                 hover: '#DC2626',
-                                foreground: 'hsl(var(--destructive-foreground))'
+                                foreground: '#FFFFFF'
                         },
                         border: 'hsl(var(--border))',
                         input: 'hsl(var(--input))',
                         ring: 'hsl(var(--ring))',
+                        ig: {
+                                blue: '#0095F6',
+                                hoverBlue: '#1877F2',
+                                red: '#ED4956',
+                                borderLight: '#DBDBDB',
+                                borderDark: '#262626',
+                                bgDark: '#000000',
+                                cardDark: '#121212',
+                                textSecondary: '#737373',
+                        },
                         neutral: {
-                                50: '#F8FAFC',
-                                100: '#F1F5F9',
-                                200: '#E2E8F0',
-                                300: '#CBD5E1',
-                                400: '#94A3B8',
-                                500: '#64748B',
-                                600: '#475569',
-                                700: '#334155',
-                                800: '#1E293B',
-                                900: '#0F172A',
+                                50: '#FAFAFA',
+                                100: '#F5F5F5',
+                                200: '#E5E5E5',
+                                300: '#D4D4D4',
+                                400: '#A3A3A3',
+                                500: '#737373',
+                                600: '#525252',
+                                700: '#404040',
+                                800: '#262626',
+                                900: '#171717',
+                                950: '#0A0A0A',
                         },
                         chart: {
                                 '1': 'hsl(var(--chart-1))',
@@ -71,23 +82,24 @@ module.exports = {
                                 '4': 'hsl(var(--chart-4))',
                                 '5': 'hsl(var(--chart-5))'
                         },
-                        brand: '#6366F1',
-                        charcoal: '#2D2D2D',
-                        cream: '#DEDBC8',
+                        brand: '#0095F6',
+                        charcoal: '#262626',
+                        cream: '#FAFAFA',
                 },
                 fontFamily: {
-                        sans: ['DM Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-                        heading: ['Sora', 'sans-serif'],
-                        body: ['DM Sans', 'Inter', 'sans-serif'],
-                        mono: ['Roboto Mono', 'Courier New', 'monospace'],
+                        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        heading: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                        body: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                        mono: ['"Roboto Mono"', 'Courier New', 'monospace'],
+                        script: ['"Grand Hotel"', 'Pacifico', 'cursive'],
                         serif: ['"Instrument Serif"', 'serif']
                 },
                 boxShadow: {
-                        'card': '0 1px 3px rgba(0, 0, 0, 0.08)',
-                        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.1)',
-                        'button': '0 2px 4px rgba(37, 99, 235, 0.2)',
-                        'button-hover': '0 4px 8px rgba(37, 99, 235, 0.25)',
-                        'input-focus': '0 0 0 3px rgba(37, 99, 235, 0.15)',
+                        'card': '0 1px 2px rgba(0, 0, 0, 0.05)',
+                        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.08)',
+                        'button': '0 2px 4px rgba(0, 149, 246, 0.2)',
+                        'button-hover': '0 4px 8px rgba(0, 149, 246, 0.3)',
+                        'input-focus': '0 0 0 2px rgba(0, 149, 246, 0.25)',
                 },
                 keyframes: {
                         'accordion-down': {

@@ -78,7 +78,7 @@ const MarqueeBar = () => (
         <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
         <span>This is a beta version which is under development but you can use it in live prod.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
-        <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+        <span className="text-[9px] font-bold bg-[#0095F6] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
         <span>Currently both sections are handled by the Discuss Team directly.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
         <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
@@ -88,7 +88,7 @@ const MarqueeBar = () => (
         <span className="text-[9px] font-bold bg-[#EF4444] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">BETA</span>
         <span>This is a beta version which is under development but you can use it in live prod.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-red-500 mx-2 animate-ping" />
-        <span className="text-[9px] font-bold bg-[#2563EB] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
+        <span className="text-[9px] font-bold bg-[#0095F6] text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">MANAGED</span>
         <span>Currently both sections are handled by the Discuss Team directly.</span>
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-2 animate-ping" />
         <span className="text-[9px] font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-2 py-0.5 rounded uppercase tracking-wider font-sans">COMING SOON</span>
@@ -195,15 +195,15 @@ export default function JobsPage() {
   }, [jobs, debouncedSearch, activeFilter]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       <MarqueeBar />
 
       {/* Syncing bar — only after first load (cache present) */}
       {isSyncing && !isFirstLoad && (
-        <div className="w-full bg-[#2563EB]/5 dark:bg-blue-500/10 discuss:bg-red-500/5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#222] py-1.5 flex items-center justify-center gap-2 select-none z-10">
-          <div className="w-3 h-3 border-2 border-[#2563EB] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin shrink-0" />
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2563EB] discuss:text-[#EF4444] dark:text-[#94A3B8]">
+        <div className="w-full bg-[#0095F6]/5 dark:bg-blue-500/10 discuss:bg-red-500/5 border-b border-neutral-200 dark:border-neutral-800 discuss:border-[#222] py-1.5 flex items-center justify-center gap-2 select-none z-10">
+          <div className="w-3 h-3 border-2 border-[#0095F6] discuss:border-[#EF4444] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0095F6] text-[#0095F6] dark:text-[#94A3B8]">
             Syncing latest jobs &amp; events...
           </span>
         </div>
@@ -216,10 +216,10 @@ export default function JobsPage() {
         {/* Header row */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] tracking-tight flex items-center gap-2">
+            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 dark:text-white tracking-tight flex items-center gap-2">
               Tech Jobs <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider select-none">BETA</span>
             </h1>
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">Find your next career move curated by Discuss.</p>
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1">Find your next career move curated by Discuss.</p>
           </div>
           <div className="flex w-full md:w-auto items-center gap-3">
             <div className="relative flex-1 md:w-64">
@@ -228,11 +228,11 @@ export default function JobsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search jobs..."
-                className="pl-9 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]"
+                className="pl-9 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white"
               />
             </div>
             {isDiscussTeam && (
-              <Button onClick={() => { setEditData(null); setShowAdminModal(true); }} className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] shrink-0">
+              <Button onClick={() => { setEditData(null); setShowAdminModal(true); }} className="bg-[#0095F6] bg-[#0095F6] text-white hover:bg-[#1877F2] hover:bg-[#1877F2] shrink-0">
                 <Plus className="w-4 h-4 mr-1" /> Add Job
               </Button>
             )}
@@ -247,8 +247,8 @@ export default function JobsPage() {
               onClick={() => setActiveFilter(filter)}
               className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide uppercase transition-all duration-200 border shrink-0 font-sans ${
                 activeFilter === filter
-                  ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white border-transparent shadow-[0_2px_10px_rgba(37,99,235,0.25)]'
-                  : 'bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:bg-neutral-50 dark:hover:bg-neutral-700/50'
+                  ? 'bg-[#0095F6] bg-[#0095F6] text-white border-transparent shadow-[0_2px_10px_rgba(37,99,235,0.25)]'
+                  : 'bg-white dark:bg-neutral-800 dark:bg-black text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:bg-neutral-50 dark:hover:bg-neutral-700/50'
               }`}
             >
               {filter}
@@ -261,9 +261,9 @@ export default function JobsPage() {
           {isFirstLoad ? (
             Array.from({ length: 3 }).map((_, i) => <JobCardSkeleton key={i} />)
           ) : filteredJobs.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+            <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
               <Briefcase className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
-              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">No jobs found.</p>
+              <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">No jobs found.</p>
             </div>
           ) : (
             <>
@@ -306,22 +306,22 @@ export default function JobsPage() {
                               <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-600" /> {item.applyPlatform || 'Discuss'}
                             </span>
                           </div>
-                          <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] leading-tight">{item.title}</h2>
-                          <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-2 font-medium">
+                          <h2 className="text-xl md:text-2xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white leading-tight">{item.title}</h2>
+                          <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-2 font-medium">
                             <Building className="w-4 h-4" /> {item.companyName}
                           </div>
                         </div>
 
                         <div className="flex gap-2 shrink-0 w-full md:w-auto">
-                          <Button onClick={() => handleApply(item)} disabled={!active} className="flex-1 md:flex-none bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] font-semibold">
+                          <Button onClick={() => handleApply(item)} disabled={!active} className="flex-1 md:flex-none bg-[#0095F6] bg-[#0095F6] text-white hover:bg-[#1877F2] hover:bg-[#1877F2] font-semibold">
                             {active ? 'Apply Now' : 'Closed'}
                           </Button>
                           {isDiscussTeam && (
                             <div className="flex gap-2">
-                              <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 hover:text-[#2563EB] rounded-lg transition-colors">
+                              <button onClick={() => handleEdit(item)} className="p-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 dark:text-white hover:bg-[#0095F6]/10 hover:text-[#0095F6] rounded-lg transition-colors">
                                 <Pencil className="w-4 h-4" />
                               </button>
-                              <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 discuss:text-[#F5F5F5] hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
+                              <button onClick={() => handleDelete(item.id)} className="p-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 dark:text-white hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -329,7 +329,7 @@ export default function JobsPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-700 discuss:border-[#333333]">
+                      <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-700 dark:border-[#262626]">
                         <div className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4]">
                           <Briefcase className="w-4 h-4 text-neutral-400" />
                           <span className="font-medium">Experience:</span> {item.experienceType || 'Not specified'}
@@ -350,7 +350,7 @@ export default function JobsPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-2">Job Description</h3>
+                        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white mb-2">Job Description</h3>
                         <div className="text-sm text-neutral-700 dark:text-neutral-300 discuss:text-[#D4D4D4] whitespace-pre-wrap leading-relaxed">
                           <ExpandableText text={item.description} maxLines={5}>
                             <LinkifiedText text={item.description} />
@@ -358,12 +358,12 @@ export default function JobsPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-700 discuss:border-[#333333] flex-wrap gap-2">
+                      <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-700 dark:border-[#262626] flex-wrap gap-2">
                         <div className="flex items-center gap-2">
-                          <Button onClick={() => handleApply(item)} disabled={!active} className="bg-[#2563EB] discuss:bg-[#EF4444] text-white hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] font-bold rounded-xl">
+                          <Button onClick={() => handleApply(item)} disabled={!active} className="bg-[#0095F6] bg-[#0095F6] text-white hover:bg-[#1877F2] hover:bg-[#1877F2] font-bold rounded-xl">
                             {active ? (item.jobType === 'Hackathon' ? 'Register Now' : 'Apply Now') : 'Application Closed'}
                           </Button>
-                          <Button variant="ghost" onClick={() => navigate(`/jobs/${item.id}`)} className="text-[#2563EB] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 rounded-xl font-bold text-sm">
+                          <Button variant="ghost" onClick={() => navigate(`/jobs/${item.id}`)} className="text-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10 rounded-xl font-bold text-sm">
                             Read Full Details
                           </Button>
                         </div>

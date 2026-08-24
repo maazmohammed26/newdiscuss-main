@@ -59,7 +59,7 @@ export default function WelcomeOnboardingModal({ open, onClose }) {
 
             {/* Feature 2: Signal */}
             <div className="p-4 bg-gray-50 dark:bg-[#161616] border border-gray-100 dark:border-[#222222] rounded-xl flex gap-3 items-start">
-              <Activity className="w-5 h-5 text-[#2563EB] shrink-0 mt-0.5" />
+              <Activity className="w-5 h-5 text-[#0095F6] shrink-0 mt-0.5" />
               <div>
                 <h5 className="text-[13px] font-bold text-gray-900 dark:text-white uppercase tracking-wide">Signal Broadcast</h5>
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-normal font-medium">

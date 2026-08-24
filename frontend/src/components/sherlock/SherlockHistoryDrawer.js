@@ -18,12 +18,12 @@ export default function SherlockHistoryDrawer({ isOpen, onClose, history, onSele
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 right-0 w-full sm:w-[380px] bg-white dark:bg-[#0c0c12] discuss:bg-[#0c0c12] border-l border-neutral-200 dark:border-neutral-800 discuss:border-white/5 shadow-2xl z-50 flex flex-col"
+            className="fixed inset-y-0 right-0 w-full sm:w-[380px] bg-white dark:bg-[#0c0c12] discuss:bg-[#0c0c12] border-l border-neutral-200 dark:border-neutral-800 dark:border-[#262626] shadow-2xl z-50 flex flex-col"
           >
-            <div className="flex items-center justify-between p-5 border-b border-neutral-100 dark:border-neutral-800 discuss:border-white/5">
+            <div className="flex items-center justify-between p-5 border-b border-neutral-100 dark:border-neutral-800 dark:border-[#262626]">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-600 discuss:text-red-500" />
-                <h2 className="text-lg font-black text-neutral-900 dark:text-neutral-100 discuss:text-white">
+                <h2 className="text-lg font-black text-neutral-900 dark:text-neutral-100 dark:text-white">
                   Search History
                 </h2>
               </div>
@@ -49,10 +49,10 @@ export default function SherlockHistoryDrawer({ isOpen, onClose, history, onSele
                       onSelectHistory(item.username);
                       onClose();
                     }}
-                    className="w-full flex items-center justify-between p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 discuss:border-white/5 bg-white dark:bg-[#1a1a1a] discuss:bg-[#1a1a1a] hover:border-blue-500/50 discuss:hover:border-red-500/50 transition-all text-left group"
+                    className="w-full flex items-center justify-between p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 dark:border-[#262626] bg-white dark:bg-[#1a1a1a] dark:bg-black hover:border-blue-500/50 discuss:hover:border-red-500/50 transition-all text-left group"
                   >
                     <div>
-                      <h4 className="font-bold text-neutral-900 dark:text-neutral-100 discuss:text-white font-mono flex items-center gap-2">
+                      <h4 className="font-bold text-neutral-900 dark:text-neutral-100 dark:text-white font-mono flex items-center gap-2">
                         {item.username}
                         {item.tag && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 discuss:bg-red-900/30 discuss:text-red-400 uppercase tracking-wider">
@@ -71,7 +71,7 @@ export default function SherlockHistoryDrawer({ isOpen, onClose, history, onSele
             </div>
 
             {history.length > 0 && (
-              <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 discuss:border-white/5">
+              <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 dark:border-[#262626]">
                 <button
                   onClick={onClearHistory}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 discuss:hover:bg-red-900/20 font-bold text-sm transition-colors"

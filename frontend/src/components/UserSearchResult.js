@@ -21,7 +21,7 @@ export default function UserSearchResult({
   };
 
   return (
-    <div className="flex items-center justify-between p-3 bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] rounded-xl hover:shadow-md dark:hover:shadow-none transition-all">
+    <div className="flex items-center justify-between p-3 bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-xl hover:shadow-md dark:hover:shadow-none transition-all">
       <div
         onClick={handleViewProfile}
         className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
@@ -34,13 +34,13 @@ export default function UserSearchResult({
         />
         <div className="min-w-0">
           <div className="flex items-center gap-1">
-            <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm truncate">
+            <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm truncate">
               <span>@{user.username}</span>
             </span>
             {user.verified && <VerifiedBadge size="sm" />}
           </div>
           {user.email && (
-            <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs truncate">
+            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs truncate">
               <span>{user.email}</span>
             </p>
           )}

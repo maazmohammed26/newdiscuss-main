@@ -324,7 +324,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowFollowConfirm(false)}>Cancel</Button>
-            <Button className="bg-[#2563EB] text-white hover:bg-[#1D4ED8]" onClick={handleFollow} disabled={isFollowLoading}>Follow</Button>
+            <Button className="bg-[#0095F6] text-white hover:bg-[#1877F2]" onClick={handleFollow} disabled={isFollowLoading}>Follow</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -373,7 +373,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowEditDialog(false)}>Cancel</Button>
-            <Button className="bg-[#2563EB] text-white hover:bg-[#1D4ED8]" onClick={handleEditSubmit}>Save</Button>
+            <Button className="bg-[#0095F6] text-white hover:bg-[#1877F2]" onClick={handleEditSubmit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

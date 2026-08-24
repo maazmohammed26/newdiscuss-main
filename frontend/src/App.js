@@ -119,16 +119,10 @@ function AppRoutes() {
       if (theme === 'dark') {
         root.classList.add('dark');
         root.style.setProperty('--splash-bg', '#000000');
-      } else if (theme === 'discuss-light') {
-        root.classList.add('discuss', 'discuss-light');
-        root.style.setProperty('--splash-bg', '#F5F5F7');
-      } else if (theme === 'discuss-black') {
-        root.classList.add('discuss-black');
-        root.style.setProperty('--splash-bg', '#0D0D12');
-      } else if (theme === 'discuss-retro') {
-        root.classList.add('discuss-retro');
-        root.style.setProperty('--splash-bg', '#E8E0D0');
       } else {
+        root.classList.remove('dark');
+        root.style.setProperty('--splash-bg', '#FFFFFF');
+      }
         root.style.setProperty('--splash-bg', '#F5F5F7');
       }
     }

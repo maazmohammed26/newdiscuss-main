@@ -102,12 +102,12 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+      <DialogContent className="sm:max-w-[500px] bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
         <DialogHeader>
-          <DialogTitle className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-lg font-bold">
+          <DialogTitle className="text-neutral-900 dark:text-neutral-50 dark:text-white text-lg font-bold">
             Create New Group
           </DialogTitle>
-          <DialogDescription className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+          <DialogDescription className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
             Create a public or private group. Group names must be unique.
           </DialogDescription>
         </DialogHeader>
@@ -115,7 +115,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
         <div className="space-y-4 py-4">
           {/* Group Name */}
           <div className="space-y-2">
-            <Label htmlFor="groupName" className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold">
+            <Label htmlFor="groupName" className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold">
               Group Name
             </Label>
             <div className="relative">
@@ -124,7 +124,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder="Enter group name (min 3 characters)"
-                className="pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]"
+                className="pr-10 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white"
                 disabled={loading}
                 maxLength={50}
               />
@@ -157,7 +157,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
 
           {/* Group Type */}
           <div className="space-y-2">
-            <Label className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold">
+            <Label className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold">
               Group Type
             </Label>
             <div className="grid grid-cols-2 gap-3">
@@ -166,23 +166,23 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
                 disabled={loading}
                 className={`p-4 rounded-[12px] border-2 transition-all ${
                   groupType === GROUP_TYPE.PUBLIC
-                    ? 'border-[#2563EB] discuss:border-[#EF4444] bg-[#2563EB]/5 discuss:bg-[#EF4444]/5'
-                    : 'border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a]'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#2563EB] discuss:hover:border-[#EF4444]'}`}
+                    ? 'border-[#0095F6] discuss:border-[#EF4444] bg-[#0095F6]/5 bg-[#0095F6]/5'
+                    : 'border-neutral-200 dark:border-neutral-700 dark:border-[#262626] bg-white dark:bg-neutral-800 dark:bg-black'
+                } ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#0095F6] discuss:hover:border-[#EF4444]'}`}
               >
                 <Users className={`w-6 h-6 mx-auto mb-2 ${
                   groupType === GROUP_TYPE.PUBLIC
-                    ? 'text-[#2563EB] discuss:text-[#EF4444]'
+                    ? 'text-[#0095F6] text-[#0095F6]'
                     : 'text-neutral-500 dark:text-neutral-400'
                 }`} />
                 <p className={`font-semibold text-sm ${
                   groupType === GROUP_TYPE.PUBLIC
-                    ? 'text-[#2563EB] discuss:text-[#EF4444]'
-                    : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'
+                    ? 'text-[#0095F6] text-[#0095F6]'
+                    : 'text-neutral-900 dark:text-neutral-50 dark:text-white'
                 }`}>
                   Public
                 </p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1">
                   Anyone can search and join
                 </p>
               </button>
@@ -192,23 +192,23 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
                 disabled={loading}
                 className={`p-4 rounded-[12px] border-2 transition-all ${
                   groupType === GROUP_TYPE.PRIVATE
-                    ? 'border-[#2563EB] discuss:border-[#EF4444] bg-[#2563EB]/5 discuss:bg-[#EF4444]/5'
-                    : 'border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a]'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#2563EB] discuss:hover:border-[#EF4444]'}`}
+                    ? 'border-[#0095F6] discuss:border-[#EF4444] bg-[#0095F6]/5 bg-[#0095F6]/5'
+                    : 'border-neutral-200 dark:border-neutral-700 dark:border-[#262626] bg-white dark:bg-neutral-800 dark:bg-black'
+                } ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#0095F6] discuss:hover:border-[#EF4444]'}`}
               >
                 <Lock className={`w-6 h-6 mx-auto mb-2 ${
                   groupType === GROUP_TYPE.PRIVATE
-                    ? 'text-[#2563EB] discuss:text-[#EF4444]'
+                    ? 'text-[#0095F6] text-[#0095F6]'
                     : 'text-neutral-500 dark:text-neutral-400'
                 }`} />
                 <p className={`font-semibold text-sm ${
                   groupType === GROUP_TYPE.PRIVATE
-                    ? 'text-[#2563EB] discuss:text-[#EF4444]'
-                    : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'
+                    ? 'text-[#0095F6] text-[#0095F6]'
+                    : 'text-neutral-900 dark:text-neutral-50 dark:text-white'
                 }`}>
                   Private
                 </p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1">
                   Invite-only group
                 </p>
               </button>
@@ -218,7 +218,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
           {/* Warning */}
           <div
             className="bg-amber-50 dark:bg-amber-950/30 discuss:bg-amber-950/30 border border-amber-200 dark:border-amber-800 discuss:border-amber-800 rounded-[12px] p-3"
-            style={document.documentElement.classList.contains('discuss-black')
+            style={false
               ? { backgroundColor: 'rgba(120,53,15,0.25)', borderColor: 'rgba(217,119,6,0.3)' }
               : {}}
           >
@@ -227,13 +227,13 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
               <div>
                 <p
                   className="text-sm font-semibold text-amber-900 dark:text-amber-200 discuss:text-amber-200 mb-1"
-                  style={document.documentElement.classList.contains('discuss-black') ? { color: '#FCD34D' } : {}}
+                  style={false ? { color: '#FCD34D' } : {}}
                 >
                   Important Notice
                 </p>
                 <p
                   className="text-xs text-amber-800 dark:text-amber-300 discuss:text-amber-300"
-                  style={document.documentElement.classList.contains('discuss-black') ? { color: '#FDE68A' } : {}}
+                  style={false ? { color: '#FDE68A' } : {}}
                 >
                   Group type cannot be modified after creation. To change the type, you'll need to delete the group and create a new one.
                 </p>
@@ -256,14 +256,14 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
             variant="outline"
             onClick={handleClose}
             disabled={loading}
-            className="border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]"
+            className="border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white"
           >
             Cancel
           </Button>
           <Button
             onClick={handleCreate}
             disabled={loading || !groupName.trim() || !isAvailable || groupName.trim().length < 3}
-            className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white"
+            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white"
           >
             {loading ? (
               <>

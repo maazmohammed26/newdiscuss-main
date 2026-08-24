@@ -192,11 +192,11 @@ export default function GroupInfoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-3" />
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">Loading group info...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Loading group info...</p>
         </div>
       </div>
     );
@@ -207,30 +207,30 @@ export default function GroupInfoPage() {
   const regularMembers = members.filter(m => m.role === MEMBER_ROLE.MEMBER);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate(`/group/${groupId}`)}
-            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]"
           >
             <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
-          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">
             Group Info
           </h1>
         </div>
 
         {/* Group Details */}
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 mb-4">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <span className="text-white font-bold text-xl">{groupInfo?.name?.slice(0, 2).toUpperCase()}</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">
                 {groupInfo?.name}
               </h2>
               <div className="flex items-center gap-2 mt-1">
@@ -249,7 +249,7 @@ export default function GroupInfoPage() {
               </div>
             </div>
           </div>
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
             <Users className="w-4 h-4 inline mr-1" />
             {members.length} {members.length === 1 ? 'member' : 'members'}
           </p>
@@ -257,8 +257,8 @@ export default function GroupInfoPage() {
 
         {/* Settings (Admin Only) */}
         {isAdmin && !isDeleted && (
-          <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 mb-4">
-            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
+            <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5" />
               Group Settings
             </h3>
@@ -266,7 +266,7 @@ export default function GroupInfoPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-medium">
+                  <Label className="text-neutral-900 dark:text-neutral-50 dark:text-white font-medium">
                     Admin-only messaging
                   </Label>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">Only admins can send messages</p>
@@ -279,7 +279,7 @@ export default function GroupInfoPage() {
               
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-medium flex items-center gap-1">
+                  <Label className="text-neutral-900 dark:text-neutral-50 dark:text-white font-medium flex items-center gap-1">
                     <Clock className="w-4 h-4" />
                     24h auto-delete
                   </Label>
@@ -295,8 +295,8 @@ export default function GroupInfoPage() {
         )}
 
         {/* Members List */}
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6 mb-4">
-          <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-4">Members</h3>
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
+          <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-4">Members</h3>
           
           {/* Admins */}
           {adminMembers.length > 0 && (
@@ -306,18 +306,18 @@ export default function GroupInfoPage() {
                 {adminMembers.map(member => {
                   const details = userDetails[member.userId];
                   return (
-                    <div key={member.userId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
+                    <div key={member.userId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]">
                       <div className="flex items-center gap-3">
                         {details?.photo_url ? (
                           <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-[#0095F6] bg-[#0095F6] flex items-center justify-center">
                             <span className="text-white font-bold text-sm">{details?.username?.slice(0, 2).toUpperCase()}</span>
                           </div>
                         )}
                         <div>
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 dark:text-white">
                               @{details?.username || 'User'}
                             </span>
                             {details?.verified && <VerifiedBadge size="sm" />}
@@ -353,18 +353,18 @@ export default function GroupInfoPage() {
                 {regularMembers.map(member => {
                   const details = userDetails[member.userId];
                   return (
-                    <div key={member.userId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
+                    <div key={member.userId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A]">
                       <div className="flex items-center gap-3">
                         {details?.photo_url ? (
                           <UserAvatar src={details.photo_url} className="w-10 h-10 rounded-full" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-[#0095F6] bg-[#0095F6] flex items-center justify-center">
                             <span className="text-white font-bold text-sm">{details?.username?.slice(0, 2).toUpperCase()}</span>
                           </div>
                         )}
                         <div>
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 dark:text-white">
                               @{details?.username || 'User'}
                             </span>
                             {details?.verified && <VerifiedBadge size="sm" />}

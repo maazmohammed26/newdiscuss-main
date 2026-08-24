@@ -814,10 +814,10 @@ export default function ChatConversationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         {/* Skeleton Top Bar */}
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
           <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] animate-pulse rounded" />
@@ -849,11 +849,11 @@ export default function ChatConversationPage() {
 
   if (!otherUser) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto py-20 text-center">
           <User className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] mb-2">
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-2">
             User not found
           </h2>
           <Button onClick={() => navigate('/chat')} variant="outline" className="rounded-[6px]">
@@ -865,14 +865,14 @@ export default function ChatConversationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212] flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3 sticky top-0 z-10">
+      <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3 sticky top-0 z-10">
         <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/chat')}
-              className="p-2 -ml-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] transition-colors"
+              className="p-2 -ml-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -889,12 +889,12 @@ export default function ChatConversationPage() {
               
               <div className="text-left">
                 <div className="flex items-center gap-1">
-                  <span className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-sm">
+                  <span className="font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white text-sm">
                     {displayName}
                   </span>
                   {otherUser.verified && <VerifiedBadge size="sm" />}
                 </div>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
                   @{otherUser.username}
                 </p>
               </div>
@@ -903,14 +903,14 @@ export default function ChatConversationPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+              <button className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                 <MoreVertical className="w-5 h-5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] rounded-[12px]">
+            <DropdownMenuContent align="end" className="dark:bg-neutral-800 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] rounded-[12px]">
               <DropdownMenuItem
                 onClick={() => navigate(`/user/${otherUserId}`)}
-                className="dark:text-neutral-50 discuss:text-[#F5F5F5] dark:focus:bg-neutral-700 discuss:focus:bg-[#333333] rounded-[6px]"
+                className="dark:text-neutral-50 dark:text-white dark:focus:bg-neutral-700 discuss:focus:bg-[#333333] rounded-[6px]"
               >
                 <User className="w-4 h-4 mr-2" />
                 View Profile
@@ -918,7 +918,7 @@ export default function ChatConversationPage() {
               <DropdownMenuSeparator className="dark:bg-neutral-700 discuss:bg-[#333333]" />
               <DropdownMenuItem
                 onClick={() => setShowAutoDeleteConfirm(true)}
-                className="dark:text-neutral-50 discuss:text-[#F5F5F5] dark:focus:bg-neutral-700 discuss:focus:bg-[#333333] rounded-[6px]"
+                className="dark:text-neutral-50 dark:text-white dark:focus:bg-neutral-700 discuss:focus:bg-[#333333] rounded-[6px]"
               >
                 <Clock className="w-4 h-4 mr-2" />
                 {autoDeleteEnabled ? 'Disable Auto-Delete' : 'Enable Auto-Delete (24h)'}
@@ -965,20 +965,20 @@ export default function ChatConversationPage() {
 
       {/* Reply preview */}
       {replyTo && (
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-2">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-2">
           <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center gap-3">
-            <div className="w-1 h-10 bg-[#2563EB] discuss:bg-[#EF4444] rounded-full" />
+            <div className="w-1 h-10 bg-[#0095F6] bg-[#0095F6] rounded-full" />
             <div className="flex-1 min-w-0">
-              <p className="text-[#2563EB] discuss:text-[#EF4444] text-xs font-semibold">
+              <p className="text-[#0095F6] text-[#0095F6] text-xs font-semibold">
                 Replying to {replyTo.sender === user.id ? 'yourself' : otherUser?.username}
               </p>
-              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm truncate">
+              <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm truncate">
                 {replyPreviewText(replyTo, messageById)}
               </p>
             </div>
             <button
               onClick={() => setReplyTo(null)}
-              className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400"
+              className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-400"
             >
               <X className="w-4 h-4" />
             </button>
@@ -996,8 +996,8 @@ export default function ChatConversationPage() {
       >
         <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto space-y-4">
           {loadingOld && (
-            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm animate-pulse">
-              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin text-[#0095F6] text-[#0095F6]" />
               <span>Loading old messages, please wait...</span>
             </div>
           )}
@@ -1019,7 +1019,7 @@ export default function ChatConversationPage() {
             <div key={date}>
               {/* Date separator */}
               <div className="flex items-center justify-center my-4">
-                <span className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs px-3 py-1 rounded-full">
+                <span className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs px-3 py-1 rounded-full">
                   {date}
                 </span>
               </div>
@@ -1055,12 +1055,12 @@ export default function ChatConversationPage() {
                     {/* Swipe reply indicator */}
                     {!isOwn && swipeOffset > 30 && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                        <Reply className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+                        <Reply className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
                       </div>
                     )}
                     {isOwn && swipeOffset < -30 && (
                       <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                        <Reply className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444] transform scale-x-[-1]" />
+                        <Reply className="w-5 h-5 text-[#0095F6] text-[#0095F6] transform scale-x-[-1]" />
                       </div>
                     )}
 
@@ -1104,8 +1104,8 @@ export default function ChatConversationPage() {
                       <div
                         className={`p-3 rounded-2xl ${
                           isOwn
-                            ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white rounded-br-none'
-                            : 'bg-white dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] rounded-bl-none border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]'
+                            ? 'bg-[#0095F6] bg-[#0095F6] text-white rounded-br-none'
+                            : 'bg-white dark:bg-neutral-800 dark:bg-[#1A1A1A] text-neutral-900 dark:text-neutral-50 dark:text-white rounded-bl-none border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]'
                         } shadow-sm max-w-xs sm:max-w-md break-words relative overflow-hidden`}
                       >
                         {/* Media Grid/Single */}
@@ -1146,7 +1146,7 @@ export default function ChatConversationPage() {
                         )}
 
                         {message.forwarded && message.originalSender && message.originalSender !== message.sender && (
-                          <div className={`flex items-center gap-1 text-[10px] opacity-75 mb-1 italic ${isOwn ? 'text-white/80' : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]'}`}>
+                          <div className={`flex items-center gap-1 text-[10px] opacity-75 mb-1 italic ${isOwn ? 'text-white/80' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400'}`}>
                             <Reply className="w-3 h-3 transform scale-x-[-1]" />
                             <span>Forwarded</span>
                           </div>
@@ -1196,7 +1196,7 @@ export default function ChatConversationPage() {
           
           {liveMessagesSynced && visibleMessages.length === 0 && chatEnabled && (
             <div className="text-center py-10">
-              <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+              <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
                 No messages yet. Say hello! 👋
               </p>
             </div>
@@ -1210,7 +1210,7 @@ export default function ChatConversationPage() {
       {showScrollDown && (
         <button
           onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-28 right-6 p-2.5 rounded-full bg-white dark:bg-neutral-800 discuss:bg-[#262626] text-[#2563EB] dark:text-neutral-200 discuss:text-[#EF4444] shadow-lg border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] hover:scale-110 active:scale-95 transition-all z-10 animate-bounce"
+          className="absolute bottom-28 right-6 p-2.5 rounded-full bg-white dark:bg-neutral-800 dark:bg-[#1A1A1A] text-[#0095F6] dark:text-neutral-200 text-[#0095F6] shadow-lg border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] hover:scale-110 active:scale-95 transition-all z-10 animate-bounce"
           style={document.documentElement.classList.contains('discuss-black')
             ? { backgroundColor: '#1A1A24', borderColor: 'rgba(255, 0, 127, 0.3)', color: '#FF007F' }
             : {}}
@@ -1256,16 +1256,16 @@ export default function ChatConversationPage() {
 
       {/* Message input */}
       {chatEnabled && (
-        <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] px-4 py-3 sticky bottom-0">
+        <div className="bg-white dark:bg-neutral-800 dark:bg-black border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3 sticky bottom-0">
           <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
             {replyTo && (
-              <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] p-2 rounded-[8px] border-l-2 border-[#2563EB] discuss:border-[#EF4444]">
+              <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] p-2 rounded-[8px] border-l-2 border-[#0095F6] discuss:border-[#EF4444]">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#2563EB] discuss:text-[#EF4444]">
+                    <p className="text-xs font-semibold text-[#0095F6] text-[#0095F6]">
                       Replying to {replyTo.sender === user?.id ? 'yourself' : `@${otherUser?.username || 'User'}`}
                     </p>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-[#9CA3AF] truncate">
+                    <p className="text-xs text-neutral-600 dark:text-neutral-300 dark:text-neutral-400 truncate">
                       {replyPreviewText(replyTo, {})}
                     </p>
                   </div>
@@ -1298,7 +1298,7 @@ export default function ChatConversationPage() {
             )}
 
             {pendingMedia.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2 p-2 bg-neutral-50 dark:bg-neutral-800 discuss:bg-[#262626] rounded-lg">
+              <div className="flex flex-wrap gap-2 mb-2 p-2 bg-neutral-50 dark:bg-neutral-800 dark:bg-[#1A1A1A] rounded-lg">
                 {pendingMedia.map((m, idx) => (
                   <div key={idx} className="relative w-16 h-16 rounded-md overflow-hidden group border border-neutral-200 dark:border-neutral-700">
                     {m.format === 'mp4' || m.url?.includes('video') ? (
@@ -1322,7 +1322,7 @@ export default function ChatConversationPage() {
               <button
                 type="button"
                 onClick={() => setShowMediaUpload(!showMediaUpload)}
-                className={`p-2 rounded-full transition-colors ${showMediaUpload ? 'bg-[#2563EB] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500'}`}
+                className={`p-2 rounded-full transition-colors ${showMediaUpload ? 'bg-[#0095F6] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500'}`}
               >
                 <IoImage size={22} />
               </button>
@@ -1330,7 +1330,7 @@ export default function ChatConversationPage() {
                 type="button"
                 onClick={handleSendLocation}
                 disabled={sending}
-                className="p-2 rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-500"
+                className="p-2 rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500"
                 title="Send Location"
               >
                 <IoLocationSharp size={22} />
@@ -1358,7 +1358,7 @@ export default function ChatConversationPage() {
                   }
                 }}
                 placeholder={replyTo ? "Type your reply..." : "Type a message..."}
-                className="flex-1 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-2xl px-4 py-2.5 text-[14px] md:text-[15px] focus:outline-none resize-none max-h-[130px] input-textarea-scroll"
+                className="flex-1 bg-neutral-100 dark:bg-neutral-900 dark:bg-[#1A1A1A] border-0 text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-2xl px-4 py-2.5 text-[14px] md:text-[15px] focus:outline-none resize-none max-h-[130px] input-textarea-scroll"
                 style={{
                   height: '40px',
                   scrollbarWidth: 'none',
@@ -1369,7 +1369,7 @@ export default function ChatConversationPage() {
               <Button
                 type="submit"
                 disabled={!newMessage.trim() && pendingMedia.length === 0 && !showMediaUpload}
-                className="rounded-full w-10 h-10 p-0 bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white shadow-button"
+                className="rounded-full w-10 h-10 p-0 bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white shadow-button"
               >
                 <Send className="w-5 h-5" />
               </Button>
@@ -1380,9 +1380,9 @@ export default function ChatConversationPage() {
 
       {/* Message options dialog - Long press options */}
       <AlertDialog open={showMessageOptions} onOpenChange={setShowMessageOptions}>
-        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] rounded-[12px] max-w-xs">
+        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] rounded-[12px] max-w-xs">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-neutral-50 discuss:text-[#F5F5F5] text-center">
+            <AlertDialogTitle className="dark:text-neutral-50 dark:text-white text-center">
               Message Options
             </AlertDialogTitle>
           </AlertDialogHeader>
@@ -1394,15 +1394,15 @@ export default function ChatConversationPage() {
                 setSelectedMessage(null);
                 inputRef.current?.focus();
               }}
-              className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] transition-colors"
+              className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 dark:text-white transition-colors"
             >
-              <Reply className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+              <Reply className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
               <span>Reply</span>
             </button>
             {!selectedMessage?.deleted && (
               <button
                 onClick={handleCopyMessage}
-                className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] transition-colors"
+                className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 dark:text-white transition-colors"
               >
                 <Copy className="w-5 h-5 text-[#10B981]" />
                 <span>Copy</span>
@@ -1414,7 +1414,7 @@ export default function ChatConversationPage() {
                   setShowMessageOptions(false);
                   setShowForwardModal(true);
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] transition-colors"
+                className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 dark:text-white transition-colors"
               >
                 <Send className="w-5 h-5 text-[#3b82f6] transform rotate-45" />
                 <span>Forward</span>
@@ -1425,7 +1425,7 @@ export default function ChatConversationPage() {
                 setDeleteMode('me');
                 setShowDeleteMessageConfirm(true);
               }}
-              className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] transition-colors"
+              className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#333333] text-neutral-900 dark:text-neutral-50 dark:text-white transition-colors"
             >
               <Trash2 className="w-5 h-5 text-[#F59E0B]" />
               <span>Delete for Me</span>
@@ -1444,7 +1444,7 @@ export default function ChatConversationPage() {
             )}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="w-full dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333] rounded-[6px]">
+            <AlertDialogCancel className="w-full dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] dark:text-white dark:border-[#262626] rounded-[6px]">
               Cancel
             </AlertDialogCancel>
           </AlertDialogFooter>
@@ -1453,19 +1453,19 @@ export default function ChatConversationPage() {
 
       {/* Delete message confirmation */}
       <AlertDialog open={showDeleteMessageConfirm} onOpenChange={setShowDeleteMessageConfirm}>
-        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] rounded-[12px]">
+        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] rounded-[12px]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-neutral-50 discuss:text-[#F5F5F5]">
+            <AlertDialogTitle className="dark:text-neutral-50 dark:text-white">
               {deleteMode === 'everyone' ? 'Delete for Everyone?' : 'Delete for Me?'}
             </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-neutral-400 discuss:text-[#9CA3AF]">
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               {deleteMode === 'everyone' 
                 ? 'This message will be deleted for everyone in this chat. The message will show as "This message was deleted".'
                 : 'This message will be removed from your chat. The other person can still see it.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333] rounded-[6px]">
+            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] dark:text-white dark:border-[#262626] rounded-[6px]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1480,18 +1480,18 @@ export default function ChatConversationPage() {
 
       {/* Delete chat confirmation */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] rounded-[12px]">
+        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] rounded-[12px]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-neutral-50 discuss:text-[#F5F5F5] flex items-center gap-2">
+            <AlertDialogTitle className="dark:text-neutral-50 dark:text-white flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-[#EF4444]" />
               Delete Chat?
             </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-neutral-400 discuss:text-[#9CA3AF]">
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               This will delete the chat for both users. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333] rounded-[6px]">
+            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] dark:text-white dark:border-[#262626] rounded-[6px]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1507,20 +1507,20 @@ export default function ChatConversationPage() {
 
       {/* Auto-delete confirmation */}
       <AlertDialog open={showAutoDeleteConfirm} onOpenChange={setShowAutoDeleteConfirm}>
-        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] rounded-[12px]">
+        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] rounded-[12px]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-neutral-50 discuss:text-[#F5F5F5] flex items-center gap-2">
+            <AlertDialogTitle className="dark:text-neutral-50 dark:text-white flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#F59E0B]" />
               {autoDeleteEnabled ? 'Disable Auto-Delete?' : 'Enable Auto-Delete?'}
             </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-neutral-400 discuss:text-[#9CA3AF]">
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               {autoDeleteEnabled 
                 ? 'Messages will be kept permanently.'
                 : 'All messages will be automatically deleted after 24 hours. This applies to this chat only and works for both users.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333] rounded-[6px]">
+            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] dark:text-white dark:border-[#262626] rounded-[6px]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1538,18 +1538,18 @@ export default function ChatConversationPage() {
 
       {/* Report confirmation */}
       <AlertDialog open={showReportConfirm} onOpenChange={setShowReportConfirm}>
-        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#262626] discuss:border-[#333333] rounded-[12px]">
+        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] rounded-[12px]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-neutral-50 discuss:text-[#F5F5F5] flex items-center gap-2">
+            <AlertDialogTitle className="dark:text-neutral-50 dark:text-white flex items-center gap-2">
               <Flag className="w-5 h-5 text-[#F59E0B]" />
               Report User?
             </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-neutral-400 discuss:text-[#9CA3AF]">
+            <AlertDialogDescription className="dark:text-neutral-400 dark:text-neutral-400">
               You will no longer be able to message this user. Both users will be restricted from chatting. This user will also be automatically unfollowed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] discuss:text-[#F5F5F5] discuss:border-[#333333] rounded-[6px]">
+            <AlertDialogCancel className="dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 discuss:bg-[#333333] dark:text-white dark:border-[#262626] rounded-[6px]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1572,11 +1572,11 @@ export default function ChatConversationPage() {
 
       {showForwardModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] flex items-center justify-between">
-              <h3 className="font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] flex items-center gap-2">
-                <Send className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444] transform rotate-45" />
+            <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex items-center justify-between">
+              <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white flex items-center gap-2">
+                <Send className="w-5 h-5 text-[#0095F6] text-[#0095F6] transform rotate-45" />
                 Forward Message
               </h3>
               <button
@@ -1584,20 +1584,20 @@ export default function ChatConversationPage() {
                   setShowForwardModal(false);
                   setForwardSearch('');
                 }}
-                className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400"
+                className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-400"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             {/* Search Input */}
-            <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+            <div className="p-3 border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
               <input
                 type="text"
                 value={forwardSearch}
                 onChange={(e) => setForwardSearch(e.target.value)}
                 placeholder="Search friends or groups..."
-                className="w-full bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#262626] border-0 text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                className="w-full bg-neutral-100 dark:bg-neutral-900 dark:bg-[#1A1A1A] border-0 text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 rounded-lg px-3 py-2 text-sm focus:outline-none"
               />
             </div>
             
@@ -1616,11 +1616,11 @@ export default function ChatConversationPage() {
                      return (
                        <div className="space-y-2">
                          {filteredChats.map(c => (
-                           <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                           <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                              <div className="flex items-center gap-2.5 min-w-0">
                                <UserAvatar src={c.otherUserDetails?.photo_url} username={c.otherUserDetails?.username} className="w-8 h-8" />
                                <div className="min-w-0">
-                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                    {c.otherUserDetails?.fullName || c.otherUserDetails?.username}
                                  </p>
                                  <p className="text-[10px] text-neutral-400 truncate">@{c.otherUserDetails?.username}</p>
@@ -1628,7 +1628,7 @@ export default function ChatConversationPage() {
                              </div>
                              <button
                                onClick={() => handleForwardToTarget(c.chatId, 'dm')}
-                               className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                               className="bg-[#0095F6]/10 hover:bg-[#0095F6] bg-[#0095F6]/10 discuss:hover:bg-[#EF4444] text-[#0095F6] hover:text-white text-[#0095F6] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                              >
                                Forward
                              </button>
@@ -1647,11 +1647,11 @@ export default function ChatConversationPage() {
                      return (
                        <div className="space-y-2">
                          {filteredUsers.map(u => (
-                           <div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                           <div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                              <div className="flex items-center gap-2.5 min-w-0">
                                <UserAvatar src={u.photo_url} username={u.username} className="w-8 h-8" />
                                <div className="min-w-0">
-                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                                 <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                    {u.username}
                                  </p>
                                  <p className="text-[10px] text-neutral-400 truncate">@{u.username}</p>
@@ -1659,7 +1659,7 @@ export default function ChatConversationPage() {
                              </div>
                              <button
                                onClick={() => handleForwardToTarget(u.id, 'dm')}
-                               className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                               className="bg-[#0095F6]/10 hover:bg-[#0095F6] bg-[#0095F6]/10 discuss:hover:bg-[#EF4444] text-[#0095F6] hover:text-white text-[#0095F6] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                              >
                                Forward
                              </button>
@@ -1685,13 +1685,13 @@ export default function ChatConversationPage() {
                      {forwardTargets.groups.filter(g =>
                        g.groupName?.toLowerCase().includes(forwardSearch.toLowerCase())
                      ).map(g => (
-                       <div key={g.groupId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 discuss:hover:bg-[#262626]/50">
+                       <div key={g.groupId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                          <div className="flex items-center gap-2.5 min-w-0">
                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#DC2626] to-[#2563EB] flex items-center justify-center text-white text-xs font-bold font-mono">
                              G
                            </div>
                            <div className="min-w-0">
-                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5] truncate">
+                             <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                {g.groupName}
                              </p>
                              <p className="text-[10px] text-neutral-400 truncate">{g.groupType === 'public' ? '🌍 Public Group' : '🔒 Private Group'}</p>
@@ -1699,7 +1699,7 @@ export default function ChatConversationPage() {
                          </div>
                          <button
                            onClick={() => handleForwardToTarget(g.groupId, 'group')}
-                           className="bg-[#2563EB]/10 hover:bg-[#2563EB] discuss:bg-[#EF4444]/10 discuss:hover:bg-[#EF4444] text-[#2563EB] hover:text-white discuss:text-[#EF4444] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                           className="bg-[#0095F6]/10 hover:bg-[#0095F6] bg-[#0095F6]/10 discuss:hover:bg-[#EF4444] text-[#0095F6] hover:text-white text-[#0095F6] discuss:hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
                          >
                            Forward
                          </button>

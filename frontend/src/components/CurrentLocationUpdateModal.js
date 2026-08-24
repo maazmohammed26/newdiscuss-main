@@ -14,8 +14,8 @@ export default function CurrentLocationUpdateModal({
   const [showManualWarning, setShowManualWarning] = useState(false);
   if (!open) return null;
 
-  const isDiscussLight = theme === 'discuss-light';
-  const isDiscussBlack = theme === 'discuss-black';
+  const isDiscussLight = false;
+  const isDiscussBlack = false;
   const isDark = theme === 'dark';
   const isLoading = status === 'loading';
   const isSuccess = status === 'success';
@@ -34,7 +34,7 @@ export default function CurrentLocationUpdateModal({
     ? 'bg-[#FF007F] text-black hover:bg-[#ff3d9d]'
     : isDiscussLight
     ? 'bg-[#EF4444] text-white hover:bg-[#dc2626] border-2 border-black'
-    : 'bg-[#2563EB] text-white hover:bg-blue-500';
+    : 'bg-[#0095F6] text-white hover:bg-blue-500';
 
   return (
     <div className="fixed inset-0 z-[10040] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -42,13 +42,13 @@ export default function CurrentLocationUpdateModal({
         <div className="flex items-start gap-3">
           <div className="mt-0.5">
             {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-[#2563EB] discuss:text-[#EF4444]" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
             ) : isSuccess ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-500" />
             ) : isBlocked ? (
               <ShieldAlert className="w-5 h-5 text-amber-500" />
             ) : (
-              <MapPin className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+              <MapPin className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
             )}
           </div>
           <div className="flex-1">
@@ -117,7 +117,7 @@ export default function CurrentLocationUpdateModal({
                     onClick={() => {
                       if (onManualPin) onManualPin();
                     }}
-                    className={`flex-1 text-xs font-black uppercase px-2 py-2.5 transition-all active:scale-95 border border-[#2563EB] text-[#2563EB] discuss:border-[#EF4444] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10`}
+                    className={`flex-1 text-xs font-black uppercase px-2 py-2.5 transition-all active:scale-95 border border-[#0095F6] text-[#0095F6] discuss:border-[#EF4444] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10`}
                   >
                     Skip & Pin
                   </button>
@@ -134,7 +134,7 @@ export default function CurrentLocationUpdateModal({
                   <button
                     type="button"
                     onClick={() => setShowManualWarning(true)}
-                    className={`flex-1 text-xs font-black uppercase px-2 py-2.5 transition-all active:scale-95 border border-[#2563EB] text-[#2563EB] discuss:border-[#EF4444] discuss:text-[#EF4444] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10`}
+                    className={`flex-1 text-xs font-black uppercase px-2 py-2.5 transition-all active:scale-95 border border-[#0095F6] text-[#0095F6] discuss:border-[#EF4444] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10`}
                   >
                     Pin Manually
                   </button>

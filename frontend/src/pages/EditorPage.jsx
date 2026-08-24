@@ -356,7 +356,7 @@ export default function EditorPage() {
   const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#121212] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
       <Header />
       
       <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
@@ -367,10 +367,10 @@ export default function EditorPage() {
         {/* Header Title block */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] tracking-tight flex items-center gap-2">
+            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 dark:text-white tracking-tight flex items-center gap-2">
               Code Playground <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded uppercase tracking-wider select-none">OFFLINE</span>
             </h1>
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1 font-medium">
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1 font-medium">
               Write, compile, preview, and download scripts live in your browser.
             </p>
           </div>
@@ -380,7 +380,7 @@ export default function EditorPage() {
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value)}
-              className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-sm rounded-xl px-4 py-2 h-10 outline-none focus:ring-2 focus:ring-[#2563EB]/20 font-bold tracking-tight shadow-sm select-none"
+              className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white text-sm rounded-xl px-4 py-2 h-10 outline-none focus:ring-2 focus:ring-[#2563EB]/20 font-bold tracking-tight shadow-sm select-none"
             >
               <option value="html">HTML / CSS / JS</option>
               <option value="javascript">JavaScript (Console)</option>
@@ -405,8 +405,8 @@ export default function EditorPage() {
           <div className="lg:col-span-7 flex flex-col bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-3xl shadow-card p-5 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#222] mb-4 select-none">
               <div className="flex items-center gap-2">
-                <Code className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                <Code className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                   Source Editor ({lang.toUpperCase()})
                 </span>
               </div>
@@ -420,7 +420,7 @@ export default function EditorPage() {
                 </button>
                 <button 
                   onClick={handleDownload}
-                  className="p-2 hover:bg-blue-500/10 hover:text-[#2563EB] text-neutral-400 rounded-lg transition-colors"
+                  className="p-2 hover:bg-blue-500/10 hover:text-[#0095F6] text-neutral-400 rounded-lg transition-colors"
                   title="Download File"
                 >
                   <Download className="w-4 h-4" />
@@ -455,7 +455,7 @@ export default function EditorPage() {
               <Button
                 onClick={handleRun}
                 disabled={isRunning}
-                className="bg-[#2563EB] hover:bg-[#1D4ED8] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626] text-white rounded-xl py-2 px-5 font-bold h-11 transition-all shadow-md active:scale-95 flex items-center gap-1.5"
+                className="bg-[#0095F6] hover:bg-[#1877F2] bg-[#0095F6] hover:bg-[#1877F2] text-white rounded-xl py-2 px-5 font-bold h-11 transition-all shadow-md active:scale-95 flex items-center gap-1.5"
               >
                 <Play className="w-4 h-4" />
                 {isRunning ? 'Executing...' : 'Run Code'}
@@ -467,15 +467,15 @@ export default function EditorPage() {
           <div className="lg:col-span-5 flex flex-col bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-3xl shadow-card p-5 min-h-[300px]">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#222] mb-4 select-none">
               <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
+                <Terminal className="w-4 h-4 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
                   Output Sandbox
                 </span>
               </div>
               {lang === 'html' && iframeSrc && (
                 <button
                   onClick={() => setShowFullscreen(true)}
-                  className="p-1 hover:bg-[#2563EB]/10 dark:hover:bg-[#2563EB]/15 text-[#2563EB] discuss:text-[#EF4444] rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
+                  className="p-1 hover:bg-[#0095F6]/10 dark:hover:bg-[#0095F6]/15 text-[#0095F6] text-[#0095F6] rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
                   title="Open Fullscreen View"
                 >
                   <Maximize2 className="w-3.5 h-3.5" /> Full View

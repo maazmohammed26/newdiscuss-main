@@ -102,25 +102,25 @@ export default function ProfileShareModal({ open, onClose, username }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dark:bg-[#1E293B] dark:border-[#334155] discuss:bg-[#262626] discuss:border-[#333333]">
+      <DialogContent className="sm:max-w-md dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
         <DialogHeader>
-          <DialogTitle className="dark:text-[#F1F5F9] discuss:text-[#F5F5F5] flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444]" />
+          <DialogTitle className="dark:text-[#F1F5F9] dark:text-white flex items-center gap-2">
+            <Share2 className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
             Share Your Profile
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           {/* Username Copy */}
-          <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] rounded-lg p-3 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs mb-2">Your username</p>
+          <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black rounded-lg p-3 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs mb-2">Your username</p>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">@{username}</span>
+              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">@{username}</span>
               <Button
                 onClick={handleCopyUsername}
                 size="sm"
                 variant="outline"
-                className="h-8 px-3 dark:border-[#334155] discuss:border-[#333333] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]"
+                className="h-8 px-3 dark:border-[#334155] dark:border-[#262626] dark:text-[#F1F5F9] dark:text-white"
               >
                 {copiedUsername ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                 <span className="ml-1.5 text-xs">{copiedUsername ? 'Copied' : 'Copy'}</span>
@@ -129,15 +129,15 @@ export default function ProfileShareModal({ open, onClose, username }) {
           </div>
 
           {/* Full Message Copy */}
-          <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#1a1a1a] rounded-lg p-3 border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333]">
-            <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs mb-2">Share message</p>
-            <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-sm mb-3">
+          <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black rounded-lg p-3 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
+            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs mb-2">Share message</p>
+            <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm mb-3">
               "{shareMessage}"
             </p>
             <Button
               onClick={handleCopyMessage}
               size="sm"
-              className="w-full bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white"
+              className="w-full bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white"
             >
               {copiedMessage ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
               <span className="ml-1.5">{copiedMessage ? 'Copied!' : 'Copy Message'}</span>
@@ -157,7 +157,7 @@ export default function ProfileShareModal({ open, onClose, username }) {
 
           {/* Share Options Grid */}
           <div>
-            <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-xs mb-3">Or share via</p>
+            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs mb-3">Or share via</p>
             <div className="grid grid-cols-4 gap-2">
               {shareOptions.map((option) => {
                 const IconComponent = option.icon;
@@ -165,10 +165,10 @@ export default function ProfileShareModal({ open, onClose, username }) {
                   <button
                     key={option.id}
                     onClick={() => handleShare(option.id)}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] hover:bg-[#F5F5F7] dark:hover:bg-[#334155] discuss:hover:bg-[#262626] border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] transition-all hover:scale-105"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-white dark:bg-[#1E293B] dark:bg-black hover:bg-[#F5F5F7] dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] transition-all hover:scale-105"
                   >
                     <IconComponent className="w-5 h-5" style={{ color: option.color }} />
-                    <span className="text-[10px] text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] truncate w-full text-center">
+                    <span className="text-[10px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 truncate w-full text-center">
                       {option.name}
                     </span>
                   </button>

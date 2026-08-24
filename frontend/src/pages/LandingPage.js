@@ -314,7 +314,7 @@ export default function LandingPage() {
               >
                 <span className="w-2 h-2 rounded-full bg-[#DC2626] shadow-[0_0_8px_#DC2626]"></span>
                 <span style={{ color: '#DEDBC8' }}>Developer-First Platform</span>
-                <span className="w-2 h-2 rounded-full bg-[#2563EB] shadow-[0_0_8px_#2563EB]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#0095F6] shadow-[0_0_8px_#2563EB]"></span>
               </motion.span>
 
               {/* Multi-style heading */}

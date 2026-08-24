@@ -228,18 +228,18 @@ export default function ChatPage() {
         onClick={() => handleChatClick(chat.otherUser)}
         className={`w-full flex items-center gap-3 p-3 rounded-[12px] transition-all ${
           isBlocked 
-            ? 'bg-neutral-50/50 dark:bg-neutral-800/50 discuss:bg-[#1a1a1a]/50 opacity-60'
+            ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'
             : hasUnread
-              ? 'bg-[#2563EB]/5 dark:bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 border-[#2563EB]/30 dark:border-[#2563EB]/30 discuss:border-[#EF4444]/30'
-              : 'bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] hover:shadow-card-hover dark:hover:shadow-none'
-        } border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
+              ? 'bg-[#0095F6]/5 dark:bg-[#0095F6]/10 bg-[#0095F6]/10 border-[#0095F6]/30 dark:border-[#0095F6]/30 discuss:border-[#EF4444]/30'
+              : 'bg-white dark:bg-neutral-800 dark:bg-black hover:shadow-card-hover dark:hover:shadow-none'
+        } border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
       >
         {/* Avatar with unread indicator */}
         <div className="relative shrink-0">
           {otherUser.photo_url ? (
             <UserAvatar src={otherUser.photo_url} username={otherUser.username} className="w-12 h-12 rounded-full object-cover" />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#0095F6] bg-[#0095F6] flex items-center justify-center">
               <span className="text-white font-bold">{initials}</span>
             </div>
           )}
@@ -253,7 +253,7 @@ export default function ChatPage() {
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 min-w-0">
-              <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white discuss:text-white' : 'text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]'}`}>
+              <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white dark:text-white' : 'text-neutral-900 dark:text-neutral-50 dark:text-white'}`}>
                 @{otherUser.username}
               </span>
               {otherUser.verified && <VerifiedBadge size="sm" />}
@@ -264,12 +264,12 @@ export default function ChatPage() {
                 </span>
               )}
             </div>
-            <span className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs shrink-0">
+            <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs shrink-0">
               {formatTime(chat.lastMessageTime)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
-            <p className={`text-xs truncate ${hasUnread ? 'text-neutral-900 dark:text-neutral-200 discuss:text-[#E5E7EB] font-medium' : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]'}`}>
+            <p className={`text-xs truncate ${hasUnread ? 'text-neutral-900 dark:text-neutral-200 dark:text-neutral-200 font-medium' : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400'}`}>
               {isBlocked ? 'Chat unavailable' : (chat.lastMessage || 'No messages yet')}
             </p>
           </div>
@@ -285,29 +285,29 @@ export default function ChatPage() {
       <button
         key={friend.id}
         onClick={() => handleStartNewChat(friend.id)}
-        className="w-full flex items-center gap-3 p-3 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] hover:shadow-card-hover dark:hover:shadow-none transition-all border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card"
+        className="w-full flex items-center gap-3 p-3 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] hover:shadow-card-hover dark:hover:shadow-none transition-all border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card"
       >
         {friend.photo_url ? (
           <UserAvatar src={friend.photo_url} username={friend.username} className="w-12 h-12 rounded-full object-cover shrink-0" />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-[#2563EB] discuss:bg-[#EF4444] flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-full bg-[#0095F6] bg-[#0095F6] flex items-center justify-center shrink-0">
             <span className="text-white font-bold">{initials}</span>
           </div>
         )}
         
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-1">
-            <span className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-sm truncate">
+            <span className="font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white text-sm truncate">
               @{friend.username}
             </span>
             {friend.verified && <VerifiedBadge size="sm" />}
           </div>
-          <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-xs">
+          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
             Friends since {new Date(friend.since).toLocaleDateString([], { month: 'short', year: 'numeric' })}
           </p>
         </div>
 
-        <MessageSquarePlus className="w-5 h-5 text-[#2563EB] discuss:text-[#EF4444] shrink-0" />
+        <MessageSquarePlus className="w-5 h-5 text-[#0095F6] text-[#0095F6] shrink-0" />
       </button>
     );
   };
@@ -315,7 +315,7 @@ export default function ChatPage() {
   const displayData = searchQuery.trim() ? searchResults : (activeTab === 'chats' ? chats : friends);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 discuss:bg-[#121212]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
       <Header />
       
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
@@ -323,23 +323,23 @@ export default function ChatPage() {
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => navigate('/feed')}
-            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] transition-colors border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
+            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
+          <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">
             Messages
           </h1>
         </div>
 
         {/* Tabs */}
-        <div className="flex mb-4 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+        <div className="flex mb-4 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
           <button
             onClick={() => { setActiveTab('chats'); setSearchQuery(''); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
               activeTab === 'chats'
-                ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]'
+                ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
+                : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
             }`}
           >
             <MessageCircle className="w-4 h-4" />
@@ -354,13 +354,13 @@ export default function ChatPage() {
             onClick={() => { setActiveTab('friends'); setSearchQuery(''); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
               activeTab === 'friends'
-                ? 'bg-[#2563EB] discuss:bg-[#EF4444] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]'
+                ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
+                : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
             }`}
           >
             <Users className="w-4 h-4" />
             Friends
-            <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-[10px] px-1.5 py-0.5 rounded-full">
+            <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[10px] px-1.5 py-0.5 rounded-full">
               {friends.length}
             </span>
           </button>
@@ -369,17 +369,17 @@ export default function ChatPage() {
         {/* Search bar */}
         <div className="mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'chats' ? 'Search chats...' : 'Search friends...'}
-              className="pl-10 pr-10 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-[6px] text-sm h-10"
+              className="pl-10 pr-10 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-[6px] text-sm h-10"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -390,36 +390,36 @@ export default function ChatPage() {
         {/* Content */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-[#2563EB] discuss:text-[#EF4444] mb-3" />
-            <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm font-medium">
+            <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
+            <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm font-medium">
               {activeTab === 'chats' ? 'Loading chats...' : 'Loading friends list...'}
             </p>
           </div>
         ) : displayData.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] rounded-[12px] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] shadow-card">
+          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
             {searchQuery ? (
               <>
-                <Search className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
-                <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
+                <Search className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
+                <h3 className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-1">
                   No results found
                 </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
                   Try a different search term
                 </p>
               </>
             ) : activeTab === 'chats' ? (
               <>
-                <MessageCircle className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
-                <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
+                <MessageCircle className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
+                <h3 className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-1">
                   No chats yet
                 </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm mb-4">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm mb-4">
                   Start a conversation with your friends
                 </p>
                 {friends.length > 0 && (
                   <Button
                     onClick={() => setActiveTab('friends')}
-                    className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-[6px] shadow-button"
+                    className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-[6px] shadow-button"
                   >
                     <Users className="w-4 h-4 mr-2" />
                     View Friends
@@ -428,16 +428,16 @@ export default function ChatPage() {
               </>
             ) : (
               <>
-                <Users className="w-10 h-10 text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] mx-auto mb-3" />
-                <h3 className="text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] font-semibold mb-1">
+                <Users className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
+                <h3 className="text-neutral-900 dark:text-neutral-50 dark:text-white font-semibold mb-1">
                   No friends yet
                 </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] text-sm mb-4">
+                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm mb-4">
                   Find people to connect with
                 </p>
                 <Button
                   onClick={() => navigate('/profile')}
-                  className="bg-[#2563EB] discuss:bg-[#EF4444] hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] text-white rounded-[6px] shadow-button"
+                  className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-[6px] shadow-button"
                 >
                   Find Friends
                 </Button>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   subscribeToActiveStories,
@@ -8,36 +8,37 @@ import {
 import SignalStoryCreator from '@/components/SignalStoryCreator';
 import SignalStoryViewer from '@/components/SignalStoryViewer';
 import UserAvatar from '@/components/UserAvatar';
-import { Plus, Zap } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
-// ─── Avatar circle for each user in the row ──────────────────
-function StoryAvatar({ group, hasUnseen, isSelf, onClick }) {
+// ─── Individual Story Avatar (Instagram Style) ───────────────
+function StoryAvatar({ group, hasUnseen, isSelf, onClick, onAddClick }) {
+  const authorName = isSelf ? 'Your story' : group.authorUsername;
+
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1.5 flex-shrink-0 group focus:outline-none"
-      style={{ width: '66px' }}
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group focus:outline-none cursor-pointer"
+      style={{ width: '74px' }}
     >
       <div className="relative">
+        {/* Instagram Gradient Ring */}
         <div
-          className="w-[58px] h-[58px] rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
-          style={
-            hasUnseen
-              ? { background: 'linear-gradient(135deg,#a855f7,#ec4899,#f97316)', padding: '2.5px' }
-              : { background: 'rgba(128,128,128,0.25)', padding: '2.5px' }
-          }
+          className={`w-[66px] h-[66px] rounded-full p-[2.5px] flex items-center justify-center transition-transform duration-150 group-hover:scale-105 active:scale-95 ${
+            hasUnseen ? 'ig-story-gradient' : 'bg-neutral-300 dark:bg-neutral-700'
+          }`}
         >
-          <div className="w-full h-full rounded-full overflow-hidden bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#2a2a2a]">
+          {/* Inner ring gap */}
+          <div className="w-full h-full rounded-full p-[2px] bg-white dark:bg-black overflow-hidden flex items-center justify-center">
             {group.authorPhotoUrl ? (
               <UserAvatar 
                 src={group.authorPhotoUrl} 
                 username={group.authorUsername} 
-                className="w-full h-full rounded-none" 
+                className="w-full h-full object-cover rounded-full" 
               />
             ) : (
               <div
-                className="w-full h-full flex items-center justify-center text-white text-[18px] font-bold"
-                style={{ background: hasUnseen ? 'linear-gradient(135deg,#a855f7,#ec4899)' : 'linear-gradient(135deg,#6b7280,#9ca3af)' }}
+                className="w-full h-full rounded-full flex items-center justify-center text-white text-[17px] font-bold"
+                style={{ background: hasUnseen ? 'linear-gradient(45deg, #f09433, #dc2743, #bc1888)' : '#8E8E8E' }}
               >
                 {(group.authorUsername?.[0] || 'U').toUpperCase()}
               </div>
@@ -45,51 +46,72 @@ function StoryAvatar({ group, hasUnseen, isSelf, onClick }) {
           </div>
         </div>
 
+        {/* Small plus badge for own story */}
         {isSelf && (
           <div
-            className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)', border: '2px solid #fff' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddClick();
+            }}
+            className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#0095F6] border-2 border-white dark:border-black flex items-center justify-center text-white shadow-xs cursor-pointer hover:scale-110 active:scale-95 transition-transform"
           >
-            <Zap className="w-2 h-2 text-white fill-white" />
+            <Plus className="w-3.5 h-3.5 stroke-[3px]" />
           </div>
         )}
       </div>
 
-      <span className="text-[11px] leading-tight text-center truncate w-full font-medium" style={{ maxWidth: '64px' }}>
-        <span className="text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
-          {isSelf ? 'You' : group.authorUsername}
-        </span>
+      <span 
+        className="text-[12px] leading-tight text-center truncate w-full text-neutral-800 dark:text-neutral-200 group-hover:text-neutral-950 dark:group-hover:text-white"
+        style={{ maxWidth: '70px' }}
+      >
+        {authorName}
       </span>
     </button>
   );
 }
 
-// ─── Add Story Button (first item) ───────────────────────────
-function AddStoryButton({ hasOwnStory, onClick }) {
+// ─── Add Story Bubble when user has no story ──────────────────
+function AddStoryBubble({ user, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1.5 flex-shrink-0 group focus:outline-none"
-      style={{ width: '66px' }}
+      className="flex flex-col items-center gap-1.5 flex-shrink-0 group focus:outline-none cursor-pointer"
+      style={{ width: '74px' }}
     >
       <div className="relative">
-        <div
-          className="w-[58px] h-[58px] rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
-          style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)', padding: '2px' }}
-        >
-          <div className="w-full h-full rounded-full bg-[#FFFFFF] dark:bg-neutral-900 discuss:bg-[#1a1a1a] discuss-retro:bg-[#EDE8DC] flex items-center justify-center">
-            <Plus className="w-5 h-5 text-purple-500" strokeWidth={2.5} />
+        <div className="w-[66px] h-[66px] rounded-full p-[2px] flex items-center justify-center">
+          <div className="w-full h-full rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex items-center justify-center">
+            {user?.photo_url ? (
+              <UserAvatar 
+                src={user.photo_url} 
+                username={user.username || 'You'} 
+                className="w-full h-full object-cover rounded-full opacity-90" 
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-600 dark:text-neutral-300 text-[17px] font-bold">
+                {(user?.username?.[0] || 'Y').toUpperCase()}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Plus Badge */}
+        <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#0095F6] border-2 border-white dark:border-black flex items-center justify-center text-white shadow-xs hover:scale-110 transition-transform">
+          <Plus className="w-3.5 h-3.5 stroke-[3px]" />
+        </div>
       </div>
-      <span className="text-[11px] leading-tight text-center font-medium text-neutral-700 dark:text-neutral-300 discuss:text-[#9CA3AF]">
-        {hasOwnStory ? 'Add more' : 'Add'}
+
+      <span 
+        className="text-[12px] leading-tight text-center truncate w-full text-neutral-800 dark:text-neutral-200"
+        style={{ maxWidth: '70px' }}
+      >
+        Your story
       </span>
     </button>
   );
 }
 
-// ─── Main Row Component ───────────────────────────────────────
+// ─── Main Stories Tray ─────────────────────────────────────────
 export default function SignalStoriesRow() {
   const { user } = useAuth();
 
@@ -104,14 +126,12 @@ export default function SignalStoriesRow() {
 
   const rowRef = useRef(null);
 
-  // ── Real-time seen IDs — fires instantly, no one-time fetch needed ──
   useEffect(() => {
     if (!user?.id) return;
     const unsub = subscribeToSeenStoryIds(user.id, setSeenIds);
     return () => unsub();
   }, [user?.id]);
 
-  // ── Subscribe to active stories ─────────────────────────────
   useEffect(() => {
     const unsub = subscribeToActiveStories((fetchedStories) => {
       setStories(fetchedStories);
@@ -120,12 +140,10 @@ export default function SignalStoriesRow() {
     return () => unsub();
   }, []);
 
-  // ── Re-group whenever stories or seenIds change ─────────────
   useEffect(() => {
     setGroups(groupStoriesByAuthor(stories, seenIds, user?.id));
   }, [stories, seenIds, user?.id]);
 
-  // Noop — seenIds are now updated via the real-time subscription
   const handleSeenUpdate = useCallback(() => {}, []);
 
   const openViewer = (idx) => {
@@ -133,55 +151,46 @@ export default function SignalStoriesRow() {
     setViewerOpen(true);
   };
 
+  const userHasStory = groups.some((g) => g.authorId === user?.id);
+
   return (
     <>
-      {/* ── Stories Row ─────────────────────────────────────── */}
-      <div className="mb-4">
-        {/* Row header */}
-        <div className="flex items-center gap-1.5 mb-3">
-          <div
-            className="w-5 h-5 rounded-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg,#a855f7,#ec4899)' }}
-          >
-            <Zap className="w-2.5 h-2.5 text-white fill-white" />
-          </div>
-          <span className="text-[12px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF]">
-            Signal
-          </span>
-        </div>
-
-        {/* Scrollable strip */}
+      <div className="w-full bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] rounded-2xl p-3.5 mb-4 shadow-xs">
         <div
           ref={rowRef}
-          className="flex items-start gap-3 overflow-x-auto scrollbar-hide pb-1"
+          className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {/* + Add button (always first) */}
-          <AddStoryButton
-            hasOwnStory={groups.some((g) => g.authorId === user?.id)}
-            onClick={() => setShowCreator(true)}
-          />
+          {/* User's own story bubble */}
+          {!userHasStory && (
+            <AddStoryBubble
+              user={user}
+              onClick={() => setShowCreator(true)}
+            />
+          )}
 
-          {/* Story avatars or skeletons */}
+          {/* Skeletons while loading */}
           {loading ? (
             <>
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ width: '66px' }}>
-                  <div className="w-[58px] h-[58px] rounded-full bg-neutral-200 dark:bg-neutral-800 discuss:bg-[#2a2a2a] animate-pulse" />
-                  <div className="w-12 h-3 rounded bg-neutral-200 dark:bg-neutral-800 discuss:bg-[#2a2a2a] animate-pulse" />
+                <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ width: '74px' }}>
+                  <div className="w-[66px] h-[66px] rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                  <div className="w-12 h-2.5 rounded bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
                 </div>
               ))}
             </>
           ) : (
             groups.map((group, idx) => {
               const hasUnseen = group.stories.some((s) => !seenIds.has(s.id));
+              const isSelf = group.authorId === user?.id;
               return (
                 <StoryAvatar
                   key={group.authorId}
                   group={group}
                   hasUnseen={hasUnseen}
-                  isSelf={group.authorId === user?.id}
+                  isSelf={isSelf}
                   onClick={() => openViewer(idx)}
+                  onAddClick={() => setShowCreator(true)}
                 />
               );
             })
@@ -189,7 +198,7 @@ export default function SignalStoriesRow() {
         </div>
       </div>
 
-      {/* ── Story Creator Modal ─────────────────────────────── */}
+      {/* Story Creator Modal */}
       {showCreator && (
         <SignalStoryCreator
           onClose={() => setShowCreator(false)}
@@ -197,7 +206,7 @@ export default function SignalStoriesRow() {
         />
       )}
 
-      {/* ── Story Viewer ─────────────────────────────────────── */}
+      {/* Story Viewer */}
       {viewerOpen && groups.length > 0 && (
         <SignalStoryViewer
           groups={groups}

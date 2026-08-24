@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toggleVote, deletePost, updatePost } from '@/lib/db';
 import { checkContentSafety } from '@/lib/nvidiaApi';
 import { generateContentHash, computeFinalScore, classifyScore, localDiscussAlgorithmFallback } from '@/lib/scoringLogic';
-import { hasNewComments } from '@/lib/commentsDb';
+import { hasNewComments, addComment } from '@/lib/commentsDb';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
 import EditPostModal from '@/components/EditPostModal';
@@ -14,7 +14,7 @@ import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import GuestAuthModal from '@/components/GuestAuthModal';
-import { Button } from '@/components/ui/button';
+import UserAvatar from '@/components/UserAvatar';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator
@@ -26,12 +26,31 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { ThumbsUp, ThumbsDown, MessageSquare, Share2, Pencil, Trash2, Github, ExternalLink, Loader2, Hash, MoreVertical, Globe, RotateCcw, ZoomIn, Flag, Bookmark, ChevronUp, ChevronDown, Volume2, Check, ShieldCheck, ShieldAlert, Sparkles, Info } from 'lucide-react';
+import { 
+  Heart, 
+  MessageCircle, 
+  Send, 
+  Bookmark, 
+  MoreHorizontal, 
+  Pencil, 
+  Trash2, 
+  Github, 
+  ExternalLink, 
+  Loader2, 
+  Globe, 
+  RotateCcw, 
+  Flag, 
+  Check, 
+  ShieldCheck, 
+  ShieldAlert, 
+  Sparkles,
+  ThumbsDown
+} from 'lucide-react';
 import { toast } from 'sonner';
 import MediaCarousel from '@/components/MediaCarousel';
 import FullscreenMedia from '@/components/FullscreenMedia';
 import ReportModal from '@/components/ReportModal';
-import { hasUserReportedTarget } from '@/lib/reportService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TRANSLATE_LANGUAGES = [
   { code: 'kn', label: 'Kannada' },
@@ -42,30 +61,26 @@ const TRANSLATE_LANGUAGES = [
 ];
 
 const LS_PREF_LANG = 'discuss_translate_pref_lang';
-
 const LANG_LABELS = Object.fromEntries(TRANSLATE_LANGUAGES.map(l => [l.code, l.label]));
 
 function getPreferredLang() {
-  try { return localStorage.getItem(LS_PREF_LANG) || null; } catch (e) { console.warn('Could not read translation preference:', e); return null; }
+  try { return localStorage.getItem(LS_PREF_LANG) || null; } catch (e) { return null; }
 }
 
 function setPreferredLang(code) {
-  try { if (code) localStorage.setItem(LS_PREF_LANG, code); } catch (e) { console.warn('Could not save translation preference:', e); }
+  try { if (code) localStorage.setItem(LS_PREF_LANG, code); } catch (e) {}
 }
 
 const POST_URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
-
 const TRANSLATE_API_BASE = 'https://translate.googleapis.com/translate_a/single';
 
 async function translatePostContent(text, targetLang) {
   const urls = [];
-  // Replace URLs with numbered placeholders so they are not translated
   const textWithPlaceholders = text.replace(POST_URL_REGEX, (match) => {
     const idx = urls.length;
     urls.push(match);
     return `[LINK_${idx}]`;
   });
-  // Reset lastIndex on the shared global regex after use
   POST_URL_REGEX.lastIndex = 0;
 
   const res = await fetch(
@@ -74,10 +89,8 @@ async function translatePostContent(text, targetLang) {
   if (!res.ok) throw new Error(`Translation failed (HTTP ${res.status})`);
 
   const data = await res.json();
-  // Google Translate gtx response: data[0] is an array of [translatedSegment, originalSegment, ...] tuples
   let translated = data[0].map(s => s[0]).join('');
 
-  // Restore original URLs using string replacement to avoid regex construction in a loop
   urls.forEach((url, i) => {
     translated = translated.split(`[LINK_${i}]`).join(url);
   });
@@ -89,7 +102,7 @@ function timeAgo(iso) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return 'Just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
@@ -103,7 +116,41 @@ function timeAgo(iso) {
 export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVoteChanged, onTagClick, isSelectable = false, isSelected = false, onSelectToggle }) {
   const navigate = useNavigate();
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [voting, setVoting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [externalLink, setExternalLink] = useState(null);
+  const [previewUser, setPreviewUser] = useState(null);
+  const [hasNewCommentBadge, setHasNewCommentBadge] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState(null);
+  const [translating, setTranslating] = useState(false);
+  const [isScoringSafety, setIsScoringSafety] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportedLocally, setReportedLocally] = useState(false);
+  const [showSafetyExplanation, setShowSafetyExplanation] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showHeartPop, setShowHeartPop] = useState(false);
+  const [quickComment, setQuickComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
+  // Votes & state
+  const [upvoteCount, setUpvoteCount] = useState(post.upvotes || 0);
+  const [downvoteCount, setDownvoteCount] = useState(post.downvotes || 0);
+  const [userVote, setUserVote] = useState(post.user_vote || null);
+
+  useEffect(() => {
+    setUpvoteCount(post.upvotes || 0);
+    setDownvoteCount(post.downvotes || 0);
+    setUserVote(post.user_vote || null);
+  }, [post.upvotes, post.downvotes, post.user_vote]);
+
+  // Bookmarks state
   useEffect(() => {
     if (!currentUser?.id) {
       setIsBookmarked(false);
@@ -145,525 +192,261 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       toast.error('Failed to update bookmark');
     }
   };
-  const [showComments, setShowComments] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [voting, setVoting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [externalLink, setExternalLink] = useState(null);
-  const [previewUser, setPreviewUser] = useState(null);
-  const [hasNewCommentBadge, setHasNewCommentBadge] = useState(false);
-  const [translatedContent, setTranslatedContent] = useState(null);
-  const [translating, setTranslating] = useState(false);
-  const [isScoringSafety, setIsScoringSafety] = useState(false);
-  const [preferredLang, setPreferredLangState] = useState(() => getPreferredLang());
-  const [showLangPrompt, setShowLangPrompt] = useState(false);
-  const [showFullscreen, setShowFullscreen] = useState(false);
-  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportedLocally, setReportedLocally] = useState(false);
-  const [showSafetyExplanation, setShowSafetyExplanation] = useState(false);
 
-  // --- Audio Podcast Reader (Web Speech API) ---
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-  const utteranceRef = useRef(null);
-  const isSpeakingRef = useRef(false);
-
-  const getSentences = useCallback((text) => {
-    if (!text) return [];
-    return text.split(/(?<=[.!?])\s+/).filter(Boolean);
-  }, []);
-
-  const playFromIndex = useCallback((index, sentences) => {
-    if (index >= sentences.length) {
-      setIsSpeaking(false);
-      isSpeakingRef.current = false;
-      setCurrentSentenceIndex(0);
-      return;
-    }
-
-    setCurrentSentenceIndex(index);
-    setIsSpeaking(true);
-    isSpeakingRef.current = true;
-
-    const utterance = new SpeechSynthesisUtterance(sentences[index]);
-    utteranceRef.current = utterance;
-
-    utterance.onend = () => {
-      if (!isSpeakingRef.current) return;
-      setTimeout(() => {
-        if (!isSpeakingRef.current) return;
-        playFromIndex(index + 1, sentences);
-      }, 250);
-    };
-
-    utterance.onerror = (e) => {
-      if (e.error !== 'interrupted') {
-        setIsSpeaking(false);
-        isSpeakingRef.current = false;
-      }
-    };
-
-    window.speechSynthesis?.speak?.(utterance);
-  }, []);
-
-  const handleToggleAudio = useCallback((e) => {
-    if (e) e.stopPropagation();
-
-    // Check if the post content has been translated (meaning it is a local language)
-    if (translatedContent) {
-      toast.error('This language is not supported');
-      return;
-    }
-
-    const sentences = getSentences(post.content);
-    if (sentences.length === 0) {
-      toast.error('No content to read');
-      return;
-    }
-
-    if (isSpeaking) {
-      isSpeakingRef.current = false;
-      window.speechSynthesis?.cancel?.();
-      setIsSpeaking(false);
-      toast.success('Audio paused');
-    } else {
-      isSpeakingRef.current = true;
-      playFromIndex(currentSentenceIndex, sentences);
-      toast.success(currentSentenceIndex > 0 ? 'Resuming audio' : 'Playing post audio 🎧');
-    }
-  }, [post.content, isSpeaking, currentSentenceIndex, getSentences, playFromIndex, translatedContent]);
-
-  // Cancel any ongoing audio reading instantly if the post is translated to another language
-  useEffect(() => {
-    if (translatedContent) {
-      isSpeakingRef.current = false;
-      window.speechSynthesis?.cancel?.();
-      setIsSpeaking(false);
-    }
-  }, [translatedContent]);
-
-  // Cleanup speech on unmount
-  useEffect(() => {
-    return () => {
-      window.speechSynthesis?.cancel?.();
-    };
-  }, []);
-
-  // --- Copy Code Snippet Utility ---
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyCode = useCallback((e) => {
-    if (e) e.stopPropagation();
-    if (!post.code) return;
-    
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(post.code)
-        .then(() => {
-          setCopied(true);
-          toast.success('Code copied to clipboard! 📋');
-          setTimeout(() => setCopied(false), 2000);
-        })
-        .catch(() => toast.error('Failed to copy'));
-    } else {
-      toast.error('Clipboard not supported');
-    }
-  }, [post.code]);
-
-  useEffect(() => {
-    setReportedLocally(hasUserReportedTarget(post.id));
-  }, [post.id]);
-
-  const isAuthor = currentUser?.id === post.author_id;
-  const isProject = post.type === 'project';
-  const hashtags = post.hashtags || [];
-  const userVote = (post.votes || {})[currentUser?.id] || null;
-  const upvoteCount = post.upvote_count || 0;
-  const downvoteCount = post.downvote_count || 0;
-
-  // Check for new comment badge (only for post author) - real-time
-  useEffect(() => {
-    if (!isAuthor || !currentUser?.id) {
-      setHasNewCommentBadge(false);
-      return;
-    }
-    
-    // Import and subscribe to real-time updates
-    const { secondaryDatabase, ref, onValue, off } = require('@/lib/firebaseSecondary');
-    const badgeRef = ref(secondaryDatabase, `commentBadges/${currentUser.id}/${post.id}`);
-    
-    const handleBadge = (snapshot) => {
-      setHasNewCommentBadge(snapshot.exists() && Object.keys(snapshot.val() || {}).length > 0);
-    };
-    
-    onValue(badgeRef, handleBadge);
-    return () => off(badgeRef);
-  }, [post.id, currentUser?.id, isAuthor]);
-
-  // Clear badge when comments are viewed
-  const handleBadgeClear = useCallback(() => {
-    setHasNewCommentBadge(false);
-  }, []);
-
-  const handlePostClick = () => {
-    navigate(`/post/${post.id}`);
-  };
-
-  const handleUsernameClick = (e) => {
-    e.stopPropagation();
-    if (post.author_id === currentUser?.id) {
-      navigate('/profile');
-    } else {
-      setPreviewUser(post.author_id);
-    }
-  };
-
-  const handleExternalLink = (url, e) => {
-    if (e) { e.preventDefault(); e.stopPropagation(); }
-    const isHttp = url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://');
-    setExternalLink({ url, isHttp });
-  };
-
-  const handleVote = async (voteType) => {
+  const handleVote = async (type) => {
     if (!currentUser) {
       setShowAuthModal(true);
       return;
     }
     if (voting) return;
     setVoting(true);
-    try {
-      const data = await toggleVote(post.id, voteType, currentUser.id);
-      onVoteChanged(post.id, data);
-    } catch (err) {
-      if (err.message?.includes('below 0')) {
-        toast.error('Vote score cannot go below 0');
+
+    const prevUserVote = userVote;
+    const prevUpvotes = upvoteCount;
+    const prevDownvotes = downvoteCount;
+
+    let newVote = null;
+    let newUp = prevUpvotes;
+    let newDown = prevDownvotes;
+
+    if (prevUserVote === type) {
+      newVote = null;
+      if (type === 'up') newUp = Math.max(0, newUp - 1);
+      else newDown = Math.max(0, newDown - 1);
+    } else {
+      newVote = type;
+      if (type === 'up') {
+        newUp += 1;
+        if (prevUserVote === 'down') newDown = Math.max(0, newDown - 1);
+        setShowHeartPop(true);
+        setTimeout(() => setShowHeartPop(false), 800);
+      } else {
+        newDown += 1;
+        if (prevUserVote === 'up') newUp = Math.max(0, newUp - 1);
       }
-    } finally { 
-      setVoting(false); 
     }
-  };
 
-  const handleDelete = async () => {
-    setDeleting(true);
-    try { 
-      await deletePost(post.id, currentUser.id); 
-      onDeleted(post.id); 
-      toast.success('Post deleted');
+    setUserVote(newVote);
+    setUpvoteCount(newUp);
+    setDownvoteCount(newDown);
+
+    try {
+      await toggleVote(post.id, currentUser.id, type);
+      onVoteChanged?.(post.id, newVote, newUp, newDown);
     } catch (err) {
-      toast.error(err.message || 'Failed to delete post');
-    } finally { 
-      setDeleting(false); 
-      setShowDeleteConfirm(false); 
+      setUserVote(prevUserVote);
+      setUpvoteCount(prevUpvotes);
+      setDownvoteCount(prevDownvotes);
+      toast.error('Failed to register reaction');
+    } finally {
+      setVoting(false);
     }
   };
 
-  const handleTranslate = async (targetLang) => {
-    if (translating) return;
-    const contentToTranslate = post.content;
-    if (!contentToTranslate) return;
+  const handleDoubleTap = (e) => {
+    e.stopPropagation();
+    if (userVote !== 'up') {
+      handleVote('up');
+    } else {
+      setShowHeartPop(true);
+      setTimeout(() => setShowHeartPop(false), 800);
+    }
+  };
+
+  const handleQuickCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!quickComment.trim()) return;
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
+    setSubmittingComment(true);
+    try {
+      await addComment({
+        postId: post.id,
+        authorId: currentUser.id,
+        authorUsername: currentUser.username,
+        authorPhotoUrl: currentUser.photo_url || null,
+        authorVerified: !!currentUser.verified,
+        content: quickComment.trim(),
+      });
+      setQuickComment('');
+      toast.success('Comment posted');
+      setShowComments(true);
+      if (onUpdated) onUpdated();
+    } catch (err) {
+      toast.error('Failed to post comment');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleTranslate = async (langCode) => {
     setTranslating(true);
     try {
-      const result = await translatePostContent(contentToTranslate, targetLang);
-      setTranslatedContent(result);
-      setTranslatedLang(targetLang);
-      toast.success(`Translated to ${LANG_LABELS[targetLang]}`);
-    } catch (err) {
-      toast.error('Translation failed. Please try again.');
+      const translated = await translatePostContent(post.content, langCode);
+      setTranslatedContent(translated);
+      toast.success(`Translated to ${LANG_LABELS[langCode]}`);
+    } catch (e) {
+      toast.error('Translation failed');
     } finally {
       setTranslating(false);
     }
   };
 
-  const handleResetTranslation = () => {
-    setTranslatedContent(null);
-    setTranslatedLang(null);
-  };
-
-  const handleTranslateClick = (e) => {
-    if (e) e.stopPropagation();
-    if (translating) return;
-    if (translatedContent) { handleResetTranslation(); return; }
-    const pref = preferredLang || getPreferredLang();
-    if (pref) {
-      handleTranslate(pref);
-    } else {
-      setShowLangPrompt(true);
-    }
-  };
-
-  const handleReportClick = () => {
-    if (!currentUser) {
-      setShowAuthModal(true);
-      return;
-    }
-    if (reportedLocally) {
-      toast.warning('You have already submitted a report for this post.');
-      return;
-    }
-    setShowReportModal(true);
-  };
-
-  const handleLangPromptSelect = (code) => {
-    setPreferredLang(code);
-    setPreferredLangState(code);
-    setShowLangPrompt(false);
-    handleTranslate(code);
-  };
-
-  const handleLangPromptSkip = () => {
-    setShowLangPrompt(false);
-  };
-
-  const handleScoreSafety = async (e, forceRescore = false) => {
-    e.stopPropagation();
-    
-    // If it's already scored and not outdated, just show the modal, don't rescore.
-    if (post.aiScored && !post.aiScoreOutdated && !forceRescore) {
-      setShowSafetyExplanation(true);
-      return;
-    }
-
-    if (isScoringSafety) return;
-    
-    setIsScoringSafety(true);
+  const handleDelete = async () => {
+    setDeleting(true);
     try {
-      const textToAnalyze = (post.title || '') + ' ' + (post.content || '');
-      const contentHash = generateContentHash(textToAnalyze);
-
-      let aiScorePayload = null;
-      
-      // Try calling Gemini AI
-      const rawFactors = await checkContentSafety(textToAnalyze);
-      
-      if (rawFactors && typeof rawFactors.toxicityScore === 'number') {
-        const finalScore = rawFactors.finalScore !== undefined && !isNaN(rawFactors.finalScore) ? rawFactors.finalScore : computeFinalScore(rawFactors);
-        
-        let aiStatus = rawFactors.aiStatus || classifyScore(finalScore, rawFactors);
-        if (aiStatus) {
-            aiStatus = aiStatus.charAt(0).toUpperCase() + aiStatus.slice(1).toLowerCase(); // Normalize "green" to "Green"
-        }
-
-        let reasons = "";
-        if (Array.isArray(rawFactors.aiReasons) && rawFactors.aiReasons.length > 0) {
-            reasons = rawFactors.aiReasons.join(' ');
-        } else if (rawFactors.summary) {
-            reasons = rawFactors.summary;
-        } else if (rawFactors.reasoning) {
-            reasons = rawFactors.reasoning;
-        } else {
-            reasons = "Analyzed by Discuss AI.";
-        }
-
-        aiScorePayload = {
-          aiScore: finalScore,
-          aiStatus: aiStatus,
-          aiReasons: reasons,
-          factors: rawFactors,
-          aiScored: true,
-          aiScoreOutdated: false,
-          aiScoredAt: new Date().toISOString(),
-          aiModelVersion: rawFactors.aiModelVersion || 'Discuss AI',
-          lastScoredContentHash: contentHash,
-          scoredBy: 'Discuss AI'
-        };
-      } else {
-        // Fallback to local algorithm if API fails
-        const fallbackResult = localDiscussAlgorithmFallback(textToAnalyze);
-        aiScorePayload = {
-          ...fallbackResult,
-          aiScored: true,
-          aiScoreOutdated: false,
-          aiScoredAt: new Date().toISOString(),
-          lastScoredContentHash: contentHash
-        };
-      }
-
-      if (aiScorePayload) {
-        await updatePost(post.id, { aiSafetyInfo: aiScorePayload, aiScored: true, aiScoreOutdated: false, lastScoredContentHash: contentHash }, currentUser?.id || post.author_id);
-        
-        if (onUpdated) {
-          onUpdated({ ...post, aiSafetyInfo: aiScorePayload, aiScored: true, aiScoreOutdated: false, lastScoredContentHash: contentHash });
-        }
-        
-        toast.success(`Post scored by ${aiScorePayload.scoredBy}!`);
-        setShowSafetyExplanation(true); // Open the modal after scoring
-      }
+      await deletePost(post.id, currentUser?.id);
+      toast.success('Post deleted');
+      onDeleted?.(post.id);
     } catch (err) {
-      console.error('Safety score error:', err);
-      toast.error('Failed to score post.');
+      toast.error('Failed to delete post');
     } finally {
-      setIsScoringSafety(false);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
+
+  const handleCopyCode = (e) => {
+    e.stopPropagation();
+    if (!post.code) return;
+    navigator.clipboard.writeText(post.code);
+    setCopied(true);
+    toast.success('Code copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const isAuthor = currentUser?.id === post.author_id;
+  const isProject = post.type === 'project';
+  const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
 
   return (
-    <div data-testid={`post-card-${post.id}`} className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] rounded-[12px] shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden flex flex-col lg:flex-row">
-      
-      {/* Left side voting panel for desktop only */}
-      <div className="hidden lg:flex flex-col items-center gap-1 px-2.5 py-4 bg-neutral-50/50 dark:bg-neutral-900/10 discuss:bg-black/10 border-r border-neutral-100 dark:border-neutral-800 discuss:border-[#262626] w-11 shrink-0 select-none">
-        <button
-          onClick={(e) => { e.stopPropagation(); handleVote('up'); }}
-          disabled={voting}
-          className={`p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#262626] transition-colors cursor-pointer ${
-            userVote === 'up' ? 'text-[#EF4444]' : 'text-neutral-400 dark:text-neutral-500'
-          }`}
-          title="Upvote"
-        >
-          <ChevronUp className="w-5 h-5 font-black" />
-        </button>
-        <span className={`text-[13px] font-extrabold ${userVote === 'up' ? 'text-[#EF4444]' : userVote === 'down' ? 'text-[#2563EB]' : 'text-neutral-800 dark:text-neutral-200 discuss:text-[#F5F5F5]'}`}>
-          {upvoteCount - downvoteCount}
-        </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); handleVote('down'); }}
-          disabled={voting}
-          className={`p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 discuss:hover:bg-[#262626] transition-colors cursor-pointer ${
-            userVote === 'down' ? 'text-[#2563EB]' : 'text-neutral-400 dark:text-neutral-500'
-          }`}
-          title="Downvote"
-        >
-          <ChevronDown className="w-5 h-5 font-black" />
-        </button>
-      </div>
-
-      {isSelectable && (
-        <div 
-          onClick={(e) => { e.stopPropagation(); onSelectToggle?.(post.id); }}
-          className="flex items-center justify-center px-4 bg-neutral-50/50 dark:bg-neutral-800/40 discuss:bg-black/20 border-r border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 cursor-pointer hover:bg-neutral-100/50 dark:hover:bg-neutral-800/80 discuss:hover:bg-black/40 transition-colors shrink-0"
-        >
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => {}} // Controlled by parent container click
-            className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 text-[#2563EB] discuss:text-[#EF4444] focus:ring-[#2563EB]/20 dark:bg-neutral-900 cursor-pointer"
-          />
-        </div>
-      )}
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Content area */}
-        <div className="p-4 md:p-5">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="flex items-center gap-2 min-w-0 flex-wrap">
-            <span data-testid={`post-badge-${post.id}`}
-              className={isProject
-                ? 'bg-[#6275AF]/10 text-[#6275AF] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] border border-[#6275AF]/20 discuss:border-[#EF4444]/20 px-2.5 py-0.5 text-xs font-semibold rounded-[6px] shrink-0'
-                : 'bg-[#2563EB]/10 text-[#2563EB] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] dark:text-[#60A5FA] border border-[#2563EB]/20 discuss:border-[#EF4444]/20 px-2.5 py-0.5 text-xs font-semibold rounded-[6px] shrink-0'
-              }>
-              <span>{isProject ? 'Project' : 'Discussion'}</span>
-            </span>
-            <span
-              data-testid={`post-author-${post.id}`}
-              onClick={handleUsernameClick}
-              className="font-semibold text-[#2563EB] discuss:text-[#F5F5F5] discuss:hover:text-[#EF4444] hover:underline text-[13px] md:text-[15px] cursor-pointer transition-colors flex items-center gap-1"
+    <>
+      <article
+        data-testid={`post-card-${post.id}`}
+        className="w-full bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] rounded-2xl mb-4 shadow-xs overflow-hidden transition-colors duration-200"
+      >
+        {/* Post Header */}
+        <div className="flex items-center justify-between px-3.5 py-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div 
+              onClick={(e) => { e.stopPropagation(); setPreviewUser(post.author_id); }}
+              className="w-8 h-8 rounded-full p-[1.5px] ig-story-gradient cursor-pointer flex-shrink-0"
             >
-              <span>{post.author_username}</span>
-              {post.author_verified && <VerifiedBadge size="xs" />}
-            </span>
-            {post.aiSafetyInfo ? (
-              <div className="flex items-center gap-1.5 ml-0.5">
-                <span 
-                  data-testid={`post-safety-badge-${post.id}`}
-                  onClick={(e) => { e.stopPropagation(); setShowSafetyExplanation(true); }}
-                  className={`flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold cursor-pointer shadow-sm transition-transform hover:scale-105 ${
-                    post.aiScoreOutdated ? 'bg-neutral-100 text-neutral-500 border-neutral-300' :
-                    post.aiSafetyInfo.aiStatus === 'Green' ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30' :
-                    post.aiSafetyInfo.aiStatus === 'Yellow' ? 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30' :
-                    'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30'
-                  }`}
-                  title={post.aiScoreOutdated ? "Score is outdated. Post was edited." : "AI Safety Score"}
-                >
-                  {post.aiScoreOutdated ? (
-                    <RotateCcw className="w-3 h-3" />
-                  ) : post.aiSafetyInfo.aiStatus === 'Green' ? (
-                    <ShieldCheck className="w-3 h-3" />
-                  ) : (
-                    <ShieldAlert className="w-3 h-3" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {post.aiScoreOutdated ? 'Outdated Score' : (post.aiSafetyInfo.scoredBy === 'Discuss Algorithm' ? 'Discuss Algorithm' : 'Discuss AI')}
-                  </span>
-                </span>
-                
-                {(post.aiScoreOutdated || currentUser?.id === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2') && (
-                  <button
-                    onClick={(e) => handleScoreSafety(e, true)}
-                    className="flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold bg-blue-100 text-blue-600 border border-blue-200 hover:bg-blue-200 transition-colors"
-                  >
-                    {isScoringSafety ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-                    <span className="hidden sm:inline">
-                       {currentUser?.id === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && !post.aiScoreOutdated ? 'Admin Rescore' : 'Rescore AI'}
-                    </span>
-                  </button>
-                )}
+              <div className="w-full h-full rounded-full bg-white dark:bg-black p-[1px] overflow-hidden">
+                <UserAvatar
+                  src={post.author_photo_url || null}
+                  username={post.author_username || 'User'}
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
-            ) : (
-              <span 
-                data-testid={`post-safety-badge-${post.id}`}
-                onClick={(e) => handleScoreSafety(e, false)}
-                className={`ml-0.5 flex items-center gap-1 px-1.5 py-[2px] rounded-[6px] text-[10px] font-bold shadow-sm bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] cursor-pointer hover:scale-105 transition-transform ${isScoringSafety ? 'opacity-50 pointer-events-none' : ''}`}
-                title="Pending AI Score (Click to Analyze)"
+            </div>
+
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span
+                data-testid={`post-author-${post.id}`}
+                onClick={(e) => { e.stopPropagation(); navigate(`/user/${post.author_id}`); }}
+                className="font-semibold text-[13.5px] text-neutral-900 dark:text-white hover:opacity-80 cursor-pointer truncate flex items-center gap-1"
               >
-                {isScoringSafety ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3 opacity-70" />}
-                <span className="hidden sm:inline opacity-70">{isScoringSafety ? 'Analyzing...' : 'Score AI'}</span>
+                {post.author_username}
+                {post.author_verified && <VerifiedBadge size="xs" />}
               </span>
-            )}
-            <span className="text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] text-xs shrink-0 ml-1"><span>{timeAgo(post.timestamp)}</span></span>
+
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                {isProject ? 'Project' : 'Discussion'}
+              </span>
+
+              <span className="text-neutral-400 text-xs">•</span>
+              <span className="text-neutral-400 dark:text-neutral-500 text-xs shrink-0">
+                {timeAgo(post.timestamp)}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center shrink-0">
-            {!currentUser && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); setShowAuthModal(true); }}
-                className="mr-2 px-3 py-1 text-[11px] font-bold tracking-wide uppercase bg-[#0f172a] dark:bg-[#1e293b] discuss:bg-[#1e3a8a] text-white rounded-md shadow-sm hover:opacity-90 transition-opacity"
-              >
-                Join Now
-              </button>
-            )}
+
+          <div className="flex items-center gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button onClick={(e) => e.stopPropagation()} aria-label={translating ? 'Translating…' : 'Post options'} className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors focus:outline-none">
-                  {translating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Post options"
+                  className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 transition-colors cursor-pointer"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+              <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-xl p-1 shadow-xl">
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                    <Globe className="w-3.5 h-3.5" /> <span>Translate</span>
+                  <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()} className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]">
+                    <Globe className="w-4 h-4 mr-2 text-neutral-500" />
+                    <span>Translate</span>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]">
+                  <DropdownMenuSubContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-xl p-1">
                     {TRANSLATE_LANGUAGES.map((lang) => (
-                      <DropdownMenuItem key={lang.code} onClick={(e) => { e.stopPropagation(); handleTranslate(lang.code); }} className="cursor-pointer text-xs text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626]">
-                        <span>{lang.label}</span>
+                      <DropdownMenuItem
+                        key={lang.code}
+                        onClick={(e) => { e.stopPropagation(); handleTranslate(lang.code); }}
+                        className="cursor-pointer text-xs px-3 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]"
+                      >
+                        {lang.label}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
+
                 {translatedContent && (
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                    <RotateCcw className="w-3.5 h-3.5" /> <span>Back to Original</span>
+                  <DropdownMenuItem
+                    onClick={(e) => { e.stopPropagation(); setTranslatedContent(null); }}
+                    className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    <span>Original Text</span>
                   </DropdownMenuItem>
                 )}
-                {isAuthor && (
+
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); setShowSafetyExplanation(true); }}
+                  className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]"
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2 text-[#0095F6]" />
+                  <span>AI Safety Score</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); handleVote('down'); }}
+                  className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]"
+                >
+                  <ThumbsDown className="w-4 h-4 mr-2 text-neutral-400" />
+                  <span>Downvote ({downvoteCount})</span>
+                </DropdownMenuItem>
+
+                {isAuthor ? (
                   <>
-                    <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs">
-                      <Pencil className="w-3.5 h-3.5" /> <span>Edit</span>
+                    <DropdownMenuSeparator className="bg-[#EFEFEF] dark:bg-[#262626] my-1" />
+                    <DropdownMenuItem
+                      onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }}
+                      className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]"
+                    >
+                      <Pencil className="w-4 h-4 mr-2 text-neutral-500" />
+                      <span>Edit Post</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }} className="cursor-pointer flex items-center gap-2 text-[#EF4444] focus:text-[#EF4444] hover:bg-[#EF4444]/10 text-xs">
-                      <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
+                    <DropdownMenuItem
+                      onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+                      className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg text-[#ED4956] hover:bg-[#ED4956]/10"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      <span>Delete Post</span>
                     </DropdownMenuItem>
                   </>
-                )}
-                {!isAuthor && (
+                ) : (
                   <>
-                    <DropdownMenuSeparator className="bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333]" />
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleReportClick(); }} className="cursor-pointer flex items-center gap-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] text-xs font-semibold">
-                      <Flag className={`w-3.5 h-3.5 ${reportedLocally ? 'text-red-500 fill-current' : ''}`} />
-                      <span>{reportedLocally ? 'Reported' : 'Report Post'}</span>
+                    <DropdownMenuSeparator className="bg-[#EFEFEF] dark:bg-[#262626] my-1" />
+                    <DropdownMenuItem
+                      onClick={(e) => { e.stopPropagation(); setShowReportModal(true); }}
+                      className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg text-[#ED4956] hover:bg-[#ED4956]/10"
+                    >
+                      <Flag className="w-4 h-4 mr-2" />
+                      <span>Report Post</span>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -672,247 +455,266 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </div>
         </div>
 
-        {/* Body - clickable to open post detail */}
-        <div
-          data-testid={`post-clickable-${post.id}`}
-          onClick={handlePostClick}
-          className="cursor-pointer"
-        >
-          {isProject && post.title && (
-            <h3 data-testid={`post-title-${post.id}`} className="font-semibold text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5] text-[15px] md:text-[17px] mb-1.5 leading-snug hover:text-[#2563EB] dark:hover:text-[#60A5FA] discuss:hover:text-[#EF4444] transition-colors"><span>{post.title}</span></h3>
-          )}
-          <div data-testid={`post-content-${post.id}`} className="text-neutral-700 dark:text-neutral-200 discuss:text-[#E5E7EB] text-[13px] md:text-[15px] leading-relaxed">
-            <ExpandableText text={translatedContent || post.content} maxLines={5}>
-              <span className="whitespace-pre-wrap"><LinkifiedText text={translatedContent || post.content} /></span>
-            </ExpandableText>
-            {translatedContent && (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <Globe className="w-3.5 h-3.5 text-neutral-400 discuss:text-[#9CA3AF] shrink-0" />
-                <span className="text-[11px] text-neutral-400 discuss:text-[#9CA3AF]">
-                  Translated to {LANG_LABELS[translatedLang]}
-                </span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleResetTranslation(); }}
-                  className="text-[11px] text-[#2563EB] discuss:text-[#60A5FA] hover:underline ml-1"
-                >
-                  Back to Original
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Premium IDE-Style Code Box Panel (Strictly for Discussion posts with code) */}
-        {post.code && (
+        {/* Media Carousel / Double Tap Area */}
+        {post.media && post.media.length > 0 && (
           <div 
-            onClick={(e) => e.stopPropagation()} 
-            className="mt-3.5 mx-0.5 border border-neutral-200 dark:border-neutral-700/50 discuss:border-[#333333] rounded-xl overflow-hidden bg-neutral-950 shadow-sm"
+            className="relative w-full overflow-hidden bg-black select-none"
+            onDoubleClick={handleDoubleTap}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header bar */}
-            <div className="bg-neutral-900 dark:bg-black px-4 py-2.5 flex items-center justify-between border-b border-white/5 select-none">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
-                <span className="w-2 h-2 rounded-full bg-[#EAB308]" />
-                <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-                <span className="text-[10px] font-bold uppercase text-neutral-400 font-mono tracking-wider ml-2">
-                  {post.codeLanguage || 'code'}
-                </span>
-              </div>
-              
-              {/* Copy Button */}
-              <button
-                onClick={handleCopyCode}
-                className="p-1 px-2.5 text-[10px] font-bold text-neutral-400 hover:text-white rounded bg-white/5 hover:bg-white/10 active:scale-95 transition-all flex items-center gap-1 cursor-pointer border border-white/5"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-green-400" />
-                    <span className="text-green-400 font-bold">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-bold">Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Code Block Container */}
-            <div 
-              className="p-3 text-left font-mono text-[12px] text-green-400 overflow-y-auto [&::-webkit-scrollbar]:hidden"
-              style={{
-                maxHeight: '120px', // Exact max-height to restrict to 5 lines of code (line-height is 24px)
-                lineHeight: '24px',
-                msOverflowStyle: 'none',
-                scrollbarWidth: 'none',
-                whiteSpace: 'pre',
+            <MediaCarousel
+              media={post.media}
+              onMediaClick={(item, index) => {
+                setSelectedMediaIndex(index);
+                setShowFullscreen(true);
               }}
-            >
-              {post.code}
-            </div>
+            />
+
+            <AnimatePresence>
+              {showHeartPop && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: [0, 1.25, 1], opacity: [0, 1, 0.9] }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className="absolute inset-0 m-auto w-24 h-24 flex items-center justify-center pointer-events-none drop-shadow-2xl z-30"
+                >
+                  <Heart className="w-24 h-24 text-white fill-[#ED4956]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
-          {/* Media Carousel */}
-          {post.media && post.media.length > 0 && (
-            <div className="mt-3" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-              <MediaCarousel 
-                media={post.media} 
-                onMediaClick={(item, index) => {
-                  setSelectedMediaIndex(index);
-                  setShowFullscreen(true);
-                }}
+        {/* Code Snippet Box */}
+        {post.code && (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="mx-3.5 my-2.5 rounded-xl border border-neutral-800 bg-[#0A0A0A] overflow-hidden"
+          >
+            <div className="px-3.5 py-2 bg-[#121212] border-b border-neutral-800 flex items-center justify-between select-none">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ED4956]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
+                <span className="text-[11px] font-mono font-bold text-neutral-400 ml-2 uppercase">
+                  {post.codeLanguage || 'Code'}
+                </span>
+              </div>
+              <button
+                onClick={handleCopyCode}
+                className="flex items-center gap-1 text-[11px] font-semibold text-neutral-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                {copied ? <Check className="w-3 h-3 text-green-400" /> : null}
+                <span>{copied ? 'Copied' : 'Copy'}</span>
+              </button>
+            </div>
+            <pre className="p-3 text-[12px] font-mono text-green-400 overflow-x-auto max-h-[140px] scrollbar-hide">
+              <code>{post.code}</code>
+            </pre>
+          </div>
+        )}
+
+        {/* Action Bar */}
+        <div className="px-3.5 pt-2.5 pb-1 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              data-testid={`post-upvote-btn-${post.id}`}
+              onClick={() => handleVote('up')}
+              disabled={voting}
+              aria-label="Like post"
+              className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+            >
+              <Heart 
+                className={`w-6 h-6 transition-colors ${
+                  userVote === 'up' 
+                    ? 'text-[#ED4956] fill-[#ED4956] animate-heart-pop' 
+                    : 'stroke-[1.8px]'
+                }`} 
               />
+            </button>
+
+            <button
+              data-testid={`post-comments-btn-${post.id}`}
+              onClick={() => setShowComments(!showComments)}
+              aria-label="Comments"
+              className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+            >
+              <MessageCircle className="w-6 h-6 stroke-[1.8px] -rotate-6" />
+            </button>
+
+            <button
+              data-testid={`post-share-btn-${post.id}`}
+              onClick={() => setShowShare(true)}
+              aria-label="Share"
+              className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+            >
+              <Send className="w-6 h-6 stroke-[1.8px] -rotate-12" />
+            </button>
+
+            <button
+              onClick={() => {
+                const textToSummarize = (post.title || '') + '\n' + (post.content || '');
+                const prompt = `Summarize this post:\n\n${textToSummarize}`;
+                navigate('/ai-assistant', { state: { prompt } });
+              }}
+              title="Summarize with Discuss AI"
+              className="p-0.5 text-[#0095F6] hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+            >
+              <Sparkles className="w-5 h-5 stroke-[2px]" />
+            </button>
+          </div>
+
+          <button
+            onClick={handleBookmarkClick}
+            aria-label="Save post"
+            className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+          >
+            <Bookmark className={`w-6 h-6 ${isBookmarked ? 'fill-current text-neutral-900 dark:text-white' : 'stroke-[1.8px]'}`} />
+          </button>
+        </div>
+
+        {/* Likes Count */}
+        <div className="px-3.5 pt-1 text-[13.5px] font-bold text-neutral-900 dark:text-white select-none">
+          {upvoteCount > 0 ? (
+            <span>{upvoteCount.toLocaleString()} {upvoteCount === 1 ? 'like' : 'likes'}</span>
+          ) : (
+            <span className="font-normal text-neutral-500 text-xs">Be the first to like this</span>
+          )}
+        </div>
+
+        {/* Caption & Post Body */}
+        <div className="px-3.5 pt-1 pb-2 space-y-1">
+          {isProject && post.title && (
+            <h3 
+              onClick={() => navigate(`/post/${post.id}`)}
+              className="font-bold text-[14.5px] text-neutral-950 dark:text-white hover:text-[#0095F6] cursor-pointer transition-colors"
+            >
+              {post.title}
+            </h3>
+          )}
+
+          <div className="text-[13.5px] text-neutral-900 dark:text-neutral-100 leading-snug">
+            <span 
+              onClick={() => navigate(`/user/${post.author_id}`)}
+              className="font-bold mr-1.5 text-neutral-900 dark:text-white cursor-pointer hover:underline"
+            >
+              {post.author_username}
+            </span>
+            <ExpandableText text={translatedContent || post.content} maxLines={3}>
+              <span className="whitespace-pre-wrap"><LinkifiedText text={translatedContent || post.content} /></span>
+            </ExpandableText>
+          </div>
+
+          {translatedContent && (
+            <div className="flex items-center gap-1 pt-0.5 text-[11px] text-[#0095F6]">
+              <Globe className="w-3 h-3" />
+              <span>Translated content</span>
+              <button 
+                onClick={() => setTranslatedContent(null)}
+                className="ml-1 underline text-neutral-500 hover:text-neutral-800 dark:hover:text-white"
+              >
+                See original
+              </button>
             </div>
           )}
 
-          {/* URL Preview Card — stop propagation so click opens the link, not the post */}
-          {extractFirstUrl(post.content) && (
-            <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-              <UrlPreviewCard url={extractFirstUrl(post.content)} />
-            </div>
-          )}
           {hashtags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {hashtags.map((tag) => (
-                <button key={tag} data-testid={`post-hashtag-${tag}`} onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
-                  className="inline-flex items-center gap-0.5 bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] hover:bg-[#2563EB]/10 discuss:hover:bg-[#333333] px-2.5 py-1 rounded-[6px] text-xs font-medium text-neutral-600 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:text-[#2563EB] discuss:hover:text-[#F5F5F5] transition-colors">
-                  <Hash className="w-3 h-3" /><span>{tag}</span>
+                <button
+                  key={tag}
+                  data-testid={`post-hashtag-${tag}`}
+                  onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
+                  className="text-xs font-semibold text-[#0095F6] hover:underline"
+                >
+                  #{tag}
                 </button>
               ))}
             </div>
           )}
 
           {isProject && (post.github_link || post.preview_link) && (
-            <div className="flex flex-wrap gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-wrap gap-2 pt-1.5">
               {post.github_link && (
-                <button onClick={(e) => handleExternalLink(post.github_link, e)} data-testid={`post-github-link-${post.id}`}
-                  className="inline-flex items-center gap-1.5 bg-neutral-900 dark:bg-neutral-100 discuss:bg-[#262626] text-white dark:text-neutral-900 discuss:text-[#F5F5F5] px-3 py-1.5 rounded-[6px] text-xs font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 discuss:hover:bg-[#333333] transition-colors">
-                  <Github className="w-3.5 h-3.5" /> <span>GitHub</span>
-                </button>
+                <a
+                  href={post.github_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white text-xs font-semibold hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                >
+                  <Github className="w-3.5 h-3.5" />
+                  <span>GitHub</span>
+                </a>
               )}
               {post.preview_link && (
-                <button onClick={(e) => handleExternalLink(post.preview_link, e)} data-testid={`post-preview-link-${post.id}`}
-                  data-primary="true"
-                  className="inline-flex items-center gap-1.5 bg-[#2563EB] discuss:bg-[#EF4444] text-white discuss:text-white px-3 py-1.5 rounded-[6px] text-xs font-medium hover:bg-[#1D4ED8] discuss:hover:bg-[#DC2626] shadow-button transition-colors">
-                  <ExternalLink className="w-3.5 h-3.5" /> <span>Live Preview</span>
-                </button>
+                <a
+                  href={post.preview_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0095F6] text-white text-xs font-semibold hover:bg-[#1877F2] transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Live Demo</span>
+                </a>
               )}
             </div>
           )}
-        </div>
 
-      {/* Actions bar */}
-      <div 
-        onPointerDown={(e) => e.stopPropagation()}
-        className="flex items-center flex-wrap gap-1 sm:gap-2 px-2 sm:px-3 py-2 border-t border-neutral-200 dark:border-neutral-700 discuss:border-[#333333]"
-      >
-        {/* Mobile Upvote Button (hidden on desktop) */}
-        <button 
-          data-testid={`post-upvote-btn-${post.id}`} 
-          onClick={() => handleVote('up')} 
-          disabled={voting}
-          className={`lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium transition-all ${
-            userVote === 'up' 
-              ? 'bg-[#10B981]/10 text-[#10B981] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] border border-[#10B981]/30 discuss:border-[#EF4444]/30' 
-              : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-[#10B981]/5 hover:text-[#10B981] discuss:hover:bg-[#262626] discuss:hover:text-[#F5F5F5] border border-transparent'
-          }`}
-        >
-          <ThumbsUp className="w-4 h-4" fill={userVote === 'up' ? 'currentColor' : 'none'} />
-          <span data-testid={`post-upvote-count-${post.id}`}><span>{upvoteCount}</span></span>
-        </button>
-
-        {/* Mobile Downvote Button (hidden on desktop) */}
-        <button 
-          data-testid={`post-downvote-btn-${post.id}`} 
-          onClick={() => handleVote('down')} 
-          disabled={voting}
-          className={`lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[13px] font-medium transition-all ${
-            userVote === 'down' 
-              ? 'bg-[#EF4444]/10 text-[#EF4444] discuss:bg-[#EF4444]/10 discuss:text-[#EF4444] border border-[#EF4444]/30 discuss:border-[#EF4444]/30' 
-              : 'text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-[#EF4444]/5 hover:text-[#EF4444] discuss:hover:bg-[#262626] discuss:hover:text-[#F5F5F5] border border-transparent'
-          }`}
-        >
-          <ThumbsDown className="w-4 h-4" fill={userVote === 'down' ? 'currentColor' : 'none'} />
-          <span data-testid={`post-downvote-count-${post.id}`}><span>{downvoteCount}</span></span>
-        </button>
-
-        <div className="lg:hidden w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-0.5" />
-
-        <button data-testid={`post-comments-btn-${post.id}`} onClick={() => setShowComments(!showComments)}
-          className="relative flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors cursor-pointer">
-          <MessageSquare className="w-4 h-4" />
-          <span data-testid={`post-comment-count-${post.id}`}><span>{post.comment_count || 0}</span></span>
-          {hasNewCommentBadge && !showComments && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#EF4444] rounded-full animate-pulse" />
+          {extractFirstUrl(post.content) && (
+            <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+              <UrlPreviewCard url={extractFirstUrl(post.content)} />
+            </div>
           )}
-        </button>
 
-        <button data-testid={`post-share-btn-${post.id}`} onClick={() => setShowShare(true)}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] hover:bg-neutral-100 dark:hover:bg-neutral-700 discuss:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors cursor-pointer">
-          <Share2 className="w-4 h-4" />
-          <span className="hidden sm:inline"><span>Share</span></span>
-        </button>
+          {(post.comment_count || 0) > 0 && (
+            <button
+              data-testid={`post-comment-count-${post.id}`}
+              onClick={() => setShowComments(!showComments)}
+              className="text-xs font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 pt-1 cursor-pointer block"
+            >
+              {showComments ? 'Hide comments' : `View all ${post.comment_count} comments`}
+            </button>
+          )}
 
-        <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 discuss:bg-[#333333] mx-0.5" />
-
-        {/* Always-visible Translate button */}
-        <button
-          data-testid={`post-translate-btn-${post.id}`}
-          onClick={handleTranslateClick}
-          disabled={translating}
-          className={`flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[12px] font-semibold transition-all border cursor-pointer ${
-            translatedContent
-              ? 'bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#262626] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] border-neutral-300 dark:border-neutral-600 discuss:border-[#444444] hover:bg-neutral-200 dark:hover:bg-neutral-600 discuss:hover:bg-[#333333]'
-              : 'bg-[#2563EB]/10 discuss:bg-[#EF4444]/10 text-[#2563EB] discuss:text-[#EF4444] border-[#2563EB]/30 discuss:border-[#EF4444]/30 hover:bg-[#2563EB]/20 discuss:hover:bg-[#EF4444]/20'
-          }`}
-          title={translatedContent ? 'Back to Original' : preferredLang ? `Translate to ${LANG_LABELS[preferredLang]}` : 'Translate'}
-        >
-          {translating
-            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            : translatedContent
-              ? <RotateCcw className="w-3.5 h-3.5" />
-              : <Globe className="w-3.5 h-3.5" />
-          }
-          <span className="hidden sm:inline">
-            {translatedContent ? 'Original' : 'Translate'}
-          </span>
-        </button>
-
-        {/* Summarize Post AI Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            const textToSummarize = (post.title || '') + '\n' + (post.content || '');
-            const prompt = `Summarize this post:\n\n${textToSummarize}`;
-            navigate('/ai-assistant', { state: { prompt } });
-          }}
-          className="flex items-center justify-center p-2 rounded-[6px] text-[#8B5CF6] discuss:text-[#A78BFA] border transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 bg-[#8B5CF6]/10 discuss:bg-[#8B5CF6]/10 border-[#8B5CF6]/30 discuss:border-[#8B5CF6]/30 lg:hover:bg-[#8B5CF6]/20"
-          title="Summarize with AI"
-        >
-          <Sparkles className="w-4 h-4" />
-        </button>
-
-        {/* Dynamic O(1) Local Storage Auth-Guarded Bookmark Button (styled as Save on desktop) */}
-        <button
-          onClick={handleBookmarkClick}
-          className={`flex items-center gap-1 px-2 py-1.5 rounded-[6px] text-[13px] font-medium transition-all duration-200 active:scale-90 hover:scale-105 border lg:border-transparent ml-auto focus:outline-none cursor-pointer
-            ${isBookmarked
-              ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.15)] lg:shadow-none animate-pulse-subtle'
-              : 'bg-neutral-100/50 dark:bg-neutral-800/40 discuss:bg-black/20 border border-neutral-200 dark:border-neutral-700/50 discuss:border-white/5 lg:bg-transparent lg:border-transparent text-neutral-400 dark:text-neutral-500 discuss:text-[#9CA3AF] hover:text-[#2563EB] dark:hover:text-blue-400 discuss:hover:text-[#EF4444] lg:hover:bg-neutral-100 lg:dark:hover:bg-neutral-700 lg:discuss:hover:bg-[#262626]'
-            }`}
-          title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Post'}
-        >
-          <Bookmark className="w-4 h-4" fill={isBookmarked ? 'currentColor' : 'none'} />
-          <span className="hidden sm:inline">{isBookmarked ? 'Saved' : 'Save'}</span>
-        </button>
-      </div>
-
-      {showComments && (
-        <div onPointerDown={(e) => e.stopPropagation()}>
-          <CommentsSection postId={post.id} postAuthorId={post.author_id} currentUser={currentUser} onBadgeClear={handleBadgeClear} onAuthRequired={() => setShowAuthModal(true)} />
+          <form 
+            onSubmit={handleQuickCommentSubmit}
+            className="flex items-center justify-between pt-2 border-t border-[#EFEFEF] dark:border-[#262626] mt-2"
+          >
+            <input
+              type="text"
+              value={quickComment}
+              onChange={(e) => setQuickComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="w-full bg-transparent text-xs text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none py-1"
+            />
+            {quickComment.trim() && (
+              <button
+                type="submit"
+                disabled={submittingComment}
+                className="text-xs font-bold text-[#0095F6] hover:text-[#1877F2] ml-2 shrink-0 cursor-pointer disabled:opacity-50"
+              >
+                {submittingComment ? 'Posting...' : 'Post'}
+              </button>
+            )}
+          </form>
         </div>
-      )}
+
+        {showComments && (
+          <div className="border-t border-[#EFEFEF] dark:border-[#262626] bg-neutral-50/50 dark:bg-black/40">
+            <CommentsSection
+              postId={post.id}
+              postAuthorId={post.author_id}
+              currentUser={currentUser}
+              onBadgeClear={() => setHasNewCommentBadge(false)}
+              onAuthRequired={() => setShowAuthModal(true)}
+            />
+          </div>
+        )}
+      </article>
+
       <ShareModal open={showShare} onClose={() => setShowShare(false)} post={post} />
       <EditPostModal open={showEditModal} onClose={() => setShowEditModal(false)} post={post} currentUser={currentUser} onUpdated={onUpdated} />
 
@@ -932,148 +734,71 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         <UserPreviewModal open={true} onClose={() => setPreviewUser(null)} userId={previewUser} currentUserId={currentUser?.id} currentUser={currentUser} />
       )}
 
-      {/* AI Safety Explanation Modal */}
+      {showReportModal && (
+        <ReportModal
+          open={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          targetType="post"
+          targetId={post.id}
+          targetAuthorId={post.author_id}
+          currentUser={currentUser}
+          onReportSubmitted={() => {
+            setReportedLocally(true);
+            setShowReportModal(false);
+          }}
+        />
+      )}
+
       <Dialog open={showSafetyExplanation} onOpenChange={setShowSafetyExplanation}>
-        <DialogContent className="bg-white dark:bg-neutral-900 discuss:bg-[#121212] border-neutral-200 dark:border-neutral-800 discuss:border-neutral-800 rounded-2xl max-w-md" onClick={(e) => e.stopPropagation()}>
+        <DialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl max-w-md p-6" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-neutral-900 dark:text-white">
-              <ShieldCheck className="w-5 h-5 text-blue-500" />
-              Discuss AI Safety Score
+            <DialogTitle className="flex items-center gap-2 text-neutral-900 dark:text-white text-base">
+              <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
+              <span>Discuss AI Content Review</span>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className={`p-4 rounded-xl border ${
-                post.aiSafetyInfo?.score === 'Green' ? 'bg-[#10B981]/10 border-[#10B981]/20 text-[#10B981]' :
-                post.aiSafetyInfo?.score === 'Yellow' ? 'bg-[#F59E0B]/10 border-[#F59E0B]/20 text-[#F59E0B]' :
-                'bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444]'
+          <div className="space-y-3 pt-2">
+            <div className={`p-3.5 rounded-xl border ${
+              post.aiSafetyInfo?.score === 'Green' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+              post.aiSafetyInfo?.score === 'Yellow' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400' :
+              'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
             }`}>
-              <div className="font-bold flex items-center gap-2 mb-1">
-                Score: {post.aiSafetyInfo?.score}
+              <div className="font-bold text-xs mb-1">
+                Status: {post.aiSafetyInfo?.score || 'Verified Safe'}
               </div>
-              <p className="text-sm font-medium">
-                {post.aiSafetyInfo?.reasoning}
+              <p className="text-xs leading-relaxed">
+                {post.aiSafetyInfo?.reasoning || 'This content meets Discuss community and safety guidelines.'}
               </p>
             </div>
-            <p className="text-xs text-neutral-500 flex flex-col gap-1">
-              <span>This content was automatically reviewed by <b>Discuss AI</b> for safety and usefulness.</span>
-              <span className="italic">Discuss AI can make mistakes. Please double check its reasoning.</span>
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              Analyzed automatically by Discuss AI moderation filters.
             </p>
           </div>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="dark:bg-neutral-800 dark:border-neutral-700 discuss:bg-[#1a1a1a] discuss:border-[#333333] rounded-[12px]">
-          <AlertDialogHeader><AlertDialogTitle className="dark:text-neutral-50 discuss:text-[#F5F5F5]">Delete post?</AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-neutral-400 discuss:text-[#9CA3AF]">This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid={`post-delete-cancel-${post.id}`} className="rounded-[6px] dark:bg-neutral-700 dark:text-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-600 discuss:bg-[#262626] discuss:text-[#F5F5F5] discuss:border-[#333333]">Cancel</AlertDialogCancel>
-            <AlertDialogAction data-testid={`post-delete-confirm-${post.id}`} onClick={handleDelete} disabled={deleting} className="rounded-[6px] bg-[#EF4444] text-white hover:bg-[#DC2626] discuss:bg-[#EF4444] discuss:hover:bg-[#DC2626]">
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+        <AlertDialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl p-6">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-neutral-900 dark:text-white text-base">Delete post?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-500 text-xs">
+              Are you sure you want to delete this post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel className="rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              disabled={deleting} 
+              className="rounded-xl bg-[#ED4956] hover:bg-[#DC2626] text-white text-xs font-semibold"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Language preference prompt — shown on first Translate click */}
-      <Dialog open={showLangPrompt} onOpenChange={setShowLangPrompt}>
-        <DialogContent className="max-w-xs rounded-[14px] bg-white dark:bg-neutral-800 discuss:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-700 discuss:border-[#333333] p-6">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[15px] text-neutral-900 dark:text-neutral-50 discuss:text-[#F5F5F5]">
-              <Globe className="w-4 h-4 text-[#2563EB] discuss:text-[#EF4444]" />
-              Choose your language
-            </DialogTitle>
-            <DialogDescription className="text-[13px] text-neutral-500 dark:text-neutral-400 discuss:text-[#9CA3AF] mt-1">
-              Set a preferred translation language. You can change it anytime from the post menu.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-2 mt-2">
-            {TRANSLATE_LANGUAGES.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => handleLangPromptSelect(lang.code)}
-                className="w-full text-left px-4 py-2.5 rounded-[8px] text-[13px] font-medium border border-neutral-200 dark:border-neutral-600 discuss:border-[#333333] text-neutral-700 dark:text-neutral-200 discuss:text-[#F5F5F5] hover:bg-[#2563EB]/10 discuss:hover:bg-[#EF4444]/10 hover:text-[#2563EB] discuss:hover:text-[#EF4444] hover:border-[#2563EB]/40 discuss:hover:border-[#EF4444]/40 transition-colors"
-              >
-                {lang.label}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={handleLangPromptSkip}
-            className="w-full mt-2 text-center text-[12px] text-neutral-400 discuss:text-[#9CA3AF] hover:text-neutral-600 discuss:hover:text-[#F5F5F5] transition-colors py-1"
-          >
-            Skip — choose manually each time
-          </button>
-        </DialogContent>
-      </Dialog>
-      
-      <GuestAuthModal
-        open={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
-      
-      <ReportModal
-        open={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        targetType={post.type}
-        targetId={post.id}
-        targetTitleOrName={post.title || post.content}
-        targetOwnerId={post.author_id}
-        currentUser={currentUser}
-        onReportSuccess={() => setReportedLocally(true)}
-      />
-      </div>
-      {/* Safety Explanation Modal */}
-      {post.aiSafetyInfo && (
-        <Dialog open={showSafetyExplanation} onOpenChange={setShowSafetyExplanation}>
-          <DialogContent className="sm:max-w-md bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xl">
-            <DialogHeader className="mb-4 text-center">
-              <div className="flex justify-center mb-4">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${
-                  post.aiSafetyInfo.aiStatus === 'Green' ? 'bg-[#10B981]/20 border-[#10B981] text-[#10B981]' :
-                  post.aiSafetyInfo.aiStatus === 'Yellow' ? 'bg-[#F59E0B]/20 border-[#F59E0B] text-[#F59E0B]' :
-                  'bg-[#EF4444]/20 border-[#EF4444] text-[#EF4444]'
-                }`}>
-                  <span className="text-2xl font-bold">{post.aiSafetyInfo.aiScore}</span>
-                </div>
-              </div>
-              <DialogTitle className="text-xl font-bold text-center">
-                {post.aiSafetyInfo.aiStatus === 'Green' ? 'Safe Content' :
-                 post.aiSafetyInfo.aiStatus === 'Yellow' ? 'Borderline Content' :
-                 'Toxic Content'}
-              </DialogTitle>
-              <DialogDescription className="text-center mt-2 text-neutral-600 dark:text-neutral-400">
-                {post.aiSafetyInfo.aiReasons}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="bg-neutral-50 dark:bg-neutral-800 rounded-xl p-4 mt-2">
-              <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Score Factors</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {post.aiSafetyInfo.factors && Object.entries(post.aiSafetyInfo.factors).map(([key, value]) => (
-                  <div key={key} className="flex flex-col">
-                    <span className="text-[10px] text-neutral-500 font-semibold capitalize">{key.replace('Score', '')}</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${value > 0.5 ? (key === 'usefulnessScore' || key === 'qualityScore' ? 'bg-[#10B981]' : 'bg-[#EF4444]') : 'bg-[#3B82F6]'}`} 
-                          style={{ width: `${Math.max(5, value * 100)}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-bold w-6 text-right">{(value * 100).toFixed(0)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between text-[10px] text-neutral-400 font-medium">
-              <span>Scored by {post.aiSafetyInfo.scoredBy}</span>
-              <span>v{post.aiSafetyInfo.aiModelVersion?.split(' ')[1] || '1.0'}</span>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+      <GuestAuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+    </>
   );
 }

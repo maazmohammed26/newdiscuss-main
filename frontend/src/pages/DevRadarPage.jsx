@@ -111,25 +111,25 @@ export default function DevRadarPage() {
   const getThemeTextClass = () => {
     if (isDiscussBlack) return 'text-[#FF007F]';
     if (isDiscussLight) return 'text-[#EF4444]';
-    return 'text-[#2563EB]';
+    return 'text-[#0095F6]';
   };
 
   const getThemeBorderClass = () => {
     if (isDiscussBlack) return 'border-[#FF007F]/40';
     if (isDiscussLight) return 'border-[#EF4444]/40';
-    return 'border-[#2563EB]/40';
+    return 'border-[#0095F6]/40';
   };
 
   const getThemeInnerBorderClass = () => {
     if (isDiscussBlack) return 'border-[#FF007F]/25';
     if (isDiscussLight) return 'border-[#EF4444]/25';
-    return 'border-[#2563EB]/25';
+    return 'border-[#0095F6]/25';
   };
 
   const getThemeBgClass = () => {
     if (isDiscussBlack) return 'bg-[#FF007F]/5 border-[#FF007F]/15';
     if (isDiscussLight) return 'bg-[#EF4444]/5 border-[#EF4444]/15';
-    return 'bg-[#2563EB]/5 border-[#2563EB]/15';
+    return 'bg-[#0095F6]/5 border-[#0095F6]/15';
   };
 
   // 1. Load Leaflet CSS stylesheet dynamically to ensure it loads in React 19 cleanly
@@ -581,7 +581,7 @@ export default function DevRadarPage() {
               onClick={handleRecenter}
               className={`p-2 rounded-xl border border-[#E2E8F0] dark:border-white/10 discuss:border-black transition-all hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-1.5 text-xs font-bold active:scale-95`}
             >
-              <Navigation className="w-3.5 h-3.5 rotate-45 text-[#2563EB] discuss:text-[#EF4444]" />
+              <Navigation className="w-3.5 h-3.5 rotate-45 text-[#0095F6] text-[#0095F6]" />
               <span className="hidden sm:inline">My Position</span>
             </button>
           )}
@@ -651,7 +651,7 @@ export default function DevRadarPage() {
               </p>
               <div className="mt-2.5">
                 <Link to="/profile" className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider transition-all hover:underline ${
-                  isDiscussBlack ? 'text-[#FF007F] hover:text-[#FF007F]/80' : isDiscussLight ? 'text-black underline font-black' : 'text-[#2563EB] hover:text-blue-700'
+                  isDiscussBlack ? 'text-[#FF007F] hover:text-[#FF007F]/80' : isDiscussLight ? 'text-black underline font-black' : 'text-[#0095F6] hover:text-blue-700'
                 }`}>
                   <span>Go to Settings</span>
                   <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
@@ -846,14 +846,14 @@ export default function DevRadarPage() {
             <div className="flex flex-col text-left">
               {/* Header Title Only - Clean & Minimalist */}
               <div className="mb-4">
-                <h3 className="text-lg font-black tracking-tight uppercase text-neutral-900 dark:text-white discuss:text-black discuss-black:text-[#F5F5F5]">
+                <h3 className="text-lg font-black tracking-tight uppercase text-neutral-900 dark:text-white discuss:text-black ">
                   New Feature: DevRadar
                 </h3>
                 <p className={`text-[10px] uppercase font-extrabold tracking-widest ${getThemeTextClass()} opacity-90 mt-0.5`}>Interactive Developer Map</p>
               </div>
 
               {/* Technical Tagline */}
-              <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-neutral-700 discuss-black:text-neutral-300 mb-5 leading-relaxed">
+              <p className="text-xs text-neutral-600 dark:text-neutral-300 discuss:text-neutral-700  mb-5 leading-relaxed">
                 Deploy your coordinate node to the interactive community cluster. **DevRadar** establishes real-time peer discovery, enabling visual mapping of nearby engineers, developers, and students. Node specifications:
               </p>
 
@@ -861,22 +861,22 @@ export default function DevRadarPage() {
               <div className="flex flex-col gap-4 mb-6">
                 
                 <div className="text-left border-l-2 border-neutral-300 dark:border-white/10 discuss:border-black pl-3 py-0.5">
-                  <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 discuss:text-black discuss-black:text-[#F5F5F5]">Geospatial Node Discovery</h4>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 discuss:text-neutral-600 discuss-black:text-[#9CA3AF] mt-1 leading-relaxed">
+                  <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 discuss:text-black ">Geospatial Node Discovery</h4>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 discuss:text-neutral-600  mt-1 leading-relaxed">
                     Geolocate active developers, system architects, and students within your immediate network. Hover over node markers to interface with live user credentials and profiles.
                   </p>
                 </div>
 
                 <div className="text-left border-l-2 border-neutral-300 dark:border-white/10 discuss:border-black pl-3 py-0.5">
-                  <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 discuss:text-black discuss-black:text-[#F5F5F5]">Precision Calibration Protocol</h4>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 discuss:text-neutral-600 discuss-black:text-[#9CA3AF] mt-1 leading-relaxed">
+                  <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 discuss:text-black ">Precision Calibration Protocol</h4>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 discuss:text-neutral-600  mt-1 leading-relaxed">
                     Compensate for coarse ISP routing or cellular geolocation offsets. Access your secure Location Settings panel to drag and calibrate your precision node pin directly onto physical coordinates.
                   </p>
                 </div>
 
                 <div className="text-left border-l-2 border-neutral-300 dark:border-white/10 discuss:border-black pl-3 py-0.5">
-                  <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 discuss:text-black discuss-black:text-[#F5F5F5]">Encrypted Opt-In Telemetry</h4>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 discuss:text-neutral-600 discuss-black:text-[#9CA3AF] mt-1 leading-relaxed">
+                  <h4 className="text-xs font-bold text-neutral-800 dark:text-neutral-200 discuss:text-black ">Encrypted Opt-In Telemetry</h4>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 discuss:text-neutral-600  mt-1 leading-relaxed">
                     Your coordinate broadcast remains completely isolated by default. Telemetry is only shared upon explicit opt-in authentication, and can be terminated instantly.
                   </p>
                 </div>
@@ -897,7 +897,7 @@ export default function DevRadarPage() {
                 </button>
                 <button
                   onClick={handleCloseWelcomeModal}
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-extrabold uppercase px-4 py-3 rounded-xl ${isDiscussBlack ? 'bg-[#FF007F] shadow-[#FF007F]/20' : isDiscussLight ? 'bg-[#EF4444] shadow-[#EF4444]/20' : 'bg-[#2563EB] shadow-blue-500/20'} text-white shadow-md hover:brightness-105 active:scale-95 transition-all`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-extrabold uppercase px-4 py-3 rounded-xl ${isDiscussBlack ? 'bg-[#FF007F] shadow-[#FF007F]/20' : isDiscussLight ? 'bg-[#EF4444] shadow-[#EF4444]/20' : 'bg-[#0095F6] shadow-blue-500/20'} text-white shadow-md hover:brightness-105 active:scale-95 transition-all`}
                 >
                   <Radar className="w-4 h-4 text-white" />
                   <span>Start Exploring</span>
@@ -929,9 +929,9 @@ export default function DevRadarPage() {
 
       {isManualPinning && (
         <div className="fixed bottom-24 left-0 right-0 z-[1000] flex justify-center px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] p-3 rounded-2xl shadow-2xl border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] flex items-center gap-3 pointer-events-auto max-w-sm w-full">
+          <div className="bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-2xl shadow-2xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] flex items-center gap-3 pointer-events-auto max-w-sm w-full">
             <div className="flex-1">
-              <p className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5]">Manual Pinning</p>
+              <p className="text-sm font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">Manual Pinning</p>
               <p className="text-xs text-[#6275AF] dark:text-[#94A3B8] mt-0.5">
                 {manualCoords ? 'Location selected. Ready to save?' : 'Tap anywhere on the map to place your pin.'}
               </p>
@@ -939,14 +939,14 @@ export default function DevRadarPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCancelManualPin}
-                className="p-2 bg-neutral-100 dark:bg-neutral-800 discuss:bg-[#262626] text-neutral-600 dark:text-neutral-300 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                className="p-2 bg-neutral-100 dark:bg-neutral-800 dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-300 rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
               <button
                 onClick={handleConfirmManualPin}
                 disabled={!manualCoords || updatingLocation}
-                className="px-4 py-2 bg-[#2563EB] discuss:bg-[#EF4444] text-white font-bold text-xs rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-[#0095F6] bg-[#0095F6] text-white font-bold text-xs rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
               >
                 {updatingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 Save

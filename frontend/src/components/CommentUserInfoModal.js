@@ -73,7 +73,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
         <DialogContent 
           aria-describedby={undefined}
           hideClose={true}
-          className="sm:max-w-xs bg-white dark:bg-[#1E293B] discuss:bg-[#1a1a1a] dark:border-[#334155] discuss:border-[#333333] p-0 overflow-hidden"
+          className="sm:max-w-xs bg-white dark:bg-[#1E293B] dark:bg-black dark:border-[#334155] dark:border-[#262626] p-0 overflow-hidden"
         >
           <DialogTitle className="sr-only">Commenter Profile Preview</DialogTitle>
           {loading ? (
@@ -82,7 +82,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
             </div>
           ) : !userData ? (
             <div className="text-center py-12 px-6">
-              <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]">User not found</p>
+              <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">User not found</p>
             </div>
           ) : (
             <>
@@ -90,7 +90,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
               <div className="flex items-center justify-between px-3 pt-3">
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-[#F5F5F7] dark:hover:bg-[#334155] discuss:hover:bg-[#262626] text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white discuss:hover:text-[#F5F5F5] transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-[#F5F5F7] dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] text-[#6275AF] hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white transition-colors"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
@@ -120,7 +120,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                     userId={userId}
                     src={userData.photo_url || null}
                     username={userData.username}
-                    className={`w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border discuss:border-[#333333] transition-opacity ${!currentUserId ? 'opacity-70 grayscale' : 'group-hover:opacity-90'}`}
+                    className={`w-16 h-16 mx-auto shadow-lg discuss:shadow-none discuss:border dark:border-[#262626] transition-opacity ${!currentUserId ? 'opacity-70 grayscale' : 'group-hover:opacity-90'}`}
                   />
                   {currentUserId && userData.photo_url && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full pointer-events-none">
@@ -139,14 +139,14 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                 
                 {/* Full Name */}
                 {profileData?.fullName && (
-                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px] flex items-center justify-center gap-1 no-copy">
+                  <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[16px] flex items-center justify-center gap-1 no-copy">
                     {profileData.fullName}
                     {userData.verified && <VerifiedBadge size="xs" />}
                   </h3>
                 )}
                 
                 {/* Username */}
-                <p data-testid="comment-user-info-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[16px]'}`}>
+                <p data-testid="comment-user-info-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[16px]'}`}>
                   @{userData.username}
                   {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
                 </p>
@@ -169,14 +169,14 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                     <span className="text-[#6275AF] text-xs">Loading...</span>
                   </div>
                 ) : profileData?.bio && (
-                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 no-copy">
-                    <p className="text-[#0F172A] dark:text-[#E2E8F0] discuss:text-[#E5E7EB] text-[12px] leading-relaxed whitespace-pre-wrap">
+                  <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-3 no-copy">
+                    <p className="text-[#0F172A] dark:text-[#E2E8F0] dark:text-neutral-200 text-[12px] leading-relaxed whitespace-pre-wrap">
                       {displayBio}
                     </p>
                     {bioNeedsTruncation && (
                       <button
                         onClick={() => setBioExpanded(!bioExpanded)}
-                        className="text-[#2563EB] discuss:text-[#60A5FA] hover:underline text-[11px] mt-1 flex items-center gap-1"
+                        className="text-[#0095F6] discuss:text-[#60A5FA] hover:underline text-[11px] mt-1 flex items-center gap-1"
                       >
                         {bioExpanded ? (
                           <>Less <ChevronUp className="w-3 h-3" /></>
@@ -197,7 +197,7 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#2563EB] discuss:text-[#60A5FA] text-[11px] font-medium px-2.5 py-1 rounded-full border border-[#E2E8F0] dark:border-[#334155] discuss:border-[#333333] transition-colors"
+                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#0095F6] discuss:text-[#60A5FA] text-[11px] font-medium px-2.5 py-1 rounded-full border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] transition-colors"
                       >
                         {link.name}
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -207,10 +207,10 @@ export default function CommentUserInfoModal({ open, onClose, userId, currentUse
                 )}
 
                 {/* Join Date */}
-                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] discuss:bg-[#262626] discuss:border discuss:border-[#333333] rounded-xl p-3 text-center">
-                  <Calendar className="w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] mx-auto mb-1" />
-                  <p className="text-[#0F172A] dark:text-[#F1F5F9] discuss:text-[#F5F5F5] text-[12px] font-semibold">{joinDate}</p>
-                  <p className="text-[#6275AF] dark:text-[#94A3B8] discuss:text-[#9CA3AF] text-[10px]">Joined</p>
+                <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-3 text-center">
+                  <Calendar className="w-4 h-4 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-1" />
+                  <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[12px] font-semibold">{joinDate}</p>
+                  <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[10px]">Joined</p>
                 </div>
 
                 {/* Friend Actions - Only show for other users */}
