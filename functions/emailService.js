@@ -2,13 +2,22 @@
 
 const https = require('https');
 
+function escapeEmailHtml(value) {
+  return String(value || 'Discuss Member')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
  * Generates the premium HTML welcome email template matching the Discuss branding.
  * @param {string} name - The user's name or username.
  * @returns {string} The fully compiled HTML template.
  */
 function getWelcomeEmailHtml(name) {
-  const sanitizedName = name || 'Discuss Member';
+  const sanitizedName = escapeEmailHtml(name);
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -20,7 +29,7 @@ function getWelcomeEmailHtml(name) {
     body {
       margin: 0;
       padding: 0;
-      background-color: #F3F4F6;
+      background-color: #F6F7F9;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #374151;
     }
@@ -32,12 +41,12 @@ function getWelcomeEmailHtml(name) {
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #374151;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F3F4F6; padding: 32px 16px;">
+<body style="margin: 0; padding: 0; background-color: #F6F7F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #374151;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F6F7F9; padding: 40px 16px;">
     <tr>
       <td align="center">
         <!-- Main Card Container -->
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 580px; background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 60px rgba(15,23,42,0.08);">
           <!-- Top Accent Line -->
           <tr>
             <td height="4" style="height: 4px; background: linear-gradient(90deg, #DC2626 0%, #2563EB 100%);"></td>
@@ -47,13 +56,13 @@ function getWelcomeEmailHtml(name) {
             <td align="center" style="padding: 40px 40px 20px 40px;">
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td align="center" style="font-size: 28px; font-weight: 800; letter-spacing: 0.05em; color: #111827;">
-                    <span style="color: #DC2626;">D</span>ISCUS<span style="color: #2563EB;">S</span>
+                  <td align="center" aria-label="Discuss" style="font-size: 34px; font-weight: 700; letter-spacing: -0.04em; color: #111827; font-family: 'Brush Script MT', 'Segoe Script', cursive;">
+                    <span style="color: #EF4444; font-family: Arial, sans-serif; font-weight: 900;">&lt;</span><span style="color: #111827;">Discuss</span><span style="color: #0095F6; font-family: Arial, sans-serif; font-weight: 900;">/&gt;</span>
                   </td>
                 </tr>
                 <tr>
                   <td align="center" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em; color: #9CA3AF; font-weight: 700; padding-top: 6px;">
-                    Secure Communication Hub
+                    A focused network for developers
                   </td>
                 </tr>
               </table>
@@ -62,14 +71,22 @@ function getWelcomeEmailHtml(name) {
           <!-- Content Body -->
           <tr>
             <td style="padding: 20px 40px 30px 40px;">
-              <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 16px 0; text-align: center;">
-                Welcome, ${sanitizedName}!
+              <h1 style="font-size: 30px; line-height: 1.2; letter-spacing: -0.04em; font-weight: 800; color: #111827; margin: 0 0 14px 0; text-align: center;">
+                Welcome to Discuss, ${sanitizedName}.
               </h1>
               
               <!-- Your Custom Personal Message -->
               <p style="font-size: 15px; line-height: 1.6; color: #4B5563; margin: 0 0 28px 0; text-align: center; font-weight: 500;">
-                Hey, I'm Mohammed Maaz, founder and developer of Discuss. Thanks for joining, and welcome from the Discuss team!
+                Your developer profile is ready. Share ideas, publish what you are building, discover the right people, and join conversations that help you move forward.
               </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="https://discussit.in/feed" style="display: inline-block; background-color: #0095F6; color: #FFFFFF; font-size: 14px; line-height: 18px; font-weight: 800; padding: 14px 24px; border-radius: 12px; text-decoration: none; box-shadow: 0 8px 24px rgba(0,149,246,0.24);">Open your Discuss feed&nbsp;&nbsp;→</a>
+                  </td>
+                </tr>
+              </table>
               
               <!-- Monospace Developer Features Layout -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
@@ -81,8 +98,8 @@ function getWelcomeEmailHtml(name) {
                           01 //
                         </td>
                         <td valign="top">
-                          <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin: 0 0 4px 0; text-transform: uppercase; tracking: 0.05em;">Real-time Chats & Groups</h4>
-                          <p style="font-size: 13px; line-height: 1.4; color: #6B7280; margin: 0;">Connect immediately with direct messaging and feature-rich group conversations.</p>
+                          <h4 style="font-size: 14px; font-weight: 800; color: #111827; margin: 0 0 4px 0;">Start a useful discussion</h4>
+                          <p style="font-size: 13px; line-height: 1.5; color: #6B7280; margin: 0;">Ask a technical question, share context, and learn from developers who care about the details.</p>
                         </td>
                       </tr>
                     </table>
@@ -97,8 +114,8 @@ function getWelcomeEmailHtml(name) {
                           02 //
                         </td>
                         <td valign="top">
-                          <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin: 0 0 4px 0; text-transform: uppercase; tracking: 0.05em;">Telegram Notifications</h4>
-                          <p style="font-size: 13px; line-height: 1.4; color: #6B7280; margin: 0;">Connect your Telegram under Profile to receive lightning-fast alerts even when offline.</p>
+                          <h4 style="font-size: 14px; font-weight: 800; color: #111827; margin: 0 0 4px 0;">Show what you are building</h4>
+                          <p style="font-size: 13px; line-height: 1.5; color: #6B7280; margin: 0;">Publish projects, code, links, images, and progress in a clean developer-first format.</p>
                         </td>
                       </tr>
                     </table>
@@ -113,8 +130,8 @@ function getWelcomeEmailHtml(name) {
                           03 //
                         </td>
                         <td valign="top">
-                          <h4 style="font-size: 14px; font-weight: 700; color: #111827; margin: 0 0 4px 0; text-transform: uppercase; tracking: 0.05em;">Privacy & Protection</h4>
-                          <p style="font-size: 13px; line-height: 1.4; color: #6B7280; margin: 0;">Enjoy state-of-the-art security, PIN locks, and advanced data encryption controls.</p>
+                          <h4 style="font-size: 14px; font-weight: 800; color: #111827; margin: 0 0 4px 0;">Find your developer network</h4>
+                          <p style="font-size: 13px; line-height: 1.5; color: #6B7280; margin: 0;">Discover people through TalentGraph and DevRadar, then connect through groups and private chat.</p>
                         </td>
                       </tr>
                     </table>
@@ -528,7 +545,7 @@ function getVerificationEmailHtml(name, link) {
  */
 async function sendWelcomeEmail(toEmail, displayName, apiKey) {
   const htmlContent = getWelcomeEmailHtml(displayName);
-  return sendBrevoEmail(toEmail, displayName, 'Welcome to Discuss!', htmlContent, apiKey);
+  return sendBrevoEmail(toEmail, displayName, 'Welcome to Discuss — your developer network is ready', htmlContent, apiKey);
 }
 
 /**
