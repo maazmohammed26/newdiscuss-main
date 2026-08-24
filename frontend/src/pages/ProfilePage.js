@@ -1306,20 +1306,31 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-black  pb-28">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-900 dark:text-white pb-28 select-none">
       <Header />
-      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 md:py-10 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+      <div className="w-full max-w-5xl lg:max-w-[1240px] mx-auto px-0 md:px-4 py-0 md:py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_600px_300px] justify-center gap-6">
           <Sidebar />
-          <div className="min-w-0 flex-1">
+          <div className="w-full max-w-[600px] mx-auto min-w-0 flex-1">
+            <div className="px-4 py-3 flex items-center justify-between border-b border-[#EFEFEF] dark:border-[#262626]">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 stroke-[2.2px]" />
+                <span>Back</span>
+              </button>
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Profile & Settings</span>
+              <div className="w-10" />
+            </div>
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        {/* Instagram-style Profile Hero */}
-        <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] p-6 text-center relative rounded-2xl mb-6 shadow-xs select-none">
+        {/* Edge-to-Edge Instagram-style Profile Hero */}
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] p-6 text-center relative select-none pb-8">
           
           {/* Top Right Icons - Share & Info */}
           <div className="absolute top-4 right-4 flex items-center gap-1">
@@ -1535,7 +1546,7 @@ export default function ProfilePage() {
         <div className="mt-6 bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
-            className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
@@ -1588,20 +1599,13 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== SETTINGS CATEGORIES STACK ==================== */}
-        <div className="mt-6 space-y-6 select-none">
-        
-        {/* ==================== GROUP 1: ACCOUNT & IDENTITY ==================== */}
-        <div>
-          <h4 className="text-[11.5px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-2 mb-2">
-            Your Account
-          </h4>
-          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden divide-y divide-[#EFEFEF] dark:divide-[#262626]">
+        <div className="w-full space-y-0 select-none">
 
           {/* Category 1: Profile Details */}
-          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
+          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowProfileSettings(!showProfileSettings)}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 bg-[#0095F6]/10 text-[#0095F6]">
@@ -2010,10 +2014,10 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 2: App Security */}
-          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
+          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowSecuritySettings(!showSecuritySettings)}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 bg-[#0095F6]/10 text-[#0095F6]">
@@ -2136,10 +2140,10 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 3: DevRadar Telemetry */}
-          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
+          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowLocationSettings(!showLocationSettings)}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 bg-[#0095F6]/10 text-[#0095F6]">
@@ -2268,10 +2272,10 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 4: Notifications & Integrations */}
-          <div className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-200 mb-4 shadow-xs">
+          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowNotificationSettings(!showNotificationSettings)}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
@@ -3146,12 +3150,12 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== GLOBAL USER LOGOUT (VERY LAST) ==================== */}
-        <div className="mt-8">
+        <div className="px-4 py-6 border-b border-[#EFEFEF] dark:border-[#262626]">
           <Button 
             data-testid="profile-logout-btn" 
             onClick={handleLogout} 
             disabled={loggingOut}
-            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-3.5 h-12 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 border border-[#EF4444]/20 cursor-pointer"
+            className="w-full bg-[#ED4956]/10 hover:bg-[#ED4956]/20 text-[#ED4956] font-bold py-3 h-11 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 border border-[#ED4956]/20 cursor-pointer"
           >
             {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LogOut className="w-4 h-4" /> <span>Log Out</span></>}
           </Button>
@@ -3166,6 +3170,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+    </div>
 
       <VerificationRequestModal 
         open={showVerificationModal} 
