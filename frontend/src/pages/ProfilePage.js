@@ -79,7 +79,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
-  FileText, LogOut, Loader2, ChevronDown, ChevronUp, 
+  FileText, LogOut, Loader2, ChevronDown, ChevronUp, ChevronRight, 
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
   Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy
@@ -1540,12 +1540,10 @@ export default function ProfilePage() {
         <div className="mt-6 bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
-            className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
-                <Trophy className="w-5 h-5" />
-              </div>
+              <Trophy className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
               <div className="text-left">
                 <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Discussion Achievements</h3>
                 <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
@@ -1599,12 +1597,10 @@ export default function ProfilePage() {
           <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowProfileSettings(!showProfileSettings)}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 bg-[#0095F6]/10 text-[#0095F6]">
-                  <User className="w-5 h-5" />
-                </div>
+                <User className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
                 <div className="text-left">
                   <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Profile Details</h3>
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage your display name, bio, social links, and theme</p>
@@ -2011,12 +2007,10 @@ export default function ProfilePage() {
           <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowSecuritySettings(!showSecuritySettings)}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 bg-[#0095F6]/10 text-[#0095F6]">
-                  <Shield className="w-5 h-5" />
-                </div>
+                <Shield className="w-5 h-5" />
                 <div className="text-left">
                   <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">App Security</h3>
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
@@ -2137,12 +2131,10 @@ export default function ProfilePage() {
           <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowLocationSettings(!showLocationSettings)}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 bg-[#0095F6]/10 text-[#0095F6]">
-                  <MapPin className="w-5 h-5" />
-                </div>
+                <MapPin className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
                 <div className="text-left">
                   <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">DevRadar Telemetry</h3>
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
@@ -2269,12 +2261,10 @@ export default function ProfilePage() {
           <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowNotificationSettings(!showNotificationSettings)}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 bg-[#0095F6]/10 text-[#0095F6]">
-                  <Bell className="w-5 h-5" />
-                </div>
+                <Bell className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
                 <div className="text-left">
                   <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Notifications & Integrations</h3>
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
@@ -2996,15 +2986,13 @@ export default function ProfilePage() {
             className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
-                <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-              </div>
+              <FileText className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
               <div className="text-left">
                 <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white"><span>Your Posts</span></h2>
                 <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
-            {showPosts ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
+            <ChevronRight className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ${showPosts ? "rotate-90 text-neutral-900 dark:text-white" : ""}`} />
           </button>
 
           {showPosts && (
@@ -3110,7 +3098,7 @@ export default function ProfilePage() {
                 <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
               </div>
             </div>
-            {showPulses ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
+            <ChevronRight className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ${showPulses ? "rotate-90 text-neutral-900 dark:text-white" : ""}`} />
           </button>
 
           {showPulses && (
