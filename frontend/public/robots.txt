@@ -1,136 +1,56 @@
-# robots.txt — discussit.in
-# Updated: 2026-04-12
-# Reference: https://developers.google.com/search/docs/crawling-indexing/robots/intro
-
-# ── Default: all crawlers ────────────────────────────────────
 User-agent: *
 Allow: /
 Allow: /about
+Allow: /blogs
+Allow: /news
+Allow: /jobs
+Allow: /download
+Allow: /guidelines
+Allow: /terms
+Allow: /privacy
 Allow: /careers
-Allow: /blog
 Allow: /contact
-Disallow: /feed
 Disallow: /profile
-Disallow: /login
-Disallow: /register
 Disallow: /settings
 Disallow: /notifications
-Disallow: /post/
-Disallow: /chat/
-Disallow: /groups/
-Disallow: /api/
-Crawl-delay: 2
-
-# ── Googlebot ────────────────────────────────────────────────
-User-agent: Googlebot
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blog
-Allow: /contact
-Disallow: /feed
-Disallow: /profile
-Disallow: /login
-Disallow: /register
-Disallow: /settings
-Disallow: /notifications
-Disallow: /post/
-Disallow: /chat/
-Disallow: /groups/
+Disallow: /chat
+Disallow: /group
+Disallow: /join-requests
 Disallow: /api/
 
-# ── Bingbot ──────────────────────────────────────────────────
-User-agent: Bingbot
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blog
-Allow: /contact
-Disallow: /feed
-Disallow: /profile
-Disallow: /login
-Disallow: /register
-Disallow: /settings
-Disallow: /notifications
-Disallow: /post/
-Disallow: /chat/
-Disallow: /groups/
-Disallow: /api/
-Crawl-delay: 1
-
-# ── AI crawlers — allow public pages only ────────────────────
 User-agent: GPTBot
 Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
 Disallow: /profile
-Disallow: /post/
-Disallow: /chat/
-Disallow: /groups/
-Disallow: /api/
-
-User-agent: Google-Extended
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
-Disallow: /post/
-Disallow: /api/
-
-User-agent: anthropic-ai
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
-Disallow: /post/
-Disallow: /api/
-
-User-agent: Claude-Web
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
-Disallow: /post/
-Disallow: /api/
-
-User-agent: CCBot
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
-Disallow: /post/
-Disallow: /api/
-
-User-agent: PerplexityBot
-Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
-Disallow: /post/
+Disallow: /chat
+Disallow: /group
 Disallow: /api/
 
 User-agent: OAI-SearchBot
 Allow: /
-Allow: /about
-Allow: /careers
-Allow: /blogs
-Allow: /contact
-Disallow: /feed
-Disallow: /post/
+Disallow: /profile
+Disallow: /chat
+Disallow: /group
 Disallow: /api/
 
-# ── Sitemap ──────────────────────────────────────────────────
+User-agent: Google-Extended
+Allow: /
+Disallow: /profile
+Disallow: /chat
+Disallow: /group
+Disallow: /api/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /profile
+Disallow: /chat
+Disallow: /group
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /profile
+Disallow: /chat
+Disallow: /group
+Disallow: /api/
+
 Sitemap: https://discussit.in/sitemap.xml

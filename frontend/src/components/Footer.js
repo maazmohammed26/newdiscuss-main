@@ -1,72 +1,20 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
-import ThemeToggle from '@/components/ThemeToggle';
+
+const groups = [
+  { title: 'Product', links: [['Explore', '/feed'], ['Tech News', '/news'], ['Tech Jobs', '/jobs'], ['Download', '/download']] },
+  { title: 'Company', links: [['About', '/about'], ['Blogs', '/blogs'], ['Careers', '/careers'], ['Contact', '/contact']] },
+  { title: 'Legal', links: [['Guidelines', '/guidelines'], ['Terms', '/terms'], ['Privacy', '/privacy']] },
+];
 
 export default function Footer() {
-  const footerLinks = [
-    { name: 'About', path: '/about' },
-    { name: 'Careers', path: '/careers' },
-    { name: 'Blogs', path: '/blogs' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'Terms', path: '/terms' },
-    { name: 'Privacy', path: '/privacy' },
-  ];
-
   return (
-    <footer className="py-8 px-6 border-t border-white/10 bg-black text-[#DEDBC8]">
-      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
-        
-        {/* Left Side: Branding */}
-        <div className="flex items-center gap-4">
-          <DiscussLogo size="md" />
-        </div>
-
-        {/* Middle: Links */}
-        <div className="flex flex-wrap justify-center gap-6 text-sm font-medium">
-          {footerLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className="transition-colors text-neutral-400 hover:text-white"
-              style={{ color: 'rgba(225,224,204,0.6)' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#E1E0CC')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(225,224,204,0.6)')}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* Right Side: Copyright */}
-        <div className="text-xs text-neutral-500 text-center lg:text-right" style={{ color: 'rgba(225,224,204,0.4)' }}>
-          <div className="mb-1 text-[11px] lg:text-xs">
-            Developed by{' '}
-            <span className="shining-purple-text font-black">
-              &lt;mm/&gt;
-            </span>
-          </div>
-          &copy; {new Date().getFullYear()} Discuss. Built for developers.<br />
-          <span className="opacity-70 mt-1 inline-block">All rights reserved.</span>
-        </div>
-
+    <footer className="border-t border-neutral-200 bg-white px-4 py-10 text-neutral-950 sm:px-6">
+      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1.5fr_2fr]">
+        <div><DiscussLogo size="md" tagged /><p className="mt-4 max-w-xs text-sm leading-6 text-neutral-500">A focused social platform for developers to discuss ideas, share work, find people, and build together.</p></div>
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">{groups.map((group) => <div key={group.title}><h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400">{group.title}</h2><ul className="mt-4 space-y-3">{group.links.map(([label, path]) => <li key={label}><Link to={path} className="text-sm font-medium text-neutral-600 hover:text-neutral-950">{label}</Link></li>)}</ul></div>)}</div>
       </div>
-      <style>{`
-        @keyframes shine-purple {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .shining-purple-text {
-          background: linear-gradient(120deg, #6B21A8 25%, #C084FC 50%, #6B21A8 75%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine-purple 3.5s linear infinite;
-          text-shadow: 0 0 8px rgba(107, 33, 168, 0.35);
-          font-weight: 800;
-          display: inline-block;
-        }
-      `}</style>
+      <div className="mx-auto mt-10 flex max-w-6xl flex-col gap-2 border-t border-neutral-200 pt-5 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Discuss. All rights reserved.</span><span>Designed for developers, builders, and technical communities.</span></div>
     </footer>
   );
 }

@@ -102,7 +102,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+      <DialogContent className="sm:max-w-[500px] rounded-t-[26px] sm:rounded-[26px] border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black">
         <DialogHeader>
           <DialogTitle className="text-neutral-900 dark:text-neutral-50 dark:text-white text-lg font-bold">
             Create New Group
@@ -124,7 +124,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder="Enter group name (min 3 characters)"
-                className="pr-10 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white"
+                className="h-11 rounded-xl border-neutral-200 bg-neutral-50 pr-10 text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:text-white"
                 disabled={loading}
                 maxLength={50}
               />
@@ -164,10 +164,10 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
               <button
                 onClick={() => setGroupType(GROUP_TYPE.PUBLIC)}
                 disabled={loading}
-                className={`p-4 rounded-[12px] border-2 transition-all ${
+                className={`p-4 rounded-2xl border transition-all ${
                   groupType === GROUP_TYPE.PUBLIC
-                    ? 'border-[#0095F6] discuss:border-[#EF4444] bg-[#0095F6]/5 bg-[#0095F6]/5'
-                    : 'border-neutral-200 dark:border-neutral-700 dark:border-[#262626] bg-white dark:bg-neutral-800 dark:bg-black'
+                    ? 'border-[#0095F6] bg-[#0095F6]/5'
+                    : 'border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black'
                 } ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#0095F6] discuss:hover:border-[#EF4444]'}`}
               >
                 <Users className={`w-6 h-6 mx-auto mb-2 ${
@@ -190,10 +190,10 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
               <button
                 onClick={() => setGroupType(GROUP_TYPE.PRIVATE)}
                 disabled={loading}
-                className={`p-4 rounded-[12px] border-2 transition-all ${
+                className={`p-4 rounded-2xl border transition-all ${
                   groupType === GROUP_TYPE.PRIVATE
-                    ? 'border-[#0095F6] discuss:border-[#EF4444] bg-[#0095F6]/5 bg-[#0095F6]/5'
-                    : 'border-neutral-200 dark:border-neutral-700 dark:border-[#262626] bg-white dark:bg-neutral-800 dark:bg-black'
+                    ? 'border-[#0095F6] bg-[#0095F6]/5'
+                    : 'border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black'
                 } ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#0095F6] discuss:hover:border-[#EF4444]'}`}
               >
                 <Lock className={`w-6 h-6 mx-auto mb-2 ${
@@ -217,7 +217,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
 
           {/* Warning */}
           <div
-            className="bg-amber-50 dark:bg-amber-950/30 discuss:bg-amber-950/30 border border-amber-200 dark:border-amber-800 discuss:border-amber-800 rounded-[12px] p-3"
+            className="rounded-2xl bg-amber-50 p-3 dark:bg-amber-950/20"
             style={false
               ? { backgroundColor: 'rgba(120,53,15,0.25)', borderColor: 'rgba(217,119,6,0.3)' }
               : {}}
@@ -263,7 +263,7 @@ export default function CreateGroupModal({ open, onOpenChange, userId, onGroupCr
           <Button
             onClick={handleCreate}
             disabled={loading || !groupName.trim() || !isAvailable || groupName.trim().length < 3}
-            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white"
+            className="rounded-xl bg-[#0095F6] text-white hover:bg-[#1877F2]"
           >
             {loading ? (
               <>

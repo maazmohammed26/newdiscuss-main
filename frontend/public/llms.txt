@@ -1,0 +1,24 @@
+# Discuss
+
+> Discuss is an ad-free social platform for developers to share technical discussions and projects, discover peers, join groups, and communicate privately.
+
+## Primary pages
+
+- Home: https://discussit.in/
+- About: https://discussit.in/about
+- Sign up: https://discussit.in/register
+- Sign in: https://discussit.in/login
+- Community guidelines: https://discussit.in/community-guidelines
+- Privacy policy: https://discussit.in/privacy-policy
+- Terms: https://discussit.in/terms
+
+## Core capabilities
+
+- Publish technical discussions, projects, links, images, and videos.
+- Discover developers through DevRadar and TalentGraph.
+- Join or create groups and use private real-time chat.
+- Browse developer-focused technology news and jobs.
+
+## Organization
+
+Discuss was founded and developed by Mohammed Maaz A. Canonical site: https://discussit.in/

@@ -607,7 +607,7 @@ export default function GroupConversationPage() {
           )}
           
           <div className="relative group">
-            <div className={`rounded-[16px] px-4 py-2.5 ${isOwn ? 'bg-[#0095F6] bg-[#0095F6] text-white' : 'bg-white dark:bg-neutral-800 dark:bg-black text-neutral-900 dark:text-neutral-50 dark:text-white border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]'}`}>
+            <div className={`rounded-2xl px-4 py-2.5 shadow-sm ${isOwn ? 'rounded-br-md bg-[#0095F6] text-white' : 'rounded-bl-md border border-neutral-200 bg-white text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white'}`}>
               {message.replyTo && (
                 <button onClick={() => scrollToMessage(message.replyTo.id)} className={`mb-2 p-2 rounded-[8px] border-l-2 text-left w-full ${isOwn ? 'bg-white/10 border-white/30' : 'bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] border-neutral-300 dark:border-neutral-600 discuss:border-[#404040]'}`}>
                   <p className={`text-[10px] font-semibold mb-0.5 ${isOwn ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}>@{userDetails[message.replyTo.sender]?.username || 'User'}</p>
@@ -749,13 +749,13 @@ export default function GroupConversationPage() {
   const isAdminOnlyMode = groupInfo?.settings?.adminOnlyMessaging;
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-black flex flex-col text-neutral-950 dark:text-white">
       <Header />
       
-      <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
-        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto flex items-center justify-between">
+      <div className="sticky top-0 z-20 border-b border-neutral-200 bg-white/95 px-3 py-3 backdrop-blur-xl dark:border-neutral-800 dark:bg-black/95">
+        <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/chat')} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-colors">
+            <button onClick={() => navigate('/chat')} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900">
               <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
             </button>
             <div>
@@ -773,7 +773,7 @@ export default function GroupConversationPage() {
               <p className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">{members.length} members</p>
             </div>
           </div>
-          <button onClick={() => navigate(`/group/${groupId}/info`)} className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] transition-colors">
+          <button onClick={() => navigate(`/group/${groupId}/info`)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900">
             <Info className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
         </div>
@@ -783,10 +783,10 @@ export default function GroupConversationPage() {
         ref={messagesContainerRef}
         onClick={clearAllHighlights}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide" 
+        className="flex-1 overflow-y-auto bg-neutral-50/60 px-2 py-4 scrollbar-hide dark:bg-neutral-950/60 sm:px-4"
         style={{ maxHeight: 'calc(100vh - 180px)' }}
       >
-        <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
+        <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4">
           {loadingOld && (
             <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm animate-pulse">
               <Loader2 className="w-4 h-4 animate-spin text-[#0095F6] text-[#0095F6]" />
@@ -863,8 +863,8 @@ export default function GroupConversationPage() {
       )}
 
       {canSendMessages ? (
-        <div className="bg-white dark:bg-neutral-800 dark:bg-black border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
-          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto">
+        <div className="sticky bottom-0 border-t border-neutral-200 bg-white/95 px-2 py-3 backdrop-blur-xl dark:border-neutral-800 dark:bg-black/95 sm:px-4">
+          <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4">
             {replyTo && (
               <div className="mb-2 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] p-2 rounded-[8px] border-l-2 border-[#0095F6] discuss:border-[#EF4444]">
                 <div className="flex items-center justify-between">
@@ -960,7 +960,7 @@ export default function GroupConversationPage() {
                   }
                 }}
                 placeholder={isAdminOnlyMode && !isAdmin ? "Only admins can send messages" : "Type a message..."}
-                className="flex-1 bg-neutral-100 dark:bg-neutral-700 dark:bg-[#1A1A1A] border-0 text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 rounded-2xl px-4 py-2.5 text-[14px] md:text-[15px] focus:outline-none resize-none max-h-[130px] input-textarea-scroll"
+                className="flex-1 max-h-[130px] resize-none rounded-[22px] border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-[14px] text-neutral-900 placeholder:text-neutral-500 focus:border-[#0095F6]/40 focus:bg-white focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:focus:bg-black md:text-[15px] input-textarea-scroll"
                 style={{
                   height: '40px',
                   scrollbarWidth: 'none',
@@ -969,7 +969,7 @@ export default function GroupConversationPage() {
                 disabled={sending || (isAdminOnlyMode && !isAdmin)}
                 maxLength={1000}
               />
-              <Button type="submit" disabled={(!messageText.trim() && pendingMedia.length === 0 && !showMediaUpload) || (isAdminOnlyMode && !isAdmin)} className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white px-4">
+              <Button type="submit" disabled={(!messageText.trim() && pendingMedia.length === 0 && !showMediaUpload) || (isAdminOnlyMode && !isAdmin)} className="h-10 w-10 rounded-full bg-[#0095F6] p-0 text-white hover:bg-[#1877F2]">
                 <Send className="w-5 h-5" />
               </Button>
             </form>
@@ -977,7 +977,7 @@ export default function GroupConversationPage() {
         </div>
       ) : (
         <div className="bg-neutral-100 dark:bg-neutral-800 dark:bg-black border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
-          <div className="w-full max-w-[1400px] px-4 md:px-8 mx-auto text-center">
+          <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 text-center">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{isAdminOnlyMode ? 'Only admins can send messages in this group' : 'You cannot send messages in this group'}</p>
           </div>
         </div>

@@ -181,7 +181,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <Link to="/" data-testid="register-logo">
-              <DiscussLogo size="lg" />
+              <DiscussLogo size="lg" tagged dark />
             </Link>
           </div>
 
@@ -274,7 +274,7 @@ export default function RegisterPage() {
                   </div>
 
                   {/* Terms and Conditions */}
-                  <div className="flex items-start gap-3 pt-2">
+                  <div className={`flex items-start gap-3 rounded-2xl border p-4 transition-colors ${termsAccepted ? 'border-[#0095F6]/40 bg-[#0095F6]/10' : 'border-white/10 bg-[#181818]'}`}>
                     <input
                       type="checkbox"
                       id="terms"
@@ -283,19 +283,21 @@ export default function RegisterPage() {
                         setTermsAccepted(e.target.checked);
                         setError('');
                       }}
-                      className="w-4 h-4 mt-0.5 accent-[#2563EB] cursor-pointer rounded bg-[#181818] border-white/10"
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md accent-[#0095F6]"
                       data-testid="register-terms-checkbox"
                     />
-                    <label htmlFor="terms" className="text-gray-400 text-xs font-bold cursor-pointer select-none">
-                      I agree to the{' '}
+                    <label htmlFor="terms" className="cursor-pointer select-none text-xs leading-5 text-gray-300">
+                      <span className="block font-bold text-white">Agreement and privacy</span>
+                      <span>I have reviewed and agree to the </span>
                       <button
                         type="button"
                         onClick={() => setShowTerms(true)}
-                        className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold transition-colors"
+                        className="font-bold text-[#0095F6] transition-colors hover:text-blue-300 hover:underline"
                         data-testid="register-terms-link"
                       >
                         Terms and Conditions
                       </button>
+                      <span>. Discuss uses this confirmation only to create and protect your account.</span>
                     </label>
                   </div>
 

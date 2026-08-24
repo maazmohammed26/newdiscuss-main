@@ -78,7 +78,7 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="text-center mb-8">
             <Link to="/" data-testid="login-logo">
-              <DiscussLogo size="lg" />
+              <DiscussLogo size="lg" tagged dark />
             </Link>
           </div>
 

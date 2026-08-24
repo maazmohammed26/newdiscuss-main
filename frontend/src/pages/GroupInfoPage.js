@@ -268,7 +268,7 @@ export default function GroupInfoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
+      <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
@@ -287,19 +287,19 @@ export default function GroupInfoPage() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white">
       <Header />
       
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(`/group/${groupId}`)} className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+      <div className="mx-auto max-w-[680px] border-x border-neutral-200 pb-24 dark:border-neutral-800">
+        <div className="flex items-center gap-3 border-b border-neutral-200 px-4 py-5 dark:border-neutral-800">
+          <button onClick={() => navigate(`/group/${groupId}`)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900">
             <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
           <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">Group Info</h1>
         </div>
 
         {/* Group Info Card */}
-        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
+        <div className="border-b border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-black">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <span className="text-white font-bold text-xl">{groupInfo?.name?.slice(0, 2).toUpperCase()}</span>
@@ -351,7 +351,7 @@ export default function GroupInfoPage() {
         </div>
 
         {isAdmin && !isDeleted && (
-          <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
+          <div className="border-b border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-black">
             <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5" />Group Settings
             </h3>
@@ -400,7 +400,7 @@ export default function GroupInfoPage() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-6 mb-4">
+        <div className="border-b border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-black">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">Members</h3>
             {isAdmin && !isDeleted && (
@@ -501,7 +501,7 @@ export default function GroupInfoPage() {
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 p-4">
           {isMember && (
             <Button onClick={() => setConfirmDialog({ open: true, action: 'leave' })} variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50">
               <LogOut className="w-4 h-4 mr-2" />Leave Group

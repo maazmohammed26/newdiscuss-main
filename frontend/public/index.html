@@ -6,9 +6,9 @@
         <meta name="theme-color" content="#2563EB" />
         
         <!-- Primary Meta Tags -->
-        <title>Discuss - Developer Discussion & Project Sharing Platform</title>
-        <meta name="title" content="Discuss - Developer Discussion & Project Sharing Platform" />
-        <meta name="description" content="Join Discuss, the modern real-time discussion platform for developers. Share projects, start conversations, upvote ideas, and connect with a vibrant developer community. Free forever. Developed and founded by Mohammed Maaz A." />
+        <title>Discuss — Developer discussions, projects, groups, and chat</title>
+        <meta name="title" content="Discuss — Developer discussions, projects, groups, and chat" />
+        <meta name="description" content="Discuss is a focused social platform for developers to share technical discussions and projects, discover peers, join groups, and chat without ads or noise." />
         <meta name="keywords" content="discuss, developer forum, discussion platform, project sharing, real-time chat, developer community, open source, coding community, tech forum, programming discussion, github projects, developer network, Mohammed Maaz A, social platform, connect developers" />
         <meta name="author" content="Mohammed Maaz A" />
         <meta name="creator" content="Mohammed Maaz A" />
@@ -22,11 +22,9 @@
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://discussit.in" />
-        <meta property="og:title" content="Discuss - Where Developers Discuss & Share Projects" />
-        <meta property="og:description" content="A modern real-time discussion platform for developers. Share projects, start conversations, and connect with a vibrant community. Developed and founded by Mohammed Maaz A. Features real-time voting, comments, hashtags, friend connections, and project showcases." />
+        <meta property="og:title" content="Discuss — Built for developers" />
+        <meta property="og:description" content="Share technical discussions and projects, find developers, join groups, and chat in one focused, ad-free community." />
         <meta property="og:image" content="%PUBLIC_URL%/favicon-new.png" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content="Discuss - Developer Discussion Platform" />
         <meta property="og:site_name" content="Discuss" />
         <meta property="og:locale" content="en_US" />
@@ -99,11 +97,6 @@
             "price": "0",
             "priceCurrency": "USD"
           },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "ratingCount": "250"
-          },
           "featureList": [
             "Real-time discussions",
             "Project showcases",
@@ -114,7 +107,9 @@
             "Personal messaging",
             "Google authentication",
             "Offline support",
-            "Multiple themes including retro Discuss theme"
+            "Developer groups and join requests",
+            "Developer discovery with DevRadar",
+            "AI-powered TalentGraph"
           ],
           "screenshot": "https://discussit.in/favicon-new.png",
           "creator": {
@@ -161,8 +156,8 @@
         
         <!-- AI & Search Engine Discovery -->
         <meta name="ai-content-declaration" content="Platform for developer discussions and project sharing with real-time features. Developed and founded by Mohammed Maaz A." />
-        <meta name="google-site-verification" content="your-verification-code-here" />
         <link rel="sitemap" type="application/xml" title="Sitemap" href="https://discussit.in/sitemap.xml" />
+        <link rel="alternate" type="text/plain" title="Discuss AI overview" href="https://discussit.in/llms.txt" />
         
         <!-- Developer Credit Meta -->
         <meta name="developer" content="Mohammed Maaz A" />
@@ -170,6 +165,18 @@
         <meta name="owner" content="Mohammed Maaz A" />
         <meta name="copyright" content="© 2024 Discuss. Developed and founded by Mohammed Maaz A." />
         
+        <!-- Structured Data - Frequently Asked Questions for search and answer engines -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            { "@type": "Question", "name": "What is Discuss?", "acceptedAnswer": { "@type": "Answer", "text": "Discuss is a focused social platform where developers share technical discussions and projects, discover peers, join groups, and chat." } },
+            { "@type": "Question", "name": "Is Discuss free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Discuss is free to join and is designed as an ad-free developer community." } },
+            { "@type": "Question", "name": "What can developers do on Discuss?", "acceptedAnswer": { "@type": "Answer", "text": "Developers can publish discussions and projects, share media and links, find other developers, join groups, use private chat, browse tech news and jobs, and use developer discovery tools." } }
+          ]
+        }
+        </script>
         <script src="%PUBLIC_URL%/error-handler.js"></script>
     </head>
     <body>
@@ -228,7 +235,7 @@
                 }
             </style>
             <div class="splash-screen">
-                <div class="splash-logo">Discuss</div>
+                <div class="splash-logo"><span style="color:#EF4444">&lt;</span>Discuss<span style="color:#0095F6">/&gt;</span></div>
                 <div class="splash-spinner"></div>
             </div>
         </div>

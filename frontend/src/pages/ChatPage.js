@@ -421,13 +421,13 @@ export default function ChatPage() {
       <button
         key={chat.chatId}
         onClick={() => handleChatClick(chat.otherUser)}
-        className={`w-full flex items-center gap-3 p-3 rounded-[12px] transition-all ${
+        className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
           isBlocked 
             ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'
             : hasUnread
               ? 'bg-[#0095F6]/5 dark:bg-[#0095F6]/10 bg-[#0095F6]/10 border-[#0095F6]/30 dark:border-[#0095F6]/30 discuss:border-[#EF4444]/30'
-              : 'bg-white dark:bg-neutral-800 dark:bg-black hover:shadow-card-hover dark:hover:shadow-none'
-        } border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
+              : 'bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950'
+        } ${hasUnread ? 'bg-blue-50/70 dark:bg-blue-950/20' : ''}`}
       >
         <div className="relative shrink-0">
           <UserAvatar
@@ -486,13 +486,13 @@ export default function ChatPage() {
       <button
         key={group.groupId}
         onClick={() => handleGroupClick(group.groupId)}
-        className={`w-full flex items-center gap-3 p-3 rounded-[12px] transition-all ${
+        className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
           isDeleted 
             ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'
             : hasUnread
               ? 'bg-[#0095F6]/5 dark:bg-[#0095F6]/10 bg-[#0095F6]/10 border-[#0095F6]/30 dark:border-[#0095F6]/30 discuss:border-[#EF4444]/30'
-              : 'bg-white dark:bg-neutral-800 dark:bg-black hover:shadow-card-hover dark:hover:shadow-none'
-        } border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] ${hasUnread ? 'ring-1 ring-[#2563EB]/20 discuss:ring-[#EF4444]/20' : ''} shadow-card`}
+              : 'bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950'
+        } ${hasUnread ? 'bg-blue-50/70 dark:bg-blue-950/20' : ''}`}
       >
         <div className="relative shrink-0">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -541,7 +541,7 @@ export default function ChatPage() {
       <button
         key={friend.id}
         onClick={() => handleStartNewChat(friend.id)}
-        className="w-full flex items-center gap-3 p-3 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] hover:shadow-card-hover dark:hover:shadow-none transition-all border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card"
+        className="w-full flex items-center gap-3 px-4 py-3.5 bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950 transition-colors"
       >
         <UserAvatar
           src={friend.photo_url}
@@ -584,18 +584,18 @@ export default function ChatPage() {
                       groups.reduce((sum, g) => sum + (g.unreadCount || 0), 0);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900  pb-28">
+    <div className="min-h-screen bg-white dark:bg-black pb-28 text-neutral-950 dark:text-white">
       <Header />
       
-      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+      <div className="mx-auto w-full max-w-[1180px] px-0 pb-32 sm:px-4 lg:px-6">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,680px)] lg:justify-center">
           <Sidebar />
-          <div className="min-w-0 flex-1">
+          <main className="min-w-0 border-x border-neutral-200 dark:border-neutral-800">
         {/* Header with three-dot menu */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 border-b border-neutral-200 px-4 py-5 dark:border-neutral-800">
           <button
             onClick={() => navigate('/feed')}
-            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -606,7 +606,7 @@ export default function ChatPage() {
           {/* Three-dot menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+              <button className="relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900">
                 <MoreVertical className="w-5 h-5" />
                 {pendingGroupRequests > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-neutral-50 dark:border-neutral-900 discuss:border-[#121212]"></span>
@@ -634,7 +634,7 @@ export default function ChatPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex mb-4 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] p-1 border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
+        <div className="mx-4 mt-4 flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-900">
           <button
             onClick={() => { setActiveTab('chats'); setSearchQuery(''); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
@@ -668,14 +668,14 @@ export default function ChatPage() {
         </div>
 
         {/* Search bar */}
-        <div className="mb-4">
+        <div className="px-4 py-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'chats' ? 'Search chats and groups...' : 'Search friends...'}
-              className="pl-10 pr-10 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 discuss:placeholder:text-[#9CA3AF] rounded-[6px] text-sm h-10"
+              className="h-11 rounded-xl border-transparent bg-neutral-100 pl-10 pr-10 text-sm text-neutral-900 placeholder:text-neutral-500 focus:border-[#0095F6]/30 focus:bg-white dark:bg-neutral-900 dark:text-white dark:focus:bg-black"
             />
             {searchQuery && (
               <button
@@ -709,7 +709,7 @@ export default function ChatPage() {
             ))}
           </div>
         ) : displayData.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-card">
+          <div className="px-6 py-20 text-center">
             {searchQuery ? (
               <>
                 <Search className="w-10 h-10 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400 mx-auto mb-3" />
@@ -768,7 +768,7 @@ export default function ChatPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
             {activeTab === 'chats'
               ? displayData.map(item => 
                   item.type === 'group' 
@@ -779,7 +779,7 @@ export default function ChatPage() {
             }
           </div>
         )}
-          </div>
+          </main>
         </div>
       </div>
 
@@ -793,7 +793,7 @@ export default function ChatPage() {
 
       {/* Search Public Groups Dialog */}
       <Dialog open={searchGroupsOpen} onOpenChange={setSearchGroupsOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-neutral-800 dark:bg-black">
+        <DialogContent className="sm:max-w-[500px] overflow-hidden rounded-3xl border-neutral-200 bg-white p-0 dark:border-neutral-800 dark:bg-black">
           <DialogHeader>
             <DialogTitle className="text-neutral-900 dark:text-neutral-50 dark:text-white">
               Search Public Groups
@@ -830,7 +830,7 @@ export default function ChatPage() {
                 publicGroups.map(group => (
                   <div
                     key={group.id}
-                    className="p-3 bg-neutral-50 dark:bg-neutral-700 dark:bg-[#1A1A1A] rounded-lg flex items-center justify-between"
+                    className="flex items-center justify-between border-b border-neutral-200 px-4 py-3.5 last:border-0 dark:border-neutral-800"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">

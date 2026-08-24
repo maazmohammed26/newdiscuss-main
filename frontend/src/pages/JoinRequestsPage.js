@@ -162,7 +162,7 @@ export default function JoinRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
+      <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
@@ -173,14 +173,14 @@ export default function JoinRequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white">
       <Header />
       
-      <div className="max-w-2xl mx-auto px-4 md:px-8 py-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="mx-auto max-w-[680px] border-x border-neutral-200 pb-24 dark:border-neutral-800">
+        <div className="flex items-center gap-3 border-b border-neutral-200 px-4 py-5 dark:border-neutral-800">
           <button
             onClick={() => navigate('/chat')}
-            className="p-2 rounded-[6px] hover:bg-white dark:hover:bg-neutral-800 discuss:hover:bg-[#1a1a1a] transition-colors border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
           >
             <ArrowLeft className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
           </button>
@@ -195,7 +195,7 @@ export default function JoinRequestsPage() {
         </div>
 
         {totalRequests === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626]">
+          <div className="px-6 py-24 text-center">
             <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
               No pending requests
             </p>
@@ -213,15 +213,15 @@ export default function JoinRequestsPage() {
                     const group = groups.find(g => g.groupId === groupId);
                     
                     return (
-                      <div key={groupId} className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-4">
-                        <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-3">
+                      <div key={groupId} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-black">
+                        <h3 className="px-4 pt-4 pb-3 font-bold text-neutral-900 dark:text-white">
                           {group?.groupName}
                         </h3>
                         <div className="space-y-2">
                           {groupRequests.map(request => {
                             const details = userDetails[request.userId];
                             return (
-                              <div key={request.userId} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700 dark:bg-[#1A1A1A] rounded-lg">
+                              <div key={request.userId} className="flex items-center justify-between border-t border-neutral-200 px-4 py-3.5 first:border-t-0 dark:border-neutral-800">
                                 <div className="flex items-center gap-3">
                                   <UserAvatar
                                     userId={request.userId}
@@ -269,7 +269,7 @@ export default function JoinRequestsPage() {
                     const gInfo = inviteGroupDetails[inv.groupId];
                     const adminInfo = userDetails[inv.invitedBy];
                     return (
-                      <div key={inv.groupId} className="bg-white dark:bg-neutral-800 dark:bg-black rounded-[12px] border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div key={inv.groupId} className="flex flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-black sm:flex-row sm:items-center">
                         <div>
                           <h3 className="font-bold text-neutral-900 dark:text-neutral-50 dark:text-white">
                             {gInfo?.name || 'Loading group...'}

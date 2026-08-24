@@ -282,7 +282,7 @@ export default function VerifyEmailPage() {
           {/* Logo */}
           <div className="text-center mb-8">
             <Link to="/">
-              <DiscussLogo size="lg" />
+              <DiscussLogo size="lg" tagged dark />
             </Link>
           </div>
 
