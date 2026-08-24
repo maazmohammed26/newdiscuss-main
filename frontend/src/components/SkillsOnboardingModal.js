@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import DiscussLogo from '@/components/DiscussLogo';
 
 const PREDEFINED_SKILLS = [
   'React', 'Node.js', 'Python', 'Cybersecurity', 'Data Science',
@@ -40,7 +41,7 @@ export default function SkillsOnboardingModal() {
       setSelectedSkills(prev => prev.filter(s => s !== skill));
     } else {
       if (selectedSkills.length >= 6) {
-        toast.error('You can add up to 5 or 6 skills maximum.');
+        toast.error('You can add up to 6 skills maximum.');
         return;
       }
       setSelectedSkills(prev => [...prev, skill]);
@@ -58,7 +59,7 @@ export default function SkillsOnboardingModal() {
     }
 
     if (selectedSkills.length >= 6) {
-      toast.error('You can add up to 5 or 6 skills maximum.');
+      toast.error('Maximum 6 skills allowed.');
       return;
     }
 
@@ -68,17 +69,23 @@ export default function SkillsOnboardingModal() {
 
   const handleSave = async () => {
     if (selectedSkills.length === 0) {
-      toast.error('Please select or add at least one skill to continue.');
+      toast.error('Please select at least one skill to continue.');
       return;
     }
 
     setSaving(true);
     try {
-      await updateUserSkills(user.id, selectedSkills);
-      await logAIAction(user.id, 'onboarding', `Onboarded with skills: ${selectedSkills.join(', ')}`);
-      toast.success('Skills saved successfully.');
+      await updateUserSkills(user.id, selectedSkills, {
+        hasCompletedOnboarding: true,
+        onboardingCompletedAt: new Date().toISOString()
+      });
+
+      await logAIAction(user.id, 'onboarding_skills_selected', { skills: selectedSkills });
+
+      toast.success('Profile skills updated!');
       setOpen(false);
     } catch (err) {
+      console.error('Failed to save skills:', err);
       toast.error('Failed to save skills. Please try again.');
     } finally {
       setSaving(false);
@@ -86,34 +93,32 @@ export default function SkillsOnboardingModal() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      // Don't allow closing without saving to enforce onboarding
-      if (!saving) {
-        setOpen(val);
-      }
-    }}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
-        <DialogHeader className="space-y-2">
-          <DialogTitle className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
-            Welcome to Discuss AI TalentGraph
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl p-6 select-none shadow-2xl">
+        <DialogHeader className="text-center sm:text-center space-y-2">
+          <div className="flex justify-center mb-1">
+            <DiscussLogo size="md" />
+          </div>
+          <DialogTitle className="text-lg font-bold text-neutral-900 dark:text-white">
+            Welcome to Discuss TalentGraph
           </DialogTitle>
-          <DialogDescription className="text-neutral-500 dark:text-neutral-400 text-sm">
-            Select your primary skills to start matching with other developers, side-projects, and collaboration opportunities.
+          <DialogDescription className="text-neutral-500 dark:text-neutral-400 text-xs">
+            Select your skills to discover developer matches, collaborate on projects, and grow your network.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 my-5">
-          <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto py-2 px-1">
+        <div className="space-y-4 my-2">
+          <div className="flex flex-wrap gap-2 py-2">
             {PREDEFINED_SKILLS.map((skill) => {
               const isSelected = selectedSkills.includes(skill);
               return (
                 <button
                   key={skill}
                   onClick={() => handleToggleSkill(skill)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-md dark:bg-white dark:text-neutral-900 dark:border-white'
-                      : 'bg-transparent text-neutral-600 border-neutral-200 dark:text-neutral-400 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500'
+                      ? 'bg-[#0095F6] text-white border-[#0095F6] shadow-xs'
+                      : 'bg-transparent text-neutral-700 border-[#DBDBDB] dark:text-neutral-300 dark:border-[#262626] hover:border-neutral-400'
                   }`}
                 >
                   {skill}
@@ -127,34 +132,34 @@ export default function SkillsOnboardingModal() {
               value={customSkill}
               onChange={(e) => setCustomSkill(e.target.value)}
               placeholder="Add a custom skill..."
-              className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white text-sm h-10 rounded-lg"
+              className="bg-neutral-50 dark:bg-neutral-900 border border-[#DBDBDB] dark:border-[#262626] text-xs h-9 rounded-xl text-neutral-900 dark:text-white focus-visible:ring-[#0095F6]"
               maxLength={25}
             />
             <Button
               type="submit"
               variant="outline"
-              className="border-neutral-200 dark:border-neutral-700 h-10 px-5 text-xs font-bold rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="border-[#DBDBDB] dark:border-[#262626] h-9 px-4 text-xs font-bold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
             >
               Add
             </Button>
           </form>
 
           {selectedSkills.length > 0 && (
-            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
-              <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-2 font-medium">Selected Skills ({selectedSkills.length}/6):</p>
+            <div className="pt-2 border-t border-[#EFEFEF] dark:border-[#262626]">
+              <p className="text-[11px] text-neutral-400 mb-1.5 font-medium">Selected ({selectedSkills.length}/6):</p>
               <div className="flex flex-wrap gap-1.5">
                 {selectedSkills.map((skill) => (
                   <span
                     key={skill}
-                    className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-1 rounded-md text-xs border border-neutral-200/50 dark:border-neutral-700/50"
+                    className="inline-flex items-center gap-1 bg-[#0095F6]/10 text-[#0095F6] px-2.5 py-0.5 rounded-full text-xs font-medium"
                   >
                     {skill}
                     <button
                       type="button"
                       onClick={() => handleToggleSkill(skill)}
-                      className="hover:text-red-500 font-bold ml-1 text-[10px]"
+                      className="hover:text-red-500 font-bold ml-1 text-xs cursor-pointer"
                     >
-                      &times;
+                      ×
                     </button>
                   </span>
                 ))}
@@ -163,11 +168,11 @@ export default function SkillsOnboardingModal() {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+        <div className="mt-4 pt-2 border-t border-[#EFEFEF] dark:border-[#262626]">
           <Button
             onClick={handleSave}
             disabled={saving || selectedSkills.length === 0}
-            className="w-full sm:w-auto bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 rounded-lg font-bold text-sm py-2.5 px-6 shadow-lg transition-all"
+            className="w-full bg-[#0095F6] hover:bg-[#1877F2] text-white font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save and Continue'}
           </Button>

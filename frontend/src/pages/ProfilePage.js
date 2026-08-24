@@ -2995,17 +2995,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ==================== GLOBAL USER LOGOUT ==================== */}
-        <div className="mt-6">
-          <Button 
-            data-testid="profile-logout-btn" 
-            onClick={handleLogout} 
-            disabled={loggingOut}
-            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-4 h-14 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-[#EF4444]/10 hover:border-[#EF4444]/25"
-          >
-            {loggingOut ? <Loader2 className="w-5 h-5 animate-spin" /> : <><LogOut className="w-5 h-5" /> <span>Logout from Discuss</span></>}
-          </Button>
-        </div>
+        
 
         {/* Your Posts Section */}
         <div className="mt-6">
@@ -3162,10 +3152,24 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <p className="text-center text-[#94A3B8] dark:text-[#6275AF] text-xs mt-6 mb-24">
-          <span>Managed by </span><span className="font-semibold text-[#BC4800]">&lt;discuss&gt;</span>
-          <span className="text-[10px] mt-1 block">made in Bengaluru</span>
-        </p>
+        {/* ==================== GLOBAL USER LOGOUT (VERY LAST) ==================== */}
+        <div className="mt-8">
+          <Button 
+            data-testid="profile-logout-btn" 
+            onClick={handleLogout} 
+            disabled={loggingOut}
+            className="w-full bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] font-bold py-3.5 h-12 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 border border-[#EF4444]/20 cursor-pointer"
+          >
+            {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LogOut className="w-4 h-4" /> <span>Log Out</span></>}
+          </Button>
+        </div>
+
+        {/* Brand Footer in Cursive Discuss font */}
+        <div className="flex flex-col items-center justify-center mt-10 mb-28 select-none text-center">
+          <span className="text-xs text-neutral-400 font-medium tracking-wide">from</span>
+          <span className="font-script text-2xl text-neutral-900 dark:text-white leading-none mt-1">Discuss</span>
+          <span className="font-script text-lg text-neutral-500 dark:text-neutral-400 leading-none mt-0.5">Bengaluru</span>
+        </div>
           </div>
         </div>
       </div>

@@ -121,15 +121,41 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [quickComment, setQuickComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  const [upvoteCount, setUpvoteCount] = useState(post.upvotes || 0);
-  const [downvoteCount, setDownvoteCount] = useState(post.downvotes || 0);
-  const [userVote, setUserVote] = useState(post.user_vote || null);
+  const getInitialUpvotes = (p) => {
+    if (typeof p.upvote_count === 'number') return p.upvote_count;
+    if (typeof p.upvotes === 'number') return p.upvotes;
+    if (p.votes && typeof p.votes === 'object') {
+      return Object.values(p.votes).filter(v => v === 'up').length;
+    }
+    return 0;
+  };
+
+  const getInitialDownvotes = (p) => {
+    if (typeof p.downvote_count === 'number') return p.downvote_count;
+    if (typeof p.downvotes === 'number') return p.downvotes;
+    if (p.votes && typeof p.votes === 'object') {
+      return Object.values(p.votes).filter(v => v === 'down').length;
+    }
+    return 0;
+  };
+
+  const getInitialUserVote = (p, uid) => {
+    if (p.user_vote) return p.user_vote;
+    if (uid && p.votes && typeof p.votes === 'object' && p.votes[uid]) {
+      return p.votes[uid];
+    }
+    return null;
+  };
+
+  const [upvoteCount, setUpvoteCount] = useState(() => getInitialUpvotes(post));
+  const [downvoteCount, setDownvoteCount] = useState(() => getInitialDownvotes(post));
+  const [userVote, setUserVote] = useState(() => getInitialUserVote(post, currentUser?.id));
 
   useEffect(() => {
-    setUpvoteCount(post.upvotes || 0);
-    setDownvoteCount(post.downvotes || 0);
-    setUserVote(post.user_vote || null);
-  }, [post.upvotes, post.downvotes, post.user_vote]);
+    setUpvoteCount(getInitialUpvotes(post));
+    setDownvoteCount(getInitialDownvotes(post));
+    setUserVote(getInitialUserVote(post, currentUser?.id));
+  }, [post, currentUser?.id]);
 
   useEffect(() => {
     if (!currentUser?.id) {
@@ -211,8 +237,12 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     setDownvoteCount(newDown);
 
     try {
-      await toggleVote(post.id, currentUser.id, type);
-      onVoteChanged?.(post.id, newVote, newUp, newDown);
+      const res = await toggleVote(post.id, type, currentUser.id);
+      if (res) {
+        setUpvoteCount(res.upvote_count);
+        setDownvoteCount(res.downvote_count);
+        onVoteChanged?.(post.id, res);
+      }
     } catch (err) {
       setUserVote(prevUserVote);
       setUpvoteCount(prevUpvotes);
