@@ -110,7 +110,7 @@ export async function sendWelcomeEmailDirectly(toEmail, username) {
                 You received this email because you created an account on Discuss. If you did not register, please ignore this email.
               </p>
               <p style="font-size: 11px; line-height: 1.6; color: #DC2626; font-weight: 700; margin: 0 0 20px 0; max-width: 440px;">
-                ⚠️ WARNING: If this account was not registered by you, please immediately email us at <a href="mailto:support@discussit.in" style="color: #DC2626; text-decoration: underline; font-weight: 800;">support@discussit.in</a> to immediately block the account.
+                Security notice: If this account was not registered by you, email <a href="mailto:support@discussit.in" style="color: #DC2626; text-decoration: underline; font-weight: 800;">support@discussit.in</a> so the account can be reviewed.
               </p>
               <p style="font-size: 12px; font-weight: 700; color: #4B5563; margin: 0;">
                 Developed by <a href="https://www.maazportfolio.site/" target="_blank" style="color: #4B5563; text-decoration: none; font-weight: 800; background: linear-gradient(120deg, #DC2626 0%, #2563EB 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt;mma/&gt;</a>
@@ -179,8 +179,8 @@ export async function sendVerificationOTPDirectly(toEmail, username, otp) {
           <tr>
             <td align="center" style="padding: 40px 40px 20px 40px;">
               <table cellpadding="0" cellspacing="0" border="0">
-                <tr><td align="center" style="font-size: 28px; font-weight: 800; letter-spacing: 0.05em; color: #111827;"><span style="color: #DC2626;">D</span>ISCUS<span style="color: #2563EB;">S</span></td></tr>
-                <tr><td align="center" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em; color: #9CA3AF; font-weight: 700; padding-top: 6px;">Verification Gateway</td></tr>
+                <tr><td align="center" aria-label="Discuss" style="font-size: 34px; font-weight: 700; letter-spacing: -0.04em; color: #111827; font-family: 'Brush Script MT', 'Segoe Script', cursive;"><span style="color: #EF4444; font-family: Arial, sans-serif; font-weight: 900;">&lt;</span><span style="color: #111827;">Discuss</span><span style="color: #0095F6; font-family: Arial, sans-serif; font-weight: 900;">/&gt;</span></td></tr>
+                <tr><td align="center" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: #9CA3AF; font-weight: 700; padding-top: 6px;">Secure email verification</td></tr>
               </table>
             </td>
           </tr>

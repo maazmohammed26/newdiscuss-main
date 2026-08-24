@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TermsModal from '@/components/TermsModal';
-import LoadingScreen from '@/components/LoadingScreen';
 import AdminMessageBanner from '@/components/AdminMessageBanner';
 import DiscussLogo from '@/components/DiscussLogo';
-import { Eye, EyeOff, Loader2, XCircle, Shield, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, XCircle, Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function GoogleIcon() {
   return (
@@ -29,19 +28,9 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showForgotDisabled, setShowForgotDisabled] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setPageLoading(false), 350);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (pageLoading) {
-    return <LoadingScreen message="Loading login..." />;
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,10 +58,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-[#E1E0CC] flex flex-col relative overflow-hidden">
-      <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
-      <div className="pointer-events-none absolute -left-32 top-24 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 top-1/3 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
+    <div className="min-h-screen bg-[#FAFAFA] text-neutral-950 flex flex-col relative overflow-hidden">
+      <div className="pointer-events-none absolute -left-32 top-24 h-72 w-72 rounded-full bg-red-500/[.07] blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-1/3 h-80 w-80 rounded-full bg-blue-500/[.08] blur-3xl" />
       <AdminMessageBanner />
       
       <div className="flex-1 flex items-center justify-center px-4 relative z-10 py-8 sm:py-12">
@@ -80,17 +68,17 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="text-center mb-6">
             <Link to="/" data-testid="login-logo">
-              <DiscussLogo size="lg" tagged dark />
+              <DiscussLogo size="lg" tagged />
             </Link>
           </div>
 
           <div className="mb-6 text-center">
-            <h1 className="text-3xl font-black tracking-[-0.035em] text-white">Welcome back</h1>
-            <p className="mt-2 text-sm text-neutral-400">Continue to your discussions, groups, and developer network.</p>
+            <h1 className="text-3xl font-black tracking-[-0.035em] text-neutral-950">Welcome back</h1>
+            <p className="mt-2 text-sm text-neutral-500">Continue to your discussions, groups, and developer network.</p>
           </div>
 
           {/* Card */}
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#111111]/95 p-6 pt-7 shadow-[0_24px_80px_rgba(0,0,0,.45)] backdrop-blur-xl sm:p-8">
+          <div className="relative overflow-hidden rounded-[26px] border border-neutral-200 bg-white p-6 pt-7 shadow-[0_24px_70px_rgba(15,23,42,.10)] sm:p-8">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
             {error && (
@@ -118,15 +106,15 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email Address</label>
+                <label className="text-neutral-500 text-[11px] font-bold uppercase tracking-[0.1em]">Email Address</label>
                 <Input data-testid="login-email-input" type="email" id="email" name="email" autoComplete="username" value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   placeholder="name@example.com"
-                  className="mt-1.5 bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11" />
+                  className="mt-1.5 h-11 rounded-xl border-neutral-200 bg-[#FAFAFA] text-neutral-950 placeholder:text-neutral-400 focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10" />
               </div>
               <div>
                 <div className="flex justify-between items-center">
-                  <label className="text-gray-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
+                  <label className="text-neutral-500 text-[11px] font-bold uppercase tracking-[0.1em]">Password</label>
                   <button 
                     type="button"
                     onClick={handleForgotPassword}
@@ -140,8 +128,8 @@ export default function LoginPage() {
                   <Input data-testid="login-password-input" type={showPw ? 'text' : 'password'} id="password" name="password" autoComplete="current-password" value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     placeholder="Enter password"
-                    className="bg-[#181818] border-white/5 text-white placeholder:text-gray-600 focus:border-[#DC2626] rounded-xl h-11 pr-10" />
-                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                    className="h-11 rounded-xl border-neutral-200 bg-[#FAFAFA] pr-10 text-neutral-950 placeholder:text-neutral-400 focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10" />
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 transition-colors">
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -156,29 +144,29 @@ export default function LoginPage() {
             </form>
 
             <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
-              <div className="relative flex justify-center text-[10px]"><span className="bg-[#111111] px-3 text-gray-500 uppercase tracking-widest font-bold">Or continue with</span></div>
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-neutral-200" /></div>
+              <div className="relative flex justify-center text-[10px]"><span className="bg-white px-3 text-neutral-400 uppercase tracking-widest font-bold">Or continue with</span></div>
             </div>
 
             <Button type="button" data-testid="login-google-btn" onClick={handleGoogle} disabled={googleLoading}
-              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/[.04] py-2.5 font-bold text-white hover:bg-white/[.08]">
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-neutral-200 bg-white py-2.5 font-bold text-neutral-900 shadow-sm hover:bg-neutral-50">
               {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> <span>Continue with Google</span></>}
             </Button>
 
-            <p className="text-center text-gray-500 text-[13px] mt-6 font-medium">
+            <p className="text-center text-neutral-500 text-[13px] mt-6 font-medium">
               <span>New to discuss? </span><Link to="/register" data-testid="login-to-register-link" className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold transition-colors">Create account</Link>
             </p>
           </div>
 
           {/* Footer links */}
           <div className="text-center mt-6 flex items-center justify-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-gray-500" />
-            <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Secure Authentication</span>
+            <Shield className="w-3.5 h-3.5 text-neutral-400" />
+            <span className="text-neutral-400 text-[10px] font-bold uppercase tracking-wider">Secure authentication</span>
           </div>
           <div className="text-center mt-2 flex items-center justify-center">
             <button 
               onClick={() => setShowTerms(true)}
-              className="text-gray-500 text-xs hover:text-white hover:underline transition-colors font-medium"
+              className="text-neutral-500 text-xs hover:text-neutral-950 hover:underline transition-colors font-medium"
               data-testid="login-terms-link"
             >
               Terms and Conditions
@@ -188,8 +176,8 @@ export default function LoginPage() {
       </div>
 
       {/* Footer */}
-      <footer className="py-6 text-center border-t border-white/5 relative z-10 bg-black">
-        <p className="text-gray-500 text-xs font-semibold">
+      <footer className="py-6 text-center border-t border-neutral-200 relative z-10 bg-white">
+        <p className="text-neutral-500 text-xs font-semibold">
           <span>Developed by </span>
           <Link
             to="/about"

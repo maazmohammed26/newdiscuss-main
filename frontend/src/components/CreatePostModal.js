@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MessageSquare, FolderGit2, Loader2, Hash, X, PlayCircle, Camera, Image as ImageIcon, Check, AlertCircle } from 'lucide-react';
 import { IoVideocam } from 'react-icons/io5';
 import { toast } from 'sonner';
@@ -112,9 +112,14 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); reset(); } }}>
-      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-xl bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] rounded-t-[24px] sm:rounded-[24px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 shadow-[0_24px_80px_rgba(0,0,0,0.25)] [&::-webkit-scrollbar]:hidden" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-        <DialogHeader className="sticky top-0 z-20 px-5 py-4 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-[#EFEFEF] dark:border-[#262626]">
+      <DialogContent hideClose onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-xl bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] rounded-t-[24px] sm:rounded-[24px] max-h-[92dvh] overflow-y-auto overflow-x-hidden p-0 shadow-[0_24px_80px_rgba(0,0,0,0.25)] [&::-webkit-scrollbar]:hidden" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+        <DialogHeader className="sticky top-0 z-20 flex-row items-center justify-between space-y-0 px-5 py-4 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-[#EFEFEF] dark:border-[#262626]">
           <DialogTitle className="text-[17px] font-bold text-neutral-900 dark:text-white">Create</DialogTitle>
+          <DialogClose asChild>
+            <button type="button" aria-label="Close create post" className="grid h-9 w-9 place-items-center rounded-full bg-neutral-100 text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-950 focus:outline-none focus:ring-2 focus:ring-[#0095F6]/30 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white">
+              <X className="h-4 w-4" />
+            </button>
+          </DialogClose>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5">
           <div className="flex items-center gap-3">

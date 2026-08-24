@@ -1,490 +1,247 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { applyActionCode, checkActionCode, auth } from '@/lib/firebase';
-import { getUserByEmail, updateUser, getPendingOTP, deletePendingOTP, savePendingOTP } from '@/lib/db';
+import { deletePendingOTP, getPendingOTP, getUserByEmail, savePendingOTP, updateUser } from '@/lib/db';
+import { sendVerificationOTPDirectly, sendWelcomeEmailDirectly } from '@/lib/emailService';
 import { Button } from '@/components/ui/button';
 import DiscussLogo from '@/components/DiscussLogo';
 import LoadingScreen from '@/components/LoadingScreen';
-import { CheckCircle2, XCircle, Loader2, Mail, KeyRound, ShieldAlert, Sparkles, Send, RefreshCw } from 'lucide-react';
-import { sendVerificationOTPDirectly, sendWelcomeEmailDirectly } from '@/lib/emailService';
+import { ArrowRight, CheckCircle2, KeyRound, Loader2, Mail, MailPlus, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
+
+const INITIAL_LINK_WAIT_SECONDS = 120;
+const OTP_COOLDOWN_SECONDS = 300;
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState('otp-entry'); // 'verifying-link', 'otp-entry', 'success', 'error'
+  const [status, setStatus] = useState('otp-entry');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  
-  // OTP input and sending states
   const [otpValues, setOtpValues] = useState(Array(6).fill(''));
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  
-  // Resend/Send OTP countdown states
-  const [resendCountdown, setResendCountdown] = useState(120); // 2 minutes countdown
+  const [resendCountdown, setResendCountdown] = useState(INITIAL_LINK_WAIT_SECONDS);
   const [canSendOtp, setCanSendOtp] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
-  
-  // Stored metadata refs
   const [emailAddress, setEmailAddress] = useState('');
   const [username, setUsername] = useState('');
   const [verifyUid, setVerifyUid] = useState('');
-  
+
   const navigate = useNavigate();
   const verifiedRef = useRef(false);
   const inputRefs = useRef([]);
-
   const mode = searchParams.get('mode');
   const oobCode = searchParams.get('oobCode');
 
-  // Load metadata from localStorage on mount
+  const cooldownKey = (uid) => `verifyOtpCooldownUntil_${uid}`;
+
   useEffect(() => {
+    document.title = 'Verify your email | Discuss';
     const storedUid = window.localStorage.getItem('verifyUid') || '';
     const storedEmail = window.localStorage.getItem('verifyEmail') || '';
     const storedUsername = window.localStorage.getItem('verifyUsername') || '';
-    
     setVerifyUid(storedUid);
     setEmailAddress(storedEmail);
     setUsername(storedUsername);
 
-    // If there is an oobCode in URL, prioritize standard Firebase verification link flow
-    if (mode === 'verifyEmail' && oobCode) {
-      handleLinkVerification(oobCode);
+    if (storedUid) {
+      const cooldownUntil = Number(window.localStorage.getItem(cooldownKey(storedUid)) || 0);
+      if (cooldownUntil > Date.now()) {
+        setOtpSent(true);
+        setCanSendOtp(false);
+        setResendCountdown(Math.ceil((cooldownUntil - Date.now()) / 1000));
+      }
     }
+
+    if (mode === 'verifyEmail' && oobCode) handleLinkVerification(oobCode);
   }, [mode, oobCode]);
 
-  // Resend countdown timer for manual Send OTP button
   useEffect(() => {
     if (status !== 'otp-entry' || resendCountdown <= 0) {
       if (resendCountdown <= 0) setCanSendOtp(true);
-      return;
+      return undefined;
     }
-
-    const timer = setInterval(() => {
-      setResendCountdown(prev => {
-        if (prev <= 1) {
+    const timer = window.setInterval(() => {
+      setResendCountdown((current) => {
+        if (current <= 1) {
           setCanSendOtp(true);
-          clearInterval(timer);
           return 0;
         }
-        return prev - 1;
+        return current - 1;
       });
     }, 1000);
-
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, [status, resendCountdown]);
 
-  // Handle standard Firebase Action Link verification
   const handleLinkVerification = async (code) => {
     if (verifiedRef.current) return;
     verifiedRef.current = true;
     setStatus('verifying-link');
-    
     try {
-      // 1. Resolve email address from code
       const info = await checkActionCode(auth, code);
       const email = info.data.email;
       if (email) setEmailAddress(email);
-
-      // 2. Apply action code in Firebase
       await applyActionCode(auth, code);
-
-      // 3. Sync verified status in Database
       if (email) {
         const dbUser = await getUserByEmail(email);
-        if (dbUser && dbUser.id) {
+        if (dbUser?.id) {
           await updateUser(dbUser.id, { emailVerified: true });
-          // Send welcome email directly
           await sendWelcomeEmailDirectly(email, dbUser.username);
         }
       }
-
       setStatus('success');
-      setSuccessMessage('Your email address has been verified successfully via verification link!');
-    } catch (err) {
-      console.error('[VerifyEmail] Action link error:', err);
+      setSuccessMessage('Your email address is verified.');
+    } catch (error) {
+      console.error('[VerifyEmail] Action link error:', error);
       setStatus('error');
-      setErrorMessage(err.message || 'The verification link has expired or has already been used.');
+      setErrorMessage(error.message || 'This verification link has expired or has already been used.');
     }
   };
 
-  // Handle individual OTP input changes and auto-focus next field
   const handleOtpChange = (index, value) => {
-    if (isNaN(value)) return; // Allow numbers only
-    
-    const newValues = [...otpValues];
-    newValues[index] = value.substring(value.length - 1); // Keep last char
-    setOtpValues(newValues);
-
-    // Auto-focus next field if a number is typed
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (!/^\d*$/.test(value)) return;
+    const next = [...otpValues];
+    next[index] = value.slice(-1);
+    setOtpValues(next);
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
   };
 
-  // Handle backspace navigation in OTP fields
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
-      const newValues = [...otpValues];
-      newValues[index - 1] = ''; // Clear previous field
-      setOtpValues(newValues);
-      inputRefs.current[index - 1]?.focus();
-    }
+  const handleKeyDown = (index, event) => {
+    if (event.key === 'Backspace' && !otpValues[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
-  // Handle pasting full 6-digit OTP code
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').trim();
-    if (!/^\d{6}$/.test(pastedData)) return; // Allow exactly 6 digits only
-
-    const newValues = pastedData.split('');
-    setOtpValues(newValues);
+  const handlePaste = (event) => {
+    const value = event.clipboardData.getData('text').trim();
+    if (!/^\d{6}$/.test(value)) return;
+    event.preventDefault();
+    setOtpValues(value.split(''));
     inputRefs.current[5]?.focus();
   };
 
-  // Handle manual OTP trigger when Send OTP button is clicked
   const handleTriggerOtp = async () => {
-    if (!canSendOtp || sendingOtp || otpSent || !emailAddress || !verifyUid) return;
-
+    if (!canSendOtp || sendingOtp || !emailAddress || !verifyUid) return;
     setSendingOtp(true);
     setErrorMessage('');
     setSuccessMessage('');
-
     try {
-      // 1. Generate new 6-digit OTP
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      // 2. Save in database (5 minutes validity)
-      await savePendingOTP(verifyUid, emailAddress, username || 'Discuss Member', newOtp);
+      const nextOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      await savePendingOTP(verifyUid, emailAddress, username || 'Discuss Member', nextOtp);
+      const sent = await sendVerificationOTPDirectly(emailAddress, username || 'Discuss Member', nextOtp);
+      if (!sent) throw new Error('We could not send the verification code. Please try again.');
 
-      // 3. Dispatch styled Brevo OTP HTML email
-      const success = await sendVerificationOTPDirectly(emailAddress, username || 'Discuss Member', newOtp);
-      if (!success) throw new Error('Failed to send verification code. Please try again.');
-
-      // 4. Update state to permanently disable the button and show OTP entry fields
+      const cooldownUntil = Date.now() + OTP_COOLDOWN_SECONDS * 1000;
+      window.localStorage.setItem(cooldownKey(verifyUid), String(cooldownUntil));
       setOtpSent(true);
-      setSuccessMessage('A secure 6-digit verification code has been sent successfully. Please check your email.');
-      
-      // Focus first input field after brief mount timeout
-      setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 100);
-    } catch (err) {
-      console.error('[VerifyEmail] Manual OTP dispatch failed:', err);
-      setErrorMessage(err.message || 'Failed to dispatch verification code.');
+      setCanSendOtp(false);
+      setResendCountdown(OTP_COOLDOWN_SECONDS);
+      setOtpValues(Array(6).fill(''));
+      setSuccessMessage('A six-digit code was sent to your email. It is valid for five minutes.');
+      window.setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    } catch (error) {
+      console.error('[VerifyEmail] OTP dispatch failed:', error);
+      setErrorMessage(error.message || 'Verification code could not be sent.');
     } finally {
       setSendingOtp(false);
     }
   };
 
-  // Handle OTP Submission and Validation
-  const handleOtpSubmit = async (e) => {
-    if (e) e.preventDefault();
-    const fullOtp = otpValues.join('');
-    
-    if (fullOtp.length !== 6) {
-      setErrorMessage('Please enter all 6 digits of the verification code.');
-      return;
-    }
-
-    if (!verifyUid) {
-      setErrorMessage('No active verification session found. Please register or attempt to log in first.');
-      return;
-    }
+  const handleOtpSubmit = async (event) => {
+    event?.preventDefault();
+    const enteredOtp = otpValues.join('');
+    if (enteredOtp.length !== 6) return setErrorMessage('Enter all six digits from your email.');
+    if (!verifyUid) return setErrorMessage('No active verification session was found. Please register or sign in again.');
 
     setVerifyingOtp(true);
     setErrorMessage('');
-    
     try {
-      // 1. Fetch OTP record from Realtime Database
       const otpData = await getPendingOTP(verifyUid);
-
-      if (!otpData) {
-        throw new Error('Verification code is invalid or has expired. Please request a new code.');
-      }
-
-      // 2. Enforce 5-minute expiry limit
+      if (!otpData) throw new Error('This code is invalid or expired. Request a new code.');
       if (Date.now() > otpData.expiresAt) {
-        await deletePendingOTP(verifyUid); // Cleanup expired code
-        throw new Error('This verification code has expired (valid for 5 minutes).');
+        await deletePendingOTP(verifyUid);
+        throw new Error('This code expired after five minutes. Request a new code.');
       }
+      if (otpData.otp !== enteredOtp) throw new Error('That code does not match the one sent to your email.');
 
-      // 3. Match entered code against stored OTP
-      if (otpData.otp !== fullOtp) {
-        throw new Error('Incorrect verification code. Please check the code sent to your email and try again.');
-      }
-
-      // 4. Verification Successful! Sync status in Database
-      const userEmail = otpData.email;
-      const userUsername = otpData.username;
-
-      // Update user status
       await updateUser(verifyUid, { emailVerified: true });
-      
-      // Send welcome onboarding email
-      await sendWelcomeEmailDirectly(userEmail, userUsername);
-
-      // 5. Delete pending OTP from database immediately
+      await sendWelcomeEmailDirectly(otpData.email, otpData.username);
       await deletePendingOTP(verifyUid);
-
-      // 6. Cleanup localStorage metadata
-      window.localStorage.removeItem('verifyUid');
-      window.localStorage.removeItem('verifyEmail');
-      window.localStorage.removeItem('verifyUsername');
-
+      ['verifyUid', 'verifyEmail', 'verifyUsername', cooldownKey(verifyUid)].forEach((key) => window.localStorage.removeItem(key));
       setStatus('success');
-      setSuccessMessage('Your email address has been verified successfully via security OTP!');
-    } catch (err) {
-      console.error('[VerifyEmail] OTP validation failed:', err);
-      setErrorMessage(err.message || 'OTP verification failed.');
+      setSuccessMessage('Your email address is verified.');
+    } catch (error) {
+      console.error('[VerifyEmail] OTP validation failed:', error);
+      setErrorMessage(error.message || 'Verification failed.');
     } finally {
       setVerifyingOtp(false);
     }
   };
 
-  // Format resend countdown timer (MM:SS)
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
-  if (status === 'verifying-link') {
-    return <LoadingScreen message="Verifying your link code with Firebase..." />;
-  }
+  if (status === 'verifying-link') return <LoadingScreen message="Verifying your email…" compact />;
 
   return (
-    <div className="min-h-screen bg-black text-[#E1E0CC] flex flex-col relative overflow-hidden">
-      <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
-      
-      <div className="flex-1 flex items-center justify-center px-4 relative z-10 py-12">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#FAFAFA] text-neutral-950">
+      <div className="pointer-events-none absolute -left-28 top-20 h-72 w-72 rounded-full bg-red-500/[.07] blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-1/3 h-80 w-80 rounded-full bg-blue-500/[.08] blur-3xl" />
+
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:py-14">
         <div className="w-full max-w-md">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <Link to="/">
-              <DiscussLogo size="lg" tagged dark />
-            </Link>
-          </div>
+          <div className="mb-7 text-center"><Link to="/"><DiscussLogo size="lg" tagged /></Link></div>
+          <section className="relative overflow-hidden rounded-[28px] border border-neutral-200 bg-white p-6 text-center shadow-[0_24px_70px_rgba(15,23,42,.10)] sm:p-8">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#ED4956] via-[#8B5CF6] to-[#0095F6]" />
 
-          {/* Card */}
-          <div className="relative bg-[#101010] rounded-2xl shadow-2xl p-6 md:p-8 border border-white/5 pt-1.5 overflow-hidden text-center">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
-
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 text-left flex items-start gap-2 font-medium">
-                <XCircle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {/* Success Message Banner */}
-            {successMessage && status !== 'success' && (
-              <div className="bg-[#10B981]/10 border border-[#10B981]/25 rounded-xl p-3 text-[#10B981] text-[13px] mb-4 text-left flex items-start gap-2 font-medium">
-                <CheckCircle2 className="w-4.5 h-4.5 shrink-0 mt-0.5 text-[#10B981]" />
-                <span>{successMessage}</span>
-              </div>
-            )}
+            {errorMessage && <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-left text-[13px] font-medium text-red-700"><XCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>{errorMessage}</span></div>}
+            {successMessage && status !== 'success' && <div className="mb-5 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-left text-[13px] font-medium text-emerald-700"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /><span>{successMessage}</span></div>}
 
             {status === 'success' ? (
-              <div className="space-y-7 py-8 animate-fade-in">
-                <div className="mx-auto h-1 w-16 rounded-full bg-gradient-to-r from-[#ED4956] to-[#0095F6]" />
-
-                <div className="space-y-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#10B981]">Verification complete</p>
-                  <h2 className="text-white font-extrabold text-3xl tracking-[-0.035em]">Your email is verified</h2>
-                  <p className="text-gray-400 text-sm font-medium max-w-sm mx-auto leading-relaxed">
-                    Please return to the Discuss app. You can now sign in using your email address and password.
-                  </p>
-                </div>
-
-                <div className="pt-1">
-                  <Button 
-                    onClick={() => navigate('/login', { replace: true, state: { verificationMessage: 'Your email has been verified. You can now sign in.' } })}
-                    className="w-full bg-white hover:bg-neutral-100 text-black font-bold rounded-xl py-3 h-12 text-[15px] transition-colors"
-                  >
-                    Continue to sign in
-                  </Button>
-                </div>
+              <div className="py-7">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60"><CheckCircle2 className="h-8 w-8" /></div>
+                <p className="mt-7 text-[11px] font-extrabold uppercase tracking-[.18em] text-emerald-600">Verification complete</p>
+                <h1 className="mt-2 text-3xl font-black tracking-[-.04em]">Your email is verified.</h1>
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-neutral-600">Return to Discuss and sign in with your email address and password.</p>
+                <Button onClick={() => navigate('/login', { replace: true, state: { verificationMessage: 'Your email has been verified. You can now sign in.' } })} className="mt-7 h-12 w-full rounded-xl bg-[#0095F6] text-sm font-bold text-white hover:bg-[#1877F2]">Continue to sign in <ArrowRight className="ml-2 h-4 w-4" /></Button>
               </div>
             ) : status === 'error' ? (
-              <div className="space-y-6 py-6 animate-fade-in">
-                <div className="w-20 h-20 bg-[#EF4444]/10 rounded-full flex items-center justify-center mx-auto border border-[#EF4444]/25 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
-                  <XCircle className="w-10 h-10 text-[#EF4444]" />
-                </div>
-
-                <div>
-                  <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2">Verification Failed</h2>
-                  <p className="text-gray-400 text-sm font-semibold max-w-xs mx-auto leading-relaxed">
-                    We could not complete your account verification. The code might be expired or already used.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3 pt-4">
-                  <Button 
-                    onClick={() => { setStatus('otp-entry'); setErrorMessage(''); }}
-                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#0095F6]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all"
-                  >
-                    Go Back to Verification Screen
-                  </Button>
-                  
-                  <Link 
-                    to="/register" 
-                    className="text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold text-xs transition-colors"
-                  >
-                    Create a new account
-                  </Link>
-                </div>
+              <div className="py-7">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-red-600"><XCircle className="h-8 w-8" /></div>
+                <h1 className="mt-6 text-2xl font-black tracking-tight">Verification could not be completed.</h1>
+                <p className="mt-3 text-sm leading-6 text-neutral-600">The link may be expired or already used. You can return to the backup verification screen.</p>
+                <Button onClick={() => { setStatus('otp-entry'); setErrorMessage(''); }} className="mt-7 h-11 w-full rounded-xl bg-neutral-950 text-sm font-bold text-white hover:bg-neutral-800">Use backup verification</Button>
+                <Link to="/register" className="mt-4 inline-block text-xs font-bold text-[#0095F6] hover:underline">Create a new account</Link>
               </div>
             ) : (
-              /* Verification Screen */
-              <div className="space-y-6 py-4 animate-fade-in">
-                <div className="w-14 h-14 bg-[#0095F6]/10 rounded-2xl flex items-center justify-center mx-auto border border-[#0095F6]/25 mb-2">
-                  <Mail className="w-6 h-6 text-[#0095F6]" />
-                </div>
+              <div className="py-3">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-blue-50 text-[#0095F6]"><Mail className="h-6 w-6" /></div>
+                <p className="mt-6 text-[11px] font-extrabold uppercase tracking-[.18em] text-[#0095F6]">Account activation</p>
+                <h1 className="mt-2 text-3xl font-black tracking-[-.04em]">Verify your email.</h1>
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-neutral-600">Use the verification link sent by Firebase{emailAddress ? <> to <strong className="break-all text-neutral-900">{emailAddress}</strong></> : ''}. If it does not arrive, request a backup code below.</p>
 
-                <div>
-                  <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2">Activate Your Account</h2>
-                  {emailAddress ? (
-                    <p className="text-gray-400 text-xs font-semibold leading-relaxed max-w-xs mx-auto">
-                      We have sent a verification link natively via Firebase to your email:<br />
-                      <span className="text-white font-bold">{emailAddress}</span><br />
-                      Click that link in your inbox to verify instantly.
-                    </p>
-                  ) : (
-                    <p className="text-gray-400 text-xs font-semibold max-w-xs mx-auto">
-                      Please check your inbox or spam folder for the default Firebase verification link.
-                    </p>
-                  )}
-                </div>
-
-                {/* Dynamic OTP Inputs Reveal - Shown ONLY if OTP has been requested and sent */}
-                {otpSent ? (
-                  <div className="space-y-5 py-2 border-t border-b border-white/5 animate-fade-in">
-                    <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#10B981] bg-[#10B981]/5 border border-[#10B981]/15 rounded-xl p-3">
-                      <KeyRound className="w-4 h-4" />
-                      <span>Enter the 6-digit code sent to your email below:</span>
+                {otpSent && (
+                  <form onSubmit={handleOtpSubmit} className="mt-7 rounded-2xl border border-neutral-200 bg-[#FAFAFA] p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-center gap-2 text-xs font-bold text-neutral-700"><KeyRound className="h-4 w-4 text-[#0095F6]" /> Enter your six-digit code</div>
+                    <div className="grid grid-cols-6 gap-1.5 sm:gap-2" onPaste={handlePaste}>
+                      {otpValues.map((digit, index) => <input key={index} ref={(node) => { inputRefs.current[index] = node; }} inputMode="numeric" autoComplete={index === 0 ? 'one-time-code' : 'off'} maxLength="1" value={digit} onChange={(event) => handleOtpChange(index, event.target.value)} onKeyDown={(event) => handleKeyDown(index, event)} aria-label={`Verification digit ${index + 1}`} className="h-12 min-w-0 rounded-xl border border-neutral-200 bg-white text-center text-lg font-bold text-neutral-950 outline-none transition focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10" />)}
                     </div>
-
-                    <form onSubmit={handleOtpSubmit} className="space-y-4">
-                      <div className="flex justify-center gap-2 md:gap-3" onPaste={handlePaste}>
-                        {otpValues.map((digit, index) => (
-                          <input
-                            key={index}
-                            ref={el => inputRefs.current[index] = el}
-                            type="text"
-                            maxLength="1"
-                            value={digit}
-                            onChange={e => handleOtpChange(index, e.target.value)}
-                            onKeyDown={e => handleKeyDown(index, e)}
-                            className="w-11 h-12 md:w-12 md:h-14 bg-[#181818] border border-white/5 text-[#E1E0CC] font-bold text-lg md:text-xl text-center rounded-xl focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 transition-all outline-none"
-                          />
-                        ))}
-                      </div>
-
-                      <Button 
-                        type="submit" 
-                        disabled={verifyingOtp || otpValues.some(val => !val)}
-                        className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Confirm Code & Activate'}
-                      </Button>
-                    </form>
-                  </div>
-                ) : (
-                  /* Initial Info State (before OTP is sent) */
-                  <div className="bg-[#141414] border border-white/5 rounded-2xl p-4 text-xs font-semibold text-gray-500 text-left space-y-2 leading-relaxed">
-                    <p className="text-white font-bold">Standard Verification:</p>
-                    <p>Check your email for the native verification link sent by Firebase. Clicking that link is the easiest way to activate your account.</p>
-                    <p className="text-white font-bold pt-1">Backup OTP Verification:</p>
-                    <p>If you didn't receive the native link, you can request a secure 6-digit OTP code below after the 2-minute cooldown timer expires.</p>
-                  </div>
+                    <Button type="submit" disabled={verifyingOtp || otpValues.some((digit) => !digit)} className="mt-4 h-11 w-full rounded-xl bg-neutral-950 text-sm font-bold text-white hover:bg-neutral-800 disabled:opacity-40">{verifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm and activate'}</Button>
+                  </form>
                 )}
 
-                {/* Send OTP Manual Button Section */}
-                <div className="pt-2 border-t border-white/5">
-                  {otpSent ? (
-                    /* Permanently Disabled After Sending - ONLY ONCE SEND IS ALLOWED */
-                    <div className="flex items-center justify-center gap-2 text-xs font-bold text-gray-400 bg-[#141414] rounded-xl p-3.5 border border-white/5">
-                      <Send className="w-3.5 h-3.5 text-[#10B981]" />
-                      <span>OTP Code Sent to Email Successfully (One-time only)</span>
-                    </div>
-                  ) : (
-                    /* Initial Countdown/Send Button */
-                    <Button
-                      onClick={handleTriggerOtp}
-                      disabled={!canSendOtp || sendingOtp}
-                      className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[14px] hover:border-[#0095F6]/40 hover:shadow-[0_4px_16px_rgba(37,99,235,0.1)] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {sendingOtp ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : !canSendOtp ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Request backup OTP in {formatTime(resendCountdown)}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-3.5 h-3.5 text-[#0095F6]" />
-                          <span>Send OTP to Email</span>
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
+                {!otpSent && <div className="mt-7 rounded-2xl border border-neutral-200 bg-[#FAFAFA] p-4 text-left"><p className="text-xs font-bold text-neutral-900">Link first, backup code second</p><p className="mt-1.5 text-xs leading-5 text-neutral-500">Allow two minutes for the standard link. A backup code is valid for five minutes, and another code can only be requested after the cooldown.</p></div>}
 
-                {/* Monospace Security Warning */}
-                <div className="bg-[#181818] border border-red-950/20 rounded-xl p-4 text-left border-l-2 border-l-[#DC2626]">
-                  <div className="flex items-start gap-2.5">
-                    <ShieldAlert className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[#DC2626] text-[10px] font-bold uppercase tracking-wider mb-1">Security Warning</p>
-                      <p className="text-gray-500 text-[10px] font-bold leading-normal font-mono">
-                        Do not share this verification code with anyone. Discuss support staff will never ask for your verification code. If you did not request this, please ignore this screen.
-                      </p>
-                    </div>
-                  </div>
+                <Button type="button" onClick={handleTriggerOtp} disabled={!canSendOtp || sendingOtp || !emailAddress || !verifyUid} className="mt-4 h-11 w-full rounded-xl border border-neutral-200 bg-white text-sm font-bold text-neutral-800 shadow-sm hover:bg-neutral-50 disabled:opacity-50">
+                  {sendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : !canSendOtp ? <><RefreshCw className="mr-2 h-4 w-4" /> {otpSent ? 'Request another code' : 'Backup code available'} in {formatTime(resendCountdown)}</> : <><MailPlus className="mr-2 h-4 w-4 text-[#0095F6]" /> {otpSent ? 'Request another code' : 'Send backup code'}</>}
+                </Button>
+
+                <div className="mt-5 flex items-start gap-3 rounded-2xl bg-neutral-950 p-4 text-left text-white">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-300" />
+                  <div><p className="text-xs font-bold">Keep your code private</p><p className="mt-1 text-[11px] leading-5 text-neutral-400">Discuss support will never ask for your password or verification code. Ignore requests you did not initiate.</p></div>
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Footer links */}
-          <div className="text-center mt-6 flex items-center justify-center gap-1.5">
-            <Mail className="w-3.5 h-3.5 text-gray-500" />
-            <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Discuss Activation Center</span>
-          </div>
+          </section>
+          <p className="mt-6 text-center text-xs text-neutral-500">Need help? <a href="mailto:support@discussit.in" className="font-bold text-neutral-900 hover:underline">support@discussit.in</a></p>
         </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="py-6 text-center border-t border-white/5 relative z-10 bg-black">
-        <p className="text-gray-500 text-xs font-semibold">
-          Developed by{' '}
-          <Link
-            to="/about"
-            className="shining-red-blue-text font-black hover:underline"
-          >
-            &lt;mma/&gt;
-          </Link>
-        </p>
-      </footer>
-      <style>{`
-        @keyframes shine-red-blue {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .shining-red-blue-text {
-          background: linear-gradient(120deg, #DC2626 25%, #93C5FD 50%, #2563EB 75%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine-red-blue 3.5s linear infinite;
-          text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
-          font-weight: 800;
-          display: inline-block;
-        }
-      `}</style>
+      </main>
     </div>
   );
 }

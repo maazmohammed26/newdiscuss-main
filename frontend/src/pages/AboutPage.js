@@ -1,169 +1,45 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { ArrowLeft, Check } from 'lucide-react';
+import { useEffect } from 'react';
+import { CheckCircle2, MessageCircle, ShieldCheck, Users } from 'lucide-react';
+import PublicPageShell from '@/components/PublicPageShell';
+
+const pillars = [
+  { icon: MessageCircle, title: 'Useful conversation', text: 'Discussions are designed around context, thoughtful replies, and technical progress.' },
+  { icon: Users, title: 'Real developer connection', text: 'Profiles, groups, chat, TalentGraph, and DevRadar help the right people find each other.' },
+  { icon: ShieldCheck, title: 'Private by design', text: 'Discuss is ad-free and gives members clear control over visibility, alerts, and account security.' },
+];
 
 export default function AboutPage() {
   useEffect(() => {
-    if (!window.location.hash) {
-      window.scrollTo(0, 0);
-    }
-    document.title = "About | Discuss Platforms";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', 'Learn more about Discuss, the 100% free developer discussion platform built for zero noise and engaging tech conversations.');
-    }
-    
-    // Smooth scroll to target hash
-    if (window.location.hash) {
-      const id = window.location.hash.substring(1);
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 300);
-    }
+    window.scrollTo(0, 0);
+    document.title = 'About | Discuss';
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-[#E1E0CC]">
-      <Header />
-      
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-12 md:py-20 w-full relative z-10">
-        <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
+    <PublicPageShell
+      eyebrow="About Discuss"
+      title="A developer network built for signal, not noise."
+      description="Discuss brings technical publishing, discovery, groups, and private conversation into one focused experience—without ads or engagement tricks."
+    >
+      <div className="grid overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-200 md:grid-cols-3">
+        {pillars.map(({ icon: Icon, title, text }) => (
+          <article key={title} className="bg-white p-6 sm:p-8">
+            <div className="mb-5 grid h-11 w-11 place-items-center rounded-2xl bg-blue-50 text-[#0095F6]"><Icon className="h-5 w-5" /></div>
+            <h2 className="text-lg font-bold">{title}</h2>
+            <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
+          </article>
+        ))}
+      </div>
 
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold transition-colors mb-10 group" style={{ color: 'rgba(225, 224, 204, 0.7)' }}>
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>Back to Discuss</span>
-        </Link>
-
-        {/* Section Header with red and blue accent */}
-        <div className="relative mb-12">
-          <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-[#DC2626] to-[#2563EB] rounded-full hidden md:block" />
-          <span className="text-[10px] sm:text-xs font-bold tracking-[0.25em] uppercase text-[#3182CE] mb-2 block">
-            Our Mission & Purpose
-          </span>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 text-[#DEDBC8] leading-none">
-            About Discuss
-          </h1>
-          <div className="w-20 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB] rounded-full" />
+      <section className="mt-8 grid gap-8 rounded-3xl bg-neutral-950 p-7 text-white sm:p-10 md:grid-cols-[1fr_.8fr]">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-blue-300">Independent product</p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Designed and built in Bengaluru.</h2>
+          <p className="mt-4 text-sm leading-7 text-neutral-400">Discuss is an independently built platform created by Mohammed Maaz A to prove that a focused social product can feel calm, fast, and genuinely useful.</p>
         </div>
-
-        <div className="space-y-12 leading-relaxed">
-          
-          <section className="bg-[#101010] p-6 sm:p-10 rounded-2xl border border-white/5 shadow-2xl relative pt-1.5">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
-              Platform Purpose
-            </h2>
-            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
-              Discuss is an uncompromising developer discussion platform. It was crafted with a single explicit purpose: to serve as a high-signal, zero-noise ecosystem where developers, engineers, and learners can share ideas, ask deep questions, and connect over technical growth without the distractions of algorithmic feeds, cookies, or intrusive advertising.
-            </p>
-          </section>
-
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#101010] p-6 sm:p-8 rounded-2xl border border-white/5 shadow-xl">
-              <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#0095F6]" />
-                Core Ecosystem Features
-              </h2>
-              <ul className="space-y-3.5">
-                {[
-                  { title: "Real-time Chat & Groups", desc: "Lightning fast messaging caches syncing peer-to-peer or within hubs." },
-                  { title: "Technical Feed", desc: "Native support for sharing GitHub repository links wrapped in structured context." },
-                  { title: "Rich Discussions", desc: "Granular comment threads designed to keep engineering solutions organized." },
-                  { title: "Privacy First", desc: "Built-in 24-hour auto-disappearing chat modes for sensitive team chats." }
-                ].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm">
-                    <Check className="w-4 h-4 mt-1 flex-shrink-0" style={{ color: i % 2 === 0 ? '#DC2626' : '#2563EB' }} />
-                    <div>
-                      <strong className="text-white block font-semibold">{f.title}</strong>
-                      <span className="text-gray-400 text-xs">{f.desc}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="bg-[#101010] p-6 sm:p-8 rounded-2xl border border-white/5 shadow-xl flex flex-col justify-between">
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
-                  Vision & Promise
-                </h2>
-                <p className="text-sm text-gray-300 mb-4 leading-relaxed font-medium">
-                  The vision is simple: The internet needs fewer distractions and more substantial builder-oriented communities. Discuss is proudly <strong className="text-[#DEDBC8] font-bold">100% free, free from ads, and free from algorithmic manipulation</strong>.
-                </p>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  There are no tracking scripts mining your time, only the genuine discussions you actively choose to participate in.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                Built by Builders, for Builders
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-gradient-to-br from-[#101010] to-[#151515] p-6 sm:p-10 rounded-2xl border border-white/5 mt-12 relative overflow-hidden shadow-2xl">
-            <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-[#DC2626]/10 to-[#2563EB]/10 rounded-full blur-2xl" />
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#0095F6]" />
-              The Story Behind the Code
-            </h2>
-            <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-4">
-              Discuss is a student-built ecosystem designed, architected, and managed entirely by{' '}
-              <a 
-                href="https://www.maazportfolio.site/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="shining-red-blue-text font-black hover:underline transition-all"
-              >
-                Mohammed Maaz A (&lt;mm/&gt;)
-              </a>
-              , a solo developer and AI engineer passionate about performant web architectures. What started as an academic undertaking has evolved into a production-grade infrastructure aiming to set a gold standard for clean, responsive application design.
-            </p>
-            <p id="about-me" className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium mb-0">
-              Every single line of code, design choice, and architectural decision in this platform was crafted purely by me. My vision is to push the boundaries of what a solo developer can build and deliver a world-class user experience.
-            </p>
-          </section>
-
-        </div>
-      </main>
-
-      <style>{`
-        @keyframes shine-purple {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes shine-red-blue {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .shining-purple-text {
-          background: linear-gradient(120deg, #6B21A8 25%, #C084FC 50%, #6B21A8 75%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine-purple 3.5s linear infinite;
-          text-shadow: 0 0 8px rgba(107, 33, 168, 0.35);
-          font-weight: 800;
-          display: inline-block;
-        }
-        .shining-red-blue-text {
-          background: linear-gradient(120deg, #DC2626 25%, #93C5FD 50%, #2563EB 75%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine-red-blue 3.5s linear infinite;
-          text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
-          font-weight: 800;
-          display: inline-block;
-        }
-      `}</style>
-      <Footer />
-    </div>
+        <ul className="space-y-3 self-center text-sm text-neutral-300">
+          {['Free to join', 'No targeted advertising', 'Built for developers and technical communities'].map(item => <li key={item} className="flex items-center gap-3"><CheckCircle2 className="h-4 w-4 text-[#0095F6]" />{item}</li>)}
+        </ul>
+      </section>
+    </PublicPageShell>
   );
 }

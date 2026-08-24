@@ -1,14 +1,18 @@
-import { useTheme } from "next-themes"
+import { useLocation } from "react-router-dom"
+import { useTheme } from "@/contexts/ThemeContext"
 import { Toaster as Sonner, toast } from "sonner"
 
 const Toaster = ({
   ...props
 }) => {
-  const { theme = "system" } = useTheme()
+  const { theme = "light" } = useTheme()
+  const location = useLocation()
+  const publicPaths = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines']
+  const renderedTheme = publicPaths.includes(location.pathname) ? 'light' : theme
 
   return (
     <Sonner
-      theme={theme}
+      theme={renderedTheme}
       className="toaster group"
       toastOptions={{
         duration: 3200,

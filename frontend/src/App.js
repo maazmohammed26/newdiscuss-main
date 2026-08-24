@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
 import FloatingNavbar from '@/components/FloatingNavbar';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { HighlightsProvider } from '@/contexts/HighlightsContext';
@@ -56,7 +56,7 @@ const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
 
 const PUBLIC_ROUTES = new Set([
   '/', '/about', '/careers', '/blogs', '/contact', '/login', '/register',
-  '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download',
+  '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines',
 ]);
 
 const isPublicPath = (pathname) => PUBLIC_ROUTES.has(pathname);
@@ -114,12 +114,9 @@ function AppRoutes() {
     const root = document.documentElement;
     
     // Public routes that should always render in default light theme
-    const accountInfoRoute = ['/terms', '/privacy', '/support'].includes(location.pathname);
-    const isPublicRoute = isPublicPath(location.pathname) && !(
-      (location.pathname === '/' && user) || (accountInfoRoute && user)
-    );
+    const isPublicRoute = isPublicPath(location.pathname) && !(location.pathname === '/' && user);
 
-    const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+    const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
 
     if (isPublicRoute || (!user && !isAppRoute)) {
       // Force default light theme (remove all active theme selectors)
@@ -256,26 +253,30 @@ function SecurityWrapper({ children }) {
 function OnboardingWrapper({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const accountId = user?.uid || user?.id;
 
   useEffect(() => {
-    if (user?.uid) {
-      const key = `showWelcomeModal_${user.uid}`;
-      const needsToSee = window.localStorage.getItem(key);
-      if (needsToSee === 'true') {
-        setShowModal(true);
-      }
+    if (!loading && accountId) {
+      const key = `discuss2LightNoticeSeen_${accountId}`;
+      setShowModal(window.localStorage.getItem(key) !== 'true');
     }
-  }, [user]);
+  }, [accountId, loading]);
 
   const handleClose = () => {
-    if (user?.uid) {
-      window.localStorage.removeItem(`showWelcomeModal_${user.uid}`);
+    if (accountId) {
+      window.localStorage.setItem(`discuss2LightNoticeSeen_${accountId}`, 'true');
     }
     setShowModal(false);
   };
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download'];
+  const handleOpenThemeSettings = () => {
+    handleClose();
+    navigate('/profile?section=theme');
+  };
+
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
   const isAiChatRoute = location.pathname === '/ai-assistant';
@@ -286,7 +287,7 @@ function OnboardingWrapper({ children }) {
       <div className={showNavbar ? "md:pl-[100px] lg:pl-0 transition-all duration-300 min-h-screen w-full flex flex-col" : "min-h-screen w-full flex flex-col"}>
         {children}
       </div>
-      <WelcomeOnboardingModal open={showModal} onClose={handleClose} />
+      <WelcomeOnboardingModal open={showModal} onClose={handleClose} onThemeSettings={handleOpenThemeSettings} />
       {user && location.pathname !== '/login-bridge' && <SkillsOnboardingModal />}
       {showNavbar && <div className="lg:hidden"><FloatingNavbar /></div>}
     </>

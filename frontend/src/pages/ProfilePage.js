@@ -1,7 +1,7 @@
 import UserAvatar from '@/components/UserAvatar';
 import MediaUpload from '@/components/MediaUpload';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import L from 'leaflet';
@@ -124,6 +124,7 @@ export default function ProfilePage() {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [userPosts, setUserPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -150,6 +151,15 @@ export default function ProfilePage() {
   const [showLocationSettings, setShowLocationSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('section') !== 'theme') return undefined;
+    setShowProfileSettings(true);
+    const timer = window.setTimeout(() => {
+      document.getElementById('profile-theme-settings')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [location.search]);
 
   // Discussion Achievements badge states
   const [selectedBadge, setSelectedBadge] = useState(null);
@@ -446,7 +456,10 @@ export default function ProfilePage() {
         adjustMapInstanceRef.current = null;
       }
     };
-  }, [showAdjustLocationModal]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Recreate the map only when the modal opens or closes. Coordinate changes are
+  // handled directly by the existing marker and must not rebuild the map.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAdjustLocationModal]);
 
   const handleOpenAdjustModal = () => {
     if (locationCoords) {
@@ -1545,7 +1558,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== ACHIEVEMENTS & BADGES ==================== */}
-        <div className="mt-6 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
             className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -1562,7 +1575,7 @@ export default function ProfilePage() {
 
           {showAchievements && (
             <div className="px-6 pb-6 pt-5 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300 space-y-5">
-              <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] px-4 py-2 rounded-xl shrink-0 inline-flex items-center gap-2">
+              <div className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-neutral-50 px-4 py-2 dark:bg-[#111111]">
                 <span className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 font-bold">Unlocked:</span>
                 <span className="text-sm font-black text-blue-600 text-[#0095F6]">{unlockedBadgesCount} / 5</span>
               </div>
@@ -1575,7 +1588,7 @@ export default function ProfilePage() {
                     <button
                       key={badge.id}
                       onClick={() => handleBadgeClick(badge)}
-                      className="flex flex-col items-center p-4 rounded-2xl bg-neutral-50/70 dark:bg-black/40 discuss:bg-[#222222]/30 hover:bg-neutral-100 dark:hover:bg-[#0F172A]/80 discuss:hover:bg-[#222222]/60 border border-neutral-200/50 dark:border-white/5 dark:border-[#262626] hover:border-neutral-300 dark:hover:border-white/10 discuss:hover:border-white/10 hover:shadow-md transition-all duration-300 active:scale-95 group"
+                      className="group flex flex-col items-center rounded-2xl bg-neutral-50/70 p-4 transition-all duration-300 hover:bg-neutral-100 active:scale-95 dark:bg-[#111111] dark:hover:bg-[#181818]"
                     >
                       <div className="relative mb-2 shrink-0">
                         <BadgeIcon badge={badge} isLocked={isLocked} size="md" className="group-hover:scale-105 transition-transform" />
@@ -1618,7 +1631,7 @@ export default function ProfilePage() {
             </button>
 
             {showProfileSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
                 {/* Loading indicator for profile data */}
                 {loadingProfile && (
                   <div className="flex items-center justify-center gap-2 py-2">
@@ -1628,7 +1641,7 @@ export default function ProfilePage() {
                 )}
 
                 {/* Full Name Section */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <User className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
@@ -1682,7 +1695,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Bio Section */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
@@ -1744,7 +1757,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Social Links Section */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <Link2 className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
@@ -1850,7 +1863,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Skills Section */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
@@ -1976,7 +1989,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Display Theme Selector */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div id="profile-theme-settings" className="scroll-mt-24 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
                       <Palette className="w-4 h-4 text-[#0095F6] stroke-[1.8px]" />
@@ -1989,7 +2002,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Online Status Visibility Section */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex flex-col">
                       <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
@@ -2029,8 +2042,8 @@ export default function ProfilePage() {
             </button>
 
             {showSecuritySettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center justify-between mb-2">
+              <div className="space-y-4 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-bold">App Lock Protection</span>
                     <button
@@ -2153,7 +2166,7 @@ export default function ProfilePage() {
             </button>
 
             {showLocationSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
@@ -2164,46 +2177,37 @@ export default function ProfilePage() {
                   {shareLocation ? (
                     <div className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">
                       <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10B981]" />
-                      <span>Telemetry Broadcast Active</span>
+                      <span>Location sharing on</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-500 border border-neutral-500/25 rounded-full">
                       <span className="w-1.5 h-1.5 bg-neutral-400 dark:bg-neutral-600 rounded-full" />
-                      <span>Telemetry Offline</span>
+                      <span>Location sharing off</span>
                     </div>
                   )}
                 </div>
 
-                {/* Theme-Tailored Premium Layout Panel */}
-                <div className={`p-5 transition-all duration-300 ${
-                  false
-                    ? 'border border-[#FF007F]/20 bg-[#13131A]/90 hover:border-[#FF007F]/35 shadow-[0_4px_25px_rgba(255,0,127,0.06)] rounded-2xl'
-                    : false
-                    ? 'border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,1)] rounded-none'
-                    : theme === 'dark'
-                    ? 'border border-white/10 bg-slate-950/40 shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md rounded-2xl'
-                    : 'border border-slate-200 bg-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] backdrop-blur-md rounded-2xl'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 transition-colors dark:border-[#262626] dark:bg-[#111111] sm:p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-start gap-3">
                       <div className={`p-2.5 rounded-xl transition-all duration-300 ${
                         shareLocation 
                           ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' 
                           : 'bg-neutral-500/10 text-neutral-400 dark:text-neutral-500'
                       }`}>
-                        <MapPin className="w-5 h-5 animate-pulse" />
+                        <MapPin className="w-5 h-5" />
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-extrabold tracking-tight text-neutral-900 dark:text-white dark:text-white">
-                          Geospatial Broadcast State
+                          Nearby discovery
                         </p>
                         <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5 leading-relaxed max-w-[220px]">
                           {updatingLocation ? (
-                            <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#0095F6] text-[#0095F6]" /> Synchronizing coordinates...</span>
+                            <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#0095F6]" /> Updating location…</span>
                           ) : shareLocation ? (
-                            <span>Your node specification is broadcasted publicly on the interactive map.</span>
+                            <span>Your approximate position is visible in DevRadar.</span>
                           ) : (
-                            <span>Activate coordinate tracking to become discoverable to nearby developers and community nodes.</span>
+                            <span>Turn this on to appear to nearby developers.</span>
                           )}
                         </p>
                       </div>
@@ -2224,9 +2228,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  <div className={`mt-4 pt-4 border-t flex flex-col gap-2.5 ${
-                    false ? 'border-black' : 'border-[#DBDBDB] dark:border-white/5'
-                  }`}>
+                  <div className="mt-4 flex flex-col gap-2.5 border-t border-neutral-200 pt-4 dark:border-[#262626]">
                     <Button
                       onClick={() => {
                         setLocationUpdateError('');
@@ -2235,17 +2237,17 @@ export default function ProfilePage() {
                       }}
                       variant="outline"
                       size="sm"
-                      className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
+                      className="w-full text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[.99] transition-all rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
                     >
                       <MapPin className="w-3.5 h-3.5" />
-                      <span>Update Current Coordinates</span>
+                      <span>Update current location</span>
                     </Button>
 
                     {shareLocation && locationCoords && (
                       <div className="flex flex-col gap-2.5">
-                        <div className="flex justify-between items-center text-xs px-1">
-                          <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 font-bold">Node Coordinates:</span>
-                          <span className="font-mono font-bold text-blue-600 text-[#0095F6]">
+                        <div className="flex flex-col gap-1 rounded-xl bg-white px-3 py-2.5 text-xs dark:bg-black sm:flex-row sm:items-center sm:justify-between">
+                          <span className="font-bold text-neutral-500 dark:text-neutral-400">Current coordinates</span>
+                          <span className="break-all font-mono font-bold text-[#0095F6] sm:text-right">
                             {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
                           </span>
                         </div>
@@ -2253,10 +2255,10 @@ export default function ProfilePage() {
                           onClick={handleOpenAdjustModal}
                           variant="outline"
                           size="sm"
-                          className="w-full text-xs font-black uppercase flex items-center justify-center gap-1.5 active:scale-95 transition-all mt-1 rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
+                          className="w-full text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[.99] transition-all mt-1 rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
                         >
                           <MapPin className="w-3.5 h-3.5" />
-                          <span>Calibrate Precise Node Pin</span>
+                          <span>Adjust map pin</span>
                         </Button>
                       </div>
                     )}
@@ -2283,14 +2285,14 @@ export default function ProfilePage() {
             </button>
 
             {showNotificationSettings && (
-              <div className="px-6 pb-6 pt-2 space-y-4 border-t border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
                 {/* Standard Notification Switch */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <NotificationToggle />
                 </div>
 
                 {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
+                <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
@@ -2323,7 +2325,7 @@ export default function ProfilePage() {
                       </div>
                       
                       <p className="text-[11px] text-[#475569] dark:text-neutral-400 leading-relaxed">
-                        <span>Discuss uses an automated delivery bot on Telegram to bypass browser push limitations. Link your chat in seconds:</span>
+                        <span>Connect the Discuss Telegram bot to receive the alerts you enable.</span>
                       </p>
 
                       <div className="grid grid-cols-1 gap-2.5">
@@ -2357,7 +2359,7 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Active Link</p>
-                            <p className="text-[12px] font-mono font-bold text-[#475569] dark:text-neutral-400">{telegramChatIdInput}</p>
+                          <p className="break-all text-[12px] font-mono font-bold text-[#475569] dark:text-neutral-400">{telegramChatIdInput}</p>
                           </div>
                         </div>
                         <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-neutral-500 hover:text-[#EF4444] p-2 transition-colors">
@@ -2391,7 +2393,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl focus-within:border-[#229ED9] transition-all">
+                       <div className="flex flex-col gap-2 rounded-xl border border-[#DBDBDB] bg-white p-1 transition-all focus-within:border-[#229ED9] dark:border-[#262626] dark:bg-black sm:flex-row">
                         <Input
                           value={telegramChatIdInput}
                           onChange={e => {
@@ -2399,25 +2401,25 @@ export default function ProfilePage() {
                             if (v === '' || /^-?\d+$/.test(v)) setTelegramChatIdInput(v);
                           }}
                           placeholder="Telegram Chat ID (e.g. 872125...)"
-                          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
+                           className="min-w-0 flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
                         />
                         <Button
                           onClick={handleSaveTelegram}
                           disabled={savingTelegram || !telegramChatIdInput.trim()}
-                          className="bg-[#229ED9] hover:bg-[#1c80b0] text-white font-bold px-4 h-9 rounded-lg transition-all"
+                           className="h-9 shrink-0 rounded-lg bg-[#229ED9] px-4 font-bold text-white transition-all hover:bg-[#1c80b0]"
                         >
                           {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
                         </Button>
                       </div>
                       <p className="text-center text-[10px] text-neutral-500 font-semibold italic">
-                         <span>Note: Telegram notifications use industry-standard encryption for privacy.</span>
+                         <span>Message previews follow the privacy option above.</span>
                       </p>
                     </div>
                   )}
                 </div>
 
                 {/* ==================== DISCORD NOTIFICATIONS ==================== */}
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626] space-y-4">
+                <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
@@ -2453,7 +2455,7 @@ export default function ProfilePage() {
                       </div>
                       
                       <p className="text-[11px] text-[#475569] dark:text-neutral-400 leading-relaxed">
-                        To maintain privacy, Discuss uses an encrypted notification bridge. Discord requires a mutual server connection before allowing encrypted DMs:
+                        Discord direct alerts require a shared server connection before the bot can deliver a message:
                       </p>
 
                       <div className="grid grid-cols-1 gap-2.5">
@@ -2476,15 +2478,15 @@ export default function ProfilePage() {
                   {/* Discord input */}
                   <div className="opacity-50 pointer-events-none select-none">
                     <div className="space-y-3">
-                      <div className="flex gap-2 p-1 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl">
+                      <div className="flex flex-col gap-2 rounded-xl border border-[#DBDBDB] bg-white p-1 dark:border-[#262626] dark:bg-black sm:flex-row">
                         <Input
                           disabled
                           placeholder="Discord User ID (e.g. 123456789...)"
-                          className="flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
+                          className="min-w-0 flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
                         />
                         <Button
                           disabled
-                          className="bg-[#5865F2] text-white font-bold px-4 h-9 rounded-lg"
+                          className="h-9 shrink-0 rounded-lg bg-[#5865F2] px-4 font-bold text-white"
                         >
                           <span>Connect</span>
                         </Button>
@@ -3137,7 +3139,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== HELP, LEGAL & SESSION ==================== */}
-        <div className="mt-6 w-full bg-white dark:bg-black divide-y divide-[#EFEFEF] dark:divide-[#262626] border-y border-[#EFEFEF] dark:border-[#262626]">
+        <div className="w-full bg-white dark:bg-black divide-y divide-[#EFEFEF] dark:divide-[#262626] border-y border-[#EFEFEF] dark:border-[#262626]">
           {[
             {
               label: 'Terms & Conditions',

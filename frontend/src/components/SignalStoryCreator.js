@@ -43,7 +43,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
 
   const handleSubmit = async () => {
     if (isUploadingMedia) {
-      toast('Wait, media is loading...', { icon: '⏳' });
+      toast('Media is still uploading. Please wait a moment.');
       return;
     }
     if (!canPost || !user) return;
@@ -95,12 +95,12 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
     >
       <div
-        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-black rounded-t-[24px] sm:rounded-[24px] border border-[#DBDBDB] dark:border-[#262626] shadow-[0_24px_80px_rgba(0,0,0,0.28)] overflow-y-auto [&::-webkit-scrollbar]:hidden pb-24 sm:pb-0 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
-        style={{ minHeight: '420px', maxHeight: '90vh', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+        className="relative mx-auto flex w-full flex-col overflow-hidden rounded-t-[24px] border border-[#DBDBDB] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] animate-in slide-in-from-bottom-4 duration-200 dark:border-[#262626] dark:bg-black sm:max-w-lg sm:rounded-[24px] sm:zoom-in-95"
+        style={{ minHeight: '420px', maxHeight: '92dvh' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 pt-5 pb-4 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-[#EFEFEF] dark:border-[#262626]">
+        <div className="z-10 flex shrink-0 items-center justify-between border-b border-[#EFEFEF] bg-white/95 px-5 pb-4 pt-5 backdrop-blur-xl dark:border-[#262626] dark:bg-black/95">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full flex items-center justify-center ig-story-gradient shadow-sm">
               <Zap className="w-3.5 h-3.5 text-white fill-white" />
@@ -118,6 +118,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
           </button>
         </div>
 
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
         {/* Author row */}
         <div className="flex items-center gap-3 px-5 py-4">
           <UserAvatar
@@ -195,8 +196,10 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
           />
         </div>
 
+        </div>
+
         {/* Footer */}
-        <div className="sticky bottom-0 flex items-center justify-between px-5 py-3.5 border-t border-neutral-100 dark:border-neutral-800 bg-white/95 dark:bg-black/95 backdrop-blur-xl">
+        <div className="flex shrink-0 items-center justify-between border-t border-neutral-100 bg-white px-5 py-3.5 dark:border-neutral-800 dark:bg-black">
           {/* Char counter */}
           <div className="flex items-center gap-1.5">
             {isOverLimit && (

@@ -46,7 +46,10 @@ export default function LandingPage() {
     setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
   }, []);
 
-  if (loading || user) return <LoadingScreen message="Opening Discuss…" />;
+  // Guests see the public landing page immediately while Firebase resolves in
+  // the background. Cached signed-in users already hydrate synchronously and
+  // continue to the feed without flashing this page.
+  if (user) return <LoadingScreen message="Opening Discuss…" compact />;
 
   return (
     <div className="lp-page min-h-screen bg-white text-neutral-950">
