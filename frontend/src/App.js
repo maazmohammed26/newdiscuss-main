@@ -20,6 +20,7 @@ const LoginPage             = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage          = lazy(() => import('@/pages/RegisterPage'));
 const TermsPage             = lazy(() => import('@/pages/TermsPage'));
 const PrivacyPage           = lazy(() => import('@/pages/PrivacyPage'));
+const SupportPage           = lazy(() => import('@/pages/SupportPage'));
 const FeedPage              = lazy(() => import('@/pages/FeedPage'));
 const ProfilePage           = lazy(() => import('@/pages/ProfilePage'));
 const PostDetailPage        = lazy(() => import('@/pages/PostDetailPage'));
@@ -55,7 +56,7 @@ const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
 
 const PUBLIC_ROUTES = new Set([
   '/', '/about', '/careers', '/blogs', '/contact', '/login', '/register',
-  '/terms', '/privacy', '/verify-email', '/login-bridge', '/download',
+  '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download',
 ]);
 
 const isPublicPath = (pathname) => PUBLIC_ROUTES.has(pathname);
@@ -113,7 +114,10 @@ function AppRoutes() {
     const root = document.documentElement;
     
     // Public routes that should always render in default light theme
-    const isPublicRoute = isPublicPath(location.pathname) && !(location.pathname === '/' && user);
+    const accountInfoRoute = ['/terms', '/privacy', '/support'].includes(location.pathname);
+    const isPublicRoute = isPublicPath(location.pathname) && !(
+      (location.pathname === '/' && user) || (accountInfoRoute && user)
+    );
 
     const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
 
@@ -146,6 +150,7 @@ function AppRoutes() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/terms"   element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/support" element={<SupportPage />} />
         <Route path="/download" element={<DownloadPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/guidelines" element={<GuidelinesPage />} />
@@ -270,7 +275,7 @@ function OnboardingWrapper({ children }) {
     setShowModal(false);
   };
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge', '/download'];
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
   const isAiChatRoute = location.pathname === '/ai-assistant';

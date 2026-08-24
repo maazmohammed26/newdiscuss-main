@@ -4,7 +4,7 @@ import DiscussLogo from '@/components/DiscussLogo';
 const groups = [
   { title: 'Product', links: [['Explore', '/feed'], ['Tech News', '/news'], ['Tech Jobs', '/jobs']] },
   { title: 'Company', links: [['About', '/about'], ['Blogs', '/blogs'], ['Careers', '/careers'], ['Contact', '/contact']] },
-  { title: 'Legal', links: [['Guidelines', '/guidelines'], ['Terms', '/terms'], ['Privacy', '/privacy']] },
+  { title: 'Legal', links: [['Guidelines', '/guidelines'], ['Terms', '/terms'], ['Privacy', '/privacy'], ['Support', '/support']] },
 ];
 
 export default function Footer() {

@@ -127,6 +127,7 @@ export default function ProfilePage() {
   const [userPosts, setUserPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showPosts, setShowPosts] = useState(false);
   const [showPulses, setShowPulses] = useState(false);
   const [filterType, setFilterType] = useState('all');
@@ -1014,10 +1015,17 @@ export default function ProfilePage() {
   }, [userPosts, filterType, filterMonth, filterYear]);
 
   const handleLogout = async () => { 
-    setLoggingOut(true); 
-    await logout(); 
-    window.history.replaceState(null, '', '/');
-    navigate('/', { replace: true }); 
+    setLoggingOut(true);
+    try {
+      await logout();
+      window.history.replaceState(null, '', '/');
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast.error('Unable to log out. Please try again.');
+      setLoggingOut(false);
+      setShowLogoutConfirm(false);
+    }
   };
 
   const handlePostDeleted = (postId) => setUserPosts(prev => prev.filter(p => p.id !== postId));
@@ -3128,16 +3136,63 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ==================== GLOBAL USER LOGOUT (VERY LAST) ==================== */}
-        <div className="px-4 py-6 border-b border-[#EFEFEF] dark:border-[#262626]">
-          <Button 
-            data-testid="profile-logout-btn" 
-            onClick={handleLogout} 
+        {/* ==================== HELP, LEGAL & SESSION ==================== */}
+        <div className="mt-6 w-full bg-white dark:bg-black divide-y divide-[#EFEFEF] dark:divide-[#262626] border-y border-[#EFEFEF] dark:border-[#262626]">
+          {[
+            {
+              label: 'Terms & Conditions',
+              description: 'Rules and standards for using Discuss',
+              icon: FileText,
+              action: () => navigate('/terms'),
+            },
+            {
+              label: 'Privacy Policy',
+              description: 'How Discuss handles and protects your information',
+              icon: Shield,
+              action: () => navigate('/privacy'),
+            },
+            {
+              label: 'Support',
+              description: 'Get help at support@discussit.in',
+              icon: Mail,
+              action: () => navigate('/support'),
+            },
+          ].map(({ label, description, icon: RowIcon, action }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={action}
+              className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <RowIcon className="h-5 w-5 shrink-0 stroke-[1.8px] text-neutral-900 dark:text-white" />
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-extrabold text-neutral-900 dark:text-white">{label}</span>
+                  <span className="mt-0.5 block text-[11px] text-neutral-500 dark:text-neutral-400">{description}</span>
+                </span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400" />
+            </button>
+          ))}
+
+          <button
+            type="button"
+            data-testid="profile-logout-btn"
+            onClick={() => setShowLogoutConfirm(true)}
             disabled={loggingOut}
-            className="w-full bg-[#ED4956]/10 hover:bg-[#ED4956]/20 text-[#ED4956] font-bold py-3 h-11 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 border border-[#ED4956]/20 cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors disabled:opacity-60"
           >
-            {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LogOut className="w-4 h-4" /> <span>Log Out</span></>}
-          </Button>
+            <span className="flex min-w-0 items-center gap-3">
+              {loggingOut
+                ? <Loader2 className="h-5 w-5 shrink-0 animate-spin text-neutral-900 dark:text-white" />
+                : <LogOut className="h-5 w-5 shrink-0 stroke-[1.8px] text-neutral-900 dark:text-white" />}
+              <span className="min-w-0">
+                <span className="block text-[15px] font-extrabold text-neutral-900 dark:text-white">Log out</span>
+                <span className="mt-0.5 block text-[11px] text-neutral-500 dark:text-neutral-400">Sign out of this account on this device</span>
+              </span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400" />
+          </button>
         </div>
 
         {/* Brand Footer in Cursive Discuss font */}
@@ -3163,6 +3218,28 @@ export default function ProfilePage() {
         imageUrl={user?.photo_url}
         altText={user?.username}
       />
+
+      {/* Logout Confirmation */}
+      <AlertDialog open={showLogoutConfirm} onOpenChange={(open) => !loggingOut && setShowLogoutConfirm(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Log out of Discuss?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will need to sign in again to access your profile, conversations, and groups on this device.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loggingOut}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200"
+            >
+              {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Log out'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Full Name Confirmation */}
       <AlertDialog open={deleteFullNameConfirm} onOpenChange={setDeleteFullNameConfirm}>

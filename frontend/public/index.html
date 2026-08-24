@@ -184,7 +184,7 @@
             (function() {
                 try {
                     var theme = localStorage.getItem('discuss_theme') || 'light';
-                    var publicPaths = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge', '/download'];
+                    var publicPaths = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download'];
                     var hasCachedSession = !!localStorage.getItem('discuss_auth_session_v1');
                     var isPublicPath = publicPaths.indexOf(window.location.pathname) !== -1 && !(window.location.pathname === '/' && hasCachedSession);
                     if (theme === 'discuss-light' || theme === 'discuss-black' || theme === 'discuss-retro') {

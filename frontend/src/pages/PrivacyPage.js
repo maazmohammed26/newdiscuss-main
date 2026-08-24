@@ -1,191 +1,61 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Shield, EyeOff, Key, BellRing, ArrowLeft, CheckCircle } from 'lucide-react';
-import DiscussLogo from '@/components/DiscussLogo';
-import AdminMessageBanner from '@/components/AdminMessageBanner';
+import { Shield, UserRound, SlidersHorizontal, LockKeyhole, Bell, Trash2 } from 'lucide-react';
+import SettingsInfoPageShell from '@/components/SettingsInfoPageShell';
 
-const NAV = [
-  { label: 'About', to: '/about' },
-  { label: 'Careers', to: '/careers' },
-  { label: 'Blogs', to: '/blogs' },
-  { label: 'Contact', to: '/contact' },
-  { label: 'Terms', to: '/terms' },
-  { label: 'Privacy', to: '/privacy' },
+const sections = [
+  {
+    title: 'Information you provide',
+    icon: UserRound,
+    content: 'Discuss stores the account details, profile information, posts, messages, media, and preferences you choose to provide so the service can operate as expected.',
+  },
+  {
+    title: 'How information is used',
+    icon: SlidersHorizontal,
+    content: 'Your information is used to authenticate your account, deliver discussions and messaging, maintain your profile, prevent abuse, provide support, and improve reliability. Discuss does not sell personal information or display targeted advertising.',
+  },
+  {
+    title: 'Storage and protection',
+    icon: LockKeyhole,
+    content: 'We use access controls and platform security features to protect stored information. No online service can guarantee absolute security, so keep your password and device access private and report suspicious activity promptly.',
+  },
+  {
+    title: 'Notifications and integrations',
+    icon: Bell,
+    content: 'Push, Telegram, Discord, and similar integrations are optional. When enabled, the minimum information required to deliver your selected notifications is processed by the relevant provider according to its own privacy terms.',
+  },
+  {
+    title: 'Your controls',
+    icon: Shield,
+    content: 'Profile settings let you manage visibility, notification previews, location sharing, social links, and security preferences. You can contact support to ask questions about your information or account.',
+  },
+  {
+    title: 'Deletion and retention',
+    icon: Trash2,
+    content: 'You can request account deletion from Discuss. Information is removed or de-identified according to the service workflow, while limited records may be retained when necessary for security, fraud prevention, or legal obligations.',
+  },
 ];
 
 export default function PrivacyPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = 'Privacy Policy | Discuss';
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-[#E1E0CC] flex flex-col relative overflow-hidden">
-      {/* Visual noise overlay */}
-      <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
-      <AdminMessageBanner />
-
-      {/* Floating header / top nav */}
-      <header className="fixed top-0 left-0 right-0 px-6 py-4 flex items-center justify-between z-50 backdrop-blur-md bg-black/40 border-b border-white/10">
-        <Link 
-          to="/" 
-          className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-full border border-white/10 bg-black/50 text-xs font-bold text-gray-300 hover:text-white transition-all hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#DC2626]" />
-          <span>Back to Home</span>
-        </Link>
-        <Link to="/" className="flex items-center gap-0.5 select-none bg-black/50 px-3 py-1.5 rounded-full border border-white/5">
-          <DiscussLogo size="sm" />
-        </Link>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-2xl mx-auto px-4 pt-28 pb-16 relative z-10 w-full">
-        {/* Page title and header capsule */}
-        <div className="relative bg-[#101010] rounded-2xl shadow-2xl p-6 md:p-8 border border-white/5 pt-1.5 overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
-
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-[#0095F6]/10 rounded-xl flex items-center justify-center border border-[#0095F6]/20">
-              <EyeOff className="w-5 h-5 text-[#0095F6]" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-black text-white leading-tight">Privacy Policy</h1>
-              <p className="text-gray-500 font-mono text-[10px] uppercase tracking-wider mt-1">Last updated: May 2026</p>
-            </div>
+    <SettingsInfoPageShell
+      title="Privacy Policy"
+      description="A clear overview of what Discuss stores, why it is needed, and the controls available to you. Last updated August 2026."
+      icon={Shield}
+    >
+      {sections.map(({ title, icon: SectionIcon, content }) => (
+        <section key={title} className="flex gap-4 border-b border-neutral-200 py-6 last:border-b-0 dark:border-neutral-800">
+          <SectionIcon className="mt-0.5 h-5 w-5 shrink-0 stroke-[1.7px] text-neutral-700 dark:text-neutral-300" />
+          <div>
+            <h2 className="text-[15px] font-extrabold">{title}</h2>
+            <p className="mt-2 text-sm leading-6 text-neutral-600 dark:text-neutral-400">{content}</p>
           </div>
-
-          <div className="space-y-6 text-gray-300 text-[14px] leading-relaxed font-medium">
-            <p>
-              At **Discuss**, privacy is not an afterthought — it is our core architecture. We do not sell your data, we do not show advertisements, and we do not profile your behavior. Read below to understand how your data is handled.
-            </p>
-
-            <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
-              <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <Key className="w-4 h-4 text-[#DC2626]" />
-                1. Privacy-Preserving Architecture
-              </h3>
-              <p className="text-xs text-gray-400">
-                Discuss utilizes double-layer encryption protocols. Your private chats, shared locations, and active media assets are protected so that only authorized, peer-approved users can read them. No raw coordinates or raw texts are leaked outside active conversations.
-              </p>
-            </div>
-
-            <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
-              <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <BellRing className="w-4 h-4 text-[#0095F6]" />
-                2. Notification Bridge Security
-              </h3>
-              <p className="text-xs text-gray-400">
-                To bridge notifications securely to Discord and Telegram, Discuss routes alerts using an Encrypted Notification Hook. You maintain complete toggle control over notification preview privacy to hide message contents and photos on lock screens.
-              </p>
-            </div>
-
-            <div className="bg-[#181818] rounded-xl p-4 border border-white/5">
-              <h3 className="font-bold text-sm mb-2 flex items-center gap-2 text-white">
-                <Shield className="w-4 h-4 text-[#DC2626]" />
-                3. Cookies & Session Storage
-              </h3>
-              <p className="text-xs text-gray-400">
-                We use secure local session tokens to keep you logged in and enforce app-level security. Discuss does not utilize any tracking cookies, third-party analytics pixels, or telemetry collectors.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-sm mb-2 text-white">4. Data We Collect</h3>
-              <p className="text-xs text-gray-400">To maintain security and deliver messaging services, we store:</p>
-              <ul className="text-xs text-gray-400 space-y-1.5 list-disc list-inside mt-2">
-                <li>Your chosen username, email address, and hashed password.</li>
-                <li>Your uploaded profile picture or secure avatar.</li>
-                <li>Your conversations and shared developer projects.</li>
-                <li>Secure Telegram/Discord notification credentials (only if opted-in).</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-sm mb-2 text-white">5. Full GDPR / CCPA Compliance</h3>
-              <p className="text-xs text-gray-400">
-                Under GDPR and CCPA standards, you possess the full right to port your data or completely erase it. Deleting your account instantly purges all personal info from our live databases.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-r from-[#DC2626]/10 to-[#2563EB]/10 rounded-xl p-4 border border-white/5">
-              <p className="text-xs text-white font-semibold flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#0095F6] shrink-0" />
-                <span>
-                  Discuss is a privacy-first utility platform. We guarantee zero telemetry profiling, zero advertising, and total user governance.
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* ═══ FOOTER ══════════════════════════════════════════ */}
-      <footer className="bg-black border-t border-white/10 py-8 px-4 sm:px-6 relative z-10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-lg font-bold italic" style={{ color: '#DEDBC8' }}>
-            &lt;<span>discuss</span>/&gt;
-          </span>
-          <div className="flex items-center gap-6 text-xs sm:text-sm">
-            {NAV.map(n => (
-              <Link key={n.label} to={n.to} className="transition-colors"
-                style={{ color: 'rgba(225,224,204,0.5)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#E1E0CC')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(225,224,204,0.5)')}>
-                {n.label}
-              </Link>
-            ))}
-          </div>
-          <div className="text-xs text-center sm:text-right" style={{ color: 'rgba(225,224,204,0.4)' }}>
-            &copy; {new Date().getFullYear()} Discuss. Built by{' '}
-            <a
-              href="https://www.maazportfolio.site/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shining-red-blue-text font-black hover:underline"
-            >
-              &lt;mma/&gt;
-            </a>{' '}
-            in collaboration with{' '}
-            <Link
-              to="/about#digitalclink"
-              className="shining-purple-text font-black hover:underline"
-            >
-              DigitalClink
-            </Link>
-          </div>
-        </div>
-      </footer>
-
-      <style>{`
-        @keyframes shine-red-blue {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes shine-purple {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        .shining-red-blue-text {
-          background: linear-gradient(120deg, #DC2626 25%, #93C5FD 50%, #2563EB 75%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine-red-blue 3.5s linear infinite;
-          text-shadow: 0 0 8px rgba(220, 38, 38, 0.25);
-          font-weight: 800;
-          display: inline-block;
-        }
-        .shining-purple-text {
-          background: linear-gradient(120deg, #6B21A8 25%, #C084FC 50%, #6B21A8 75%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine-purple 3.5s linear infinite;
-          text-shadow: 0 0 8px rgba(107, 33, 168, 0.35);
-          font-weight: 800;
-          display: inline-block;
-        }
-      `}</style>
-    </div>
+        </section>
+      ))}
+    </SettingsInfoPageShell>
   );
 }
