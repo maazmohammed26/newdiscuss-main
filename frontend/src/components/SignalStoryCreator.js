@@ -2,7 +2,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { createStory } from '@/lib/storiesDb';
-import { X, Zap, AlertCircle, Loader2, Image as ImageIcon } from 'lucide-react';
+import { X, Zap, AlertCircle, Loader2, Image as ImageIcon, Type, Globe2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
 
@@ -35,8 +35,11 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
 
   const remaining = MAX_CHARS - text.length;
   const isOverLimit = remaining < 0;
-  const isEmpty = text.trim().length === 0 && mediaList.length === 0;
-  const canPost = !isEmpty && !isOverLimit && !submitting && !isUploadingMedia;
+  const hasText = text.trim().length > 0;
+  const hasMedia = mediaList.length > 0;
+  const isEmpty = !hasText && !hasMedia;
+  const isReady = !isEmpty && !isOverLimit && !isUploadingMedia;
+  const canPost = isReady && !submitting;
 
   const handleSubmit = async () => {
     if (isUploadingMedia) {
@@ -52,9 +55,9 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             user.id,
             user.username,
             user.photo_url || '',
-            text.trim(),
+            '',
             item.url || '',
-            item.type || 'text'
+            item.type || 'image'
           );
         }
       } else {
@@ -92,25 +95,20 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
     >
       <div
-        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-neutral-900 dark:bg-black rounded-t-[20px] sm:rounded-[20px] shadow-2xl overflow-y-auto [&::-webkit-scrollbar]:hidden pb-28 sm:pb-0"
+        className="relative w-full sm:max-w-lg mx-auto bg-white dark:bg-black rounded-t-[24px] sm:rounded-[24px] border border-[#DBDBDB] dark:border-[#262626] shadow-[0_24px_80px_rgba(0,0,0,0.28)] overflow-y-auto [&::-webkit-scrollbar]:hidden pb-24 sm:pb-0 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
         style={{ minHeight: '420px', maxHeight: '90vh', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 pt-5 pb-4 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-[#EFEFEF] dark:border-[#262626]">
           <div className="flex items-center gap-2">
-            {/* Signal lightning icon */}
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, #a855f7, #ec4899, #f97316)',
-              }}
-            >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center ig-story-gradient shadow-sm">
               <Zap className="w-3.5 h-3.5 text-white fill-white" />
             </div>
-            <span className="font-semibold text-[15px] text-neutral-900 dark:text-neutral-50 dark:text-white">
-              New Signal
-            </span>
+            <div>
+              <span className="font-bold text-[15px] text-neutral-900 dark:text-white block leading-tight">New Signal</span>
+              <span className="text-[10px] text-neutral-400">Share one focused update</span>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -121,42 +119,44 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         </div>
 
         {/* Author row */}
-        <div className="flex items-center gap-2.5 px-5 pb-3">
+        <div className="flex items-center gap-3 px-5 py-4">
           <UserAvatar
             src={user?.photo_url}
             username={user?.username}
-            className="w-8 h-8 ring-2 ring-purple-400/40"
+            className="w-9 h-9 ring-2 ring-[#0095F6]/20"
           />
           <div>
             <p className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-100 dark:text-white">
               {user?.username}
             </p>
             <p className="text-[11px] text-neutral-400 dark:text-neutral-400">
-              Visible to everyone · 24h
+              <span className="inline-flex items-center gap-1"><Globe2 className="w-3 h-3" /> Everyone · 24 hours</span>
             </p>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="mx-5 border-t border-neutral-100 dark:border-neutral-800 discuss:border-[#2a2a2a]" />
-
         {/* Text input */}
-        <div className="px-5 pt-4 pb-2">
+        <div className="px-5 pb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-neutral-700 dark:text-neutral-300"><Type className="w-3.5 h-3.5" /> Text Signal</span>
+            {hasMedia && <span className="text-[10px] font-semibold text-neutral-400">Disabled while an image is attached</span>}
+          </div>
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => !hasMedia && setText(e.target.value)}
+            disabled={hasMedia}
             placeholder="What's your signal? Share a thought, link, or update…"
             rows={6}
-            className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-neutral-900 dark:text-neutral-50 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-600 discuss:placeholder:text-[#555] outline-none"
+            className="w-full resize-none rounded-2xl border border-[#DBDBDB] dark:border-[#262626] bg-[#FAFAFA] dark:bg-[#0A0A0A] p-4 text-[15px] leading-relaxed text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           />
         </div>
 
         {/* Custom Media Preview */}
         {mediaList.length > 0 && (
-          <div className="px-5 pb-2 flex flex-wrap gap-3">
+          <div className="px-5 pb-3">
             {mediaList.map((item, index) => (
-              <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 discuss:border-[#333]">
+              <div key={index} className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900">
                 {item.type === 'video' ? (
                   <video src={item.url} className="w-full h-full object-cover" />
                 ) : (
@@ -174,26 +174,29 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         )}
 
         {/* Media Upload */}
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-neutral-700 dark:text-neutral-300"><ImageIcon className="w-3.5 h-3.5" /> Image Signal</span>
+            {hasText && <span className="text-[10px] font-semibold text-neutral-400">Clear text to attach an image</span>}
+          </div>
           <MediaUpload 
             type="image" 
             folder="stories"
-            multiple={true}
-            maxFiles={3}
+            multiple={false}
+            maxFiles={1}
+            disabled={hasText}
+            disabledMessage="Clear text to add an image"
             onUploadingChange={setIsUploadingMedia}
             onUploadComplete={(result) => {
-              if (Array.isArray(result)) {
-                setMediaList((prev) => [...prev, ...result]);
-              } else {
-                setMediaList((prev) => [...prev, result]);
-              }
+              setText('');
+              setMediaList(Array.isArray(result) ? result.slice(0, 1) : [result]);
               toast.success('Media added to story');
             }} 
           />
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-neutral-100 dark:border-neutral-800 discuss:border-[#2a2a2a]">
+        <div className="sticky bottom-0 flex items-center justify-between px-5 py-3.5 border-t border-neutral-100 dark:border-neutral-800 bg-white/95 dark:bg-black/95 backdrop-blur-xl">
           {/* Char counter */}
           <div className="flex items-center gap-1.5">
             {isOverLimit && (
@@ -216,20 +219,21 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
           <button
             onClick={handleSubmit}
             disabled={!canPost}
-            className="flex items-center gap-2 px-5 py-2 rounded-full text-[13px] font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed"
             style={{
-              background: canPost
+              background: (isReady || submitting)
                 ? 'linear-gradient(135deg, #a855f7, #ec4899)'
-                : '#6b7280',
-              boxShadow: canPost
+                : '#d4d4d8',
+              boxShadow: (isReady || submitting)
                 ? '0 4px 14px rgba(168,85,247,0.4)'
                 : 'none',
+              opacity: submitting ? 0.82 : 1,
             }}
           >
             {submitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Zap className="w-3.5 h-3.5 fill-white" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
             )}
             <span>{submitting ? 'Posting…' : 'Post Signal'}</span>
           </button>

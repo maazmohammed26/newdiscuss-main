@@ -495,10 +495,10 @@ export default function TalentGraphPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A] ">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white">
       <Header />
       
-      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 pb-32 md:pb-32">
+      <div className="mx-auto max-w-[935px] px-4 py-6 pb-32 md:py-8">
         
         {/* Navigation back */}
         <button
@@ -512,7 +512,7 @@ export default function TalentGraphPage() {
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white dark:text-white">
-              Discuss AI TalentGraph
+              TalentGraph
             </h1>
             <p className="text-neutral-500 dark:text-neutral-400 text-sm">
               Discover opportunities, collaborators, founders, and build developer teams.
@@ -520,14 +520,14 @@ export default function TalentGraphPage() {
           </div>
           
           {/* Rebranded Model Status UI */}
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold bg-white dark:bg-neutral-850 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-750 shadow-sm select-none">
+          <div className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400 select-none">
             <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></span>
             Discuss Mars AI model Active
           </div>
         </div>
 
         {/* Tab Selection */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6 bg-white dark:bg-neutral-800 dark:bg-black p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] shadow-sm">
+        <div className="mb-6 grid grid-cols-3 gap-1 overflow-hidden border-b border-neutral-200 pb-2 dark:border-neutral-800 md:grid-cols-6">
           <button
             onClick={() => setActiveTab('matches')}
             className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
@@ -595,7 +595,7 @@ export default function TalentGraphPage() {
         {/* 1. MATCHES TAB */}
         {activeTab === 'matches' && (
           <div className="space-y-4">
-            <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="text-left">
                 <h2 className="text-base font-bold text-neutral-900 dark:text-white">AI Collaborator Matches</h2>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">Recommended partners based on complementary skills and profile activity.</p>
@@ -621,7 +621,7 @@ export default function TalentGraphPage() {
             </div>
 
             {loadingMatches && timeRemaining.matches > 0 ? (
-              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
                 <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
                   <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
                   <div className="absolute inset-0 rounded-full border-4 border-t-[#8B5CF6] border-r-[#8B5CF6] animate-spin"></div>
@@ -642,7 +642,7 @@ export default function TalentGraphPage() {
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
               </div>
             ) : matches.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-6">
+              <div className="text-center py-16 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6">
                 <Users className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
                 <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">Collaborator Recommendations</h3>
                 
@@ -670,7 +670,7 @@ export default function TalentGraphPage() {
                   return (
                     <div
                       key={match.userId}
-                      className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 shadow-sm space-y-4 text-left"
+                      className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4 text-left"
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div className="flex gap-3">
@@ -749,7 +749,7 @@ export default function TalentGraphPage() {
         {/* 2. OPPORTUNITY FEED TAB */}
         {activeTab === 'opportunities' && (
           <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
                 <h2 className="text-base font-bold text-neutral-900 dark:text-white">AI Project Opportunity Feed</h2>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">Startup ideas, collaboration openings, and open-source projects selected for you.</p>
@@ -775,7 +775,7 @@ export default function TalentGraphPage() {
             </div>
 
             {loadingFeed && timeRemaining.opportunities > 0 ? (
-              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
                 <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
                   <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
                   <div className="absolute inset-0 rounded-full border-4 border-t-[#3B82F6] border-r-[#3B82F6] animate-spin"></div>
@@ -796,7 +796,7 @@ export default function TalentGraphPage() {
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
               </div>
             ) : opportunities.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl">
+              <div className="text-center py-16 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl">
                 <Briefcase className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
                 <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">Feed Empty</h3>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto mb-4">
@@ -811,7 +811,7 @@ export default function TalentGraphPage() {
                 {opportunities.map((opp, idx) => (
                   <div
                     key={opp.id || idx}
-                    className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 shadow-sm flex flex-col justify-between"
+                    className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between"
                   >
                     <div className="space-y-3">
                       <div className="flex justify-between items-start">
@@ -849,7 +849,7 @@ export default function TalentGraphPage() {
         {/* 3. TEAM BUILDER TAB */}
         {activeTab === 'team' && (
           <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5">
+            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
               <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">AI Team Builder</h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
                 Describe a side project, hackathon project, or startup idea. AI will scan the user list and find ideal collaborators.
@@ -897,7 +897,7 @@ export default function TalentGraphPage() {
             </div>
 
             {buildingTeam && timeRemaining.team > 0 ? (
-              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
                 <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
                   <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
                   <div className="absolute inset-0 rounded-full border-4 border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
@@ -929,7 +929,7 @@ export default function TalentGraphPage() {
                     return (
                       <div
                         key={rec.userId}
-                        className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 flex flex-col sm:flex-row justify-between gap-4 items-start"
+                        className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col sm:flex-row justify-between gap-4 items-start"
                       >
                         <div className="space-y-3 flex-1">
                           <div className="flex gap-3 items-center">
@@ -1000,7 +1000,7 @@ export default function TalentGraphPage() {
         {/* 4. HIRING ASSISTANT TAB */}
         {activeTab === 'hiring' && (
           <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5">
+            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
               <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">AI Founder & Hiring Assistant</h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
                 Describe a developer opening, startup role, or business problem you need solved. AI will find developers matching your stack.
@@ -1038,7 +1038,7 @@ export default function TalentGraphPage() {
             </div>
 
             {loadingHiring && timeRemaining.hiring > 0 ? (
-              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
+              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
                 <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
                   <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
                   <div className="absolute inset-0 rounded-full border-4 border-t-amber-500 border-r-amber-500 animate-spin"></div>
@@ -1078,7 +1078,7 @@ export default function TalentGraphPage() {
                     return (
                       <div
                         key={rec.userId}
-                        className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5 flex flex-col sm:flex-row justify-between gap-4 items-start"
+                        className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col sm:flex-row justify-between gap-4 items-start"
                       >
                         <div className="space-y-3 flex-1">
                           <div className="flex gap-3 items-center">
@@ -1149,7 +1149,7 @@ export default function TalentGraphPage() {
 
         {/* 5. AI CHAT ASSISTANT TAB */}
         {activeTab === 'chat' && (
-          <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl flex flex-col h-[550px] overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl flex flex-col h-[550px] overflow-hidden shadow-sm">
             <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex items-center justify-between text-left">
               <div>
                 <h2 className="text-sm font-bold text-neutral-900 dark:text-white">Discuss AI Network Chat</h2>
@@ -1296,7 +1296,7 @@ export default function TalentGraphPage() {
         {/* 6. TRANSPARENCY LOGS TAB */}
         {activeTab === 'logs' && (
           <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl p-5">
+            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
               <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">AI Actions & Transparency Log</h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 A listing of actions performed by AI on your behalf, explaining how your profile is processed.
@@ -1308,7 +1308,7 @@ export default function TalentGraphPage() {
                 <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
               </div>
             ) : actionLogs.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl">
+              <div className="text-center py-16 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl">
                 <Terminal className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
                 <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">No Activity Logs</h3>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
@@ -1316,7 +1316,7 @@ export default function TalentGraphPage() {
                 </p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-neutral-800 dark:bg-black border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {actionLogs.map((log) => (
                     <div key={log.id} className="p-4 flex flex-col sm:flex-row justify-between gap-3 text-xs">

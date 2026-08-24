@@ -525,18 +525,18 @@ export default function DevRadarPage() {
   let techieBoxClass = '';
 
   if (isLight) {
-    headerClass = 'bg-white/80 border-neutral-200 text-neutral-800 backdrop-blur-md';
-    containerClass = 'bg-[#F3F4F6] text-neutral-800';
-    cardClass = 'bg-white/95 border-neutral-200 shadow-[0_10px_30px_rgba(0,0,0,0.08)] text-neutral-800';
-    settingsOverlayClass = 'bg-white/95 border-slate-200 shadow-[0_4px_20px_rgba(0,0,0,0.05)] text-slate-700 rounded-2xl';
-    techieBoxClass = 'bg-white/90 border-slate-200/80 shadow-[0_15px_40px_rgba(0,0,0,0.06)] text-slate-800 rounded-2xl border backdrop-blur-2xl';
+    headerClass = 'bg-white/90 border-neutral-200 text-neutral-950 backdrop-blur-xl';
+    containerClass = 'bg-white text-neutral-950';
+    cardClass = 'bg-white/95 border-neutral-200 shadow-xl text-neutral-950';
+    settingsOverlayClass = 'bg-white/95 border-neutral-200 shadow-xl text-neutral-700 rounded-2xl';
+    techieBoxClass = 'bg-white/95 border-neutral-200 shadow-2xl text-neutral-950 rounded-2xl border backdrop-blur-xl';
     mapThemeClass = '';
   } else if (isDark) {
-    headerClass = 'bg-[#0F172A]/80 border-white/10 text-white backdrop-blur-md';
-    containerClass = 'bg-[#0b0f19] text-white';
-    cardClass = 'bg-[#0F172A]/95 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)] text-white';
-    settingsOverlayClass = 'bg-[#0F172A]/95 border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)] text-neutral-200 rounded-2xl';
-    techieBoxClass = 'bg-slate-950/80 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] text-white rounded-2xl border backdrop-blur-2xl';
+    headerClass = 'bg-black/90 border-neutral-800 text-white backdrop-blur-xl';
+    containerClass = 'bg-black text-white';
+    cardClass = 'bg-neutral-950/95 border-neutral-800 shadow-2xl text-white';
+    settingsOverlayClass = 'bg-neutral-950/95 border-neutral-800 shadow-2xl text-neutral-200 rounded-2xl';
+    techieBoxClass = 'bg-neutral-950/95 border-neutral-800 shadow-2xl text-white rounded-2xl border backdrop-blur-xl';
     mapThemeClass = 'dark-map';
   } else if (isDiscussLight) {
     headerClass = 'bg-white border-b-2 border-black text-black';
@@ -568,10 +568,10 @@ export default function DevRadarPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-[17px] font-black tracking-tight uppercase flex items-center">
+            <h1 className="flex items-center text-[17px] font-bold tracking-tight">
               <span>DevRadar</span>
             </h1>
-            <p className="text-[10px] uppercase font-bold tracking-wider opacity-60">Developer Mapping</p>
+            <p className="text-[11px] font-medium opacity-60">Developers near you</p>
           </div>
         </div>
 
@@ -644,7 +644,7 @@ export default function DevRadarPage() {
       {!myCoords && !loading && (
         <div className={`absolute top-20 left-4 z-[999] max-w-[280px] p-4 border backdrop-blur-md transition-all ${settingsOverlayClass}`}>
           <div className="flex items-start gap-2.5">
-            <span className={`text-base shrink-0 ${isDiscussBlack ? 'text-[#FF007F]' : isDiscussLight ? 'text-[#EF4444]' : 'text-blue-500'}`}>📍</span>
+            <MapPin className={`h-4 w-4 shrink-0 ${isDiscussBlack ? 'text-[#FF007F]' : isDiscussLight ? 'text-[#EF4444]' : 'text-blue-500'}`} />
             <div>
               <p className="text-[11px] font-bold leading-relaxed">
                 You aren't visible on the map. Turn on Location Sharing in your profile to show up and center the map on your location!

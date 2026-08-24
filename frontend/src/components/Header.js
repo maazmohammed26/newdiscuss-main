@@ -15,15 +15,13 @@ import {
   Users, 
   Radar,
   Send,
-  Sparkles
+  Search
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Header() {
-  const [showGuidelines, setShowGuidelines] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -102,7 +100,7 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => setShowGuidelines(true)}
+              onClick={() => navigate('/guidelines')}
               className="p-2 rounded-full text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               title="Community Guidelines"
             >
@@ -153,6 +151,10 @@ export default function Header() {
                 </div>
 
                 <div className="space-y-1 text-sm font-medium">
+                  <button onClick={() => { navigate('/search'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Search className="w-5 h-5 text-neutral-900 dark:text-white" />
+                    <span>Search Discuss</span>
+                  </button>
                   <button onClick={() => { navigate('/chat'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
                     <Send className="w-5 h-5 text-[#0095F6]" />
                     <span>Direct Messages</span>
@@ -177,7 +179,7 @@ export default function Header() {
                     <Bookmark className="w-5 h-5 text-pink-500" />
                     <span>Saved Posts</span>
                   </button>
-                  <button onClick={() => { setShowGuidelines(true); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                  <button onClick={() => { navigate('/guidelines'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
                     <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
                     <span>Community Guidelines</span>
                   </button>
@@ -205,23 +207,6 @@ export default function Header() {
           </>
         )}
       </AnimatePresence>
-
-      {/* Community Guidelines Dialog */}
-      <Dialog open={showGuidelines} onOpenChange={setShowGuidelines}>
-        <DialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl max-w-md p-6">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-neutral-900 dark:text-white text-base">
-              <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
-              <span>Discuss Safety & Guidelines</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 pt-2 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
-            <p>• <b>Authentic Collaboration</b>: Share original code, projects, and positive constructive feedback.</p>
-            <p>• <b>Zero Harassment</b>: Respect fellow builders and creators at all times.</p>
-            <p>• <b>AI Moderation</b>: Discuss AI continuously screens content for safety and security.</p>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <CreatePostModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
       <GuestAuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />

@@ -2,10 +2,12 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   padding: 12px;
-  background: var(--bg-secondary, #f8f9fa);
-  border-radius: 12px;
+  background: #fafafa;
+  border: 1px solid #efefef;
+  border-radius: 14px;
+  transition: background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
 }
 
 .media-preview-grid {
@@ -47,25 +49,45 @@
 
 .add-media-slot {
   aspect-ratio: 1;
-  border: 2px dashed var(--primary-color, #339af0);
-  border-radius: 8px;
+  border: 1px dashed #c7c7c7;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--primary-color, #339af0);
+  color: #0095f6;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.add-media-slot:hover {
-  background: rgba(51, 154, 240, 0.1);
+.add-media-slot:hover:not(:disabled) {
+  background: rgba(0, 149, 246, 0.06);
+  border-color: #0095f6;
 }
 
 .add-media-slot span {
   font-size: 12px;
   font-weight: bold;
+}
+
+.media-upload-disabled {
+  opacity: 0.62;
+}
+
+.add-media-slot:disabled {
+  cursor: not-allowed;
+  color: #8e8e8e;
+}
+
+.dark .media-upload-container {
+  background: #0a0a0a;
+  border-color: #262626;
+}
+
+.dark .add-media-slot {
+  border-color: #363636;
+  background: #121212;
 }
 
 .upload-now-btn {

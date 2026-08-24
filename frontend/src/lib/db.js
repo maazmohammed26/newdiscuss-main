@@ -480,6 +480,27 @@ export const getPosts = async (searchQuery = null) => {
   return postsList;
 };
 
+// Lightweight global search used by the dedicated Search page. It intentionally
+// reads only post metadata/content so search is not delayed by votes or comments.
+export const searchPosts = async (searchQuery, limit = 20) => {
+  const q = String(searchQuery || '').toLowerCase().trim();
+  if (!q) return [];
+
+  const snapshot = await get(ref(database, 'posts'));
+  if (!snapshot.exists()) return [];
+
+  return Object.entries(snapshot.val())
+    .map(([id, post]) => ({ id, ...post }))
+    .filter((post) => {
+      const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
+      return [post.title, post.content, post.author_username, post.author_name, post.type]
+        .some((value) => String(value || '').toLowerCase().includes(q)) ||
+        hashtags.some((tag) => String(tag).toLowerCase().includes(q.replace(/^#/, '')));
+    })
+    .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
+    .slice(0, limit);
+};
+
 export const updatePost = async (postId, updates, userId) => {
   const postRef = ref(database, `posts/${postId}`);
   const snapshot = await get(postRef);
@@ -984,4 +1005,3 @@ export const deletePendingOTP = async (uid) => {
   const otpRef = ref(database, `pendingVerifications/${uid}`);
   await remove(otpRef);
 };
-

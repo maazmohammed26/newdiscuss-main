@@ -11,6 +11,7 @@ import { IoVideocam } from 'react-icons/io5';
 import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
 import { createPulse } from '@/lib/pulseDb';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function CreatePostModal({ open, onClose, onCreated, initialType = 'discussion' }) {
   const { user } = useAuth();
@@ -111,28 +112,33 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); reset(); } }}>
-      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-lg bg-white dark:bg-[#1E293B] dark:border-[#334155] max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-        <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-bold text-[#0F172A] dark:text-[#F1F5F9]">Create a post</DialogTitle>
+      <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-xl bg-white dark:bg-black border-[#DBDBDB] dark:border-[#262626] rounded-t-[24px] sm:rounded-[24px] max-h-[92vh] overflow-y-auto overflow-x-hidden p-0 shadow-[0_24px_80px_rgba(0,0,0,0.25)] [&::-webkit-scrollbar]:hidden" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+        <DialogHeader className="sticky top-0 z-20 px-5 py-4 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-[#EFEFEF] dark:border-[#262626]">
+          <DialogTitle className="text-[17px] font-bold text-neutral-900 dark:text-white">Create</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {error && <div data-testid="create-post-error" className="bg-[#EF4444]/8 border border-[#EF4444]/20 rounded-md p-3 text-[#EF4444] text-[13px]">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5">
+          <div className="flex items-center gap-3">
+            <UserAvatar src={user?.photo_url || user?.photoURL} username={user?.username || user?.displayName} className="w-10 h-10 rounded-full object-cover" />
+            <div><p className="text-[14px] font-bold text-neutral-900 dark:text-white">{user?.username || user?.displayName || 'Developer'}</p><p className="text-[11px] text-neutral-500">Share with the Discuss community</p></div>
+          </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {error && <div data-testid="create-post-error" className="flex items-center gap-2 bg-[#ED4956]/8 rounded-xl p-3 text-[#ED4956] text-[13px] font-medium"><AlertCircle className="w-4 h-4 shrink-0" />{error}</div>}
+
+          <div className="grid grid-cols-3 gap-1 p-1 bg-[#F3F3F3] dark:bg-[#121212] rounded-xl">
             <button type="button" data-testid="create-post-type-discussion" onClick={() => setPostType('discussion')}
-              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${postType === 'discussion' ? 'border-[#0095F6] bg-[#0095F6]/5' : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#0095F6]/30'}`}>
+              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-all ${postType === 'discussion' ? 'bg-white dark:bg-[#262626] shadow-sm' : 'hover:bg-white/50 dark:hover:bg-[#1A1A1A]'}`}>
               <MessageSquare className={`w-5 h-5 ${postType === 'discussion' ? 'text-[#0095F6]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`} />
-              <span className={`text-[13px] md:text-[15px] font-medium ${postType === 'discussion' ? 'text-[#0095F6]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}>Discussion</span>
+              <span className={`text-[11px] sm:text-[13px] font-semibold ${postType === 'discussion' ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'}`}>Discussion</span>
             </button>
             <button type="button" onClick={() => setPostType('project')}
-              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${postType === 'project' ? 'border-[#3B82F6] bg-[#3B82F6]/5' : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#3B82F6]/30'}`}>
+              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-all ${postType === 'project' ? 'bg-white dark:bg-[#262626] shadow-sm' : 'hover:bg-white/50 dark:hover:bg-[#1A1A1A]'}`}>
               <FolderGit2 className={`w-5 h-5 ${postType === 'project' ? 'text-[#3B82F6]' : 'text-[#64748B] dark:text-[#94A3B8]'}`} />
-              <span className={`text-[13px] md:text-[15px] font-medium ${postType === 'project' ? 'text-[#3B82F6]' : 'text-[#64748B] dark:text-[#94A3B8]'}`}>Project</span>
+              <span className={`text-[11px] sm:text-[13px] font-semibold ${postType === 'project' ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'}`}>Project</span>
             </button>
             <button type="button" onClick={() => setPostType('pulse')}
-              className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all col-span-2 ${postType === 'pulse' ? 'border-[#EF4444] bg-[#EF4444]/5' : 'border-[#E2E8F0] dark:border-[#334155] hover:border-[#EF4444]/30'}`}>
+              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-all ${postType === 'pulse' ? 'bg-white dark:bg-[#262626] shadow-sm' : 'hover:bg-white/50 dark:hover:bg-[#1A1A1A]'}`}>
               <PlayCircle className={`w-5 h-5 ${postType === 'pulse' ? 'text-[#EF4444]' : 'text-[#EF4444] opacity-60'}`} />
-              <span className={`text-[13px] md:text-[15px] font-medium ${postType === 'pulse' ? 'text-[#EF4444]' : 'text-[#94A3B8]'}`}>Pulse (Video)</span>
+              <span className={`text-[11px] sm:text-[13px] font-semibold ${postType === 'pulse' ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'}`}>Pulse</span>
             </button>
           </div>
 
@@ -141,7 +147,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
             <div>
               <Label className="text-[#0F172A] dark:text-[#F1F5F9] text-[13px] md:text-[15px] font-medium">Project Title</Label>
               <Input data-testid="create-post-title" value={title} onChange={(e) => setTitle(e.target.value)}
-                placeholder="Your project name" className="mt-1.5 bg-[#F1F5F9] dark:bg-[#0F172A] border-transparent dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#64748B] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 rounded-md" />
+                placeholder="Your project name" className="mt-1.5 h-11 bg-[#FAFAFA] dark:bg-[#0A0A0A] border-[#DBDBDB] dark:border-[#262626] dark:text-white focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 rounded-xl" />
             </div>
           )}
 
@@ -161,7 +167,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 setContent(e.target.value);
               }}
               placeholder={placeholderText}
-              rows={postType === 'discussion' ? 5 : 3} className="mt-1.5 bg-[#F1F5F9] dark:bg-[#0F172A] border-transparent dark:border-[#334155] dark:text-[#F1F5F9] dark:placeholder:text-[#64748B] focus:bg-white dark:focus:bg-[#1E293B] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 rounded-md resize-none" />
+              rows={postType === 'discussion' ? 5 : 3} className="mt-1.5 bg-[#FAFAFA] dark:bg-[#0A0A0A] border-[#DBDBDB] dark:border-[#262626] dark:text-white focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 rounded-2xl resize-none p-4 text-[14px] leading-relaxed" />
           </div>
 
           {/* Interactive Code Entry Option (only for Discussion posts) */}
@@ -337,8 +343,8 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
           )}
 
           <Button type="submit" data-testid="create-post-submit" disabled={loading}
-            className="w-full bg-[#0095F6] text-white hover:bg-[#1877F2] rounded-md py-2.5 font-medium shadow-sm">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Publish Post'}
+            className="w-full h-11 bg-[#0095F6] text-white hover:bg-[#1877F2] rounded-xl font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-70">
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Publishing…</> : `Share ${postType === 'pulse' ? 'Pulse' : postType === 'project' ? 'Project' : 'Discussion'}`}
           </Button>
         </form>
       </DialogContent>

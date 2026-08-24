@@ -340,9 +340,8 @@ export default function NewsPage() {
   }, [news, debouncedSearch]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
+    <div className="min-h-screen bg-white dark:bg-black pb-28 text-neutral-950 dark:text-white">
       <Header />
-      <MarqueeBar />
 
       {/* Syncing Indicator — only after first load (cached data exists) */}
       {isSyncing && !isFirstLoad && (
@@ -354,14 +353,14 @@ export default function NewsPage() {
         </div>
       )}
 
-      <div className="w-full max-w-5xl lg:max-w-[1300px] mx-auto px-4 lg:px-6 py-6 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 mt-6">
+      <div className="mx-auto w-full max-w-[1180px] px-4 pb-32 lg:px-6">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
           <Sidebar />
           <div className="min-w-0 flex-1">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+        <div className="flex flex-col gap-4 border-b border-neutral-200 py-6 dark:border-neutral-800 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-50 dark:text-white tracking-tight flex items-center gap-2">
-              Tech News <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider select-none">BETA</span>
+            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-neutral-950 dark:text-white">
+              Tech News <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400">Beta</span>
             </h1>
             <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1">
               Latest updates and tech news from the community.
@@ -374,7 +373,7 @@ export default function NewsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search news..." 
-                className="pl-9 bg-white dark:bg-neutral-800 dark:bg-black border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-neutral-900 dark:text-neutral-50 dark:text-white"
+                className="h-10 rounded-xl border-neutral-200 bg-neutral-50 pl-9 text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:text-white"
               />
             </div>
             {isDiscussTeam && (
@@ -396,7 +395,7 @@ export default function NewsPage() {
             
             {/* HackerNews mobile/tablet widget */}
             {hnStories.length > 0 && (
-              <div className="lg:hidden bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-3xl p-5 shadow-card animate-fade-in mb-6">
+              <div className="lg:hidden bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-card animate-fade-in mb-6">
                 <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#222] mb-4">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
@@ -455,7 +454,7 @@ export default function NewsPage() {
                     <div 
                       id={`news-${item.id}`} 
                       key={item.id} 
-                      className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] rounded-3xl border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] shadow-[0_8px_30px_rgb(241,245,249)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.06)] hover:discuss:shadow-[0_20px_40px_rgba(239,68,68,0.06)] hover:-translate-y-1 hover:border-blue-500/30 hover:discuss:border-red-500/30 transition-all duration-300 overflow-hidden relative group"
+                      className="bg-white dark:bg-black rounded-2xl border border-neutral-200 dark:border-neutral-800 transition-colors duration-200 overflow-hidden relative group"
                     >
                       {item.image && (
                         <div className="w-full h-48 md:h-64 bg-neutral-100 dark:bg-neutral-900 discuss:bg-[#000] relative overflow-hidden flex items-center justify-center">
@@ -547,7 +546,7 @@ export default function NewsPage() {
             <div className="sticky top-20 space-y-6 animate-fade-in">
               
               {/* HackerNews Desktop Card Widget */}
-              <div className="bg-white dark:bg-neutral-900/60 discuss:bg-[#151515] border border-neutral-100 dark:border-neutral-800 discuss:border-[#222] rounded-3xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
                 <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-neutral-800 discuss:border-[#222] mb-4">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />

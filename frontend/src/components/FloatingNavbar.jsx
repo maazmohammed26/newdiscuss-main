@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import UserAvatar from '@/components/UserAvatar';
-import ExploreMenuModal from '@/components/ExploreMenuModal';
 import {
   Home,
   Tv,
@@ -16,7 +15,6 @@ export default function FloatingNavbar() {
   const { user } = useAuth();
   const location = useLocation();
   const { unreadChatCount } = useHighlights();
-  const [showExploreModal, setShowExploreModal] = useState(false);
   const [domLoading, setDomLoading] = useState(false);
 
   useEffect(() => {
@@ -49,7 +47,7 @@ export default function FloatingNavbar() {
     { key: 'home', to: '/feed', active: currentPath === '/feed', icon: Home, label: 'Home' },
     { key: 'pulse', to: '/pulse', active: currentPath === '/pulse', icon: Clapperboard, label: 'Pulse' },
     { key: 'chats', to: '/chat', active: currentPath.startsWith('/chat'), icon: Send, label: 'Chats', badge: unreadChatCount },
-    { key: 'search', action: () => setShowExploreModal(true), active: ['/devradar', '/news', '/jobs', '/editor', '/bookmarks', '/talentgraph'].includes(currentPath), icon: Search, label: 'Search' },
+    { key: 'search', to: '/search', active: currentPath === '/search', icon: Search, label: 'Search' },
     { key: 'profile', to: user ? '/profile' : '/login', active: currentPath === '/profile', label: 'Profile' },
   ];
 
@@ -133,11 +131,6 @@ export default function FloatingNavbar() {
           })}
         </div>
       </nav>
-
-      <ExploreMenuModal
-        open={showExploreModal}
-        onClose={() => setShowExploreModal(false)}
-      />
     </>
   );
 }

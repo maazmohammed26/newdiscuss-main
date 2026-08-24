@@ -5,13 +5,14 @@ import { uploadVideo } from '@/lib/imagekit';
 import { IoClose, IoImage, IoVideocam, IoCloudUpload } from 'react-icons/io5';
 import './MediaUpload.css';
 
-const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', folder = 'general', multiple = false, maxFiles = null }) => {
+const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', folder = 'general', multiple = false, maxFiles = null, disabled = false, disabledMessage = '' }) => {
   const [previews, setPreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef(null);
 
   const handleFileSelect = async (e) => {
+    if (disabled) return;
     let files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -68,7 +69,7 @@ const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', fold
   };
 
   return (
-    <div className="media-upload-container">
+    <div className={`media-upload-container ${disabled ? 'media-upload-disabled' : ''}`}>
       <div className="media-preview-grid">
         {previews.map((preview, index) => (
           <div key={index} className="media-preview-item relative">
@@ -86,10 +87,10 @@ const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', fold
         ))}
         
         {(!uploading && (multiple || previews.length === 0)) && (
-          <div className="add-media-slot" onClick={() => fileInputRef.current?.click()}>
+          <button type="button" className="add-media-slot" onClick={() => !disabled && fileInputRef.current?.click()} disabled={disabled}>
             {type === 'image' ? <IoImage size={32} /> : <IoVideocam size={32} />}
-            <span>Add {type}</span>
-          </div>
+            <span>{disabled ? (disabledMessage || `${type} unavailable`) : `Add ${type}`}</span>
+          </button>
         )}
       </div>
 
@@ -99,6 +100,7 @@ const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', fold
         onChange={handleFileSelect}
         accept={type === 'image' ? 'image/*' : 'video/*'}
         multiple={multiple}
+        disabled={disabled}
         style={{ display: 'none' }}
       />
 

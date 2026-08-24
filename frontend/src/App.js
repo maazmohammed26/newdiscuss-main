@@ -49,6 +49,8 @@ const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
 const LoginBridgePage = lazy(() => import('@/pages/LoginBridgePage'));
 const DownloadPage     = lazy(() => import('@/pages/DownloadPage'));
+const SearchPage       = lazy(() => import('@/pages/SearchPage'));
+const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
 
 // ── ProtectedRoute ────────────────────────────────────────────────────────────
 // Gate for authenticated routes. Shows a loading screen while auth resolves.
@@ -105,7 +107,7 @@ function AppRoutes() {
     const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge', '/download'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
-    const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+    const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
 
     if (isPublicRoute || (!user && !isAppRoute)) {
       // Force default light theme (remove all active theme selectors)
@@ -141,6 +143,8 @@ function AppRoutes() {
         <Route path="/terms"   element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/download" element={<DownloadPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/guidelines" element={<GuidelinesPage />} />
 
         {/* Auth (redirect if already logged in) */}
         <Route path="/login"    element={<AuthRedirect><LoginPage /></AuthRedirect>} />
@@ -241,7 +245,7 @@ function OnboardingWrapper({ children }) {
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email', '/login-bridge', '/download'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
+  const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
   const isAiChatRoute = location.pathname === '/ai-assistant';
   const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 
