@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toggleVote, deletePost, updatePost } from '@/lib/db';
+import { toggleVote, deletePost } from '@/lib/db';
 import { createCommentFirestore } from '@/lib/commentsDb';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
@@ -22,7 +22,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { 
   Heart, 
@@ -34,14 +34,11 @@ import {
   Trash2, 
   Github, 
   ExternalLink, 
-  Loader2, 
   Globe, 
   RotateCcw, 
   Flag, 
   Check, 
   ShieldCheck, 
-  ShieldAlert, 
-  Sparkles,
   ThumbsDown
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -58,17 +55,7 @@ const TRANSLATE_LANGUAGES = [
   { code: 'en', label: 'English' },
 ];
 
-const LS_PREF_LANG = 'discuss_translate_pref_lang';
 const LANG_LABELS = Object.fromEntries(TRANSLATE_LANGUAGES.map(l => [l.code, l.label]));
-
-function getPreferredLang() {
-  try { return localStorage.getItem(LS_PREF_LANG) || null; } catch (e) { return null; }
-}
-
-function setPreferredLang(code) {
-  try { if (code) localStorage.setItem(LS_PREF_LANG, code); } catch (e) {}
-}
-
 const POST_URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 const TRANSLATE_API_BASE = 'https://translate.googleapis.com/translate_a/single';
 
@@ -111,7 +98,7 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVoteChanged, onTagClick, isSelectable = false, isSelected = false, onSelectToggle }) {
+export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVoteChanged, onTagClick }) {
   const navigate = useNavigate();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -122,22 +109,18 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const [deleting, setDeleting] = useState(false);
   const [externalLink, setExternalLink] = useState(null);
   const [previewUser, setPreviewUser] = useState(null);
-  const [hasNewCommentBadge, setHasNewCommentBadge] = useState(false);
   const [translatedContent, setTranslatedContent] = useState(null);
   const [translating, setTranslating] = useState(false);
-  const [isScoringSafety, setIsScoringSafety] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportedLocally, setReportedLocally] = useState(false);
   const [showSafetyExplanation, setShowSafetyExplanation] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showHeartPop, setShowHeartPop] = useState(false);
   const [quickComment, setQuickComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  // Votes & state
   const [upvoteCount, setUpvoteCount] = useState(post.upvotes || 0);
   const [downvoteCount, setDownvoteCount] = useState(post.downvotes || 0);
   const [userVote, setUserVote] = useState(post.user_vote || null);
@@ -148,7 +131,6 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     setUserVote(post.user_vote || null);
   }, [post.upvotes, post.downvotes, post.user_vote]);
 
-  // Bookmarks state
   useEffect(() => {
     if (!currentUser?.id) {
       setIsBookmarked(false);
@@ -314,12 +296,13 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
 
   return (
     <>
+      {/* Edge-to-Edge Instagram Post (No card borders/shadows/rounded boxes) */}
       <article
         data-testid={`post-card-${post.id}`}
-        className="w-full bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] rounded-2xl mb-4 shadow-xs overflow-hidden transition-colors duration-200"
+        className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] pb-4 mb-2 select-none"
       >
         {/* Post Header */}
-        <div className="flex items-center justify-between px-3.5 py-3">
+        <div className="flex items-center justify-between px-3.5 py-2.5">
           <div className="flex items-center gap-2.5 min-w-0">
             <div 
               onClick={(e) => { e.stopPropagation(); setPreviewUser(post.author_id); }}
@@ -338,14 +321,10 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               <span
                 data-testid={`post-author-${post.id}`}
                 onClick={(e) => { e.stopPropagation(); navigate(`/user/${post.author_id}`); }}
-                className="font-semibold text-[13.5px] text-neutral-900 dark:text-white hover:opacity-80 cursor-pointer truncate flex items-center gap-1"
+                className="font-bold text-[13.5px] text-neutral-950 dark:text-white hover:opacity-80 cursor-pointer truncate flex items-center gap-1"
               >
                 {post.author_username}
                 {post.author_verified && <VerifiedBadge size="xs" />}
-              </span>
-
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-                {isProject ? 'Project' : 'Discussion'}
               </span>
 
               <span className="text-neutral-400 text-xs">•</span>
@@ -361,7 +340,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                 <button
                   onClick={(e) => e.stopPropagation()}
                   aria-label="Post options"
-                  className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 transition-colors cursor-pointer"
+                  className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
                 >
                   <MoreHorizontal className="w-5 h-5" />
                 </button>
@@ -446,7 +425,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </div>
         </div>
 
-        {/* Media Carousel / Double Tap Area */}
+        {/* Media Carousel / Double Tap Area (Edge-to-edge, perfect aspect ratio) */}
         {post.media && post.media.length > 0 && (
           <div 
             className="relative w-full overflow-hidden bg-black select-none"
@@ -477,24 +456,19 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </div>
         )}
 
-        {/* Code Snippet Box */}
+        {/* Developer Code Box */}
         {post.code && (
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="mx-3.5 my-2.5 rounded-xl border border-neutral-800 bg-[#0A0A0A] overflow-hidden"
+            className="mx-3.5 my-2 rounded-xl border border-neutral-800 bg-[#0A0A0A] overflow-hidden"
           >
-            <div className="px-3.5 py-2 bg-[#121212] border-b border-neutral-800 flex items-center justify-between select-none">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ED4956]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
-                <span className="text-[11px] font-mono font-bold text-neutral-400 ml-2 uppercase">
-                  {post.codeLanguage || 'Code'}
-                </span>
-              </div>
+            <div className="px-3.5 py-1.5 bg-[#121212] border-b border-neutral-800 flex items-center justify-between select-none">
+              <span className="text-[11px] font-mono font-bold text-neutral-400 uppercase">
+                {post.codeLanguage || 'Code'}
+              </span>
               <button
                 onClick={handleCopyCode}
-                className="flex items-center gap-1 text-[11px] font-semibold text-neutral-400 hover:text-white px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                className="flex items-center gap-1 text-[11px] font-semibold text-neutral-400 hover:text-white px-2 py-0.5 rounded bg-white/5"
               >
                 {copied ? <Check className="w-3 h-3 text-green-400" /> : null}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -506,7 +480,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </div>
         )}
 
-        {/* Action Bar */}
+        {/* Action Bar (Heart, Comment, Share, Bookmark on Right) */}
         <div className="px-3.5 pt-2.5 pb-1 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -514,7 +488,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               onClick={() => handleVote('up')}
               disabled={voting}
               aria-label="Like post"
-              className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+              className="p-0.5 text-neutral-900 dark:text-white hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
             >
               <Heart 
                 className={`w-6 h-6 transition-colors ${
@@ -529,7 +503,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               data-testid={`post-comments-btn-${post.id}`}
               onClick={() => setShowComments(!showComments)}
               aria-label="Comments"
-              className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+              className="p-0.5 text-neutral-900 dark:text-white hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
             >
               <MessageCircle className="w-6 h-6 stroke-[1.8px] -rotate-6" />
             </button>
@@ -538,28 +512,16 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               data-testid={`post-share-btn-${post.id}`}
               onClick={() => setShowShare(true)}
               aria-label="Share"
-              className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+              className="p-0.5 text-neutral-900 dark:text-white hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
             >
               <Send className="w-6 h-6 stroke-[1.8px] -rotate-12" />
-            </button>
-
-            <button
-              onClick={() => {
-                const textToSummarize = (post.title || '') + '\n' + (post.content || '');
-                const prompt = `Summarize this post:\n\n${textToSummarize}`;
-                navigate('/ai-assistant', { state: { prompt } });
-              }}
-              title="Summarize with Discuss AI"
-              className="p-0.5 text-[#0095F6] hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
-            >
-              <Sparkles className="w-5 h-5 stroke-[2px]" />
             </button>
           </div>
 
           <button
             onClick={handleBookmarkClick}
             aria-label="Save post"
-            className="p-0.5 text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
+            className="p-0.5 text-neutral-900 dark:text-white hover:opacity-70 transition-transform active:scale-125 cursor-pointer"
           >
             <Bookmark className={`w-6 h-6 ${isBookmarked ? 'fill-current text-neutral-900 dark:text-white' : 'stroke-[1.8px]'}`} />
           </button>
@@ -575,11 +537,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         </div>
 
         {/* Caption & Post Body */}
-        <div className="px-3.5 pt-1 pb-2 space-y-1">
+        <div className="px-3.5 pt-1 pb-1 space-y-1">
           {isProject && post.title && (
             <h3 
               onClick={() => navigate(`/post/${post.id}`)}
-              className="font-bold text-[14.5px] text-neutral-950 dark:text-white hover:text-[#0095F6] cursor-pointer transition-colors"
+              className="font-bold text-[14px] text-neutral-950 dark:text-white hover:text-[#0095F6] cursor-pointer transition-colors"
             >
               {post.title}
             </h3>
@@ -670,9 +632,10 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             </button>
           )}
 
+          {/* Inline comment quick input */}
           <form 
             onSubmit={handleQuickCommentSubmit}
-            className="flex items-center justify-between pt-2 border-t border-[#EFEFEF] dark:border-[#262626] mt-2"
+            className="flex items-center justify-between pt-1.5 mt-1"
           >
             <input
               type="text"
@@ -693,13 +656,13 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           </form>
         </div>
 
+        {/* Comments Section Drawer */}
         {showComments && (
           <div className="border-t border-[#EFEFEF] dark:border-[#262626] bg-neutral-50/50 dark:bg-black/40">
             <CommentsSection
               postId={post.id}
               postAuthorId={post.author_id}
               currentUser={currentUser}
-              onBadgeClear={() => setHasNewCommentBadge(false)}
               onAuthRequired={() => setShowAuthModal(true)}
             />
           </div>
@@ -733,10 +696,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
           targetId={post.id}
           targetAuthorId={post.author_id}
           currentUser={currentUser}
-          onReportSubmitted={() => {
-            setReportedLocally(true);
-            setShowReportModal(false);
-          }}
+          onReportSubmitted={() => setShowReportModal(false)}
         />
       )}
 
@@ -749,21 +709,12 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 pt-2">
-            <div className={`p-3.5 rounded-xl border ${
-              post.aiSafetyInfo?.score === 'Green' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-              post.aiSafetyInfo?.score === 'Yellow' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400' :
-              'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
-            }`}>
-              <div className="font-bold text-xs mb-1">
-                Status: {post.aiSafetyInfo?.score || 'Verified Safe'}
-              </div>
+            <div className="p-3.5 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+              <div className="font-bold text-xs mb-1">Status: Verified Safe</div>
               <p className="text-xs leading-relaxed">
                 {post.aiSafetyInfo?.reasoning || 'This content meets Discuss community and safety guidelines.'}
               </p>
             </div>
-            <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Analyzed automatically by Discuss AI moderation filters.
-            </p>
           </div>
         </DialogContent>
       </Dialog>

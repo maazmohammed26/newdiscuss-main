@@ -1,29 +1,25 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 import UserAvatar from '@/components/UserAvatar';
+import CreatePostModal from '@/components/CreatePostModal';
+import GuestAuthModal from '@/components/GuestAuthModal';
 import { 
   Heart, 
-  Send, 
+  Plus, 
   Menu, 
   X, 
-  ChevronRight, 
   Newspaper, 
   Briefcase, 
   Code, 
   Bookmark, 
-  HelpCircle, 
-  ChevronDown, 
-  Sparkles, 
-  Users, 
   ShieldCheck, 
-  ShieldAlert,
-  Search,
-  Radar
+  Users, 
+  Radar,
+  Send,
+  Sparkles
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
@@ -32,11 +28,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Header() {
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   const { user, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { unreadChatCount, pendingFriendRequests } = useHighlights();
+  const { unreadChatCount } = useHighlights();
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/verify-email'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
@@ -44,147 +43,101 @@ export default function Header() {
   const isAiChatRoute = location.pathname === '/ai-assistant';
   const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 
-  const headerClass = `sticky top-0 z-40 bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-[#DBDBDB] dark:border-[#262626] select-none transition-colors duration-200 ${
+  const handlePlusClick = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowCreateModal(true);
+  };
+
+  const headerClass = `sticky top-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-[#DBDBDB] dark:border-[#262626] select-none transition-colors duration-200 ${
     hasNavbar ? 'md:fixed md:top-0 md:left-0 md:w-full md:pl-[100px] lg:pl-0 md:z-40' : 'w-full'
   }`;
 
   return (
     <>
       <header className={headerClass}>
-        {/* Mobile/Tablet Header */}
-        <div className="lg:hidden max-w-5xl mx-auto px-4 h-14 flex items-center justify-between w-full relative">
-          <Link to="/" className="flex items-center" data-testid="header-logo">
+        {/* Mobile/Tablet Header: Left (+), Center (Discuss), Right (Heart + Menu) */}
+        <div className="lg:hidden max-w-5xl mx-auto px-4 h-12 flex items-center justify-between w-full relative">
+          {/* Left: Plus Icon for Create Post */}
+          <button
+            onClick={handlePlusClick}
+            aria-label="Create Post"
+            className="p-1.5 text-neutral-900 dark:text-white hover:opacity-70 transition-transform active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-6 h-6 stroke-[2.2px]" />
+          </button>
+
+          {/* Center: Centered Discuss Script Logo */}
+          <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center" data-testid="header-logo">
             <DiscussLogo size="md" />
           </Link>
 
-          <div className="flex items-center gap-3">
-            {/* Direct messages / Chat shortcut */}
+          {/* Right: Heart (Activity/Notifications) & Hamburger Menu */}
+          <div className="flex items-center gap-1">
             <button
               onClick={() => navigate(user ? '/chat' : '/login')}
-              className="relative p-2 rounded-full text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-opacity"
-              title="Messages"
+              className="relative p-1.5 text-neutral-900 dark:text-white hover:opacity-70 transition-opacity"
+              title="Activity"
             >
-              <Send className="w-5 h-5 -rotate-12" />
+              <Heart className="w-6 h-6 stroke-[2px]" />
               {unreadChatCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-[#ED4956] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {unreadChatCount > 99 ? '99+' : unreadChatCount}
-                </span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[#ED4956] rounded-full ring-2 ring-white dark:ring-black" />
               )}
             </button>
 
-            {/* Safety guidelines */}
+            <button
+              onClick={() => setShowDrawer(!showDrawer)}
+              className="p-1.5 text-neutral-900 dark:text-white hover:opacity-70 transition-opacity"
+              title="Menu"
+            >
+              {showDrawer ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6 stroke-[2px]" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden lg:flex max-w-5xl mx-auto px-6 h-14 items-center justify-between">
+          <Link to="/" className="flex items-center" data-testid="desktop-header-logo">
+            <DiscussLogo size="lg" />
+          </Link>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handlePlusClick}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0095F6] hover:bg-[#1877F2] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5px]" />
+              <span>Create Post</span>
+            </button>
+
             <button
               onClick={() => setShowGuidelines(true)}
-              className="p-2 rounded-full text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-opacity"
+              className="p-2 rounded-full text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               title="Community Guidelines"
             >
               <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
             </button>
 
-            {/* Menu drawer button */}
-            <motion.button
-              onClick={() => setShowDrawer(!showDrawer)}
-              className="p-2 rounded-full text-neutral-800 dark:text-neutral-200 hover:opacity-70 transition-opacity"
-              title="Menu"
-              whileTap={{ scale: 0.95 }}
-            >
-              <motion.div
-                animate={{ rotate: showDrawer ? 180 : 0 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              >
-                {showDrawer ? <X className="w-5 h-5 text-[#ED4956]" /> : <Menu className="w-5 h-5" />}
-              </motion.div>
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Desktop Header */}
-        <div className="hidden lg:flex w-full px-8 h-14 items-center justify-between relative bg-white/90 dark:bg-black/90">
-          {/* Logo (Left-aligned) */}
-          <Link to="/feed" className="flex items-center gap-1.5">
-            <DiscussLogo size="md" />
-          </Link>
-
-          {/* Right Side Icons & Profile Dropdown */}
-          <div className="flex items-center gap-5">
-            {/* Guidelines */}
-            <button
-              onClick={() => setShowGuidelines(true)}
-              className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
-              title="Community Safety Guidelines"
-            >
-              <HelpCircle className="w-5 h-5" />
-            </button>
-
-            {/* Chat Icon with Badge */}
-            <Link
-              to={user ? "/chat" : "/login"}
-              className="relative p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
-              title="Messages"
-            >
-              <Send className="w-5 h-5 -rotate-12" />
-              {unreadChatCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-[#ED4956] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {unreadChatCount > 99 ? '99+' : unreadChatCount}
-                </span>
-              )}
-            </Link>
-
-            {/* User Dropdown */}
-            <div className="relative">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 focus:outline-none group cursor-pointer select-none">
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-[#DBDBDB] dark:border-[#262626] group-hover:border-[#0095F6] transition-colors">
-                      <UserAvatar src={user?.photo_url || null} username={user?.username || 'Guest'} className="w-full h-full object-cover" />
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-neutral-500 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white shadow-xl rounded-xl p-1.5">
-                  {user ? (
-                    <>
-                      <div className="px-3 py-2 border-b border-[#EFEFEF] dark:border-[#262626] mb-1">
-                        <p className="text-[11px] text-neutral-400 font-medium">Signed in as</p>
-                        <p className="text-sm font-bold truncate text-neutral-900 dark:text-white">@{user.username}</p>
-                      </div>
-                      <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1F1F1F]">
-                        Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/bookmarks')} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1F1F1F]">
-                        Bookmarks
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/editor')} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1F1F1F]">
-                        Code Tools
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-[#EFEFEF] dark:bg-[#262626] my-1" />
-                      <DropdownMenuItem onClick={() => {
-                        const { signOutUser } = require('@/lib/db');
-                        signOutUser().then(() => {
-                          navigate('/login');
-                        });
-                      }} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold text-[#ED4956] hover:bg-[#ED4956]/10">
-                        Sign Out
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/login')} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1F1F1F]">
-                        Sign In
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/register')} className="cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-[#1F1F1F] text-[#0095F6]">
-                        Create Account
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {user ? (
+              <Link to="/profile" className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full p-[1.5px] ig-story-gradient">
+                  <div className="w-full h-full rounded-full bg-white dark:bg-black p-[1px] overflow-hidden">
+                    <UserAvatar src={user.photo_url} username={user.username || 'You'} className="w-full h-full object-cover rounded-full" />
+                  </div>
+                </div>
+              </Link>
+            ) : (
+              <Link to="/login" className="px-4 py-1.5 bg-[#0095F6] text-white text-xs font-bold rounded-lg hover:bg-[#1877F2]">
+                Log In
+              </Link>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Slide-Out Drawer for Mobile */}
+      {/* Slide-out Menu Drawer */}
       <AnimatePresence>
         {showDrawer && (
           <>
@@ -192,217 +145,97 @@ export default function Header() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
               onClick={() => setShowDrawer(false)}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs block lg:hidden"
+              className="fixed inset-0 bg-black/50 z-50 backdrop-blur-xs"
             />
-
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 z-50 w-[290px] h-full flex flex-col justify-between border-l shadow-2xl p-5 block lg:hidden
-                bg-white text-neutral-900 border-[#DBDBDB]
-                dark:bg-[#121212] dark:text-neutral-50 dark:border-[#262626]"
+              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+              className="fixed right-0 top-0 bottom-0 w-72 bg-white dark:bg-black border-l border-[#DBDBDB] dark:border-[#262626] z-50 p-5 flex flex-col justify-between shadow-2xl"
             >
-              <div className="space-y-5 overflow-y-auto">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-[#EFEFEF] dark:border-[#262626]">
-                  <DiscussLogo size="sm" />
-                  <button
-                    onClick={() => setShowDrawer(false)}
-                    className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500"
-                    title="Close"
-                  >
+                  <DiscussLogo size="md" />
+                  <button onClick={() => setShowDrawer(false)} className="p-1 rounded-full text-neutral-500 hover:text-black dark:hover:text-white">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      setShowGuidelines(true);
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-blue-500/10 text-[#0095F6]">
-                      <ShieldCheck className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">Safety Guidelines</h4>
-                      <p className="text-[11px] text-neutral-500">Community rules</p>
-                    </div>
+                <div className="space-y-1 text-sm font-medium">
+                  <button onClick={() => { navigate('/chat'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Send className="w-5 h-5 text-[#0095F6]" />
+                    <span>Direct Messages</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      navigate('/news');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
-                      <Newspaper className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">Tech News</h4>
-                      <p className="text-[11px] text-neutral-500">Latest articles</p>
-                    </div>
+                  <button onClick={() => { navigate('/devradar'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Radar className="w-5 h-5 text-indigo-500" />
+                    <span>DevRadar</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      navigate('/jobs');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
-                      <Briefcase className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">Careers & Jobs</h4>
-                      <p className="text-[11px] text-neutral-500">Developer roles</p>
-                    </div>
+                  <button onClick={() => { navigate('/talentgraph'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Users className="w-5 h-5 text-amber-500" />
+                    <span>TalentGraph</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      navigate('/ai-assistant');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                      <Sparkles className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">Discuss AI</h4>
-                      <p className="text-[11px] text-neutral-500">Smart assistant</p>
-                    </div>
+                  <button onClick={() => { navigate('/news'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Newspaper className="w-5 h-5 text-emerald-500" />
+                    <span>Tech News</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      navigate('/devradar');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-sky-500/10 text-sky-500">
-                      <Radar className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">DevRadar</h4>
-                      <p className="text-[11px] text-neutral-500">Trending tech</p>
-                    </div>
+                  <button onClick={() => { navigate('/jobs'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Briefcase className="w-5 h-5 text-blue-500" />
+                    <span>Tech Jobs</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      navigate('/talentgraph');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-rose-500/10 text-rose-500">
-                      <Users className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">TalentGraph</h4>
-                      <p className="text-[11px] text-neutral-500">Developer connections</p>
-                    </div>
+                  <button onClick={() => { navigate('/bookmarks'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Bookmark className="w-5 h-5 text-pink-500" />
+                    <span>Saved Posts</span>
                   </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      navigate('/editor');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-                      <Code className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">Code Playground</h4>
-                      <p className="text-[11px] text-neutral-500">Run code</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowDrawer(false);
-                      if (!user) navigate('/login');
-                      else navigate('/bookmarks');
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                      <Bookmark className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-[14px]">Bookmarks</h4>
-                      <p className="text-[11px] text-neutral-500">Saved posts</p>
-                    </div>
+                  <button onClick={() => { setShowGuidelines(true); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
+                    <span>Community Guidelines</span>
                   </button>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#EFEFEF] dark:border-[#262626] flex items-center justify-between text-xs text-neutral-400">
-                <span className="font-script text-lg text-neutral-900 dark:text-white">Discuss</span>
-                <span>© 2026</span>
+              <div className="pt-4 border-t border-[#EFEFEF] dark:border-[#262626]">
+                {user ? (
+                  <button onClick={() => { navigate('/profile'); setShowDrawer(false); }} className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900">
+                    <div className="w-8 h-8 rounded-full overflow-hidden">
+                      <UserAvatar src={user.photo_url} username={user.username || 'You'} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">@{user.username}</div>
+                      <div className="text-[11px] text-neutral-400">View Profile</div>
+                    </div>
+                  </button>
+                ) : (
+                  <button onClick={() => { navigate('/login'); setShowDrawer(false); }} className="w-full py-2 bg-[#0095F6] text-white text-xs font-bold rounded-xl text-center">
+                    Log In
+                  </button>
+                )}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Guidelines Modal */}
+      {/* Community Guidelines Dialog */}
       <Dialog open={showGuidelines} onOpenChange={setShowGuidelines}>
-        <DialogContent className="max-w-md w-[95vw] rounded-2xl bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] shadow-2xl p-6 overflow-hidden">
-          <DialogHeader className="space-y-2">
-            <DialogTitle className="text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#0095F6] shrink-0" />
+        <DialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-neutral-900 dark:text-white text-base">
+              <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
               <span>Discuss Safety & Guidelines</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed font-medium">
-              We strive to keep Discuss a professional, respectful, and productive community for tech builders.
-            </DialogDescription>
           </DialogHeader>
-
-          <div className="mt-4 space-y-3">
-            <div className="bg-neutral-50 dark:bg-black/50 rounded-xl p-3.5 border border-[#EFEFEF] dark:border-[#262626] space-y-2">
-              <h4 className="text-xs font-bold text-[#0095F6]">
-                Community Standards
-              </h4>
-              <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                Be kind, respectful, and collaborative. Do not share copyrighted code without permission or post deceptive content.
-              </p>
-              <div className="text-[11px] text-neutral-500 dark:text-neutral-400 space-y-1">
-                <div>• Click <b>three dots (...)</b> on any post or comment to report violations.</div>
-                <div>• Flag inappropriate user behavior directly from profile cards.</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 p-3 bg-red-500/5 border border-red-500/10 rounded-xl text-xs text-neutral-600 dark:text-neutral-400">
-              <ShieldAlert className="w-4 h-4 text-[#ED4956] shrink-0 mt-0.5" />
-              <span>Reports are analyzed by Discuss AI and reviewed by our moderation team within 24 hours.</span>
-            </div>
+          <div className="space-y-3 pt-2 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
+            <p>• <b>Authentic Collaboration</b>: Share original code, projects, and positive constructive feedback.</p>
+            <p>• <b>Zero Harassment</b>: Respect fellow builders and creators at all times.</p>
+            <p>• <b>AI Moderation</b>: Discuss AI continuously screens content for safety and security.</p>
           </div>
-
-          <DialogFooter className="mt-5">
-            <Button
-              onClick={() => setShowGuidelines(false)}
-              className="w-full bg-[#0095F6] hover:bg-[#1877F2] text-white rounded-xl py-2 font-semibold transition-all"
-            >
-              Close
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
-      {hasNavbar && <div className="hidden md:block h-14" />}
+
+      <CreatePostModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      <GuestAuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
 }
