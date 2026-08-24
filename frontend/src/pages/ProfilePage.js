@@ -79,7 +79,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
-  FileText, LogOut, Loader2, ChevronDown, ChevronUp, ChevronRight, 
+  FileText, LogOut, Loader2, ChevronRight,
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
   Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy
@@ -1537,7 +1537,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== ACHIEVEMENTS & BADGES ==================== */}
-        <div className="mt-6 bg-white dark:bg-[#1E293B] dark:bg-black shadow-[0_4px_24px_rgba(0,0,0,0.03)] border dark:border-[#262626] rounded-2xl overflow-hidden transition-all duration-300">
+        <div className="mt-6 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
             className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -1549,7 +1549,7 @@ export default function ProfilePage() {
                 <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Earn official badges by publishing high-quality technical discussions</p>
               </div>
             </div>
-            {showAchievements ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
+            <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showAchievements ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
           </button>
 
           {showAchievements && (
@@ -1606,7 +1606,7 @@ export default function ProfilePage() {
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage your display name, bio, social links, and theme</p>
                 </div>
               </div>
-              {showProfileSettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
+              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showProfileSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
             </button>
 
             {showProfileSettings && (
@@ -2010,13 +2010,13 @@ export default function ProfilePage() {
               className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5" />
+                <Shield className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
                 <div className="text-left">
                   <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">App Security</h3>
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
                 </div>
               </div>
-              {showSecuritySettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
+              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showSecuritySettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
             </button>
 
             {showSecuritySettings && (
@@ -2140,7 +2140,7 @@ export default function ProfilePage() {
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
                 </div>
               </div>
-              {showLocationSettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
+              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showLocationSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
             </button>
 
             {showLocationSettings && (
@@ -2270,7 +2270,7 @@ export default function ProfilePage() {
                   <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
                 </div>
               </div>
-              {showNotificationSettings ? <ChevronUp className="w-5 h-5 text-neutral-500" /> : <ChevronDown className="w-5 h-5 text-neutral-500" />}
+              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showNotificationSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
             </button>
 
             {showNotificationSettings && (
@@ -2495,14 +2495,14 @@ export default function ProfilePage() {
 
 
         {/* ==================== FRIENDS SECTION ==================== */}
-        <div className="mt-6">
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowFriends(!showFriends)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#10B981]/10 discuss:bg-[#10B981]/10 flex items-center justify-center rounded-lg relative">
-                <Users className="w-4 h-4 text-[#10B981]" />
+              <div className="relative shrink-0">
+                <Users className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px]" />
                 {receivedRequests.length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-[#F59E0B] text-white text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-1">
                     <span>{receivedRequests.length}</span>
@@ -2517,11 +2517,11 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            {showFriends ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
+            <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showFriends ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
           </button>
 
           {showFriends && (
-            <div className="mt-4 space-y-4">
+            <div className="px-4 py-4 space-y-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
               {/* Received Friend Requests */}
               {receivedRequests.length > 0 && (
                 <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-xl p-4">
@@ -2842,15 +2842,13 @@ export default function ProfilePage() {
         {/* ==================== END FRIENDS SECTION ==================== */}
 
         {/* ==================== AI INSIGHTS SECTION ==================== */}
-        <div className="mt-6">
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowAiInsights(!showAiInsights)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#0095F6]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
-                <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-              </div>
+              <ShieldCheck className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
               <div className="text-left">
                 <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white">AI TalentGraph Insights</h2>
                 <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
@@ -2858,11 +2856,11 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            {showAiInsights ? <ChevronUp className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />}
+            <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showAiInsights ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
           </button>
 
           {showAiInsights && (
-            <div className="mt-4 bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl p-5 space-y-4">
+            <div className="px-4 py-4 space-y-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
               <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="text-left">
                   <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Profile Insights</h3>
@@ -2979,11 +2977,11 @@ export default function ProfilePage() {
         
 
         {/* Your Posts Section */}
-        <div className="mt-6">
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             data-testid="your-posts-toggle"
             onClick={() => setShowPosts(!showPosts)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
@@ -2996,7 +2994,7 @@ export default function ProfilePage() {
           </button>
 
           {showPosts && (
-            <div className="mt-4 space-y-4">
+            <div className="px-4 py-4 space-y-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
               {/* Filter bar */}
               <div data-testid="post-filter-bar" className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl px-3 py-2.5">
                 <Filter className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
@@ -3083,16 +3081,14 @@ export default function ProfilePage() {
         </div>
 
         {/* Your Pulses Section */}
-        <div className="mt-6">
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             data-testid="your-pulses-toggle"
             onClick={() => setShowPulses(!showPulses)}
-            className="w-full flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] px-5 py-4 hover:shadow-md dark:hover:shadow-none transition-all rounded-xl"
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#EF4444]/10 bg-[#0095F6]/10 flex items-center justify-center rounded-lg">
-                <PlayCircle className="w-4 h-4 text-[#EF4444] text-[#0095F6]" />
-              </div>
+              <PlayCircle className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
               <div className="text-left">
                 <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white"><span>Your Pulses</span></h2>
                 <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
@@ -3102,7 +3098,7 @@ export default function ProfilePage() {
           </button>
 
           {showPulses && (
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="px-4 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
               {loadingPosts ? (
                 <div className="col-span-full flex items-center justify-center py-10">
                   <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
