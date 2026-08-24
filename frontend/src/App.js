@@ -10,7 +10,6 @@ import SecurityLockScreen from '@/components/SecurityLockScreen';
 import { Toaster } from '@/components/ui/sonner';
 import LoadingScreen from '@/components/LoadingScreen';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
-import PageRouteSkeleton from '@/components/PageRouteSkeleton';
 import OfflineBanner from '@/components/OfflineBanner';
 import '@/App.css';
 
@@ -131,7 +130,7 @@ function AppRoutes() {
   }
 
   return (
-    <Suspense fallback={<PageRouteSkeleton />}>
+    <Suspense fallback={<LoadingScreen message="Opening Discuss…" />}>
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />

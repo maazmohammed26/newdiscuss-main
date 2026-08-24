@@ -32,14 +32,21 @@ export default function LoadingScreen({ message = 'Loading...' }) {
   };
 
   return (
-    <div id="discuss-loading-screen" className="fixed inset-0 bg-white dark:bg-black z-50 flex flex-col items-center justify-between py-12 px-4 select-none">
+    <div
+      id="discuss-loading-screen"
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-white px-4 py-12 text-neutral-900 transition-colors dark:bg-black dark:text-white select-none animate-in fade-in duration-300"
+    >
       <div className="w-full flex-1" />
 
       {/* Centered Brand Mark */}
-      <div className="flex flex-col items-center justify-center gap-4">
-        <DiscussLogo size="xl" />
+      <div className="flex flex-col items-center justify-center gap-4 animate-in fade-in zoom-in-95 duration-300">
+        <div className="motion-safe:animate-[pulse_2s_ease-in-out_infinite]">
+          <DiscussLogo size="xl" />
+        </div>
 
-        <div className="flex items-center gap-2 mt-4 text-xs font-semibold text-neutral-400">
+        <div className="flex items-center gap-2 mt-4 text-xs font-semibold text-neutral-400 dark:text-neutral-500">
           {!showRetry ? (
             <Loader2 className="w-4 h-4 animate-spin text-[#0095F6]" />
           ) : (
