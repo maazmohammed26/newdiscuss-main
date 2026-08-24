@@ -62,6 +62,8 @@ const RTDB_TIMEOUT_MS        = 5_000;   // Max wait for RTDB user fetch
 const USERNAME_CHECK_MS      = 3_000;   // Max wait for a single checkUsernameAvailable call
 const REDIRECT_RESULT_MS     = 4_000;   // Max wait for getRedirectResult
 const EMAIL_LINK_REDIRECT_URL = 'https://discussit.in/';
+const NATIVE_GOOGLE_BRIDGE_WAIT_MS = 1_500;
+const NATIVE_GOOGLE_LOGIN_TIMEOUT_MS = 90_000;
 
 const AuthContext = createContext(null);
 
@@ -71,6 +73,74 @@ function withTimeout(promise, ms, fallback) {
     promise,
     new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
+}
+
+// Median injects its JavaScript bridge after the page starts loading. Resolve
+// the native Google method when available, while keeping older GoNative builds
+// compatible. No OAuth request is ever opened inside the WebView.
+async function getMedianGoogleLogin() {
+  const findLogin = () => {
+    const medianGoogle = window.median?.socialLogin?.google;
+    if (typeof medianGoogle?.login === 'function') {
+      return medianGoogle.login.bind(medianGoogle);
+    }
+
+    const goNativeGoogle = window.gonative?.socialLogin?.google;
+    if (typeof goNativeGoogle?.login === 'function') {
+      return goNativeGoogle.login.bind(goNativeGoogle);
+    }
+
+    return null;
+  };
+
+  const immediatelyAvailable = findLogin();
+  if (immediatelyAvailable) return immediatelyAvailable;
+
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < NATIVE_GOOGLE_BRIDGE_WAIT_MS) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const login = findLogin();
+    if (login) return login;
+  }
+
+  return null;
+}
+
+function requestMedianGoogleToken(nativeGoogleLogin) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (handler, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      handler(value);
+    };
+
+    const timeoutId = setTimeout(() => {
+      finish(reject, new Error('Google sign-in timed out. Please try again.'));
+    }, NATIVE_GOOGLE_LOGIN_TIMEOUT_MS);
+
+    try {
+      nativeGoogleLogin({
+        callback: (response = {}) => {
+          if (response.error) {
+            finish(reject, new Error(response.error));
+            return;
+          }
+
+          const idToken = response.idToken || response.credential;
+          if (!idToken) {
+            finish(reject, new Error('Google did not return a valid identity token.'));
+            return;
+          }
+
+          finish(resolve, idToken);
+        },
+      });
+    } catch (error) {
+      finish(reject, error);
+    }
+  });
 }
 
 // ─── Helper: fetch user from RTDB with timeout ───────────────────────────────
@@ -677,17 +747,41 @@ export function AuthProvider({ children }) {
       window.localStorage.removeItem('pendingVerification');
       setPendingVerification(false);
 
-      // Detect if running inside the Median.co wrapped mobile app
+      // Detect if running inside the Median.co wrapped mobile app.
       const isMedianApp = typeof window !== 'undefined' && (
         window.median !== undefined ||
         window.gonative !== undefined ||
-        navigator.userAgent.includes('Median') ||
-        navigator.userAgent.includes('GoNative')
+        /median|gonative/i.test(navigator.userAgent)
       );
 
       if (isMedianApp) {
-        // WebView auth bridge flow specifically for Median.co WebView APK
-        const flowId = `flow_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+        // Preferred APK flow: Median's native Google SDK presents the account
+        // chooser over the app and returns an ID token directly to this page.
+        // This is Google's supported alternative to OAuth inside a WebView.
+        const nativeGoogleLogin = await getMedianGoogleLogin();
+        if (nativeGoogleLogin) {
+          try {
+            const idToken = await requestMedianGoogleToken(nativeGoogleLogin);
+            const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+            const credential = GoogleAuthProvider.credential(idToken);
+            const result = await signInWithCredential(auth, credential);
+            await syncUser(result.user);
+            return { success: true };
+          } catch (nativeError) {
+            console.error('[MedianAuth] Native Google sign-in failed:', nativeError);
+            return {
+              success: false,
+              error: nativeError.message || 'Native Google sign-in failed. Please try again.',
+            };
+          }
+        }
+
+        // Compatibility fallback for APK builds that do not yet include the
+        // Median Social Login plugin. Keep the existing external-browser flow
+        // until that APK is rebuilt with the plugin enabled.
+        const randomFlowPart = window.crypto?.randomUUID?.()
+          || Math.random().toString(36).substring(2, 11);
+        const flowId = `flow_${Date.now()}_${randomFlowPart}`;
         window.localStorage.setItem('median_auth_flow_id', flowId);
         
         // 1. Write the pending status to RTDB
@@ -709,12 +803,27 @@ export function AuthProvider({ children }) {
 
         // 3. Set up Realtime Database listener to wait for completion
         return new Promise((resolve) => {
+          let settled = false;
+          const finish = (result) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            off(bridgeRef);
+            resolve(result);
+          };
+
+          const timeoutId = setTimeout(async () => {
+            try { await set(bridgeRef, null); } catch (_) {}
+            window.localStorage.removeItem('median_auth_flow_id');
+            finish({
+              success: false,
+              error: 'Google sign-in was not completed. Please return to the app and try again.',
+            });
+          }, 120_000);
+
           onValue(bridgeRef, async (snapshot) => {
             const data = snapshot.val();
             if (data && data.status === 'success' && data.googleIdToken) {
-              // Unsubscribe from database updates
-              off(bridgeRef);
-              
               // Clean up the database node
               await set(bridgeRef, null);
               
@@ -727,13 +836,13 @@ export function AuthProvider({ children }) {
                 window.localStorage.removeItem('median_auth_flow_id');
                 
                 // Return success
-                resolve({ success: true });
+                finish({ success: true });
                 
                 // Full reload to establish state and load caches instantly
                 window.location.reload();
               } catch (signInErr) {
                 console.error('[AuthBridge] Sign-in with credential failed:', signInErr);
-                resolve({ success: false, error: signInErr.message || 'Credential sign-in failed' });
+                finish({ success: false, error: signInErr.message || 'Credential sign-in failed' });
               }
             }
           });
