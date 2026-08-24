@@ -82,7 +82,7 @@ import {
   FileText, LogOut, Loader2, ChevronRight,
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
-  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy
+  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy, Palette
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationToggle from '@/components/NotificationToggle';
@@ -1971,7 +1971,8 @@ export default function ProfilePage() {
                 <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-4 rounded-xl discuss:border dark:border-[#262626]">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                      🎨 Application Theme
+                      <Palette className="w-4 h-4 text-[#0095F6] stroke-[1.8px]" />
+                      Application Theme
                     </span>
                   </div>
                   <div className="pl-6">
