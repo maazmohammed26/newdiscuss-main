@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, BrainCircuit, Code2, MessageCircle, Radar, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, BrainCircuit, CheckCircle2, Code2, ExternalLink, Loader2, Mail, MessageCircle, Radar, ShieldCheck, Users } from 'lucide-react';
+import { FaApple } from 'react-icons/fa';
+import { SiGoogleplay } from 'react-icons/si';
 import { useAuth } from '@/contexts/AuthContext';
 import DiscussLogo from '@/components/DiscussLogo';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -18,6 +20,129 @@ const signals = [
   { icon: BrainCircuit, label: 'AI-powered TalentGraph' },
   { icon: ShieldCheck, label: 'Private, ad-free experience' },
 ];
+
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=co.median.android.lpowadz';
+
+function MobileAccessSection() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle');
+  const [message, setMessage] = useState('');
+  const [showIosHelp, setShowIosHelp] = useState(false);
+
+  const requestAndroidAccess = async (event) => {
+    event.preventDefault();
+    if (status === 'sending' || status === 'success') return;
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setStatus('error');
+      setMessage('Enter a valid Google Play email.');
+      return;
+    }
+
+    setStatus('sending');
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/android-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, website: '' }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Could not send your request.');
+
+      setStatus('success');
+      setMessage('Request sent. Check Google Play in 4–6 hours with this email.');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message || 'Could not send your request. Please try again.');
+    }
+  };
+
+  return (
+    <section className="border-y border-neutral-200 bg-[#FAFAFA] px-4 py-16 sm:px-6 sm:py-20" id="mobile-access">
+      <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-[#0095F6]">Discuss anywhere</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Take Discuss with you.</h2>
+          <p className="mt-3 text-sm leading-6 text-neutral-600 sm:text-base">Android early access or an app-like iOS PWA.</p>
+        </div>
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+          <article className="relative overflow-hidden rounded-[28px] border border-neutral-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,.07)] sm:p-8">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#34A853] via-[#FBBC04] to-[#4285F4]" />
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-950 text-white shadow-lg">
+                <SiGoogleplay className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Early access</span>
+            </div>
+            <h3 className="mt-6 text-2xl font-bold tracking-tight">Discuss for Android</h3>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-neutral-600">Use your Google Play email. Access is usually added within 4–6 hours.</p>
+
+            <form onSubmit={requestAndroidAccess} className="mt-6" noValidate>
+              <label htmlFor="android-access-email" className="text-xs font-bold uppercase tracking-[.12em] text-neutral-500">Google Play email</label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
+                  <input
+                    id="android-access-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(event) => { setEmail(event.target.value); if (status === 'error') setStatus('idle'); }}
+                    placeholder="you@gmail.com"
+                    disabled={status === 'sending' || status === 'success'}
+                    className="h-12 w-full rounded-xl border border-neutral-200 bg-[#FAFAFA] pl-10 pr-3 text-sm font-medium text-neutral-950 outline-none transition focus:border-[#0095F6] focus:ring-4 focus:ring-[#0095F6]/10 disabled:opacity-70"
+                    aria-describedby="android-access-status"
+                    required
+                  />
+                  <input name="website" tabIndex="-1" autoComplete="off" className="absolute -left-[9999px]" aria-hidden="true" />
+                </div>
+                <button
+                  type="submit"
+                  disabled={status === 'sending' || status === 'success'}
+                  className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-5 text-sm font-bold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {status === 'sending' ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : status === 'success' ? <><CheckCircle2 className="h-4 w-4" /> Requested</> : 'Request access'}
+                </button>
+              </div>
+              <div id="android-access-status" aria-live="polite" className={`mt-3 min-h-5 text-xs font-medium ${status === 'error' ? 'text-red-600' : status === 'success' ? 'text-emerald-700' : 'text-neutral-500'}`}>
+                {message || 'We only send this request to the Discuss Admin bot. It is not saved in our database.'}
+              </div>
+            </form>
+
+            <a href={PLAY_STORE_URL} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#0095F6] hover:text-[#1877F2]">
+              Open Google Play <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </article>
+
+          <article className="relative overflow-hidden rounded-[28px] border border-neutral-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,.07)] sm:p-8">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neutral-950 via-neutral-500 to-neutral-200" />
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-950 text-white shadow-lg">
+                <FaApple className="h-7 w-7" aria-hidden="true" />
+              </div>
+              <span className="rounded-full bg-neutral-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600">PWA</span>
+            </div>
+            <h3 className="mt-6 text-2xl font-bold tracking-tight">Discuss for iOS</h3>
+            <p className="mt-2 text-sm leading-6 text-neutral-600">Install from Safari for a fast, full-screen app experience.</p>
+            <button type="button" onClick={() => setShowIosHelp((current) => !current)} className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-bold text-neutral-950 shadow-sm transition hover:bg-neutral-50">
+              {showIosHelp ? 'Hide instructions' : 'Install iOS PWA'}
+            </button>
+            {showIosHelp && (
+              <div className="mt-3 rounded-2xl bg-neutral-50 p-4 text-sm leading-6 text-neutral-600">
+                In Safari, tap <span className="font-bold text-neutral-950">Share</span>, then <span className="font-bold text-neutral-950">Add to Home Screen</span>.
+              </div>
+            )}
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -109,6 +234,8 @@ export default function LandingPage() {
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">{signals.map(({ icon: Icon, label }) => <div key={label} className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-4 text-sm font-semibold text-neutral-700"><Icon className="h-5 w-5 text-[#0095F6]" />{label}</div>)}</div>
         </section>
+
+        <MobileAccessSection />
 
         <section className="px-4 pb-16 sm:px-6 sm:pb-20"><div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 rounded-[28px] bg-neutral-950 px-6 py-10 text-center text-white sm:px-10 md:flex-row md:text-left"><div><h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Your next useful conversation starts here.</h2><p className="mt-2 text-sm text-neutral-400">Join developers sharing what they know and building what comes next.</p></div><Link to="/register" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-neutral-950 hover:bg-neutral-100">Start discussing <ArrowRight className="h-4 w-4" /></Link></div></section>
       </main>
