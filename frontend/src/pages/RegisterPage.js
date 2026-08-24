@@ -37,7 +37,7 @@ export default function RegisterPage() {
   const location = useLocation();
 
   useEffect(() => {
-    const timer = setTimeout(() => setPageLoading(false), 1500);
+    const timer = setTimeout(() => setPageLoading(false), 350);
     return () => clearTimeout(timer);
   }, []);
 
@@ -173,19 +173,26 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#E1E0CC] flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-[#080808] text-[#E1E0CC] flex flex-col relative overflow-hidden">
       <div className="bg-noise absolute inset-0 opacity-[0.08] pointer-events-none" />
+      <div className="pointer-events-none absolute -left-32 top-24 h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-1/3 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
       <AdminMessageBanner />
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12 relative z-10">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-6">
             <Link to="/" data-testid="register-logo">
               <DiscussLogo size="lg" tagged dark />
             </Link>
           </div>
 
-          <div className="relative bg-[#101010] rounded-2xl shadow-2xl p-6 md:p-8 border border-white/5 pt-1.5 overflow-hidden">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-black tracking-[-0.035em] text-white">Create your account</h1>
+            <p className="mt-2 text-sm text-neutral-400">Build your developer identity and join useful conversations.</p>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#111111]/95 p-6 pt-7 shadow-[0_24px_80px_rgba(0,0,0,.45)] backdrop-blur-xl sm:p-8">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
             {!signupEnabled ? (
@@ -303,18 +310,18 @@ export default function RegisterPage() {
 
                   <Button type="submit" data-testid="register-submit-btn"
                     disabled={loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
-                    className="w-full bg-[#181818] hover:bg-[#202020] border border-white/5 text-white font-bold rounded-xl py-3 h-12 text-[15px] hover:border-[#DC2626]/40 hover:shadow-[0_4px_16px_rgba(220,38,38,0.1)] transition-all mt-1 disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="mt-1 h-12 w-full rounded-xl border-0 bg-[#0095F6] py-3 text-[15px] font-bold text-white shadow-[0_10px_30px_rgba(0,149,246,.2)] transition-all hover:bg-[#1877F2] disabled:cursor-not-allowed disabled:opacity-40">
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>
                 </form>
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
-                  <div className="relative flex justify-center text-[10px]"><span className="bg-[#101010] px-3 text-gray-500 uppercase tracking-widest font-bold">Or continue with</span></div>
+                  <div className="relative flex justify-center text-[10px]"><span className="bg-[#111111] px-3 text-gray-500 uppercase tracking-widest font-bold">Or continue with</span></div>
                 </div>
 
                 <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={googleLoading}
-                  className="w-full bg-[#181818] border border-white/5 text-[#E1E0CC] hover:bg-[#202020] rounded-xl py-2.5 h-11 font-bold flex items-center justify-center gap-2.5 mb-5">
+                  className="mb-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/[.04] py-2.5 font-bold text-white hover:bg-white/[.08]">
                   {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
                 </Button>
 

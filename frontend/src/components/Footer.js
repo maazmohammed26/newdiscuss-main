@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 
 const groups = [
-  { title: 'Product', links: [['Explore', '/feed'], ['Tech News', '/news'], ['Tech Jobs', '/jobs'], ['Download', '/download']] },
+  { title: 'Product', links: [['Explore', '/feed'], ['Tech News', '/news'], ['Tech Jobs', '/jobs']] },
   { title: 'Company', links: [['About', '/about'], ['Blogs', '/blogs'], ['Careers', '/careers'], ['Contact', '/contact']] },
   { title: 'Legal', links: [['Guidelines', '/guidelines'], ['Terms', '/terms'], ['Privacy', '/privacy']] },
 ];

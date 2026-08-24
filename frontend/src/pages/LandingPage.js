@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Code2, MessageCircle, Radar, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Code2, MessageCircle, Radar, ShieldCheck, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import DiscussLogo from '@/components/DiscussLogo';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -15,7 +15,7 @@ const features = [
 
 const signals = [
   { icon: Radar, label: 'Discover nearby developers' },
-  { icon: Sparkles, label: 'AI-powered TalentGraph' },
+  { icon: BrainCircuit, label: 'AI-powered TalentGraph' },
   { icon: ShieldCheck, label: 'Private, ad-free experience' },
 ];
 
@@ -66,7 +66,8 @@ export default function LandingPage() {
           <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.1fr_.9fr] lg:py-28">
             <div className="max-w-3xl">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-[#0095F6]" /> A focused network for people who build
+                <span className="rounded-full bg-neutral-950 px-2 py-0.5 text-[10px] font-black tracking-wide text-white">DISCUSS 2.0</span>
+                A smarter network for people who build
               </div>
               <h1 className="text-balance text-5xl font-black leading-[.96] tracking-[-.055em] sm:text-6xl lg:text-7xl">
                 Ideas become better when developers <span className="lp-gradient-text">discuss.</span>
