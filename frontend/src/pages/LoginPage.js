@@ -82,8 +82,8 @@ export default function LoginPage() {
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
             {error && (
-              <div data-testid="login-error" className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2 font-medium">
-                <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
+              <div data-testid="login-error" role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold leading-5 text-red-700 shadow-sm">
+                <span>{error}</span>
               </div>
             )}
 

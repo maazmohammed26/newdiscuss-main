@@ -19,6 +19,36 @@ import ImagePreviewModal from '@/components/ImagePreviewModal';
 import SignalStoryViewer from '@/components/SignalStoryViewer';
 import { Zap, User as UserIcon, ExternalLink, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { database, ref, onValue, off } from '@/lib/firebase';
+
+// Share one live photo listener per user across every post, comment, and chat
+// avatar. This keeps pictures current without opening duplicate connections.
+const livePhotoEntries = new Map();
+
+function subscribeToLivePhoto(userId, listener) {
+  let entry = livePhotoEntries.get(userId);
+  if (!entry) {
+    const photoRef = ref(database, `users/${userId}/photo_url`);
+    entry = { listeners: new Set(), value: undefined, photoRef };
+    entry.handleValue = (snapshot) => {
+      entry.value = snapshot.exists() ? snapshot.val() || '' : '';
+      entry.listeners.forEach((notify) => notify(entry.value));
+    };
+    onValue(photoRef, entry.handleValue);
+    livePhotoEntries.set(userId, entry);
+  }
+
+  entry.listeners.add(listener);
+  if (entry.value !== undefined) listener(entry.value);
+
+  return () => {
+    entry.listeners.delete(listener);
+    if (entry.listeners.size === 0) {
+      off(entry.photoRef, 'value', entry.handleValue);
+      livePhotoEntries.delete(userId);
+    }
+  };
+}
 
 /**
  * @param {string}  src          — image URL (photo_url / photoURL)
@@ -47,9 +77,21 @@ export default function UserAvatar({
     (userId && userId === currentUser.id) ||
     (!userId && username && username === currentUser.username)
   ));
+  const [liveProfileSrc, setLiveProfileSrc] = useState(undefined);
+
+  useEffect(() => {
+    if (!userId || isCurrentUserAvatar) {
+      setLiveProfileSrc(undefined);
+      return undefined;
+    }
+    return subscribeToLivePhoto(userId, setLiveProfileSrc);
+  }, [isCurrentUserAvatar, userId]);
+
   const resolvedSrc = useMemo(
-    () => isCurrentUserAvatar ? (currentUser?.photo_url || '') : (src || ''),
-    [currentUser?.photo_url, isCurrentUserAvatar, src]
+    () => isCurrentUserAvatar
+      ? (currentUser?.photo_url || '')
+      : (liveProfileSrc || src || ''),
+    [currentUser?.photo_url, isCurrentUserAvatar, liveProfileSrc, src]
   );
   const [displaySrc, setDisplaySrc] = useState(resolvedSrc);
   const [failed, setFailed] = useState(false);

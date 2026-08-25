@@ -44,6 +44,7 @@ admin.initializeApp();
 
 const functions = require('firebase-functions');
 const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const { sendWelcomeEmail, sendEngagementEmail, sendVerificationEmail } = require('./emailService');
 
 
@@ -51,6 +52,158 @@ const TELEGRAM_TOKEN = defineSecret('TELEGRAM_BOT_TOKEN');
 
 // App URL shown in all bot messages so users can open Discuss
 const APP_URL = 'https://discussit.in/';
+
+const AUXILIARY_DATABASES = {
+  secondary: process.env.SECONDARY_DATABASE_URL || 'https://discussit-5879b-default-rtdb.firebaseio.com',
+  chats: process.env.CHATS_DATABASE_URL || 'https://discuss-f1f56-default-rtdb.firebaseio.com',
+  groups: process.env.GROUPS_DATABASE_URL || 'https://discuss-3c060-default-rtdb.firebaseio.com',
+  signals: process.env.SIGNALS_DATABASE_URL || 'https://discuss-d48be-default-rtdb.firebaseio.com',
+  devradar: process.env.DEVRADAR_DATABASE_URL || 'https://discuss-74b96-default-rtdb.firebaseio.com',
+};
+
+function emailIndexKey(email = '') {
+  return email.toLowerCase().replace(/\./g, ',');
+}
+
+async function cleanupPrimaryUserData(user) {
+  const db = admin.database();
+  const root = db.ref();
+  const profileSnap = await root.child(`users/${user.uid}`).once('value');
+  const profile = profileSnap.val() || {};
+  const postsSnap = await root.child('posts').orderByChild('author_id').equalTo(user.uid).once('value');
+  const updates = {
+    [`users/${user.uid}`]: null,
+    [`sessions/${user.uid}`]: null,
+    [`pendingVerifications/${user.uid}`]: null,
+  };
+
+  postsSnap.forEach((postSnap) => {
+    updates[`posts/${postSnap.key}`] = null;
+  });
+
+  const indexedEmail = profile.email || user.email;
+  if (indexedEmail) {
+    const path = `userEmails/${emailIndexKey(indexedEmail)}`;
+    const ownerSnap = await root.child(path).once('value');
+    if (ownerSnap.val() === user.uid) updates[path] = null;
+  }
+  if (profile.username) {
+    const path = `usernames/${profile.username.toLowerCase()}`;
+    const ownerSnap = await root.child(path).once('value');
+    if (ownerSnap.val() === user.uid) updates[path] = null;
+  }
+
+  // Intentionally do not delete votes or comments. They remain as historical
+  // activity and resolve to the deleted-account message in the client.
+  await root.update(updates);
+}
+
+async function cleanupSecondaryUserData(db, uid) {
+  const root = db.ref();
+  const relationshipsSnap = await root.child('relationships').once('value');
+  const updates = {
+    [`userProfiles/${uid}`]: null,
+    [`relationships/${uid}`]: null,
+    [`commentBadges/${uid}`]: null,
+    [`replyBadges/${uid}`]: null,
+  };
+
+  relationshipsSnap.forEach((personSnap) => {
+    if (personSnap.key === uid) return;
+    updates[`relationships/${personSnap.key}/friends/${uid}`] = null;
+    updates[`relationships/${personSnap.key}/sentRequests/${uid}`] = null;
+    updates[`relationships/${personSnap.key}/receivedRequests/${uid}`] = null;
+  });
+  await root.update(updates);
+}
+
+async function cleanupChatUserData(db, uid) {
+  const root = db.ref();
+  const chatsSnap = await root.child('chats').once('value');
+  const updates = { [`userChats/${uid}`]: null };
+
+  chatsSnap.forEach((chatSnap) => {
+    const chat = chatSnap.val() || {};
+    const participants = Array.isArray(chat.participants)
+      ? chat.participants
+      : chatSnap.key.split('_');
+    if (!participants.includes(uid)) return;
+    updates[`chats/${chatSnap.key}`] = null;
+    updates[`messages/${chatSnap.key}`] = null;
+    participants.forEach((participantId) => {
+      updates[`userChats/${participantId}/${chatSnap.key}`] = null;
+    });
+  });
+  await root.update(updates);
+}
+
+async function cleanupGroupUserData(db, uid) {
+  const root = db.ref();
+  const groupsSnap = await root.child('groups').once('value');
+  const updates = {
+    [`userGroups/${uid}`]: null,
+    [`userGroupInvites/${uid}`]: null,
+    [`deletedGroupMessages/${uid}`]: null,
+  };
+
+  groupsSnap.forEach((groupSnap) => {
+    updates[`groups/${groupSnap.key}/members/${uid}`] = null;
+    updates[`groups/${groupSnap.key}/joinRequests/${uid}`] = null;
+    updates[`groups/${groupSnap.key}/invites/${uid}`] = null;
+    groupSnap.child('messages').forEach((messageSnap) => {
+      if (messageSnap.child('sender').val() === uid) {
+        updates[`groups/${groupSnap.key}/messages/${messageSnap.key}`] = null;
+      }
+    });
+  });
+  await root.update(updates);
+}
+
+async function cleanupSignalUserData(db, uid) {
+  const root = db.ref();
+  const [storiesSnap, pulseSnap] = await Promise.all([
+    root.child('stories').orderByChild('authorId').equalTo(uid).once('value'),
+    root.child('pulse').orderByChild('authorId').equalTo(uid).once('value'),
+  ]);
+  const updates = { [`userSeenStories/${uid}`]: null };
+  storiesSnap.forEach((storySnap) => {
+    updates[`stories/${storySnap.key}`] = null;
+    updates[`storyViews/${storySnap.key}`] = null;
+  });
+  pulseSnap.forEach((itemSnap) => {
+    updates[`pulse/${itemSnap.key}`] = null;
+  });
+  await root.update(updates);
+}
+
+async function runAuxiliaryCleanup(name, url, uid) {
+  try {
+    const db = admin.app().database(url);
+    if (name === 'secondary') await cleanupSecondaryUserData(db, uid);
+    if (name === 'chats') await cleanupChatUserData(db, uid);
+    if (name === 'groups') await cleanupGroupUserData(db, uid);
+    if (name === 'signals') await cleanupSignalUserData(db, uid);
+    if (name === 'devradar') await db.ref(`devRadarLocations/${uid}`).remove();
+    console.log(`[AccountCleanup] ${name} cleanup completed for uid=${uid}`);
+  } catch (error) {
+    // Cross-project RTDBs require this Functions service account to have
+    // Firebase Realtime Database Admin access in each auxiliary project.
+    console.error(`[AccountCleanup] ${name} cleanup failed for uid=${uid}:`, error.message);
+  }
+}
+
+exports.cleanupDeletedUser = functions
+  .runWith({ timeoutSeconds: 300, memory: '512MB' })
+  .auth.user()
+  .onDelete(async (user) => {
+    await cleanupPrimaryUserData(user);
+    await Promise.all(
+      Object.entries(AUXILIARY_DATABASES).map(([name, url]) =>
+        runAuxiliaryCleanup(name, url, user.uid)
+      )
+    );
+    console.log(`[AccountCleanup] completed for uid=${user.uid}`);
+  });
 
 // ─── Telegram API helper ──────────────────────────────────────────────────────
 
@@ -453,6 +606,5 @@ exports.onUserEmailVerified = functions.database
     }
     return null;
   });
-
 
 

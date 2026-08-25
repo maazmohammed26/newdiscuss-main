@@ -922,9 +922,9 @@ export default function ChatConversationPage() {
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 py-20 text-center">
           <User className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-2">
-            User not found
-          </h2>
+          <p className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            This account has been deleted or removed from Discuss.
+          </p>
           <Button onClick={() => navigate('/chat')} variant="outline" className="rounded-[6px]">
             Back to Chats
           </Button>

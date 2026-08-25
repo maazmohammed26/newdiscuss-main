@@ -65,6 +65,9 @@ const EMAIL_LINK_REDIRECT_URL = 'https://discussit.in/';
 const NATIVE_GOOGLE_BRIDGE_WAIT_MS = 1_500;
 const NATIVE_GOOGLE_LOGIN_TIMEOUT_MS = 90_000;
 const AUTH_SESSION_CACHE_KEY = 'discuss_auth_session_v1';
+const EMAIL_PASSWORD_PROVIDER_MESSAGE = 'This account was created with email and password. Please sign in with your email and password.';
+const GOOGLE_PROVIDER_MESSAGE = 'This account was created with Google. Please continue with Google to sign in.';
+const EMAIL_ALREADY_IN_USE_MESSAGE = 'Sorry, this email is already in use.';
 
 const AuthContext = createContext(null);
 
@@ -107,6 +110,41 @@ function withTimeout(promise, ms, fallback) {
     promise,
     new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
+}
+
+function normalizeProvider(providerId) {
+  return providerId === 'google.com' || providerId === 'google' ? 'google' : 'email';
+}
+
+function providerForFirebaseUser(firebaseUser) {
+  const providers = firebaseUser?.providerData?.map((provider) => provider.providerId) || [];
+  return providers.includes('google.com') ? 'google' : 'email';
+}
+
+function providerConflictMessage(existingUser, requestedProvider) {
+  if (!existingUser) return '';
+  const existingProvider = normalizeProvider(existingUser.auth_provider);
+  if (existingProvider === requestedProvider) return '';
+  return existingProvider === 'google'
+    ? GOOGLE_PROVIDER_MESSAGE
+    : EMAIL_PASSWORD_PROVIDER_MESSAGE;
+}
+
+function decodeGoogleEmail(idToken) {
+  try {
+    const payload = idToken.split('.')[1];
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(window.atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')));
+    return decoded.email?.toLowerCase().trim() || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function createProviderConflictError(message) {
+  const error = new Error(message);
+  error.code = 'auth/provider-conflict';
+  return error;
 }
 
 // Median injects its JavaScript bridge after the page starts loading. Resolve
@@ -292,6 +330,8 @@ export function AuthProvider({ children }) {
               const existing = await getUser(firebaseUser.uid);
               if (!existing) {
                 const email = firebaseUser.email?.toLowerCase();
+                const emailOwner = email ? await getUserByEmail(email) : null;
+                if (emailOwner && emailOwner.id !== firebaseUser.uid) return;
                 let username =
                   firebaseUser.displayName
                     ?.replace(/[^a-zA-Z0-9_]/g, '')
@@ -321,6 +361,15 @@ export function AuthProvider({ children }) {
       // ── Happy path: RTDB returned data ────────────────────────────────
       // New user — create RTDB record
       if (dbUser === null) {
+        const emailOwner = firebaseUser.email
+          ? await getUserByEmail(firebaseUser.email).catch(() => null)
+          : null;
+        if (emailOwner && emailOwner.id !== firebaseUser.uid) {
+          throw createProviderConflictError(
+            providerConflictMessage(emailOwner, providerForFirebaseUser(firebaseUser))
+              || EMAIL_ALREADY_IN_USE_MESSAGE
+          );
+        }
         try {
           const email = firebaseUser.email?.toLowerCase();
           let username =
@@ -360,6 +409,7 @@ export function AuthProvider({ children }) {
             window.localStorage.setItem('adminSignupNotified_' + firebaseUser.uid, 'true');
           }
         } catch (e) {
+          if (e?.code === 'auth/provider-conflict') throw e;
           console.error('[Auth] createUser error:', e);
           const basicUser = buildBasicUser(firebaseUser);
           setUser(basicUser);
@@ -367,6 +417,9 @@ export function AuthProvider({ children }) {
           return basicUser;
         }
       }
+
+      const conflict = providerConflictMessage(dbUser, providerForFirebaseUser(firebaseUser));
+      if (conflict) throw createProviderConflictError(conflict);
 
       const userData = {
         id:            firebaseUser.uid,
@@ -496,6 +549,11 @@ export function AuthProvider({ children }) {
           await syncUser(firebaseUser);
         } catch (err) {
           console.error('[Auth] onAuthStateChanged handler error:', err);
+          if (err?.code === 'auth/provider-conflict') {
+            await firebaseSignOut(auth).catch(() => {});
+            if (mounted) setUser(null);
+            return;
+          }
           // Fail safe: if we errored and there's a firebase user, use basic data
           if (mounted) {
             if (firebaseUser) {
@@ -688,8 +746,10 @@ export function AuthProvider({ children }) {
         return { success: false, error: `Username "${username}" is already taken` };
 
       const existingUser = await getUserByEmail(email);
-      if (existingUser)
-        return { success: false, error: 'This email is already registered' };
+      if (existingUser) {
+        const conflict = providerConflictMessage(existingUser, 'email');
+        return { success: false, error: conflict || EMAIL_ALREADY_IN_USE_MESSAGE };
+      }
 
       // Set pending verification in storage so we treat this email specially
       window.localStorage.setItem('pendingVerification', 'true');
@@ -734,7 +794,7 @@ export function AuthProvider({ children }) {
       window.localStorage.removeItem('pendingVerification'); // Cleanup on failure
       console.error('[Auth] Registration error:', error);
       if (error.code === 'auth/email-already-in-use')
-        return { success: false, error: 'This email is already registered' };
+        return { success: false, error: EMAIL_ALREADY_IN_USE_MESSAGE };
       if (error.code === 'auth/weak-password')
         return { success: false, error: 'Password is too weak' };
       return { success: false, error: error.message || 'Registration failed' };
@@ -747,6 +807,10 @@ export function AuthProvider({ children }) {
       if (!password) return { success: false, error: 'Password is required' };
 
       window.localStorage.removeItem('pendingVerification');
+
+      const existingUser = await getUserByEmail(email).catch(() => null);
+      const providerConflict = providerConflictMessage(existingUser, 'email');
+      if (providerConflict) return { success: false, error: providerConflict };
 
       const credential = await signInWithEmailAndPassword(auth, email, password);
       const uid = credential.user.uid;
@@ -809,6 +873,25 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithGoogle = async () => {
+    const assertGoogleProvider = async (email) => {
+      if (!email) return;
+      const existingUser = await getUserByEmail(email).catch(() => null);
+      const conflict = providerConflictMessage(existingUser, 'google');
+      if (conflict) throw createProviderConflictError(conflict);
+    };
+
+    const completeGoogleSignIn = async (result) => {
+      try {
+        await assertGoogleProvider(result.user?.email);
+        await syncUser(result.user);
+        return { success: true };
+      } catch (error) {
+        await firebaseSignOut(auth).catch(() => {});
+        setUser(null);
+        throw error;
+      }
+    };
+
     try {
       // Force account picker and override UA hint so Google doesn't block the WebView
       googleProvider.setCustomParameters({
@@ -832,11 +915,11 @@ export function AuthProvider({ children }) {
         if (nativeGoogleLogin) {
           try {
             const idToken = await requestMedianGoogleToken(nativeGoogleLogin);
+            await assertGoogleProvider(decodeGoogleEmail(idToken));
             const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
             const credential = GoogleAuthProvider.credential(idToken);
             const result = await signInWithCredential(auth, credential);
-            await syncUser(result.user);
-            return { success: true };
+            return await completeGoogleSignIn(result);
           } catch (nativeError) {
             console.error('[MedianAuth] Native Google sign-in failed:', nativeError);
             return {
@@ -900,9 +983,10 @@ export function AuthProvider({ children }) {
               try {
                 // Re-create the Google credential and sign in securely!
                 const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+                await assertGoogleProvider(decodeGoogleEmail(data.googleIdToken));
                 const credential = GoogleAuthProvider.credential(data.googleIdToken, data.googleAccessToken || undefined);
                 const result = await signInWithCredential(auth, credential);
-                await syncUser(result.user);
+                await completeGoogleSignIn(result);
                 window.localStorage.removeItem('median_auth_flow_id');
                 
                 // Return success
@@ -922,8 +1006,7 @@ export function AuthProvider({ children }) {
       // Standard desktop / mobile PWA flow
       try {
         const result = await signInWithPopup(auth, googleProvider);
-        await syncUser(result.user);
-        return { success: true };
+        return await completeGoogleSignIn(result);
       } catch (popupError) {
         const code = popupError.code || '';
 

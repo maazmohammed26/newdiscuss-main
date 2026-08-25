@@ -163,7 +163,7 @@ export default function UserPostsPage() {
           <div className="flex items-center justify-center py-32"><Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" /></div>
         ) : !userData ? (
           <div className="text-center py-16">
-            <h2 className="text-lg font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">User not found</h2>
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">This account has been deleted or removed from Discuss.</p>
           </div>
         ) : (
           <>

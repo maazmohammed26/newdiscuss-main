@@ -340,7 +340,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
             >
               <div className="w-full h-full rounded-full bg-white dark:bg-black p-[1px] overflow-hidden">
                 <UserAvatar
-                  src={post.author_photo_url || null}
+                  src={post.author_photo_url || post.author_photo || null}
                   username={post.author_username || 'User'}
                   className="w-full h-full object-cover rounded-full"
                 />

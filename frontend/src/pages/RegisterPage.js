@@ -108,7 +108,6 @@ export default function RegisterPage() {
     if (!username.trim()) return setError('Username is required');
     if (usernameStatus?.type === 'taken') return setError('Username is already taken');
     if (!email.trim()) return setError('Email is required');
-    if (emailStatus?.type === 'taken') return setError('Email is already registered');
     
     const isPasswordValid = passwordConditions.every(cond => cond.regex.test(password));
     if (!isPasswordValid) return setError('Password must meet all complexity requirements');
@@ -211,8 +210,8 @@ export default function RegisterPage() {
             ) : (
               <>
                 {error && (
-                  <div data-testid="register-error" className="bg-[#EF4444]/10 border border-[#EF4444]/25 rounded-xl p-3 text-[#EF4444] text-[13px] mb-4 flex items-start gap-2">
-                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span>
+                  <div data-testid="register-error" role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold leading-5 text-red-700 shadow-sm">
+                    <span>{error}</span>
                   </div>
                 )}
 
@@ -311,7 +310,7 @@ export default function RegisterPage() {
                   </div>
 
                   <Button type="submit" data-testid="register-submit-btn"
-                    disabled={settingsLoading || loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
+                    disabled={settingsLoading || loading || usernameStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
                     className="mt-1 h-12 w-full rounded-xl border-0 bg-[#0095F6] py-3 text-[15px] font-bold text-white shadow-[0_10px_30px_rgba(0,149,246,.2)] transition-all hover:bg-[#1877F2] disabled:cursor-not-allowed disabled:opacity-40">
                     {settingsLoading || loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>

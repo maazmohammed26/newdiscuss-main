@@ -95,7 +95,7 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
             </div>
           ) : !userData ? (
             <div className="text-center py-12 px-6">
-              <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">User not found</p>
+              <p className="text-neutral-700 dark:text-neutral-300 text-[13px] font-medium leading-5">This account has been deleted or removed from Discuss.</p>
             </div>
           ) : (
             <>
