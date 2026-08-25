@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { getUser } from '@/lib/db';
 import { database, ref, onValue } from '@/lib/firebase';
-import { getChatsWithUserDetails, subscribeToUserChats, getUserChats, getChatSettings } from '@/lib/chatsDb';
+import { getChatsWithUserDetails, subscribeToUserChats, getUserChats, getChatSettings, markMessagesAsRead } from '@/lib/chatsDb';
 import { getFriendsWithDetails, searchFriends } from '@/lib/relationshipsDb';
 import { 
   getUserGroups, 
@@ -74,7 +74,7 @@ const reconcileCollection = (current, incoming, getKey) => {
 export default function ChatPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { pendingGroupRequests } = useHighlights();
+  const { pendingGroupRequests, markChatReadLocally } = useHighlights();
   const [chats, setChats] = useState(() => {
     if (typeof window !== 'undefined' && window.__discuss_chats_cache) {
       return window.__discuss_chats_cache;
@@ -394,10 +394,20 @@ export default function ChatPage() {
     return () => clearTimeout(searchTimer);
   }, [searchQuery, user?.id, activeTab, chats, groups]);
 
-  const handleChatClick = (otherUserId, details) => {
+  const handleChatClick = (chat) => {
+    const { chatId, otherUser: otherUserId, otherUserDetails: details } = chat;
     if (typeof window !== 'undefined' && details) {
       window.__discuss_active_chat_user = { id: otherUserId, ...details };
     }
+    markChatReadLocally(chatId);
+    const nextChats = chatsRef.current.map((item) => item.chatId === chatId
+      ? { ...item, unreadCount: 0 }
+      : item);
+    chatsRef.current = nextChats;
+    setChats(nextChats);
+    if (typeof window !== 'undefined') window.__discuss_chats_cache = nextChats;
+    cacheChats(user.id, nextChats);
+    markMessagesAsRead(chatId, user.id);
     navigate(`/chat/${otherUserId}`);
   };
 
@@ -513,7 +523,7 @@ export default function ChatPage() {
     return (
       <button
         key={chat.chatId}
-        onClick={() => handleChatClick(chat.otherUser, otherUser)}
+        onClick={() => handleChatClick(chat)}
         className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
           isBlocked 
             ? 'bg-neutral-50/50 dark:bg-neutral-800/50 dark:bg-black/50 opacity-60'

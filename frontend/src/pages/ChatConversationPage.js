@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } fr
 import { database, ref, onValue } from '@/lib/firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useHighlights } from '@/contexts/HighlightsContext';
 import { getUser } from '@/lib/db';
 import { getUserProfile } from '@/lib/userProfileDb';
 import { isChatEnabled, getRelationshipStatus, getRelationshipDetails, RELATIONSHIP_STATUS, unfollowFriend } from '@/lib/relationshipsDb';
@@ -38,7 +39,6 @@ import {
   DELETED_MESSAGE_PREVIEW,
   isDeletedForEveryone,
 } from '@/lib/chatMessageUtils';
-import Header from '@/components/Header';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import ChatLinkText from '@/components/ChatLinkText';
@@ -84,6 +84,7 @@ const reconcileMessages = (current, incoming) => {
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
   const { user } = useAuth();
+  const { markChatReadLocally } = useHighlights();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -375,6 +376,7 @@ export default function ChatConversationPage() {
     if (!chatId || !user?.id) return;
     
     // Mark messages as read immediately when opening the chat
+    markChatReadLocally(chatId);
     markMessagesAsRead(chatId, user.id);
     
     const unsubscribe = subscribeToChatSettings(chatId, (settings) => {
@@ -388,7 +390,7 @@ export default function ChatConversationPage() {
     });
     
     return () => unsubscribe();
-  }, [chatId, user?.id]);
+  }, [chatId, markChatReadLocally, user?.id]);
 
   // Subscribe to messages with IndexedDB + localStorage cache
   useEffect(() => {
@@ -436,6 +438,7 @@ export default function ChatConversationPage() {
 
         setLiveMessagesSynced(true);
         cacheMessages(user.id, chatId, newMessages).catch(() => {});
+        markChatReadLocally(chatId);
         markMessagesAsRead(chatId, user.id);
         setLoadingOld(false);
 
@@ -457,7 +460,7 @@ export default function ChatConversationPage() {
       cancelled = true;
       if (unsubscribe) unsubscribe();
     };
-  }, [chatId, user?.id, messageLimit]);
+  }, [chatId, markChatReadLocally, user?.id, messageLimit]);
 
   // Position cached or freshly loaded messages before the browser paints them.
   // This removes the visible oldest-message -> latest-message jump.
@@ -883,7 +886,6 @@ export default function ChatConversationPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
-        <Header />
         {/* Skeleton Top Bar */}
         <div className="bg-white dark:bg-neutral-800 dark:bg-black border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] px-4 py-3">
           <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 flex items-center justify-between">
@@ -918,7 +920,6 @@ export default function ChatConversationPage() {
   if (!otherUser) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
-        <Header />
         <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 py-20 text-center">
           <User className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 dark:text-white mb-2">

@@ -87,7 +87,7 @@ export default function NotificationToggle({ compact = false }) {
           // Inside Android APK - simply save preferences locally and sync
           localStorage.setItem('discuss_notifications_enabled', 'true');
           setEnabled(true);
-          toast.success('Notifications enabled! 🔔');
+          toast.success('Notifications enabled');
           
           // Request native permissions via Median bridge if OneSignal is initialized
           if (window.median && window.median.onesignal) {
@@ -101,7 +101,7 @@ export default function NotificationToggle({ compact = false }) {
           const subscription = await registerPushSubscription();
           if (subscription) {
             setEnabled(true);
-            toast.success('Notifications enabled! 🔔');
+            toast.success('Notifications enabled');
           } else {
             const permission = getPermissionStatus();
             if (permission === 'denied') {
@@ -321,7 +321,7 @@ export default function NotificationToggle({ compact = false }) {
           <div className="text-sm">
             <p className="font-medium text-amber-600 dark:text-amber-400">Install the app first</p>
             <p className="text-muted-foreground text-xs mt-1" style={isBlack ? { color: '#9090A8' } : {}}>
-              Tap the share button <span className="inline-block px-1">⬆️</span> then "Add to Home Screen" to enable notifications on iOS.
+              Tap the Safari share button, then choose "Add to Home Screen" to enable notifications on iOS.
             </p>
           </div>
         </div>

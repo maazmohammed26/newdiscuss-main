@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
 import FloatingNavbar from '@/components/FloatingNavbar';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { HighlightsProvider } from '@/contexts/HighlightsContext';
@@ -104,6 +104,22 @@ function HomeRoute() {
   return user ? <Navigate to="/feed" replace /> : <LandingPage />;
 }
 
+function ChatWorkspace() {
+  const location = useLocation();
+  const isConversation = location.pathname.split('/').filter(Boolean).length > 1;
+
+  return (
+    <>
+      <div className={isConversation ? 'hidden' : ''}>
+        <ChatPage />
+      </div>
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
+    </>
+  );
+}
+
 // ── AppRoutes ─────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const { user } = useAuth();
@@ -162,8 +178,9 @@ function AppRoutes() {
         <Route path="/feed"                    element={<FeedPage />} />
         <Route path="/post/:postId"            element={<PostDetailPage />} />
         <Route path="/user/:userId"            element={<UserPostsPage />} />
-        <Route path="/chat"                    element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-        <Route path="/chat/:otherUserId"       element={<ProtectedRoute><ChatConversationPage /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><ChatWorkspace /></ProtectedRoute>}>
+          <Route path=":otherUserId" element={<ChatConversationPage />} />
+        </Route>
         <Route path="/group/:groupId"          element={<ProtectedRoute><GroupConversationPage /></ProtectedRoute>} />
         <Route path="/group/:groupId/info"     element={<ProtectedRoute><GroupInfoPage /></ProtectedRoute>} />
         <Route path="/join-requests"           element={<ProtectedRoute><JoinRequestsPage /></ProtectedRoute>} />
@@ -259,14 +276,14 @@ function OnboardingWrapper({ children }) {
 
   useEffect(() => {
     if (!loading && accountId) {
-      const key = `discuss2LightNoticeSeen_${accountId}`;
+      const key = `discuss2ExperienceNoticeV2Seen_${accountId}`;
       setShowModal(window.localStorage.getItem(key) !== 'true');
     }
   }, [accountId, loading]);
 
   const handleClose = () => {
     if (accountId) {
-      window.localStorage.setItem(`discuss2LightNoticeSeen_${accountId}`, 'true');
+      window.localStorage.setItem(`discuss2ExperienceNoticeV2Seen_${accountId}`, 'true');
     }
     setShowModal(false);
   };
@@ -274,6 +291,11 @@ function OnboardingWrapper({ children }) {
   const handleOpenThemeSettings = () => {
     handleClose();
     navigate('/profile?section=theme');
+  };
+
+  const handleOpenNotificationSettings = () => {
+    handleClose();
+    navigate('/profile?section=notifications');
   };
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
@@ -287,7 +309,12 @@ function OnboardingWrapper({ children }) {
       <div className={showNavbar ? "md:pl-[100px] lg:pl-0 transition-all duration-300 min-h-screen w-full flex flex-col" : "min-h-screen w-full flex flex-col"}>
         {children}
       </div>
-      <WelcomeOnboardingModal open={showModal} onClose={handleClose} onThemeSettings={handleOpenThemeSettings} />
+      <WelcomeOnboardingModal
+        open={showModal}
+        onClose={handleClose}
+        onThemeSettings={handleOpenThemeSettings}
+        onNotificationSettings={handleOpenNotificationSettings}
+      />
       {user && location.pathname !== '/login-bridge' && <SkillsOnboardingModal />}
       {showNavbar && <div className="lg:hidden"><FloatingNavbar /></div>}
     </>

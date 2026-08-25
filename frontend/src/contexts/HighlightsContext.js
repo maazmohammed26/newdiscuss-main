@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { subscribeToUserGroups, subscribeToGroupInvites, subscribeToAdminJoinRequests } from '@/lib/groupsDb';
 import { subscribeToReceivedRequests } from '@/lib/relationshipsDb';
@@ -16,6 +16,9 @@ export function HighlightsProvider({ children }) {
   const [pendingAdminGroupRequests, setPendingAdminGroupRequests] = useState(0);
   const [viewedGroupRequests, setViewedGroupRequests] = useState(0);
   const [clearedSections, setClearedSections] = useState({});
+  const unreadChatsRef = useRef({});
+  const locallyReadChatsRef = useRef(new Map());
+  const readReleaseTimersRef = useRef(new Map());
 
   // Signal Stories global sync state
   const [activeStories, setActiveStories] = useState([]);
@@ -33,8 +36,24 @@ export function HighlightsProvider({ children }) {
       return;
     }
 
+    const readReleaseTimers = readReleaseTimersRef.current;
+    const locallyReadChats = locallyReadChatsRef.current;
+
     const unsubChats = subscribeToUserChats(user.id, (chats) => {
-      const count = chats.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+      const unreadByChat = {};
+      let count = 0;
+      chats.forEach((chat) => {
+        const unread = Number(chat.unreadCount) || 0;
+        unreadByChat[chat.chatId] = unread;
+        if (unread === 0 && locallyReadChatsRef.current.has(chat.chatId)) {
+          locallyReadChatsRef.current.delete(chat.chatId);
+          const timer = readReleaseTimersRef.current.get(chat.chatId);
+          if (timer) window.clearTimeout(timer);
+          readReleaseTimersRef.current.delete(chat.chatId);
+        }
+        if (!locallyReadChatsRef.current.has(chat.chatId)) count += unread;
+      });
+      unreadChatsRef.current = unreadByChat;
       setUnreadChatCount(count);
     });
 
@@ -61,8 +80,31 @@ export function HighlightsProvider({ children }) {
       unsubFriendReqs();
       unsubGroupInvites();
       unsubAdminRequests();
+      readReleaseTimers.forEach((timer) => window.clearTimeout(timer));
+      readReleaseTimers.clear();
+      locallyReadChats.clear();
+      unreadChatsRef.current = {};
     };
   }, [user?.id]);
+
+  const markChatReadLocally = useCallback((chatId) => {
+    if (!chatId) return;
+    const unread = unreadChatsRef.current[chatId] || 0;
+    locallyReadChatsRef.current.set(chatId, Date.now());
+    unreadChatsRef.current = { ...unreadChatsRef.current, [chatId]: 0 };
+    setUnreadChatCount((current) => Math.max(0, current - unread));
+
+    const existingTimer = readReleaseTimersRef.current.get(chatId);
+    if (existingTimer) window.clearTimeout(existingTimer);
+    const timer = window.setTimeout(() => {
+      locallyReadChatsRef.current.delete(chatId);
+      readReleaseTimersRef.current.delete(chatId);
+      const latestCount = Object.values(unreadChatsRef.current)
+        .reduce((sum, value) => sum + (Number(value) || 0), 0);
+      setUnreadChatCount(latestCount);
+    }, 8000);
+    readReleaseTimersRef.current.set(chatId, timer);
+  }, []);
 
   useEffect(() => {
     if (!user?.id) {
@@ -132,6 +174,7 @@ export function HighlightsProvider({ children }) {
     markGroupRequestsViewed,
     clearSection,
     clearAllHighlights,
+    markChatReadLocally,
     clearedSections,
     activeStories,
     seenStoryIds,

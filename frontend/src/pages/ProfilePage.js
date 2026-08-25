@@ -153,10 +153,13 @@ export default function ProfilePage() {
   const [showAchievements, setShowAchievements] = useState(false);
 
   useEffect(() => {
-    if (new URLSearchParams(location.search).get('section') !== 'theme') return undefined;
-    setShowProfileSettings(true);
+    const section = new URLSearchParams(location.search).get('section');
+    if (section !== 'theme' && section !== 'notifications') return undefined;
+    if (section === 'theme') setShowProfileSettings(true);
+    if (section === 'notifications') setShowNotificationSettings(true);
     const timer = window.setTimeout(() => {
-      document.getElementById('profile-theme-settings')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const targetId = section === 'theme' ? 'profile-theme-settings' : 'profile-notification-settings';
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 180);
     return () => window.clearTimeout(timer);
   }, [location.search]);
@@ -2273,7 +2276,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 4: Notifications & Integrations */}
-          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+          <div id="profile-notification-settings" className="scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowNotificationSettings(!showNotificationSettings)}
               className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
