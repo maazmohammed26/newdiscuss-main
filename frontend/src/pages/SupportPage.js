@@ -7,12 +7,16 @@ import { useAuth } from '@/contexts/AuthContext';
 const SUPPORT_MESSAGE_LIMIT = 1200;
 
 export default function SupportPage() {
-  const { user } = useAuth();
+  const { user, deleteAccount } = useAuth();
   const [requestType, setRequestType] = useState('bug');
   const [supportMessage, setSupportMessage] = useState('');
   const [status, setStatus] = useState('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const [caseNumber, setCaseNumber] = useState('');
+  const [deleteStep, setDeleteStep] = useState('closed');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteStatus, setDeleteStatus] = useState('idle');
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -59,6 +63,27 @@ export default function SupportPage() {
       setStatus('error');
       setStatusMessage(error.message || 'Could not send your support request. Please try again.');
     }
+  };
+
+  const closeDeleteFlow = () => {
+    if (deleteStatus === 'deleting') return;
+    setDeleteStep('closed');
+    setDeleteConfirmation('');
+    setDeleteStatus('idle');
+    setDeleteError('');
+  };
+
+  const permanentlyDeleteAccount = async () => {
+    if (deleteStatus === 'deleting') return;
+    setDeleteStatus('deleting');
+    setDeleteError('');
+    const result = await deleteAccount();
+    if (result.success) {
+      window.location.replace('/login?accountDeleted=1');
+      return;
+    }
+    setDeleteStatus('error');
+    setDeleteError(result.error || 'Your account could not be deleted. Please try again.');
   };
 
   return (
@@ -164,6 +189,81 @@ export default function SupportPage() {
           <p className="mt-2 text-sm leading-6 text-neutral-600 dark:text-neutral-400">Discuss Support will never ask for your password or one-time verification code. Only trust messages sent from the official discussit.in support address.</p>
         </div>
       </section>
+
+      {user && (
+        <section className="border-t border-neutral-200 py-6 dark:border-neutral-800">
+          <div className="rounded-2xl bg-neutral-50 p-5 dark:bg-[#111111]">
+            <h2 className="text-[15px] font-extrabold">Delete account permanently</h2>
+            <p className="mt-2 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+              Permanently remove your Discuss account and the content owned by it. This action cannot be undone.
+            </p>
+            <button
+              type="button"
+              onClick={() => setDeleteStep('confirm-text')}
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-neutral-300 bg-white px-5 text-sm font-bold text-neutral-950 transition hover:bg-neutral-100 dark:border-neutral-700 dark:bg-black dark:text-white dark:hover:bg-neutral-900"
+            >
+              Delete account
+            </button>
+          </div>
+        </section>
+      )}
+
+      {deleteStep !== 'closed' && (
+        <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div className="w-full max-w-md overflow-hidden rounded-[26px] bg-white p-6 shadow-2xl dark:bg-[#0A0A0A] sm:p-7">
+            <h2 id="delete-account-title" className="text-xl font-black tracking-[-0.025em] text-neutral-950 dark:text-white">
+              Delete account permanently
+            </h2>
+
+            {deleteStep === 'confirm-text' ? (
+              <>
+                <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+                  Type DELETE below to confirm that you understand your account cannot be recovered.
+                </p>
+                <label htmlFor="delete-account-confirmation" className="mt-5 block text-[11px] font-bold uppercase tracking-[0.12em] text-neutral-500">
+                  Confirmation
+                </label>
+                <input
+                  id="delete-account-confirmation"
+                  value={deleteConfirmation}
+                  onChange={(event) => {
+                    setDeleteConfirmation(event.target.value.toUpperCase().slice(0, 6));
+                    setDeleteError('');
+                  }}
+                  autoComplete="off"
+                  spellCheck="false"
+                  placeholder="Type DELETE"
+                  className="mt-2 h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-bold tracking-[0.12em] text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/10 dark:border-neutral-700 dark:bg-black dark:text-white dark:focus:border-white"
+                />
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button type="button" onClick={closeDeleteFlow} className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900">Cancel</button>
+                  <button type="button" disabled={deleteConfirmation !== 'DELETE'} onClick={() => setDeleteStep('final-warning')} className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-35 dark:bg-white dark:text-neutral-950">Continue</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+                  Do you really want to permanently delete this account? Discuss really will miss you.
+                </p>
+                <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+                  Your profile, posts, chats, groups, stories, pulses, sessions, and account details will be permanently removed. Existing comments and likes remain as historical activity without an active profile.
+                </p>
+                {deleteError && (
+                  <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-5 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">
+                    {deleteError}
+                  </div>
+                )}
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button type="button" disabled={deleteStatus === 'deleting'} onClick={() => setDeleteStep('confirm-text')} className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900">Back</button>
+                  <button type="button" disabled={deleteStatus === 'deleting'} onClick={permanentlyDeleteAccount} className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60 dark:bg-white dark:text-neutral-950">
+                    {deleteStatus === 'deleting' ? 'Deleting account' : 'Delete permanently'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </SettingsInfoPageShell>
   );
 }

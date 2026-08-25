@@ -39,6 +39,8 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink,
   sendEmailVerification,
+  deleteUser as firebaseDeleteUser,
+  fetchSignInMethodsForEmail,
 } from '@/lib/firebase';
 import { database, ref, onValue, get, set, off } from '@/lib/firebase';
 import { update, onDisconnect } from 'firebase/database';
@@ -145,6 +147,22 @@ function createProviderConflictError(message) {
   const error = new Error(message);
   error.code = 'auth/provider-conflict';
   return error;
+}
+
+async function lookupExistingAccount(email) {
+  const normalizedEmail = email?.toLowerCase().trim();
+  if (!normalizedEmail) return null;
+
+  const profile = await getUserByEmail(normalizedEmail).catch(() => null);
+  if (profile) return profile;
+
+  const methods = await fetchSignInMethodsForEmail(auth, normalizedEmail).catch(() => []);
+  if (!methods.length) return null;
+  return {
+    email: normalizedEmail,
+    auth_provider: methods.includes('google.com') ? 'google.com' : 'email',
+    _authOnly: true,
+  };
 }
 
 // Median injects its JavaScript bridge after the page starts loading. Resolve
@@ -745,7 +763,7 @@ export function AuthProvider({ children }) {
       if (!isAvailable)
         return { success: false, error: `Username "${username}" is already taken` };
 
-      const existingUser = await getUserByEmail(email);
+      const existingUser = await lookupExistingAccount(email);
       if (existingUser) {
         const conflict = providerConflictMessage(existingUser, 'email');
         return { success: false, error: conflict || EMAIL_ALREADY_IN_USE_MESSAGE };
@@ -801,6 +819,13 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const checkEmailRegistration = useCallback(async (email) => {
+    const existing = await lookupExistingAccount(email);
+    if (!existing) return { exists: false, provider: null };
+    const provider = normalizeProvider(existing.auth_provider);
+    return { exists: true, provider };
+  }, []);
+
   const login = async (email, password) => {
     try {
       if (!email)    return { success: false, error: 'Email is required' };
@@ -808,7 +833,7 @@ export function AuthProvider({ children }) {
 
       window.localStorage.removeItem('pendingVerification');
 
-      const existingUser = await getUserByEmail(email).catch(() => null);
+      const existingUser = await lookupExistingAccount(email);
       const providerConflict = providerConflictMessage(existingUser, 'email');
       if (providerConflict) return { success: false, error: providerConflict };
 
@@ -875,7 +900,7 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = async () => {
     const assertGoogleProvider = async (email) => {
       if (!email) return;
-      const existingUser = await getUserByEmail(email).catch(() => null);
+      const existingUser = await lookupExistingAccount(email);
       const conflict = providerConflictMessage(existingUser, 'google');
       if (conflict) throw createProviderConflictError(conflict);
     };
@@ -922,10 +947,19 @@ export function AuthProvider({ children }) {
             return await completeGoogleSignIn(result);
           } catch (nativeError) {
             console.error('[MedianAuth] Native Google sign-in failed:', nativeError);
-            return {
-              success: false,
-              error: nativeError.message || 'Native Google sign-in failed. Please try again.',
-            };
+            const nativeMessage = String(nativeError?.message || '').toLowerCase();
+            const canUseBrowserFallback = nativeMessage.includes('no credential')
+              || nativeMessage.includes('credential available')
+              || nativeMessage.includes('cannot find a matching credential');
+            if (!canUseBrowserFallback) {
+              return {
+                success: false,
+                error: nativeError.message || 'Native Google sign-in failed. Please try again.',
+              };
+            }
+            // Continue into the external browser bridge below. This lets users
+            // choose an account even when Android Credential Manager has no
+            // previously authorized credential on the device.
           }
         }
 
@@ -1073,6 +1107,41 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const deleteAccount = async () => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      return { success: false, error: 'Your session has expired. Please sign in again.' };
+    }
+
+    const uid = firebaseUser.uid;
+    try {
+      await firebaseDeleteUser(firebaseUser);
+      if (sessionCleanupRef.current) {
+        try {
+          await sessionCleanupRef.current();
+        } catch (_) {}
+        sessionCleanupRef.current = null;
+      }
+      await purgeUserSessionCaches(uid).catch(() => {});
+      writeCachedAuthSession(null);
+      setUser(null);
+      return { success: true };
+    } catch (error) {
+      console.error('[Auth] Delete account error:', error);
+      if (error?.code === 'auth/requires-recent-login') {
+        return {
+          success: false,
+          requiresRecentLogin: true,
+          error: 'For your security, please sign out, sign in again, and then return here to delete your account.',
+        };
+      }
+      return {
+        success: false,
+        error: error?.message || 'Your account could not be deleted. Please try again.',
+      };
+    }
+  };
+
   const refreshUser = async () => {
     if (auth.currentUser) {
       await syncUser(auth.currentUser);
@@ -1102,8 +1171,10 @@ export function AuthProvider({ children }) {
         pendingVerification,
         login,
         register,
+        checkEmailRegistration,
         loginWithGoogle,
         logout,
+        deleteAccount,
         resendVerificationEmail,
         refreshUser,
         patchUser,

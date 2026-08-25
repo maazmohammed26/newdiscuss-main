@@ -30,6 +30,8 @@ import {
   sendEmailVerification,
   applyActionCode,
   checkActionCode,
+  deleteUser,
+  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 
 
@@ -104,6 +106,8 @@ export {
   sendEmailVerification,
   applyActionCode,
   checkActionCode,
+  deleteUser,
+  fetchSignInMethodsForEmail,
 };
 
 export default app;

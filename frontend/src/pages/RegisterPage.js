@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { checkUsernameAvailable, checkEmailAvailable, getAdminSettings } from '@/lib/db';
+import { checkUsernameAvailable } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TermsModal from '@/components/TermsModal';
 import AdminMessageBanner from '@/components/AdminMessageBanner';
 import DiscussLogo from '@/components/DiscussLogo';
-import { Eye, EyeOff, Loader2, CheckCircle2, XCircle, AlertCircle, Shield, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 
 function GoogleIcon() {
   return <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>;
@@ -25,34 +25,12 @@ export default function RegisterPage() {
   const [emailStatus, setEmailStatus] = useState(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [signupEnabled, setSignupEnabled] = useState(true);
-  const [settingsLoading, setSettingsLoading] = useState(true);
   
   const usernameTimeout = useRef(null);
   const emailTimeout = useRef(null);
-  const { register, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle, checkEmailRegistration } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    let active = true;
-    const fallback = window.setTimeout(() => {
-      if (active) setSettingsLoading(false);
-    }, 1500);
-    getAdminSettings().then(settings => {
-      if (!active) return;
-      setSignupEnabled(settings.signup_enabled !== false);
-      setSettingsLoading(false);
-      window.clearTimeout(fallback);
-    }).catch(() => {
-      if (active) setSettingsLoading(false);
-      window.clearTimeout(fallback);
-    });
-    return () => {
-      active = false;
-      window.clearTimeout(fallback);
-    };
-  }, []);
 
   // No captcha generated
 
@@ -82,14 +60,22 @@ export default function RegisterPage() {
     setEmailStatus({ type: 'checking', msg: 'Checking...' });
     emailTimeout.current = setTimeout(async () => {
       try {
-        const available = await checkEmailAvailable(email.trim());
-        setEmailStatus(available 
-          ? { type: 'available', msg: 'Email is available' } 
-          : { type: 'taken', msg: 'Email is already registered' }
-        );
-      } catch { setEmailStatus(null); }
-    }, 500);
-  }, [email]);
+        const result = await checkEmailRegistration(email.trim());
+        if (result.exists) {
+          setEmailStatus({
+            type: 'taken',
+            msg: result.provider === 'google'
+              ? 'This email is already registered with Google'
+              : 'This email is already registered with email and password',
+          });
+          return;
+        }
+        setEmailStatus({ type: 'available', msg: 'Email format looks good' });
+      } catch {
+        setEmailStatus({ type: 'available', msg: 'Email will be verified when you continue' });
+      }
+    }, 450);
+  }, [checkEmailRegistration, email]);
 
   const passwordConditions = [
     { id: 'length', label: 'At least 8 characters', regex: /^.{8,}$/ },
@@ -103,11 +89,10 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     
-    if (settingsLoading) return setError('Please wait while registration availability is checked.');
-    if (!signupEnabled) return;
     if (!username.trim()) return setError('Username is required');
     if (usernameStatus?.type === 'taken') return setError('Username is already taken');
     if (!email.trim()) return setError('Email is required');
+    if (emailStatus?.type === 'taken') return setError(`${emailStatus.msg}. Please sign in instead.`);
     
     const isPasswordValid = passwordConditions.every(cond => cond.regex.test(password));
     if (!isPasswordValid) return setError('Password must meet all complexity requirements');
@@ -131,7 +116,6 @@ export default function RegisterPage() {
   };
 
   const handleGoogle = async () => {
-    if (settingsLoading || !signupEnabled) return;
     if (!termsAccepted) {
       setError('Please accept the Terms and Conditions before continuing.');
       return;
@@ -153,7 +137,7 @@ export default function RegisterPage() {
     if (!status) return null;
     if (status.type === 'checking') return <Loader2 className="w-3.5 h-3.5 animate-spin text-[#94A3B8]" />;
     if (status.type === 'available') return <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />;
-    if (status.type === 'taken') return <XCircle className="w-3.5 h-3.5 text-[#EF4444]" />;
+    if (status.type === 'taken') return null;
     if (status.type === 'invalid') return <AlertCircle className="w-3.5 h-3.5 text-[#F59E0B]" />;
     return null;
   };
@@ -196,18 +180,6 @@ export default function RegisterPage() {
           <div className="relative overflow-hidden rounded-[26px] border border-neutral-200 bg-white p-6 pt-7 shadow-[0_24px_70px_rgba(15,23,42,.10)] sm:p-8">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
-            {!signupEnabled ? (
-              <div data-testid="signup-disabled-message" className="text-center py-8">
-                <div className="w-16 h-16 bg-[#F59E0B]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#F59E0B]/20">
-                  <AlertCircle className="w-8 h-8 text-[#F59E0B]" />
-                </div>
-                <h3 className="text-neutral-950 font-bold text-lg mb-2">Sign Up Disabled</h3>
-                <p className="text-neutral-500 text-[14px] font-medium">Admin has disabled the sign-up process. Thank you.</p>
-                <Link to="/login" className="inline-block mt-4 text-[#0095F6] hover:text-[#DC2626] hover:underline font-bold text-[14px]">
-                  Go to Login
-                </Link>
-              </div>
-            ) : (
               <>
                 {error && (
                   <div data-testid="register-error" role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold leading-5 text-red-700 shadow-sm">
@@ -310,9 +282,9 @@ export default function RegisterPage() {
                   </div>
 
                   <Button type="submit" data-testid="register-submit-btn"
-                    disabled={settingsLoading || loading || usernameStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
+                    disabled={loading || usernameStatus?.type === 'taken' || emailStatus?.type === 'taken' || !termsAccepted || !passwordConditions.every(cond => cond.regex.test(password))}
                     className="mt-1 h-12 w-full rounded-xl border-0 bg-[#0095F6] py-3 text-[15px] font-bold text-white shadow-[0_10px_30px_rgba(0,149,246,.2)] transition-all hover:bg-[#1877F2] disabled:cursor-not-allowed disabled:opacity-40">
-                    {settingsLoading || loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Account'}
                   </Button>
                 </form>
 
@@ -321,7 +293,7 @@ export default function RegisterPage() {
                   <div className="relative flex justify-center text-[10px]"><span className="bg-white px-3 text-neutral-400 uppercase tracking-widest font-bold">Or continue with</span></div>
                 </div>
 
-                <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={settingsLoading || googleLoading}
+                <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={googleLoading}
                   className="mb-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-neutral-200 bg-white py-2.5 font-bold text-neutral-900 shadow-sm hover:bg-neutral-50">
                   {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
                 </Button>
@@ -333,7 +305,6 @@ export default function RegisterPage() {
                   </Link>
                 </p>
               </>
-            )}
           </div>
 
           <div className="text-center mt-6 flex items-center justify-center gap-1.5">
