@@ -62,6 +62,9 @@ import ImagePreviewModal from '@/components/ImagePreviewModal';
 import UserSearchResult from '@/components/UserSearchResult';
 import ProfileShareModal from '@/components/ProfileShareModal';
 import CurrentLocationUpdateModal from '@/components/CurrentLocationUpdateModal';
+import CreatePostModal from '@/components/CreatePostModal';
+import emptyPostIllustration from '@/assets/profile-empty-post.webp';
+import emptyPulseIllustration from '@/assets/profile-empty-pulse.webp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -137,6 +140,8 @@ export default function ProfilePage() {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createInitialType, setCreateInitialType] = useState('discussion');
   const [pendingProfilePic, setPendingProfilePic] = useState(null);
   const [savingProfilePic, setSavingProfilePic] = useState(false);
 
@@ -786,6 +791,32 @@ export default function ProfilePage() {
 
   // Fetch user posts and pulses
   const [userPulses, setUserPulses] = useState([]);
+
+  const openCreateModal = (type = 'discussion') => {
+    setCreateInitialType(type);
+    setShowCreateModal(true);
+  };
+
+  const handleProfileContentCreated = async (created) => {
+    setShowCreateModal(false);
+    if (!user?.id) return;
+
+    try {
+      if (created?.type === 'pulse') {
+        const pulses = await getUserPulses(user.id);
+        setUserPulses(pulses);
+        setShowPulses(true);
+        return;
+      }
+
+      const posts = await getPosts();
+      setUserPosts(posts.filter((post) => post.author_id === user.id));
+      setShowPosts(true);
+    } catch {
+      // The creation already succeeded. The existing live data refresh will
+      // reconcile the profile if this immediate refresh is unavailable.
+    }
+  };
   
   useEffect(() => {
     if (user?.id) {
@@ -1544,6 +1575,19 @@ export default function ProfilePage() {
             </span>
           </div>
 
+          {!loadingPosts && userPosts.length === 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5">
+              <span className="font-script text-[23px] leading-none text-neutral-900 dark:text-white">Create your first post</span>
+              <button
+                type="button"
+                onClick={() => openCreateModal('discussion')}
+                className="min-h-8 rounded-full bg-[#0095F6] px-4 text-[11px] font-extrabold text-white transition hover:bg-[#1877F2] active:scale-95"
+              >
+                Create
+              </button>
+            </div>
+          )}
+
           {receivedRequests.length > 0 && (
             <button
               type="button"
@@ -1591,8 +1635,9 @@ export default function ProfilePage() {
 
         </div>
 
+        <div className="flex flex-col">
         {/* ==================== ACHIEVEMENTS & BADGES ==================== */}
-        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div className="order-5 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowAchievements(!showAchievements)}
             className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -1646,10 +1691,10 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== SETTINGS CATEGORIES STACK ==================== */}
-        <div className="w-full space-y-0 select-none">
+        <div className="contents select-none">
 
           {/* Category 1: Profile Details */}
-          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+          <div className="order-1 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowProfileSettings(!showProfileSettings)}
               className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -2060,7 +2105,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 2: App Security */}
-          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+          <div className="order-7 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowSecuritySettings(!showSecuritySettings)}
               className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -2184,7 +2229,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 3: DevRadar Telemetry */}
-          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+          <div className="order-8 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowLocationSettings(!showLocationSettings)}
               className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -2303,7 +2348,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Category 4: Notifications & Integrations */}
-          <div id="profile-notification-settings" className="scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+          <div id="profile-notification-settings" className="order-6 scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
             <button
               onClick={() => setShowNotificationSettings(!showNotificationSettings)}
               className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -2540,7 +2585,7 @@ export default function ProfilePage() {
 
 
         {/* ==================== FRIENDS SECTION ==================== */}
-        <div id="profile-friend-requests" className="scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div id="profile-friend-requests" className="order-4 scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowFriends(!showFriends)}
             className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -2566,10 +2611,10 @@ export default function ProfilePage() {
           </button>
 
           {showFriends && (
-            <div className="px-4 py-4 space-y-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+            <div className="flex flex-col gap-4 border-t border-[#EFEFEF] bg-[#FAFAFA] px-4 py-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] dark:bg-[#080808]">
               {/* Received Friend Requests */}
               {receivedRequests.length > 0 && (
-                <div className="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-xl p-4">
+                <div className="order-2 rounded-2xl bg-[#F59E0B]/10 p-4 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.18)]">
                   <h3 className="text-sm font-semibold text-[#92400E] dark:text-[#FCD34D] discuss:text-[#FCD34D] mb-3 flex items-center gap-2">
                     <UserPlus className="w-4 h-4" />
                     Friend Requests ({receivedRequests.length})
@@ -2579,7 +2624,7 @@ export default function ProfilePage() {
                       const reqUser = requestUserDetails[request.fromUserId];
                       
                       return (
-                        <div key={request.fromUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                        <div key={request.fromUserId} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-[#111111]">
                           <button
                             onClick={() => navigate(`/user/${request.fromUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2626,7 +2671,7 @@ export default function ProfilePage() {
 
               {/* Sent Requests */}
               {sentRequests.length > 0 && (
-                <div className="bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                <div className="order-1 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
                   <h3 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mb-3 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span>Sent Requests ({sentRequests.length})</span>
@@ -2636,7 +2681,7 @@ export default function ProfilePage() {
                       const reqUser = requestUserDetails[request.toUserId];
                       
                       return (
-                        <div key={request.toUserId} className="flex items-center justify-between bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-lg border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                        <div key={request.toUserId} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
                           <button
                             onClick={() => navigate(`/user/${request.toUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2670,7 +2715,7 @@ export default function ProfilePage() {
               )}
 
               {/* Find Friends Search */}
-              <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+              <div className="order-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
                 <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                   <Search className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                   <span>Find Friends</span>
@@ -2681,7 +2726,7 @@ export default function ProfilePage() {
                     value={friendSearchQuery}
                     onChange={(e) => setFriendSearchQuery(e.target.value)}
                     placeholder="Search users by username..."
-                    className="pl-10 bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white placeholder:text-neutral-500 dark:placeholder:text-[#94A3B8] discuss:placeholder:text-[#9CA3AF] text-sm"
+                    className="h-11 rounded-xl border-neutral-200 bg-neutral-50 pl-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-[#0095F6]/20 dark:border-[#262626] dark:bg-black dark:text-white"
                   />
                   {friendSearchQuery && (
                     <button
@@ -2717,15 +2762,15 @@ export default function ProfilePage() {
 
               {/* Friends List */}
               {loadingFriends ? (
-                <div className="flex flex-col items-center justify-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                <div className="order-4 flex flex-col items-center justify-center rounded-2xl bg-white py-8 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
                   <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6] mb-2" />
                   <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm"><span>Loading friends list...</span></p>
                 </div>
               ) : friends.length > 0 ? (
-                <div className="space-y-4">
+                <div className="order-4 space-y-4">
                   {/* Suggested Friends Section */}
                   {suggestedFriends.length > 0 && (
-                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
                       <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                         <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
                         <span>Suggested Friends</span>
@@ -2740,7 +2785,7 @@ export default function ProfilePage() {
                           {suggestedFriends.map((suggested) => {
                             
                             return (
-                              <div key={suggested.id} className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-3 rounded-lg">
+                              <div key={suggested.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
                                 <button
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -2779,7 +2824,7 @@ export default function ProfilePage() {
                   )}
 
                   {/* Your Friends */}
-                  <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                  <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
                   <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#10B981]" />
                     Your Friends ({friends.length})
@@ -2788,7 +2833,7 @@ export default function ProfilePage() {
                     {friends.map((friend) => {
                       
                       return (
-                        <div key={friend.id} className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-3 rounded-lg">
+                        <div key={friend.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
                           <button
                             onClick={() => navigate(`/user/${friend.id}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2819,13 +2864,13 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="order-4 space-y-4">
                   {/* Suggested Friends for users without friends */}
                   {suggestedFriends.length > 0 && (
-                    <div className="bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl p-4 border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
+                    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
                       <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
                         <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                        People You May Know
+                        Suggested Friends
                       </h3>
                       {loadingSuggestions ? (
                         <div className="flex items-center justify-center py-4">
@@ -2837,7 +2882,7 @@ export default function ProfilePage() {
                           {suggestedFriends.map((suggested) => {
                             
                             return (
-                              <div key={suggested.id} className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] p-3 rounded-lg">
+                              <div key={suggested.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
                                 <button
                                   onClick={() => navigate(`/user/${suggested.id}`)}
                                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -2872,12 +2917,10 @@ export default function ProfilePage() {
                     </div>
                   )}
                   
-                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
-                    <Users className="w-10 h-10 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mx-auto mb-3" />
-                    <h3 className="text-neutral-900 dark:text-white dark:text-white font-semibold mb-1"><span>No friends yet</span></h3>
-                    <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">
-                      <span>Search for users above to connect</span>
-                    </p>
+                  <div className="rounded-2xl bg-white px-5 py-7 text-center shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">Your Friends (0)</p>
+                    <h3 className="font-script mt-3 text-[28px] leading-8 text-neutral-950 dark:text-white">Your circle starts here</h3>
+                    <p className="mx-auto mt-2 max-w-xs text-[12px] leading-5 text-neutral-500 dark:text-neutral-400">Find someone new or choose a suggestion above and send your first request.</p>
                   </div>
                 </div>
               )}
@@ -2887,7 +2930,7 @@ export default function ProfilePage() {
         {/* ==================== END FRIENDS SECTION ==================== */}
 
         {/* ==================== AI INSIGHTS SECTION ==================== */}
-        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div className="order-9 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowAiInsights(!showAiInsights)}
             className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
@@ -3022,7 +3065,7 @@ export default function ProfilePage() {
         
 
         {/* Your Posts Section */}
-        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div className="order-2 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             data-testid="your-posts-toggle"
             onClick={() => setShowPosts(!showPosts)}
@@ -3102,12 +3145,31 @@ export default function ProfilePage() {
                   <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
                 </div>
               ) : filteredPosts.length === 0 ? (
-                <div className="text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#DBDBDB] dark:border-[#262626]">
-                  <Calendar className="w-8 h-8 text-neutral-500 dark:text-neutral-400 mx-auto mb-2" />
-                  <p className="text-neutral-500 dark:text-neutral-400 text-[13px]">
-                    <span>{filterType === 'all' ? "You haven't created any posts yet." : 'No posts found for this period.'}</span>
-                  </p>
-                </div>
+                userPosts.length === 0 && filterType === 'all' ? (
+                  <div className="overflow-hidden rounded-[24px] bg-neutral-50 px-5 pb-6 pt-3 text-center dark:bg-[#101010]">
+                    <img
+                      src={emptyPostIllustration}
+                      alt="Developer preparing a first technical discussion"
+                      className="mx-auto h-auto w-full max-w-[320px] object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <h3 className="font-script -mt-2 text-[30px] leading-8 text-neutral-950 dark:text-white">Create your first post</h3>
+                    <p className="mx-auto mt-2 max-w-xs text-[12px] leading-5 text-neutral-500 dark:text-neutral-400">Make this space your own with a discussion, project, or idea.</p>
+                    <button
+                      type="button"
+                      onClick={() => openCreateModal('discussion')}
+                      className="mt-5 min-h-11 w-full max-w-xs rounded-xl bg-[#0095F6] px-5 text-sm font-extrabold text-white transition hover:bg-[#1877F2] active:scale-[0.98]"
+                    >
+                      Create
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-neutral-50 py-9 text-center dark:bg-[#101010]">
+                    <Calendar className="mx-auto mb-2 h-7 w-7 text-neutral-400" />
+                    <p className="text-[13px] text-neutral-500 dark:text-neutral-400">No posts found for this period.</p>
+                  </div>
+                )
               ) : (
                 filteredPosts.map(post => (
                   <PostCard
@@ -3126,7 +3188,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Your Pulses Section */}
-        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div className="order-3 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             data-testid="your-pulses-toggle"
             onClick={() => setShowPulses(!showPulses)}
@@ -3149,11 +3211,23 @@ export default function ProfilePage() {
                   <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
                 </div>
               ) : userPulses.length === 0 ? (
-                <div className="col-span-full text-center py-10 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#DBDBDB] dark:border-[#262626]">
-                  <PlayCircle className="w-8 h-8 text-neutral-500 dark:text-neutral-400 mx-auto mb-2" />
-                  <p className="text-neutral-500 dark:text-neutral-400 text-[13px]">
-                    <span>You haven't posted any Pulse videos yet.</span>
-                  </p>
+                <div className="col-span-full overflow-hidden rounded-[24px] bg-neutral-50 px-5 pb-6 pt-3 text-center dark:bg-[#101010]">
+                  <img
+                    src={emptyPulseIllustration}
+                    alt="Creator recording a first technical Pulse video"
+                    className="mx-auto h-auto w-full max-w-[320px] object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <h3 className="font-script -mt-2 text-[30px] leading-8 text-neutral-950 dark:text-white">Share your first Pulse</h3>
+                  <p className="mx-auto mt-2 max-w-xs text-[12px] leading-5 text-neutral-500 dark:text-neutral-400">Turn one useful idea into a quick video for the community.</p>
+                  <button
+                    type="button"
+                    onClick={() => openCreateModal('pulse')}
+                    className="mt-5 min-h-11 w-full max-w-xs rounded-xl bg-[#EF4444] px-5 text-sm font-extrabold text-white transition hover:bg-[#DC2626] active:scale-[0.98]"
+                  >
+                    Create Pulse
+                  </button>
                 </div>
               ) : (
                 userPulses.map(pulse => (
@@ -3173,7 +3247,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ==================== HELP, LEGAL & SESSION ==================== */}
-        <div className="w-full bg-white dark:bg-black divide-y divide-[#EFEFEF] dark:divide-[#262626] border-y border-[#EFEFEF] dark:border-[#262626]">
+        <div className="order-10 w-full bg-white dark:bg-black divide-y divide-[#EFEFEF] dark:divide-[#262626] border-y border-[#EFEFEF] dark:border-[#262626]">
           {[
             {
               label: 'Terms & Conditions',
@@ -3230,6 +3304,7 @@ export default function ProfilePage() {
             <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400" />
           </button>
         </div>
+        </div>
 
         {/* Brand Footer in Cursive Discuss font */}
         <div className="flex flex-col items-center justify-center mt-10 mb-28 select-none text-center">
@@ -3240,6 +3315,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <CreatePostModal
+        open={showCreateModal}
+        initialType={createInitialType}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={handleProfileContentCreated}
+      />
 
       <VerificationRequestModal 
         open={showVerificationModal} 
