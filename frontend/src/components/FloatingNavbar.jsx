@@ -14,7 +14,7 @@ import {
 export default function FloatingNavbar() {
   const { user } = useAuth();
   const location = useLocation();
-  const { unreadChatCount } = useHighlights();
+  const { unreadChatCount, pendingFriendRequests } = useHighlights();
   const [domLoading, setDomLoading] = useState(false);
 
   useEffect(() => {
@@ -86,6 +86,14 @@ export default function FloatingNavbar() {
                       />
                     </div>
                   </div>
+                  {pendingFriendRequests > 0 && (
+                    <span
+                      aria-label={`${pendingFriendRequests} pending friend ${pendingFriendRequests === 1 ? 'request' : 'requests'}`}
+                      className="absolute top-0 right-0 min-w-[16px] h-4 px-1 rounded-full bg-[#F59E0B] text-white text-[9px] font-extrabold leading-none flex items-center justify-center shadow-[0_0_0_2px_rgba(255,255,255,0.96)] dark:shadow-[0_0_0_2px_rgba(0,0,0,0.96)]"
+                    >
+                      {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
+                    </span>
+                  )}
                 </Link>
               );
             }

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useHighlights } from '@/contexts/HighlightsContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Header() {
@@ -30,6 +31,7 @@ export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { pendingFriendRequests } = useHighlights();
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/guidelines'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
@@ -108,12 +110,17 @@ export default function Header() {
             </button>
 
             {user ? (
-              <Link to="/profile" className="flex items-center gap-2">
+              <Link to="/profile" className="relative flex items-center gap-2" aria-label={pendingFriendRequests > 0 ? `Profile, ${pendingFriendRequests} pending friend ${pendingFriendRequests === 1 ? 'request' : 'requests'}` : 'Profile'}>
                 <div className="w-8 h-8 rounded-full p-[1.5px] ig-story-gradient">
                   <div className="w-full h-full rounded-full bg-white dark:bg-black p-[1px] overflow-hidden">
                     <UserAvatar src={user.photo_url} username={user.username || 'You'} userId={user.id} priority className="w-full h-full object-cover rounded-full" />
                   </div>
                 </div>
+                {pendingFriendRequests > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#F59E0B] text-white text-[9px] font-extrabold leading-none flex items-center justify-center ring-2 ring-white dark:ring-black">
+                    {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
+                  </span>
+                )}
               </Link>
             ) : (
               <Link to="/login" className="px-4 py-1.5 bg-[#0095F6] text-white text-xs font-bold rounded-lg hover:bg-[#1877F2]">
@@ -189,8 +196,15 @@ export default function Header() {
               <div className="pt-4 border-t border-[#EFEFEF] dark:border-[#262626]">
                 {user ? (
                   <button onClick={() => { navigate('/profile'); setShowDrawer(false); }} className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900">
-                    <div className="w-8 h-8 rounded-full overflow-hidden">
-                      <UserAvatar src={user.photo_url} username={user.username || 'You'} userId={user.id} priority className="w-full h-full object-cover" />
+                    <div className="relative w-8 h-8 rounded-full">
+                      <div className="h-full w-full overflow-hidden rounded-full">
+                        <UserAvatar src={user.photo_url} username={user.username || 'You'} userId={user.id} priority className="w-full h-full rounded-full object-cover" />
+                      </div>
+                      {pendingFriendRequests > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#F59E0B] text-white text-[9px] font-extrabold leading-none flex items-center justify-center ring-2 ring-white dark:ring-black">
+                          {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
+                        </span>
+                      )}
                     </div>
                     <div className="text-left">
                       <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">@{user.username}</div>

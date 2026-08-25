@@ -649,6 +649,16 @@ export default function ProfilePage() {
   const [searchingFriends, setSearchingFriends] = useState(false);
   const [processingRequest, setProcessingRequest] = useState(null);
   const [requestUserDetails, setRequestUserDetails] = useState({});
+
+  const openFriendRequests = () => {
+    setShowFriends(true);
+    window.setTimeout(() => {
+      document.getElementById('profile-friend-requests')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 80);
+  };
   
   // Suggested friends
   const [suggestedFriends, setSuggestedFriends] = useState([]);
@@ -1534,15 +1544,32 @@ export default function ProfilePage() {
             </span>
           </div>
 
-          {/* Discord Section (Disabled) */}
-          <div className="mt-4 opacity-50 cursor-not-allowed">
-             <div className="flex items-center justify-between bg-neutral-50 dark:bg-black p-3 rounded-lg border border-[#DBDBDB] dark:border-[#262626]">
-               <div className="flex items-center gap-2 text-neutral-900 dark:text-white text-sm">
-                 <span className="font-semibold">Discord Integration</span>
-               </div>
-               <span className="text-[10px] font-bold uppercase bg-[#E2E8F0] dark:bg-[#334155] px-2 py-0.5 rounded text-neutral-500 dark:text-neutral-400">Coming Soon</span>
-             </div>
-          </div>
+          {receivedRequests.length > 0 && (
+            <button
+              type="button"
+              onClick={openFriendRequests}
+              className="group mt-4 w-full max-w-sm rounded-2xl bg-gradient-to-r from-[#FFF7ED] via-[#FFFBEB] to-[#FFF7ED] px-4 py-3 text-left shadow-[0_8px_24px_rgba(245,158,11,0.10)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(245,158,11,0.16)] active:translate-y-0 dark:from-[#1C1408] dark:via-[#17130B] dark:to-[#1C1408]"
+              aria-label={`Open ${receivedRequests.length} pending friend ${receivedRequests.length === 1 ? 'request' : 'requests'}`}
+            >
+              <span className="flex items-center gap-3">
+                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F59E0B] text-white shadow-sm">
+                  <UserPlus className="h-5 w-5 stroke-[2px]" />
+                  <span className="absolute -right-1 -top-1 flex min-w-[17px] h-[17px] items-center justify-center rounded-full bg-neutral-950 px-1 text-[9px] font-extrabold text-white ring-2 ring-[#FFF7ED] dark:bg-white dark:text-neutral-950 dark:ring-[#1C1408]">
+                    {receivedRequests.length > 99 ? '99+' : receivedRequests.length}
+                  </span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="font-script block text-[22px] leading-6 text-neutral-950 dark:text-white">
+                    {receivedRequests.length === 1 ? 'A new friend request is waiting' : `${receivedRequests.length} friend requests are waiting`}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-semibold text-[#A16207] dark:text-[#FBBF24]">
+                    Open Friends to review {receivedRequests.length === 1 ? 'it' : 'them'}
+                  </span>
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0 text-[#D97706] transition-transform group-hover:translate-x-0.5 dark:text-[#FBBF24]" />
+              </span>
+            </button>
+          )}
 
           {!user?.verified && (
             <Button
@@ -2513,7 +2540,7 @@ export default function ProfilePage() {
 
 
         {/* ==================== FRIENDS SECTION ==================== */}
-        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+        <div id="profile-friend-requests" className="scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
           <button
             onClick={() => setShowFriends(!showFriends)}
             className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
