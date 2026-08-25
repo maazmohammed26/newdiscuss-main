@@ -121,7 +121,7 @@ import { ADMIN_MESSAGE_PREVIEW_LENGTH } from '@/lib/uiConstants';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, patchUser } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1430,6 +1430,8 @@ export default function ProfilePage() {
               <UserAvatar
                 src={user?.photo_url}
                 username={user?.username}
+                userId={user?.id}
+                priority
                 className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
               />
               {user?.photo_url && (
@@ -1464,8 +1466,8 @@ export default function ProfilePage() {
                           onClick={async () => {
                             const { updateProfilePicture } = await import('@/lib/db');
                             await updateProfilePicture(user.id, '');
+                            patchUser({ photo_url: '' });
                             toast.success('Profile picture removed');
-                            window.location.reload();
                           }}
                           className="w-full mt-3 flex items-center justify-center gap-2 text-[#EF4444] text-xs font-medium py-2 hover:bg-[#EF4444]/10 rounded-lg transition-colors"
                         >
@@ -1494,8 +1496,10 @@ export default function ProfilePage() {
                             try {
                               const { updateProfilePicture } = await import('@/lib/db');
                               await updateProfilePicture(user.id, pendingProfilePic);
+                              patchUser({ photo_url: pendingProfilePic });
+                              setPendingProfilePic(null);
+                              setSavingProfilePic(false);
                               toast.success('Profile picture updated!');
-                              window.location.reload();
                             } catch (e) {
                               toast.error('Failed to update picture');
                               setSavingProfilePic(false);

@@ -228,6 +228,10 @@ export function AuthProvider({ children }) {
     writeCachedAuthSession(user);
   }, [user]);
 
+  const patchUser = useCallback((patch) => {
+    setUser((current) => current ? { ...current, ...patch } : current);
+  }, []);
+
   // ── resolve: called exactly once per auth-state cycle ──────────────────
   const resolve = useCallback(() => {
     if (hasResolved.current) return;
@@ -520,6 +524,14 @@ export function AuthProvider({ children }) {
 
     const userRef = ref(database, `users/${user.id}`);
     let previousVerified = user.verified;
+    let previousProfile = {
+      username: user.username || '',
+      email: user.email || '',
+      photo_url: user.photo_url ?? '',
+      verified: Boolean(user.verified),
+      admin_message: user.admin_message || '',
+      isOnlineVisible: user.isOnlineVisible !== false,
+    };
     let sawProfile = false;
 
     const handleUserUpdate = (snapshot) => {
@@ -534,12 +546,31 @@ export function AuthProvider({ children }) {
           previousVerified = newVerified;
         }
 
-        setUser((prev) => ({
-          ...prev,
-          verified:       newVerified,
-          admin_message:  data.admin_message || '',
+        const liveProfile = {
+          id: user.id,
+          username: data.username || user.username || '',
+          email: data.email || user.email || '',
+          photo_url: data.photo_url ?? '',
+          verified: newVerified,
+          admin_message: data.admin_message || '',
           isOnlineVisible: data.isOnlineVisible !== false,
-        }));
+        };
+
+        const profileChanged = Object.keys(previousProfile).some(
+          (key) => previousProfile[key] !== liveProfile[key]
+        );
+
+        if (profileChanged) {
+          previousProfile = {
+            username: liveProfile.username,
+            email: liveProfile.email,
+            photo_url: liveProfile.photo_url,
+            verified: liveProfile.verified,
+            admin_message: liveProfile.admin_message,
+            isOnlineVisible: liveProfile.isOnlineVisible,
+          };
+          setUser((prev) => prev ? { ...prev, ...liveProfile } : prev);
+        }
       } else if (sawProfile) {
         // Profile record was deleted → account removed by admin
         sawProfile = false;
@@ -992,6 +1023,7 @@ export function AuthProvider({ children }) {
         logout,
         resendVerificationEmail,
         refreshUser,
+        patchUser,
       }}
     >
       {children}

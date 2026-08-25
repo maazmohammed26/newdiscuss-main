@@ -23,7 +23,8 @@ import {
   cacheFriends,
   getCachedGroups,
   cacheGroups,
-  fastCacheLoad
+  fastCacheLoad,
+  patchCachedUserProfile,
 } from '@/lib/cacheManager';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -53,6 +54,22 @@ import {
   previewFromLastMessageString,
   isDeletedListPreview,
 } from '@/lib/chatMessageUtils';
+
+const reconcileCollection = (current, incoming, getKey) => {
+  if (!Array.isArray(incoming)) return current;
+  const previousByKey = new Map(current.map((item) => [getKey(item), item]));
+  let changed = current.length !== incoming.length;
+  const reconciled = incoming.map((item, index) => {
+    const previous = previousByKey.get(getKey(item));
+    if (previous && JSON.stringify(previous) === JSON.stringify(item)) {
+      if (current[index] !== previous) changed = true;
+      return previous;
+    }
+    changed = true;
+    return item;
+  });
+  return changed ? reconciled : current;
+};
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -108,8 +125,10 @@ export default function ChatPage() {
   const [searchingGroups, setSearchingGroups] = useState(false);
   const [groupRequestStatus, setGroupRequestStatus] = useState({});
   const chatsRef = useRef(chats);
+  const friendsRef = useRef(friends);
 
   useEffect(() => { chatsRef.current = chats; }, [chats]);
+  useEffect(() => { friendsRef.current = friends; }, [friends]);
 
   // Sync state changes with in-memory cache for instant subsequent loads
   useEffect(() => {
@@ -144,13 +163,13 @@ export default function ChatPage() {
         ]);
 
         if (cachedChatsData?.length > 0) {
-          setChats(cachedChatsData);
+          setChats((current) => reconcileCollection(current, cachedChatsData, (chat) => chat.chatId));
         }
         if (cachedFriendsData?.length > 0) {
-          setFriends(cachedFriendsData);
+          setFriends((current) => reconcileCollection(current, cachedFriendsData, (friend) => friend.id));
         }
         if (cachedGroupsData?.length > 0) {
-          setGroups(cachedGroupsData);
+          setGroups((current) => reconcileCollection(current, cachedGroupsData, (group) => group.groupId));
         }
         if (cachedChatsData || cachedFriendsData || cachedGroupsData) {
           setLoading(false);
@@ -158,7 +177,7 @@ export default function ChatPage() {
 
         // Load friends (only manual database fetch needed since chats and groups have subscriptions!)
         const friendsData = await getFriendsWithDetails(user.id);
-        setFriends(friendsData);
+        setFriends((current) => reconcileCollection(current, friendsData, (friend) => friend.id));
         await cacheFriends(user.id, friendsData);
         
       } catch (error) {
@@ -187,7 +206,9 @@ export default function ChatPage() {
             // Get chat settings for auto-delete indicator in real-time
             const settings = await getChatSettings(chat.chatId);
             if (settings?.autoDelete) {
-              setChatSettings(prev => ({ ...prev, [chat.chatId]: settings }));
+              setChatSettings((prev) => JSON.stringify(prev[chat.chatId]) === JSON.stringify(settings)
+                ? prev
+                : { ...prev, [chat.chatId]: settings });
             }
             
             return {
@@ -207,13 +228,13 @@ export default function ChatPage() {
       );
       
       const validChats = chatsWithDetails.filter(chat => chat !== null && chat.otherUserDetails !== null);
-      startTransition(() => setChats(validChats));
+      startTransition(() => setChats((current) => reconcileCollection(current, validChats, (chat) => chat.chatId)));
       cacheChats(user.id, validChats);
     });
 
     // Subscribe to real-time group updates
     const unsubscribeGroups = subscribeToUserGroups(user.id, (updatedGroups) => {
-      startTransition(() => setGroups(updatedGroups));
+      startTransition(() => setGroups((current) => reconcileCollection(current, updatedGroups, (group) => group.groupId)));
       cacheGroups(user.id, updatedGroups);
     });
 
@@ -237,6 +258,42 @@ export default function ChatPage() {
       onValue(ref(database, `users/${oid}`), (snap) => {
         if (snap.exists()) {
           seenOk.add(oid);
+          const data = snap.val();
+          const profile = {
+            id: oid,
+            username: data.username || '',
+            photo_url: data.photo_url ?? '',
+            verified: Boolean(data.verified),
+          };
+          const chatDetails = chatsRef.current.find((chat) => chat.otherUser === oid)?.otherUserDetails;
+          const friendDetails = friendsRef.current.find((friend) => friend.id === oid);
+          const chatChanged = Boolean(chatDetails) && (
+            chatDetails.username !== profile.username
+            || (chatDetails.photo_url ?? '') !== profile.photo_url
+            || Boolean(chatDetails.verified) !== profile.verified
+          );
+          const friendChanged = Boolean(friendDetails) && (
+            friendDetails.username !== profile.username
+            || (friendDetails.photo_url ?? '') !== profile.photo_url
+            || Boolean(friendDetails.verified) !== profile.verified
+          );
+
+          if (chatChanged) {
+            setChats((current) => current.map((chat) => chat.otherUser === oid
+              ? {
+                  ...chat,
+                  otherUserDetails: { ...(chat.otherUserDetails || {}), ...profile },
+                }
+              : chat));
+          }
+          if (friendChanged) {
+            setFriends((current) => current.map((friend) => friend.id === oid
+              ? { ...friend, ...profile }
+              : friend));
+          }
+          if (chatChanged || friendChanged) {
+            patchCachedUserProfile(user.id, profile).catch(() => {});
+          }
           return;
         }
         if (!seenOk.has(oid)) return;
@@ -267,6 +324,25 @@ export default function ChatPage() {
       onValue(ref(database, `users/${fid}`), (snap) => {
         if (snap.exists()) {
           seenOk.add(fid);
+          const data = snap.val();
+          const profile = {
+            id: fid,
+            username: data.username || '',
+            photo_url: data.photo_url ?? '',
+            verified: Boolean(data.verified),
+          };
+          const friendDetails = friendsRef.current.find((friend) => friend.id === fid);
+          const profileChanged = Boolean(friendDetails) && (
+            friendDetails.username !== profile.username
+            || (friendDetails.photo_url ?? '') !== profile.photo_url
+            || Boolean(friendDetails.verified) !== profile.verified
+          );
+          if (profileChanged) {
+            setFriends((current) => current.map((friend) => friend.id === fid
+              ? { ...friend, ...profile }
+              : friend));
+            patchCachedUserProfile(user.id, profile).catch(() => {});
+          }
           return;
         }
         if (!seenOk.has(fid)) return;
@@ -336,8 +412,11 @@ export default function ChatPage() {
     navigate(`/group/${groupId}`);
   };
 
-  const handleStartNewChat = (friendId) => {
-    navigate(`/chat/${friendId}`);
+  const handleStartNewChat = (friend) => {
+    if (typeof window !== 'undefined') {
+      window.__discuss_active_chat_user = { ...friend, id: friend.id };
+    }
+    navigate(`/chat/${friend.id}`);
   };
 
   const handleGroupCreated = (group) => {
@@ -554,7 +633,7 @@ export default function ChatPage() {
     return (
       <button
         key={friend.id}
-        onClick={() => handleStartNewChat(friend.id)}
+        onClick={() => handleStartNewChat(friend)}
         className="w-full flex items-center gap-3 px-4 py-3.5 bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950 transition-colors"
       >
         <UserAvatar

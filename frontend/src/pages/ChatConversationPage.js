@@ -1,5 +1,5 @@
 import UserAvatar from '@/components/UserAvatar';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { database, ref, onValue } from '@/lib/firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,7 @@ import {
   getCachedMessages,
   getFastCachedMessages,
   cacheMessages,
+  patchCachedUserProfile,
   clearDmThreadCaches,
   removeDmMessageFromCaches,
   patchDmMessageDeletedInCaches,
@@ -64,6 +65,22 @@ import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
 import { MapPin } from 'lucide-react';
 import LocationMessage from '@/components/LocationMessage';
 
+const reconcileMessages = (current, incoming) => {
+  if (!Array.isArray(incoming)) return current;
+  const previousById = new Map(current.map((message) => [message.id, message]));
+  let changed = current.length !== incoming.length;
+  const reconciled = incoming.map((message, index) => {
+    const previous = previousById.get(message.id);
+    if (previous && JSON.stringify(previous) === JSON.stringify(message)) {
+      if (current[index] !== previous) changed = true;
+      return previous;
+    }
+    changed = true;
+    return message;
+  });
+  return changed ? reconciled : current;
+};
+
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
   const { user } = useAuth();
@@ -84,7 +101,7 @@ export default function ChatConversationPage() {
   const [messages, setMessages] = useState(() => initialMessages || []);
   const [deletedMessageIds, setDeletedMessageIds] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(() => !initialOtherUser && !initialMessages);
+  const [loading, setLoading] = useState(() => !initialOtherUser);
   const [sending, setSending] = useState(false);
   const [chatId, setChatId] = useState(initialChatId);
   const [chatEnabled, setChatEnabled] = useState(true);
@@ -99,6 +116,7 @@ export default function ChatConversationPage() {
   const [reporting, setReporting] = useState(false);
   const [chatCreated, setChatCreated] = useState(false);
   const [liveMessagesSynced, setLiveMessagesSynced] = useState(false);
+  const [positionedChatId, setPositionedChatId] = useState(null);
   const [messageLimit, setMessageLimit] = useState(50);
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
@@ -240,6 +258,32 @@ export default function ChatConversationPage() {
     const unsub = onValue(uref, (snap) => {
       if (snap.exists()) {
         sawProfile = true;
+        const data = snap.val();
+        const liveUser = {
+          id: otherUserId,
+          username: data.username || '',
+          email: data.email || '',
+          photo_url: data.photo_url ?? '',
+          verified: Boolean(data.verified),
+        };
+        const current = otherUserRef.current;
+        const profileChanged = !current
+          || current.username !== liveUser.username
+          || current.email !== liveUser.email
+          || (current.photo_url ?? '') !== liveUser.photo_url
+          || Boolean(current.verified) !== liveUser.verified;
+
+        if (!profileChanged) return;
+        setOtherUser((existing) => ({ ...(existing || {}), ...liveUser }));
+        if (typeof window !== 'undefined') {
+          window.__discuss_active_chat_user = {
+            ...(window.__discuss_active_chat_user || {}),
+            ...liveUser,
+          };
+        }
+        if (user?.id) {
+          patchCachedUserProfile(user.id, liveUser).catch(() => {});
+        }
         return;
       }
       if (sawProfile) {
@@ -248,7 +292,7 @@ export default function ChatConversationPage() {
       }
     });
     return () => unsub();
-  }, [otherUserId, navigate]);
+  }, [otherUserId, navigate, user?.id]);
 
   useEffect(() => {
     userIdRef.current = user?.id;
@@ -280,6 +324,9 @@ export default function ChatConversationPage() {
           window.__discuss_active_chat_user = { id: otherUserId, ...userData };
         }
         setOtherUserProfile(profileData);
+        // Identity is enough to paint the conversation shell. Relationship,
+        // deletion and chat-creation checks continue without blocking it.
+        setLoading(false);
 
         // Check relationship and chat status with details
         const [canChat, status, details] = await Promise.all([
@@ -353,7 +400,7 @@ export default function ChatConversationPage() {
     (async () => {
       const cached = await getCachedMessages(user.id, chatId);
       if (!cancelled && cached?.length) {
-        setMessages(cached);
+        setMessages((current) => reconcileMessages(current, cached));
       }
 
       unsubscribe = subscribeToMessages(chatId, async (newMessages) => {
@@ -374,8 +421,12 @@ export default function ChatConversationPage() {
         const container = messagesContainerRef.current;
         const scrollHeightBefore = container ? container.scrollHeight : 0;
         const scrollTopBefore = container ? container.scrollTop : 0;
+        const distanceFromBottom = container
+          ? scrollHeightBefore - scrollTopBefore - container.clientHeight
+          : 0;
+        const shouldStayAtLatest = distanceFromBottom < 160;
 
-        setMessages(newMessages);
+        setMessages((current) => reconcileMessages(current, newMessages));
 
         if (newMessages.length < messageLimit) {
           setHasMoreOld(false);
@@ -383,8 +434,8 @@ export default function ChatConversationPage() {
           setHasMoreOld(true);
         }
 
-        await cacheMessages(user.id, chatId, newMessages);
         setLiveMessagesSynced(true);
+        cacheMessages(user.id, chatId, newMessages).catch(() => {});
         markMessagesAsRead(chatId, user.id);
         setLoadingOld(false);
 
@@ -394,6 +445,10 @@ export default function ChatConversationPage() {
             const diff = container.scrollHeight - scrollHeightBefore;
             container.scrollTop = diff;
           }, 0);
+        } else if (container && shouldStayAtLatest) {
+          requestAnimationFrame(() => {
+            container.scrollTop = container.scrollHeight;
+          });
         }
       }, messageLimit);
     })();
@@ -404,14 +459,18 @@ export default function ChatConversationPage() {
     };
   }, [chatId, user?.id, messageLimit]);
 
-  // Initial scroll to bottom when chat loads
-  useEffect(() => {
-    if (!loading && messagesEndRef.current) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-      }, 100);
-    }
-  }, [loading]);
+  // Position cached or freshly loaded messages before the browser paints them.
+  // This removes the visible oldest-message -> latest-message jump.
+  useLayoutEffect(() => {
+    if (loading || !chatId || positionedChatId === chatId) return;
+    if (messages.length === 0 && !liveMessagesSynced) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+    setShowScrollDown(false);
+    setPositionedChatId(chatId);
+  }, [chatId, liveMessagesSynced, loading, messages.length, positionedChatId]);
 
   // Handle relationship status change
   const handleStatusChange = useCallback((newStatus) => {
@@ -893,6 +952,7 @@ export default function ChatConversationPage() {
               <UserAvatar
                 src={otherUser.photo_url}
                 username={otherUser.username}
+                priority
                 className="w-10 h-10"
               />
               
@@ -1000,7 +1060,7 @@ export default function ChatConversationPage() {
         ref={messagesContainerRef}
         onClick={clearAllHighlights}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto bg-neutral-50/60 px-2 py-4 scrollbar-hide dark:bg-neutral-950/60 sm:px-4"
+        className="relative flex-1 overflow-y-auto bg-neutral-50/60 px-2 py-4 scrollbar-hide dark:bg-neutral-950/60 sm:px-4"
         style={{ maxHeight: `calc(100vh - ${autoDeleteEnabled ? 176 : (replyTo ? 180 : 140)}px)` }}
       >
         <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 space-y-4">
@@ -1011,8 +1071,8 @@ export default function ChatConversationPage() {
             </div>
           )}
 
-          {!liveMessagesSynced && messages.length === 0 && (
-            <div className="space-y-3 py-2" aria-hidden>
+          {positionedChatId !== chatId && (
+            <div className="absolute inset-x-4 top-4 z-10 space-y-3 bg-neutral-50/95 py-2 dark:bg-neutral-950/95" aria-hidden>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
@@ -1024,6 +1084,7 @@ export default function ChatConversationPage() {
             </div>
           )}
 
+          <div className={positionedChatId === chatId ? 'visible' : 'invisible'}>
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>
               {/* Date separator */}
@@ -1212,6 +1273,7 @@ export default function ChatConversationPage() {
           )}
           
           <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
 

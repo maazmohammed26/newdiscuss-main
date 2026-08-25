@@ -111,7 +111,7 @@ export default function Header() {
               <Link to="/profile" className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full p-[1.5px] ig-story-gradient">
                   <div className="w-full h-full rounded-full bg-white dark:bg-black p-[1px] overflow-hidden">
-                    <UserAvatar src={user.photo_url} username={user.username || 'You'} className="w-full h-full object-cover rounded-full" />
+                    <UserAvatar src={user.photo_url} username={user.username || 'You'} userId={user.id} priority className="w-full h-full object-cover rounded-full" />
                   </div>
                 </div>
               </Link>
@@ -190,7 +190,7 @@ export default function Header() {
                 {user ? (
                   <button onClick={() => { navigate('/profile'); setShowDrawer(false); }} className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900">
                     <div className="w-8 h-8 rounded-full overflow-hidden">
-                      <UserAvatar src={user.photo_url} username={user.username || 'You'} className="w-full h-full object-cover" />
+                      <UserAvatar src={user.photo_url} username={user.username || 'You'} userId={user.id} priority className="w-full h-full object-cover" />
                     </div>
                     <div className="text-left">
                       <div className="text-xs font-bold text-neutral-900 dark:text-white truncate">@{user.username}</div>

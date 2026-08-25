@@ -10,7 +10,7 @@
  *  2. Glassmorphic Option Interceptors: full story viewing, full profile pic previewing, and profile routing.
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
@@ -36,18 +36,60 @@ export default function UserAvatar({
   fallbackBg = 'linear-gradient(135deg, #2563EB, #1d4ed8)',
   style = {},
   userId,
+  priority = false,
 }) {
   const { user: currentUser } = useAuth();
   const highlights = useHighlights();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isCurrentUserAvatar = Boolean(currentUser && (
+    (userId && userId === currentUser.id) ||
+    (!userId && username && username === currentUser.username)
+  ));
+  const resolvedSrc = useMemo(
+    () => isCurrentUserAvatar ? (currentUser?.photo_url || '') : (src || ''),
+    [currentUser?.photo_url, isCurrentUserAvatar, src]
+  );
+  const [displaySrc, setDisplaySrc] = useState(resolvedSrc);
   const [failed, setFailed] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
 
   const altText = alt || username || 'User';
+
+  // Keep the previous decoded avatar visible until the replacement is ready.
+  // This prevents the initials/old-image flash when cached profile data is
+  // reconciled with a newly uploaded picture.
+  useEffect(() => {
+    if (resolvedSrc === displaySrc) {
+      setFailed(false);
+      return undefined;
+    }
+    if (!resolvedSrc) {
+      setDisplaySrc('');
+      setFailed(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const preload = new Image();
+    preload.referrerPolicy = 'no-referrer';
+    preload.decoding = 'async';
+    preload.onload = () => {
+      if (cancelled) return;
+      setDisplaySrc(resolvedSrc);
+      setFailed(false);
+    };
+    preload.onerror = () => {
+      if (!cancelled && !displaySrc) setFailed(true);
+    };
+    preload.src = resolvedSrc;
+    return () => {
+      cancelled = true;
+    };
+  }, [displaySrc, resolvedSrc]);
 
   // Derive initials: up to 2 alphanumeric characters from the username
   const raw = username ? username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() : '';
@@ -80,21 +122,22 @@ export default function UserAvatar({
     if (hasStory) {
       setShowOptions(true);
     } else {
-      if (src && !failed) {
+      if (displaySrc && !failed) {
         setShowImagePreview(true);
       }
     }
   };
 
-  const innerAvatarMarkup = src && !failed ? (
+  const innerAvatarMarkup = displaySrc && !failed ? (
     <img
-      src={src}
+      src={displaySrc}
       alt={altText}
       className={`${className} rounded-full object-cover flex-shrink-0 story-shining-avatar no-drag ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
       style={style}
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
       onContextMenu={(e) => {
         e.preventDefault();
@@ -197,12 +240,12 @@ export default function UserAvatar({
       )}
 
       {/* Fullscreen profile picture overlay */}
-      {showImagePreview && src && (
+      {showImagePreview && displaySrc && (
         <div onClick={(e) => e.stopPropagation()}>
           <ImagePreviewModal
             open={showImagePreview}
             onClose={() => setShowImagePreview(false)}
-            imageUrl={src}
+            imageUrl={displaySrc}
             altText={username}
           />
         </div>

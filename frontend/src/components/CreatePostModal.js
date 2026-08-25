@@ -123,7 +123,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5">
           <div className="flex items-center gap-3">
-            <UserAvatar src={user?.photo_url || user?.photoURL} username={user?.username || user?.displayName} className="w-10 h-10 rounded-full object-cover" />
+            <UserAvatar src={user?.photo_url || user?.photoURL} username={user?.username || user?.displayName} userId={user?.id} priority className="w-10 h-10 rounded-full object-cover" />
             <div><p className="text-[14px] font-bold text-neutral-900 dark:text-white">{user?.username || user?.displayName || 'Developer'}</p><p className="text-[11px] text-neutral-500">Share with the Discuss community</p></div>
           </div>
 

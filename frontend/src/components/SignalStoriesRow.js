@@ -80,6 +80,8 @@ function AddStoryBubble({ user, onClick }) {
               <UserAvatar 
                 src={user.photo_url} 
                 username={user.username || 'You'} 
+                userId={user.id}
+                priority
                 className="w-full h-full object-cover rounded-full opacity-90" 
               />
             ) : (

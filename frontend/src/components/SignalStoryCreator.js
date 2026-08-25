@@ -128,6 +128,8 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
           <UserAvatar
             src={user?.photo_url}
             username={user?.username}
+            userId={user?.id}
+            priority
             className="w-9 h-9 ring-2 ring-[#0095F6]/20"
           />
           <div>

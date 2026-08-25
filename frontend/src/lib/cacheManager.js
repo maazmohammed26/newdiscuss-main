@@ -421,6 +421,88 @@ export const getCachedChats = async (userId) => {
   }
 };
 
+/**
+ * Reconcile a mutable user profile across the chat/friend caches without
+ * clearing either list. This keeps navigation instant while a fresh avatar or
+ * username is propagated in the background.
+ */
+export const patchCachedUserProfile = async (ownerUserId, profile) => {
+  if (!ownerUserId || !profile?.id) return;
+
+  const profilePatch = {
+    id: profile.id,
+    username: profile.username || '',
+    photo_url: profile.photo_url ?? '',
+    verified: Boolean(profile.verified),
+  };
+  const patchChat = (chat) => chat?.otherUser === profile.id
+    ? {
+        ...chat,
+        otherUserDetails: {
+          ...(chat.otherUserDetails || {}),
+          ...profilePatch,
+        },
+      }
+    : chat;
+  const patchFriend = (friend) => friend?.id === profile.id
+    ? { ...friend, ...profilePatch }
+    : friend;
+
+  try {
+    const fastChats = fastCacheLoad(`chats_${ownerUserId}`, Number.MAX_SAFE_INTEGER)?.data;
+    if (Array.isArray(fastChats)) {
+      fastCacheSave(`chats_${ownerUserId}`, fastChats.map(patchChat));
+    }
+    const fastFriends = fastCacheLoad(`friends_${ownerUserId}`, Number.MAX_SAFE_INTEGER)?.data;
+    if (Array.isArray(fastFriends)) {
+      fastCacheSave(`friends_${ownerUserId}`, fastFriends.map(patchFriend));
+    }
+
+    if (typeof window !== 'undefined') {
+      if (Array.isArray(window.__discuss_chats_cache)) {
+        window.__discuss_chats_cache = window.__discuss_chats_cache.map(patchChat);
+      }
+      if (Array.isArray(window.__discuss_friends_cache)) {
+        window.__discuss_friends_cache = window.__discuss_friends_cache.map(patchFriend);
+      }
+      if (window.__discuss_active_chat_user?.id === profile.id) {
+        window.__discuss_active_chat_user = {
+          ...window.__discuss_active_chat_user,
+          ...profilePatch,
+        };
+      }
+    }
+
+    const db = await getDB();
+    const cachedUser = await db.get('users', profile.id);
+    await db.put('users', {
+      ...(cachedUser || {}),
+      ...profilePatch,
+      timestamp: Date.now(),
+    });
+
+    const chatTx = db.transaction('chats', 'readwrite');
+    const cachedChats = await chatTx.store.getAll();
+    for (const chat of cachedChats) {
+      if (chat.userId === ownerUserId && chat.otherUser === profile.id) {
+        await chatTx.store.put(patchChat(chat));
+      }
+    }
+    await chatTx.done;
+
+    const cachedFriends = await db.get('friends', ownerUserId);
+    if (Array.isArray(cachedFriends?.friends)) {
+      await db.put('friends', {
+        ...cachedFriends,
+        friends: cachedFriends.friends.map(patchFriend),
+        timestamp: Date.now(),
+      });
+    }
+  } catch (error) {
+    console.warn('Cached user profile reconciliation failed:', error);
+  }
+};
+
 // ==================== MESSAGES CACHE ====================
 
 const dmMessagesFastKey = (userId, chatId) => `dm_messages_${userId}_${chatId}`;
