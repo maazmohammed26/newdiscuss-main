@@ -90,8 +90,13 @@ const verifyUser = async (authorization = '') => {
   const match = String(authorization).match(/^Bearer\s+(.+)$/i);
   if (!match) throw new ApiError(401, 'unauthenticated', 'Sign in to use Discuss audio calling.');
   try {
-    return await getApps().primary.auth().verifyIdToken(match[1], true);
-  } catch (_) {
+    // Cryptographic verification is sufficient here and does not require the
+    // Vercel service account to have broad Firebase Authentication user-read
+    // permissions. Revocation-aware verification performs an additional
+    // account lookup and was incorrectly turning valid sessions into 401s.
+    return await getApps().primary.auth().verifyIdToken(match[1]);
+  } catch (error) {
+    console.warn('[AudioCall] Token verification failed:', error?.code || 'unknown');
     throw new ApiError(401, 'unauthenticated', 'Your session has expired. Please sign in again.');
   }
 };

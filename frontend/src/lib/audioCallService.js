@@ -16,8 +16,8 @@ const request = async (action, payload = {}) => {
     error.code = 'unauthenticated';
     throw error;
   }
-  const token = await user.getIdToken();
-  const response = await fetch('/api/audio-call', {
+
+  const send = (token) => fetch('/api/audio-call', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -25,6 +25,15 @@ const request = async (action, payload = {}) => {
     },
     body: JSON.stringify({ action, ...payload }),
   });
+
+  // Firebase normally refreshes ID tokens automatically. Mobile WebViews and
+  // resumed PWAs can occasionally retain a stale token, so retry once with a
+  // forced refresh before asking the user to sign in again.
+  let response = await send(await user.getIdToken());
+  if (response.status === 401 && auth.currentUser) {
+    response = await send(await auth.currentUser.getIdToken(true));
+  }
+
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(result.error || 'The audio call could not be connected. Please try again.');
