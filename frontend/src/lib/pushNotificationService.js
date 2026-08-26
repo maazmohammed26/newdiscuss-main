@@ -9,6 +9,53 @@ const NOTIFICATION_ENABLED_KEY = 'discuss_notifications_enabled';
 const NOTIFICATION_PREVIEW_KEY = 'discuss_notification_preview_enabled';
 const CHAT_COOLDOWN_KEY = 'discuss_chat_cooldowns';
 const SENT_NOTIFICATIONS_KEY = 'discuss_sent_notifications';
+const ONESIGNAL_APP_ID = '280791b6-7711-4b32-8897-449efe155f2b';
+let oneSignalWebReady = null;
+
+const isMedianApp = () => typeof window !== 'undefined' && Boolean(window.median?.onesignal);
+
+const ensureOneSignalWeb = () => {
+  if (typeof window === 'undefined' || isMedianApp()) return Promise.resolve(null);
+  if (oneSignalWebReady) return oneSignalWebReady;
+
+  oneSignalWebReady = new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error('OneSignal Web initialization timed out.')), 15000);
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async (OneSignal) => {
+      try {
+        await OneSignal.init({
+          appId: ONESIGNAL_APP_ID,
+          serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
+          serviceWorkerParam: { scope: '/push/onesignal/' },
+          notifyButton: { enable: false },
+          allowLocalhostAsSecureOrigin: window.location.hostname === 'localhost',
+        });
+        window.clearTimeout(timeout);
+        resolve(OneSignal);
+      } catch (error) {
+        window.clearTimeout(timeout);
+        reject(error);
+      }
+    });
+
+    if (!document.querySelector('script[data-discuss-onesignal]')) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+      script.defer = true;
+      script.dataset.discussOnesignal = 'true';
+      script.onerror = () => {
+        window.clearTimeout(timeout);
+        reject(new Error('OneSignal Web SDK could not be loaded.'));
+      };
+      document.head.appendChild(script);
+    }
+  }).catch((error) => {
+    oneSignalWebReady = null;
+    throw error;
+  });
+
+  return oneSignalWebReady;
+};
 
 // Chat notification cooldown (2 hours in milliseconds)
 const CHAT_NOTIFICATION_COOLDOWN = 2 * 60 * 60 * 1000;
@@ -45,7 +92,7 @@ export function urlBase64ToUint8Array(base64String) {
 
 // Check if push notifications are supported
 export const isPushSupported = () => {
-  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+  if (isMedianApp()) {
     return true; // Supported natively via OneSignal in Android APK
   }
   return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -76,7 +123,7 @@ export const getIOSVersion = () => {
 
 // Check if push is available on this device
 export const canUsePush = () => {
-  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+  if (isMedianApp()) {
     return true;
   }
   if (!isPushSupported()) return false;
@@ -88,7 +135,7 @@ export const canUsePush = () => {
 
 // Get current permission status
 export const getPermissionStatus = () => {
-  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+  if (isMedianApp()) {
     return 'granted';
   }
   if (!isPushSupported()) return 'unsupported';
@@ -99,7 +146,7 @@ export const getPermissionStatus = () => {
 
 // Check if notifications are enabled for user
 export const isNotificationsEnabled = () => {
-  if (typeof window !== 'undefined' && (window.median !== undefined || navigator.userAgent.includes('Android'))) {
+  if (isMedianApp()) {
     return localStorage.getItem(NOTIFICATION_ENABLED_KEY) === 'true';
   }
   return typeof window !== 'undefined' && 
@@ -179,7 +226,7 @@ export const markNotificationSent = (type, id) => {
 
 // Synchronize logged-in user session with OneSignal Native Android/iOS Wrapper
 export const syncOneSignalUser = (uid, username) => {
-  if (window.median && window.median.onesignal) {
+  if (isMedianApp()) {
     try {
       window.median.onesignal.login(uid);
       window.median.onesignal.tags.set({
@@ -190,32 +237,32 @@ export const syncOneSignalUser = (uid, username) => {
     } catch (e) {
       console.warn('[OneSignal] Failed to sync user identity through Median Bridge:', e.message);
     }
+    return;
   }
+  ensureOneSignalWeb().then(async (OneSignal) => {
+    if (!OneSignal) return;
+    await OneSignal.login(uid);
+    await OneSignal.User.addTags({ username: username || 'user', platform: 'web' });
+  }).catch((error) => console.warn('[OneSignal] Web identity sync failed:', error.message));
 };
 
 // Terminate OneSignal identity session on user logout
 export const logoutOneSignalUser = () => {
-  if (window.median && window.median.onesignal) {
+  if (isMedianApp()) {
     try {
       window.median.onesignal.logout();
       console.log('[OneSignal] Logged out successfully.');
     } catch (e) {
       console.warn('[OneSignal] Failed to logout through Median Bridge:', e.message);
     }
+    return;
   }
+  ensureOneSignalWeb().then((OneSignal) => OneSignal?.logout()).catch(() => {});
 };
 
-// Deliver OneSignal Push Notification directly from sender's client-side using REST API
+// Deliver through the authenticated server endpoint. The OneSignal REST key is
+// intentionally never included in the browser bundle.
 export const sendOneSignalNotification = async (targetUserId, title, bodyText, data = {}) => {
-  const apiKey = process.env.REACT_APP_ONESIGNAL_REST_API_KEY || 'os_v2_app_xxxxxxxxxxxxxxxx';
-  const appId = '280791b6-7711-4b32-8897-449efe155f2b';
-
-  // If the secret key hasn't been set by the developer yet, we exit gracefully
-  if (!apiKey || apiKey.startsWith('os_v2_app_xxx')) {
-    console.warn('[OneSignal] REST API key is missing. Skipping direct mobile push alert delivery.');
-    return false;
-  }
-
   // Respect the privacy settings of the receiver from their database profile
   let isPreview = true;
   try {
@@ -232,28 +279,26 @@ export const sendOneSignalNotification = async (targetUserId, title, bodyText, d
   const maskedBody = formatBodyForPreview(bodyText, isPreview);
 
   try {
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+    const { auth } = await import('./firebase');
+    if (!auth.currentUser) return false;
+    const token = await auth.currentUser.getIdToken();
+    const response = await fetch('/api/send-notification', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${apiKey}`
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        app_id: appId,
-        include_aliases: {
-          external_id: [targetUserId]
-        },
-        target_channel: "push",
-        headings: { en: title },
-        contents: { en: maskedBody },
-        data: data
-      })
+        targetUserId,
+        title,
+        bodyText: maskedBody,
+        data,
+      }),
     });
     const result = await response.json();
-    console.log('[OneSignal] Direct push notification result:', result);
-    return result.id !== undefined;
+    return response.ok && result.ok === true;
   } catch (error) {
-    console.error('[OneSignal] Direct push send error:', error);
+    console.error('[OneSignal] Notification send error:', error);
     return false;
   }
 };
@@ -278,6 +323,15 @@ export const registerPushSubscription = async () => {
   if (!canUsePush()) return null;
   
   try {
+    const OneSignal = await ensureOneSignalWeb();
+    if (OneSignal) {
+      await OneSignal.Notifications.requestPermission();
+      if (Notification.permission !== 'granted') return null;
+      await OneSignal.User.PushSubscription.optIn();
+      setNotificationsEnabled(true);
+      return { provider: 'onesignal' };
+    }
+
     // Check permission first
     if (Notification.permission !== 'granted') {
       const permission = await requestPermission();
@@ -309,6 +363,8 @@ export const registerPushSubscription = async () => {
 // Unsubscribe from push notifications
 export const unsubscribePush = async () => {
   try {
+    const OneSignal = await ensureOneSignalWeb().catch(() => null);
+    if (OneSignal) await OneSignal.User.PushSubscription.optOut();
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     

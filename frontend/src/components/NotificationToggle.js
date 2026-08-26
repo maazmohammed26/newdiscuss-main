@@ -41,7 +41,7 @@ export default function NotificationToggle({ compact = false }) {
       try {
         setEnabled(isNotificationsEnabled());
         setPreviewEnabled(isNotificationPreviewEnabled());
-        setIsAndroidApp(window.median !== undefined || navigator.userAgent.includes('Android'));
+        setIsAndroidApp(Boolean(window.median?.onesignal));
       } catch (error) {
         console.error('Error checking notification status:', error);
       }
@@ -53,7 +53,7 @@ export default function NotificationToggle({ compact = false }) {
   const handleToggle = async () => {
     if (toggling) return;
     
-    const isAndroidAppWrapper = window.median !== undefined || navigator.userAgent.includes('Android');
+    const isAndroidAppWrapper = Boolean(window.median?.onesignal);
     
     if (!isAndroidAppWrapper) {
       if (isIOS() && !isPWAInstalled()) {

@@ -3,6 +3,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } fr
 import { database, ref, onValue } from '@/lib/firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAudioCall } from '@/contexts/AudioCallContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { getUser } from '@/lib/db';
 import { getUserProfile } from '@/lib/userProfileDb';
@@ -42,6 +43,8 @@ import {
 import FriendRequestButton from '@/components/FriendRequestButton';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import ChatLinkText from '@/components/ChatLinkText';
+import AudioCallLogCard from '@/components/AudioCallLogCard';
+import { setAudioCallingPreference } from '@/lib/audioCallService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -53,7 +56,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Send, Loader2, Lock, MoreVertical, Trash2, User, AlertTriangle, Clock, 
-  Copy, X, Reply, Flag, Check, ChevronDown
+  Copy, X, Reply, Flag, Check, ChevronDown, Phone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
@@ -83,7 +86,8 @@ const reconcileMessages = (current, incoming) => {
 
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
-  const { user } = useAuth();
+  const { user, patchUser } = useAuth();
+  const { startAudioCall, isCalling } = useAudioCall();
   const { markChatReadLocally } = useHighlights();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
@@ -122,6 +126,7 @@ export default function ChatConversationPage() {
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [callingPreferenceBusy, setCallingPreferenceBusy] = useState(false);
 
   useEffect(() => {
     messagesCountRef.current = messages.length;
@@ -266,13 +271,15 @@ export default function ChatConversationPage() {
           email: data.email || '',
           photo_url: data.photo_url ?? '',
           verified: Boolean(data.verified),
+          callingEnabled: data.callingEnabled !== false,
         };
         const current = otherUserRef.current;
         const profileChanged = !current
           || current.username !== liveUser.username
           || current.email !== liveUser.email
           || (current.photo_url ?? '') !== liveUser.photo_url
-          || Boolean(current.verified) !== liveUser.verified;
+          || Boolean(current.verified) !== liveUser.verified
+          || current.callingEnabled !== liveUser.callingEnabled;
 
         if (!profileChanged) return;
         setOtherUser((existing) => ({ ...(existing || {}), ...liveUser }));
@@ -880,6 +887,46 @@ export default function ChatConversationPage() {
     }, {});
   }, [visibleMessages]);
 
+  const callUnavailableReason = useMemo(() => {
+    if (!chatEnabled || chatStatus !== CHAT_STATUS.ACTIVE) {
+      return 'Audio calling is unavailable in this conversation.';
+    }
+    if (relationshipStatus !== RELATIONSHIP_STATUS.FRIENDS) {
+      return 'Audio calls are available between active friends.';
+    }
+    if (otherUser?.callingEnabled === false) {
+      return `@${otherUser.username} has turned off audio calling.`;
+    }
+    return '';
+  }, [chatEnabled, chatStatus, otherUser?.callingEnabled, otherUser?.username, relationshipStatus]);
+
+  const handleStartAudioCall = useCallback(() => {
+    if (callUnavailableReason) {
+      toast(callUnavailableReason);
+      return;
+    }
+    if (isCalling) {
+      toast('Return to your current audio call before starting another.');
+      return;
+    }
+    if (otherUserId && chatId) startAudioCall(otherUserId, chatId);
+  }, [callUnavailableReason, chatId, isCalling, otherUserId, startAudioCall]);
+
+  const handleCallingPreference = useCallback(async () => {
+    if (callingPreferenceBusy) return;
+    const next = user?.callingEnabled === false;
+    setCallingPreferenceBusy(true);
+    try {
+      await setAudioCallingPreference(next);
+      patchUser({ callingEnabled: next });
+      toast.success(next ? 'Audio calling is on.' : 'Audio calling is off.');
+    } catch (error) {
+      toast.error('Calling privacy could not be updated. Please try again.');
+    } finally {
+      setCallingPreferenceBusy(false);
+    }
+  }, [callingPreferenceBusy, patchUser, user?.callingEnabled]);
+
   const initials = (otherUser?.username || 'U').slice(0, 2).toUpperCase();
   const displayName = otherUserProfile?.fullName || otherUser?.username || 'Unknown';
 
@@ -971,6 +1018,16 @@ export default function ChatConversationPage() {
             </button>
           </div>
 
+          <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleStartAudioCall}
+            aria-label="Start audio call"
+            aria-disabled={Boolean(callUnavailableReason) || isCalling}
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${callUnavailableReason || isCalling ? 'text-neutral-300 dark:text-neutral-700' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-[#1A1A1A]'}`}
+          >
+            <Phone className="h-5 w-5" />
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">
@@ -984,6 +1041,18 @@ export default function ChatConversationPage() {
               >
                 <User className="w-4 h-4 mr-2" />
                 View Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="dark:bg-neutral-700 discuss:bg-[#333333]" />
+              <DropdownMenuItem
+                onSelect={(event) => event.preventDefault()}
+                onClick={handleCallingPreference}
+                className="dark:text-white dark:focus:bg-[#222] rounded-[6px]"
+              >
+                <Phone className="mr-2 h-4 w-4" />
+                <span className="flex-1">Allow audio calls</span>
+                <span className={`relative ml-4 h-5 w-9 rounded-full transition-colors ${user?.callingEnabled === false ? 'bg-neutral-300 dark:bg-neutral-700' : 'bg-[#0095F6]'}`} aria-hidden>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${user?.callingEnabled === false ? 'translate-x-0.5' : 'translate-x-[18px]'}`} />
+                </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="dark:bg-neutral-700 discuss:bg-[#333333]" />
               <DropdownMenuItem
@@ -1010,6 +1079,7 @@ export default function ChatConversationPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -1097,6 +1167,9 @@ export default function ChatConversationPage() {
               
               {/* Messages for this date */}
               {dateMessages.map((message, index) => {
+                if (message.type === 'audio_call') {
+                  return <AudioCallLogCard key={message.id} message={message} />;
+                }
                 const isOwn = message.sender === user.id;
                 const showAvatar = !isOwn && (index === 0 || dateMessages[index - 1]?.sender !== message.sender);
                 const swipeState = swipeStates[message.id];

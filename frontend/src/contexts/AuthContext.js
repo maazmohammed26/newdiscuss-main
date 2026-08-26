@@ -607,6 +607,7 @@ export function AuthProvider({ children }) {
       verified: Boolean(user.verified),
       admin_message: user.admin_message || '',
       isOnlineVisible: user.isOnlineVisible !== false,
+      callingEnabled: user.callingEnabled !== false,
     };
     let sawProfile = false;
 
@@ -630,6 +631,7 @@ export function AuthProvider({ children }) {
           verified: newVerified,
           admin_message: data.admin_message || '',
           isOnlineVisible: data.isOnlineVisible !== false,
+          callingEnabled: data.callingEnabled !== false,
         };
 
         const profileChanged = Object.keys(previousProfile).some(
@@ -644,6 +646,7 @@ export function AuthProvider({ children }) {
             verified: liveProfile.verified,
             admin_message: liveProfile.admin_message,
             isOnlineVisible: liveProfile.isOnlineVisible,
+            callingEnabled: liveProfile.callingEnabled,
           };
           setUser((prev) => prev ? { ...prev, ...liveProfile } : prev);
         }

@@ -3,6 +3,7 @@ import WelcomeOnboardingModal from '@/components/WelcomeOnboardingModal';
 import FloatingNavbar from '@/components/FloatingNavbar';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AudioCallProvider } from '@/contexts/AudioCallContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { HighlightsProvider } from '@/contexts/HighlightsContext';
 import { SecurityProvider, useSecurity } from '@/contexts/SecurityContext';
@@ -231,6 +232,7 @@ function App() {
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
+            <AudioCallProvider>
             <SecurityProvider>
               <HighlightsProvider>
                 <ConfirmDialogProvider>
@@ -245,6 +247,7 @@ function App() {
                 </ConfirmDialogProvider>
               </HighlightsProvider>
             </SecurityProvider>
+            </AudioCallProvider>
           </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>

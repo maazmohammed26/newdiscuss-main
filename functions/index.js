@@ -606,5 +606,3 @@ exports.onUserEmailVerified = functions.database
     }
     return null;
   });
-
-
