@@ -6,8 +6,8 @@ import {
   Phone,
   PhoneOff,
   UserPlus,
+  Volume1,
   Volume2,
-  VolumeX,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,8 +16,10 @@ import UserAvatar from '@/components/UserAvatar';
 import { getFriendsWithDetails } from '@/lib/relationshipsDb';
 import {
   CALL_MAX_PARTICIPANTS,
+  cancelAudioCallInvite,
   createAudioCall,
   declineAudioCall,
+  expireAudioCallInvite,
   friendlyCallError,
   formatCallDuration,
   inviteAudioCallParticipant,
@@ -134,20 +136,25 @@ function IncomingCall({ invite, onAccept, onDecline, busy }) {
   );
 }
 
-function ParticipantTile({ participant, active, currentUserId }) {
+function ParticipantTile({ participant, active, currentUserId, onCancelInvite, cancelling }) {
   const muted = participant.state === 'joined' && participant.muted;
   return (
     <div className={`relative flex min-h-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border bg-neutral-100 px-3 py-5 transition-all dark:bg-[#171717] ${active ? 'border-transparent shadow-[0_0_0_2px_#22C55E,0_0_28px_rgba(0,149,246,0.30),0_0_42px_rgba(237,73,86,0.18)]' : 'border-neutral-200 dark:border-neutral-800'}`}>
       <UserAvatar src={participant.photoUrl} username={participant.username} priority className="h-20 w-20 sm:h-24 sm:w-24" />
       <p className="mt-4 max-w-full truncate text-sm font-semibold">{participant.id === currentUserId ? 'You' : participant.username}</p>
       <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{participant.state === 'invited' ? 'Invited' : participant.state === 'left' ? 'Left call' : 'In call'}</p>
+      {participant.state === 'invited' && participant.invitedBy === currentUserId && (
+        <button disabled={cancelling} onClick={() => onCancelInvite(participant.id)} className="mt-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 shadow-sm disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-200">
+          Cancel invite
+        </button>
+      )}
       {muted && <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-neutral-950 text-white dark:bg-white dark:text-black"><MicOff className="h-3.5 w-3.5" /></span>}
     </div>
   );
 }
 
 function ParticipantPicker({ friends, participants, onInvite, onClose, inviting }) {
-  const available = friends.filter((friend) => !participants?.[friend.id] || ['left', 'declined'].includes(participants[friend.id].state));
+  const available = friends.filter((friend) => !participants?.[friend.id] || ['left', 'declined', 'cancelled', 'missed'].includes(participants[friend.id].state));
   return (
     <div className="fixed inset-0 z-[205] flex items-end justify-center bg-black/45 backdrop-blur-sm sm:items-center sm:p-5">
       <div className="max-h-[75dvh] w-full max-w-md overflow-y-auto rounded-t-[26px] bg-white p-5 text-neutral-950 dark:bg-[#111] dark:text-white sm:rounded-[26px]">
@@ -169,10 +176,10 @@ function ParticipantPicker({ friends, participants, onInvite, onClose, inviting 
   );
 }
 
-function ActiveCallScreen({ session, user, muted, remoteMuted, speakerEnabled, activeSpeakers, elapsed, onToggleMute, onToggleSpeaker, onLeave, onMinimize, onOpenPicker }) {
+function ActiveCallScreen({ session, user, muted, remoteMuted, speakerEnabled, activeSpeakers, elapsed, onToggleMute, onToggleSpeaker, onLeave, onMinimize, onOpenPicker, onCancelInvite, cancellingInvite }) {
   const call = session.call;
   const participants = Object.values(call?.participants || {});
-  const connected = participants.filter((participant) => !['declined', 'left'].includes(participant.state));
+  const connected = participants.filter((participant) => !['declined', 'left', 'cancelled', 'missed'].includes(participant.state));
   const isConnected = call?.status === 'active' || Boolean(call?.startedAt);
   return (
     <div className="fixed inset-0 z-[175] flex flex-col overflow-hidden bg-white text-neutral-950 dark:bg-black dark:text-white">
@@ -183,12 +190,12 @@ function ActiveCallScreen({ session, user, muted, remoteMuted, speakerEnabled, a
       </div>
       <div className={`mx-auto grid min-h-0 w-full max-w-3xl flex-1 gap-3 px-4 py-3 ${connected.length <= 1 ? 'grid-cols-1' : 'grid-cols-2'} ${connected.length > 2 ? 'grid-rows-2' : ''}`}>
         {connected.map((participant) => (
-          <ParticipantTile key={participant.id} participant={{ ...participant, muted: participant.id === user.id ? muted : Boolean(remoteMuted[participant.id]) }} active={activeSpeakers.includes(participant.id)} currentUserId={user.id} />
+          <ParticipantTile key={participant.id} participant={{ ...participant, muted: participant.id === user.id ? muted : Boolean(remoteMuted[participant.id]) }} active={activeSpeakers.includes(participant.id)} currentUserId={user.id} onCancelInvite={onCancelInvite} cancelling={cancellingInvite === participant.id} />
         ))}
       </div>
       <div className="px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-4">
         <div className="mx-auto flex max-w-sm items-center justify-center gap-6 rounded-[28px] bg-neutral-100 px-5 py-4 shadow-sm dark:bg-[#171717]">
-          <button onClick={onToggleSpeaker} className="flex flex-col items-center gap-1.5 text-[10px] font-medium"><span className={`flex h-12 w-12 items-center justify-center rounded-full ${speakerEnabled ? 'bg-white text-black shadow-sm dark:bg-neutral-800 dark:text-white' : 'bg-neutral-300 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'}`}>{speakerEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}</span>Speaker</button>
+          <button onClick={onToggleSpeaker} className="flex flex-col items-center gap-1.5 text-[10px] font-medium"><span className={`flex h-12 w-12 items-center justify-center rounded-full ${speakerEnabled ? 'bg-white text-black shadow-sm dark:bg-neutral-800 dark:text-white' : 'bg-neutral-300 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'}`}>{speakerEnabled ? <Volume2 className="h-5 w-5" /> : <Volume1 className="h-5 w-5" />}</span>{speakerEnabled ? 'Speaker' : 'Phone'}</button>
           <button onClick={onLeave} className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ED4956] text-white shadow-lg" aria-label="Leave call"><PhoneOff className="h-7 w-7" /></button>
           <button onClick={onToggleMute} className="flex flex-col items-center gap-1.5 text-[10px] font-medium"><span className={`flex h-12 w-12 items-center justify-center rounded-full ${muted ? 'bg-neutral-300 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400' : 'bg-white text-black shadow-sm dark:bg-neutral-800 dark:text-white'}`}>{muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}</span>{muted ? 'Unmute' : 'Mute'}</button>
         </div>
@@ -204,11 +211,12 @@ export function AudioCallProvider({ children }) {
   const callUnsubscribeRef = useRef(null);
   const pendingStartRef = useRef(null);
   const [incoming, setIncoming] = useState(null);
+  const [incomingInvites, setIncomingInvites] = useState([]);
   const [session, setSession] = useState(null);
   const [busy, setBusy] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [speakerEnabled, setSpeakerEnabled] = useState(true);
+  const [speakerEnabled, setSpeakerEnabled] = useState(false);
   const [activeSpeakers, setActiveSpeakers] = useState([]);
   const [remoteMuted, setRemoteMuted] = useState({});
   const [elapsed, setElapsed] = useState(0);
@@ -216,20 +224,27 @@ export function AudioCallProvider({ children }) {
   const [showPicker, setShowPicker] = useState(false);
   const [friends, setFriends] = useState([]);
   const [inviting, setInviting] = useState(false);
+  const [cancellingInvite, setCancellingInvite] = useState(null);
 
   useEffect(() => {
     if (!user?.id) return undefined;
     return subscribeToIncomingCalls(user.id, (invites) => {
+      setIncomingInvites(invites);
       if (!session) setIncoming(invites[0] || null);
     });
   }, [user?.id, session]);
 
   useEffect(() => {
     if (!incoming?.expiresAt) return undefined;
+    const expiringCallId = incoming.callId || incoming.id;
     const remaining = Math.max(0, incoming.expiresAt - Date.now());
-    const timer = window.setTimeout(() => setIncoming(null), remaining);
+    const timer = window.setTimeout(() => {
+      setIncoming(null);
+      setIncomingInvites((current) => current.filter((invite) => (invite.callId || invite.id) !== expiringCallId));
+      expireAudioCallInvite(expiringCallId).catch(() => {});
+    }, remaining);
     return () => window.clearTimeout(timer);
-  }, [incoming?.expiresAt]);
+  }, [incoming?.callId, incoming?.expiresAt, incoming?.id]);
 
   useEffect(() => {
     if (!session?.call?.startedAt) {
@@ -279,7 +294,7 @@ export function AudioCallProvider({ children }) {
       const element = track.attach();
       element.autoplay = true;
       element.playsInline = true;
-      element.muted = !speakerEnabled;
+      element.muted = false;
       audioContainerRef.current.appendChild(element);
     });
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
@@ -300,7 +315,7 @@ export function AudioCallProvider({ children }) {
     setMuted(false);
     setSession({ call, phase });
     watchCall(call.id);
-  }, [speakerEnabled, watchCall]);
+  }, [watchCall]);
 
   const executeStart = useCallback(async ({ targetId, chatId }) => {
     setBusy(true);
@@ -332,10 +347,10 @@ export function AudioCallProvider({ children }) {
     executeStart(request);
   }, [busy, executeStart, session]);
 
-  const acceptIncoming = useCallback(async () => {
-    if (!incoming || busy) return;
+  const acceptIncoming = useCallback(async (selectedInvite = incoming) => {
+    if (!selectedInvite || busy) return;
     setBusy(true);
-    const incomingCallId = incoming.callId || incoming.id;
+    const incomingCallId = selectedInvite.callId || selectedInvite.id;
     let joined = false;
     try {
       await requestMicrophone();
@@ -343,6 +358,7 @@ export function AudioCallProvider({ children }) {
       joined = true;
       await connectRoom(result, 'active');
       setIncoming(null);
+      setIncomingInvites((current) => current.filter((invite) => (invite.callId || invite.id) !== incomingCallId));
       setMinimized(false);
     } catch (error) {
       disconnectRoom();
@@ -389,14 +405,37 @@ export function AudioCallProvider({ children }) {
     }
   }, [muted]);
 
-  const toggleSpeaker = useCallback(() => {
+  const routeCallAudio = useCallback(async (useLoudspeaker) => {
+    const room = roomRef.current;
+    if (!room || !navigator.mediaDevices?.enumerateDevices) return false;
+    const outputs = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind === 'audiooutput');
+    if (!outputs.length) return false;
+    const pattern = useLoudspeaker ? /speaker|loudspeaker/i : /earpiece|receiver|communications/i;
+    const preferred = outputs.find((device) => pattern.test(device.label)) || (!useLoudspeaker ? outputs.find((device) => device.deviceId === 'default') : null);
+    if (!preferred) return false;
+    if (typeof room.switchActiveDevice === 'function') {
+      await room.switchActiveDevice('audiooutput', preferred.deviceId).catch(() => {});
+    }
+    await Promise.all(Array.from(audioContainerRef.current?.querySelectorAll('audio') || []).map(async (element) => {
+      element.muted = false;
+      if (typeof element.setSinkId === 'function') await element.setSinkId(preferred.deviceId).catch(() => {});
+    }));
+    return true;
+  }, []);
+
+  const toggleSpeaker = useCallback(async () => {
     const next = !speakerEnabled;
     setSpeakerEnabled(next);
-    audioContainerRef.current?.querySelectorAll('audio').forEach((element) => { element.muted = !next; });
-  }, [speakerEnabled]);
+    audioContainerRef.current?.querySelectorAll('audio').forEach((element) => { element.muted = false; });
+    await routeCallAudio(next);
+  }, [routeCallAudio, speakerEnabled]);
+
+  useEffect(() => {
+    if (session) routeCallAudio(speakerEnabled).catch(() => {});
+  }, [routeCallAudio, session, speakerEnabled]);
 
   const openPicker = useCallback(async () => {
-    const currentCount = Object.values(session?.call?.participants || {}).filter((person) => !['left', 'declined'].includes(person.state)).length;
+    const currentCount = Object.values(session?.call?.participants || {}).filter((person) => !['left', 'declined', 'cancelled', 'missed'].includes(person.state)).length;
     if (!user?.id || currentCount >= CALL_MAX_PARTICIPANTS) return;
     setShowPicker(true);
     const list = await getFriendsWithDetails(user.id).catch(() => []);
@@ -417,12 +456,27 @@ export function AudioCallProvider({ children }) {
     }
   }, [session?.call?.id]);
 
+  const cancelParticipantInvite = useCallback(async (targetId) => {
+    if (!session?.call?.id || !targetId) return;
+    setCancellingInvite(targetId);
+    try {
+      await cancelAudioCallInvite(session.call.id, targetId);
+      toast.success('Call invitation canceled.');
+    } catch (error) {
+      toast.error(friendlyCallError(error));
+    } finally {
+      setCancellingInvite(null);
+    }
+  }, [session?.call?.id]);
+
   const value = useMemo(() => ({
     activeCall: session?.call || null,
     isCalling: Boolean(session),
+    incomingCallInvites: incomingInvites,
     startAudioCall,
+    acceptAudioCallInvite: acceptIncoming,
     restoreCall: () => setMinimized(false),
-  }), [session, startAudioCall]);
+  }), [acceptIncoming, incomingInvites, session, startAudioCall]);
 
   return (
     <AudioCallContext.Provider value={value}>
@@ -440,7 +494,7 @@ export function AudioCallProvider({ children }) {
           }}
         />
       )}
-      {!session && <IncomingCall invite={incoming} onAccept={acceptIncoming} onDecline={declineIncoming} busy={busy} />}
+      {!session && <IncomingCall invite={incoming} onAccept={() => acceptIncoming(incoming)} onDecline={declineIncoming} busy={busy} />}
       {session && !minimized && (
         <ActiveCallScreen
           session={session}
@@ -455,6 +509,8 @@ export function AudioCallProvider({ children }) {
           onLeave={endCall}
           onMinimize={() => setMinimized(true)}
           onOpenPicker={openPicker}
+          onCancelInvite={cancelParticipantInvite}
+          cancellingInvite={cancellingInvite}
         />
       )}
       {session && minimized && (

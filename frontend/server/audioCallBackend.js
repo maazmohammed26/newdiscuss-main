@@ -184,22 +184,44 @@ const publicCall = (call) => ({
   participants: call.participants || {},
 });
 
-const sendCallPush = async (targetId, caller, callId) => {
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
-  if (!apiKey) return false;
+const directChatId = (firstId, secondId) => [firstId, secondId].sort().join('_');
+
+const sendTelegramCallAlert = async (targetId, caller, callId) => {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+  const profile = (await primaryDb().ref(`users/${targetId}`).once('value')).val() || {};
+  const chatId = profile.telegramChatId;
+  if (!chatId) return false;
+  const username = String(caller.username || 'Discuss user').replace(/[<>&]/g, '');
   const targetUrl = `https://www.discussit.in/chat/${caller.id}?call=${callId}`;
-  const response = await fetch('https://onesignal.com/api/v1/notifications', {
+  const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Basic ${apiKey}` },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      chat_id: String(chatId),
+      text: `<b>Incoming Discuss audio call</b>\n\n@${username} is calling you.`,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      reply_markup: { inline_keyboard: [[{ text: 'Open call', url: targetUrl }]] },
+    }),
+  });
+  return response.ok;
+};
+
+const sendCallPush = async (targetId, caller, callId) => {
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY || process.env.REACT_APP_ONESIGNAL_REST_API_KEY;
+  const targetUrl = `https://www.discussit.in/chat/${caller.id}?call=${callId}`;
+  const basePayload = {
       app_id: ONESIGNAL_APP_ID,
-      include_aliases: { external_id: [targetId] },
-      target_channel: 'push',
       headings: { en: 'Incoming Discuss audio call' },
       contents: { en: `@${caller.username} is calling you` },
       web_url: targetUrl,
+      url: targetUrl,
       ios_sound: 'default',
+      android_sound: 'default',
+      android_visibility: 1,
       priority: 10,
+      ttl: 60,
       data: {
         type: 'audio_call',
         callId,
@@ -207,10 +229,72 @@ const sendCallPush = async (targetId, caller, callId) => {
         url: `/chat/${caller.id}?call=${callId}`,
         targetUrl,
       },
-    }),
-  });
-  if (!response.ok) throw new Error(`OneSignal returned ${response.status}`);
-  return true;
+  };
+  const deliver = async (audience) => {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Basic ${apiKey}` },
+      body: JSON.stringify({ ...basePayload, ...audience }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(`OneSignal returned ${response.status}`);
+    return result;
+  };
+  const tasks = [sendTelegramCallAlert(targetId, caller, callId).catch((error) => {
+    console.warn('[AudioCall] Telegram alert failed:', error.message);
+    return false;
+  })];
+  if (apiKey) {
+    tasks.push((async () => {
+      const primary = await deliver({ include_aliases: { external_id: [targetId] }, target_channel: 'push' });
+      if (Number(primary.recipients) === 0) {
+        await deliver({ filters: [{ field: 'tag', key: 'userId', relation: '=', value: targetId }] });
+      }
+      return true;
+    })());
+  }
+  const results = await Promise.all(tasks);
+  return results.some(Boolean);
+};
+
+const writeInviteCallLog = async (call, inviterId, targetId, status = 'missed') => {
+  const participant = call.participants?.[targetId];
+  if (!participant || participant.inviteLogWritten) return;
+  const inviter = call.participants?.[inviterId] || await getCallUser(inviterId);
+  const target = call.participants?.[targetId] || await getCallUser(targetId);
+  const chatId = directChatId(inviterId, targetId);
+  if (chatId === call.chatId) return;
+  const endedAt = Date.now();
+  const existingChat = await auxiliaryGet(CHATS_DATABASE_URL, `chats/${chatId}`);
+  if (!existingChat) {
+    await auxiliarySet(CHATS_DATABASE_URL, `chats/${chatId}`, {
+      participants: [inviterId, targetId],
+      createdAt: new Date(endedAt).toISOString(),
+      lastMessage: null,
+      status: 'active',
+      autoDelete: false,
+      autoDeleteHours: 24,
+    });
+  }
+  const messageId = primaryDb().ref('callLogIds').push().key;
+  const message = {
+    type: 'audio_call', sender: 'system', timestamp: new Date(endedAt).toISOString(), read: true, status: 'sent',
+    call: {
+      callId: call.id,
+      status,
+      startedAt: null,
+      endedAt,
+      durationSeconds: 0,
+      participants: [inviter, target].map((person) => ({ id: person.id, username: person.username, photoUrl: person.photoUrl || '' })),
+    },
+  };
+  await Promise.all([
+    auxiliarySet(CHATS_DATABASE_URL, `messages/${chatId}/${messageId}`, message),
+    auxiliaryUpdate(CHATS_DATABASE_URL, `chats/${chatId}`, { lastMessage: { text: 'Missed audio call', sender: 'system', timestamp: message.timestamp } }),
+    auxiliaryUpdate(CHATS_DATABASE_URL, `userChats/${inviterId}/${chatId}`, { lastMessage: 'Missed audio call', lastMessageTime: message.timestamp }),
+    auxiliaryUpdate(CHATS_DATABASE_URL, `userChats/${targetId}/${chatId}`, { lastMessage: 'Missed audio call', lastMessageTime: message.timestamp }),
+    primaryDb().ref(`calls/${call.id}/participants/${targetId}/inviteLogWritten`).set(true),
+  ]);
 };
 
 const writeCallLog = async (call, status, endedAt) => {
@@ -269,6 +353,12 @@ const finalizeCall = async (callId, requestedStatus = null) => {
   await Promise.all(Object.keys(call.participants || {}).map((uid) =>
     primaryDb().ref(`callInvites/${uid}/${callId}`).remove()));
   const finalCall = { ...call, status, endedAt, finalizedAt: endedAt };
+  await Promise.all(Object.entries(call.participants || {}).map(([targetId, participant]) => {
+    if (participant.state !== 'invited' || !participant.invitedBy) return null;
+    return writeInviteCallLog(finalCall, participant.invitedBy, targetId, 'missed').catch((error) => {
+      console.error('[AudioCall] Invite log failed:', error.message);
+    });
+  }));
   await writeCallLog(finalCall, status, endedAt).catch((error) => {
     console.error('[AudioCall] Call log failed:', error.message);
   });
@@ -319,6 +409,13 @@ const joinCall = async (uid, body) => {
   if (call.finalizedAt || ['completed', 'missed', 'declined'].includes(call.status)) {
     throw new ApiError(412, 'call-ended', 'This audio call has ended.');
   }
+  const invitedParticipant = call.participants[uid];
+  if (invitedParticipant.state === 'invited' && invitedParticipant.inviteExpiresAt && Date.now() > invitedParticipant.inviteExpiresAt) {
+    await callRef.child(`participants/${uid}`).update({ state: 'missed', leftAt: Date.now() });
+    await primaryDb().ref(`callInvites/${uid}/${callId}`).remove();
+    await writeInviteCallLog(call, invitedParticipant.invitedBy, uid, 'missed');
+    throw new ApiError(410, 'call-missed', 'This call invitation has ended.');
+  }
   if (!call.startedAt && Date.now() > call.expiresAt) {
     await finalizeCall(callId, 'missed');
     throw new ApiError(410, 'call-missed', 'This audio call was missed.');
@@ -347,6 +444,9 @@ const declineCall = async (uid, body) => {
   if (!call.participants?.[uid]) throw new ApiError(403, 'permission-denied', 'You were not invited to this call.');
   await primaryDb().ref(`calls/${callId}/participants/${uid}`).update({ state: 'declined', leftAt: Date.now() });
   await primaryDb().ref(`callInvites/${uid}/${callId}`).remove();
+  if (call.startedAt && call.participants[uid]?.invitedBy) {
+    await writeInviteCallLog({ id: callId, ...call }, call.participants[uid].invitedBy, uid, 'missed');
+  }
   if (!call.startedAt && Object.keys(call.participants || {}).length <= 2) await finalizeCall(callId, 'declined');
   return { success: true };
 };
@@ -374,20 +474,58 @@ const inviteParticipant = async (uid, body) => {
   const call = { id: callId, ...snapshot.val() };
   if (call.finalizedAt || call.status !== 'active') throw new ApiError(412, 'call-ended', 'This audio call has ended.');
   if (call.participants?.[uid]?.state !== 'joined') throw new ApiError(403, 'permission-denied', 'Join the call before inviting someone.');
-  const current = Object.values(call.participants || {}).filter((person) => !['left', 'declined'].includes(person.state));
+  const current = Object.values(call.participants || {}).filter((person) => !['left', 'declined', 'cancelled', 'missed'].includes(person.state));
   if (current.length >= CALL_MAX_PARTICIPANTS) throw new ApiError(409, 'participant-limit', 'This call already has four participants.');
-  if (call.participants?.[targetId] && !['left', 'declined'].includes(call.participants[targetId].state)) {
+  if (call.participants?.[targetId] && !['left', 'declined', 'cancelled', 'missed'].includes(call.participants[targetId].state)) {
     throw new ApiError(409, 'already-exists', 'This person is already in the call.');
   }
   const [target, inviter] = await Promise.all([assertFriendCanCall(uid, targetId), getCallUser(uid)]);
   const now = Date.now();
+  const expiresAt = now + CALL_RING_TIMEOUT_MS;
+  const inviteChatId = directChatId(uid, targetId);
   await Promise.all([
-    callRef.child(`participants/${targetId}`).set({ ...target, state: 'invited', invitedBy: uid, invitedAt: now }),
+    callRef.child(`participants/${targetId}`).set({ ...target, state: 'invited', invitedBy: uid, invitedAt: now, inviteExpiresAt: expiresAt }),
     primaryDb().ref(`callInvites/${targetId}/${callId}`).set({
-      callId, caller: inviter, chatId: call.chatId, createdAt: now, expiresAt: now + CALL_RING_TIMEOUT_MS,
+      callId, caller: inviter, invitedBy: uid, chatId: inviteChatId, sourceChatId: call.chatId, createdAt: now, expiresAt,
     }),
   ]);
   sendCallPush(targetId, inviter, callId).catch((error) => console.warn('[AudioCall] Participant push failed:', error.message));
+  return { success: true };
+};
+
+const cancelInvite = async (uid, body) => {
+  const callId = cleanId(body.callId);
+  const targetId = cleanId(body.targetId, 'targetId');
+  const callRef = primaryDb().ref(`calls/${callId}`);
+  const snapshot = await callRef.once('value');
+  if (!snapshot.exists()) return { success: true };
+  const call = { id: callId, ...snapshot.val() };
+  const invited = call.participants?.[targetId];
+  if (!invited || invited.state !== 'invited') return { success: true };
+  if (invited.invitedBy !== uid) throw new ApiError(403, 'permission-denied', 'Only the person who sent this invitation can cancel it.');
+  await Promise.all([
+    callRef.child(`participants/${targetId}`).update({ state: 'cancelled', leftAt: Date.now() }),
+    primaryDb().ref(`callInvites/${targetId}/${callId}`).remove(),
+  ]);
+  if (!call.startedAt && Object.keys(call.participants || {}).length <= 2) await finalizeCall(callId, 'missed');
+  else await writeInviteCallLog(call, uid, targetId, 'missed');
+  return { success: true };
+};
+
+const expireInvite = async (uid, body) => {
+  const callId = cleanId(body.callId);
+  const callRef = primaryDb().ref(`calls/${callId}`);
+  const snapshot = await callRef.once('value');
+  if (!snapshot.exists()) return { success: true };
+  const call = { id: callId, ...snapshot.val() };
+  const invited = call.participants?.[uid];
+  if (!invited || invited.state !== 'invited' || !invited.inviteExpiresAt || Date.now() < invited.inviteExpiresAt) return { success: true };
+  await Promise.all([
+    callRef.child(`participants/${uid}`).update({ state: 'missed', leftAt: Date.now() }),
+    primaryDb().ref(`callInvites/${uid}/${callId}`).remove(),
+  ]);
+  if (!call.startedAt && Object.keys(call.participants || {}).length <= 2) await finalizeCall(callId, 'missed');
+  else await writeInviteCallLog(call, invited.invitedBy, uid, 'missed');
   return { success: true };
 };
 
@@ -403,6 +541,8 @@ const actions = {
   decline: declineCall,
   leave: leaveCall,
   invite: inviteParticipant,
+  cancelInvite,
+  expireInvite,
   setPreference,
 };
 

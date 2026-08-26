@@ -43,7 +43,7 @@ import {
 import FriendRequestButton from '@/components/FriendRequestButton';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import ChatLinkText from '@/components/ChatLinkText';
-import AudioCallLogCard from '@/components/AudioCallLogCard';
+import AudioCallLogCard, { LiveAudioCallCard } from '@/components/AudioCallLogCard';
 import { setAudioCallingPreference } from '@/lib/audioCallService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -87,7 +87,7 @@ const reconcileMessages = (current, incoming) => {
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
   const { user, patchUser } = useAuth();
-  const { startAudioCall, isCalling } = useAudioCall();
+  const { startAudioCall, isCalling, incomingCallInvites, acceptAudioCallInvite } = useAudioCall();
   const { markChatReadLocally } = useHighlights();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
@@ -118,6 +118,8 @@ export default function ChatConversationPage() {
   const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [autoDeleteEnabled, setAutoDeleteEnabled] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [joiningLiveCall, setJoiningLiveCall] = useState(false);
+  const liveCallInvite = useMemo(() => incomingCallInvites?.find((invite) => invite.chatId === chatId) || null, [chatId, incomingCallInvites]);
   const [reporting, setReporting] = useState(false);
   const [chatCreated, setChatCreated] = useState(false);
   const [liveMessagesSynced, setLiveMessagesSynced] = useState(false);
@@ -1337,6 +1339,20 @@ export default function ChatConversationPage() {
               })}
             </div>
           ))}
+
+          <LiveAudioCallCard
+            invite={liveCallInvite}
+            joining={joiningLiveCall}
+            onJoin={async (invite) => {
+              if (joiningLiveCall) return;
+              setJoiningLiveCall(true);
+              try {
+                await acceptAudioCallInvite(invite);
+              } finally {
+                setJoiningLiveCall(false);
+              }
+            }}
+          />
           
           {liveMessagesSynced && visibleMessages.length === 0 && chatEnabled && (
             <div className="text-center py-10">

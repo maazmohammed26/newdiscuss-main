@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Phone, PhoneMissed, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { formatCallDuration } from '@/lib/audioCallService';
 
@@ -26,9 +26,8 @@ export default function AudioCallLogCard({ message }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex max-w-[88%] items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-xs font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-[#111] dark:text-neutral-200 dark:hover:bg-[#181818]"
+          className={`flex max-w-[88%] items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium shadow-sm transition-colors ${missed ? 'border-[#ED4956]/35 bg-[#ED4956]/[0.06] text-[#B4232F] hover:bg-[#ED4956]/10 dark:text-[#FF7A85]' : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-[#111] dark:text-neutral-200 dark:hover:bg-[#181818]'}`}
         >
-          {missed ? <PhoneMissed className="h-3.5 w-3.5 text-[#ED4956]" /> : <Phone className="h-3.5 w-3.5 text-[#0095F6]" />}
           <span>{label}</span>
           {!missed && call.durationSeconds > 0 && <span className="text-neutral-400">{formatCallDuration(call.durationSeconds)}</span>}
         </button>
@@ -70,5 +69,21 @@ export default function AudioCallLogCard({ message }) {
         </div>
       )}
     </>
+  );
+}
+
+export function LiveAudioCallCard({ invite, onJoin, joining }) {
+  if (!invite) return null;
+  return (
+    <div className="my-3 flex w-full justify-center px-3">
+      <button
+        type="button"
+        disabled={joining}
+        onClick={() => onJoin(invite)}
+        className="max-w-[88%] rounded-full border border-[#22C55E]/45 bg-[#22C55E]/10 px-5 py-2.5 text-center text-xs font-semibold text-[#15803D] shadow-[0_0_24px_rgba(34,197,94,0.14)] transition-colors hover:bg-[#22C55E]/15 disabled:opacity-60 dark:text-[#72E69A]"
+      >
+        {joining ? 'Joining audio call' : `Live audio call with @${invite.caller?.username || 'Discuss user'} — tap to join`}
+      </button>
+    </div>
   );
 }

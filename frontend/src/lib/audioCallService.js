@@ -59,23 +59,36 @@ export const leaveAudioCall = (callId) =>
 export const inviteAudioCallParticipant = (callId, targetId) =>
   request('invite', { callId, targetId });
 
+export const cancelAudioCallInvite = (callId, targetId) =>
+  request('cancelInvite', { callId, targetId });
+
+export const expireAudioCallInvite = (callId) =>
+  request('expireInvite', { callId });
+
 export const setAudioCallingPreference = (enabled) =>
   request('setPreference', { enabled });
 
 export const subscribeToIncomingCalls = (userId, callback) => {
   if (!userId) return () => {};
   const invitesRef = ref(database, `callInvites/${userId}`);
+  let expiryTimer = null;
   const handler = (snapshot) => {
     const now = Date.now();
-    const calls = snapshot.exists()
+    const allCalls = snapshot.exists()
       ? Object.entries(snapshot.val()).map(([id, value]) => ({ id, ...value }))
-        .filter((invite) => !invite.expiresAt || invite.expiresAt > now)
-        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
       : [];
+    const calls = allCalls.filter((invite) => !invite.expiresAt || invite.expiresAt > now)
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     callback(calls);
+    if (expiryTimer) window.clearTimeout(expiryTimer);
+    const nextExpiry = calls.reduce((minimum, invite) => invite.expiresAt && (!minimum || invite.expiresAt < minimum) ? invite.expiresAt : minimum, 0);
+    if (nextExpiry) expiryTimer = window.setTimeout(() => handler(snapshot), Math.max(0, nextExpiry - Date.now()) + 50);
   };
   onValue(invitesRef, handler);
-  return () => off(invitesRef, 'value', handler);
+  return () => {
+    if (expiryTimer) window.clearTimeout(expiryTimer);
+    off(invitesRef, 'value', handler);
+  };
 };
 
 export const subscribeToCall = (callId, callback) => {

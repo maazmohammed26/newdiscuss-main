@@ -231,6 +231,7 @@ export const syncOneSignalUser = (uid, username) => {
       window.median.onesignal.login(uid);
       window.median.onesignal.tags.set({
         "is_android": "true",
+        "userId": uid,
         "username": username || "user"
       });
       console.log(`[OneSignal] Logged in successfully: uid=${uid}, username=${username}`);
@@ -242,7 +243,7 @@ export const syncOneSignalUser = (uid, username) => {
   ensureOneSignalWeb().then(async (OneSignal) => {
     if (!OneSignal) return;
     await OneSignal.login(uid);
-    await OneSignal.User.addTags({ username: username || 'user', platform: 'web' });
+    await OneSignal.User.addTags({ userId: uid, username: username || 'user', platform: 'web' });
   }).catch((error) => console.warn('[OneSignal] Web identity sync failed:', error.message));
 };
 

@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
     if (!/^[A-Za-z0-9_-]{8,160}$/.test(targetUserId) || !title || !bodyText) {
       return res.status(400).json({ error: 'Notification details are invalid.' });
     }
-    const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+    const apiKey = process.env.ONESIGNAL_REST_API_KEY || process.env.REACT_APP_ONESIGNAL_REST_API_KEY;
     if (!apiKey) return res.status(503).json({ error: 'Notifications are temporarily unavailable.' });
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
