@@ -11,8 +11,51 @@ const CHAT_COOLDOWN_KEY = 'discuss_chat_cooldowns';
 const SENT_NOTIFICATIONS_KEY = 'discuss_sent_notifications';
 const ONESIGNAL_APP_ID = '280791b6-7711-4b32-8897-449efe155f2b';
 let oneSignalWebReady = null;
+let activeNativeOneSignalUid = null;
 
-const isMedianApp = () => typeof window !== 'undefined' && Boolean(window.median?.onesignal);
+const isMedianApp = () => typeof window !== 'undefined' && Boolean(
+  window.median
+  || window.gonative
+  || /median|gonative/i.test(window.navigator?.userAgent || '')
+);
+
+const getNativeOneSignalBridge = async () => {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < 8_000) {
+    const bridge = window.median?.onesignal || window.gonative?.onesignal;
+    if (bridge) return bridge;
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+  return null;
+};
+
+const persistOneSignalInfo = async (uid, info = {}) => {
+  if (!uid || !info || typeof info !== 'object') return;
+  const subscription = info.subscription || {};
+  const identifiers = {
+    oneSignalId: info.oneSignalId || '',
+    oneSignalExternalId: info.externalId || uid,
+    oneSignalSubscriptionId: subscription.id || info.oneSignalSubscriptionId || '',
+    oneSignalUserId: info.oneSignalUserId || '',
+  };
+  if (!Object.values(identifiers).some(Boolean)) return;
+  try {
+    const { updateUser } = await import('./db');
+    await updateUser(uid, identifiers);
+  } catch (error) {
+    console.warn('[OneSignal] Failed to save native notification identifiers:', error.message);
+  }
+};
+
+if (typeof window !== 'undefined') {
+  const existingInfoCallback = window.median_onesignal_info;
+  window.median_onesignal_info = (info) => {
+    if (typeof existingInfoCallback === 'function') {
+      try { existingInfoCallback(info); } catch (_) {}
+    }
+    if (activeNativeOneSignalUid) persistOneSignalInfo(activeNativeOneSignalUid, info);
+  };
+}
 
 const ensureOneSignalWeb = () => {
   if (typeof window === 'undefined' || isMedianApp()) return Promise.resolve(null);
@@ -227,17 +270,35 @@ export const markNotificationSent = (type, id) => {
 // Synchronize logged-in user session with OneSignal Native Android/iOS Wrapper
 export const syncOneSignalUser = (uid, username) => {
   if (isMedianApp()) {
-    try {
-      window.median.onesignal.login(uid);
-      window.median.onesignal.tags.set({
-        "is_android": "true",
-        "userId": uid,
-        "username": username || "user"
-      });
-      console.log(`[OneSignal] Logged in successfully: uid=${uid}, username=${username}`);
-    } catch (e) {
-      console.warn('[OneSignal] Failed to sync user identity through Median Bridge:', e.message);
-    }
+    activeNativeOneSignalUid = uid;
+    (async () => {
+      try {
+        const bridge = await getNativeOneSignalBridge();
+        if (!bridge) throw new Error('Median OneSignal bridge is unavailable.');
+        if (localStorage.getItem(NOTIFICATION_ENABLED_KEY) === 'true' && typeof bridge.register === 'function') {
+          await Promise.resolve(bridge.register()).catch(() => {});
+        }
+        if (typeof bridge.login === 'function') await Promise.resolve(bridge.login(uid));
+        if (typeof bridge.externalUserId?.set === 'function') {
+          await Promise.resolve(bridge.externalUserId.set({ externalId: uid })).catch(() => {});
+        }
+        if (typeof bridge.tags?.set === 'function') {
+          await Promise.resolve(bridge.tags.set({ is_android: 'true', userId: uid, username: username || 'user' })).catch(() => {});
+        }
+        const infoMethod = typeof bridge.info === 'function'
+          ? bridge.info.bind(bridge)
+          : typeof bridge.onesignalInfo === 'function'
+            ? bridge.onesignalInfo.bind(bridge)
+            : null;
+        if (infoMethod) {
+          const info = await Promise.resolve(infoMethod()).catch(() => null);
+          if (info) await persistOneSignalInfo(uid, info);
+        }
+        console.log(`[OneSignal] Native identity synchronized: uid=${uid}`);
+      } catch (e) {
+        console.warn('[OneSignal] Failed to sync user identity through Median Bridge:', e.message);
+      }
+    })();
     return;
   }
   ensureOneSignalWeb().then(async (OneSignal) => {
@@ -250,12 +311,14 @@ export const syncOneSignalUser = (uid, username) => {
 // Terminate OneSignal identity session on user logout
 export const logoutOneSignalUser = () => {
   if (isMedianApp()) {
-    try {
-      window.median.onesignal.logout();
-      console.log('[OneSignal] Logged out successfully.');
-    } catch (e) {
-      console.warn('[OneSignal] Failed to logout through Median Bridge:', e.message);
-    }
+    activeNativeOneSignalUid = null;
+    getNativeOneSignalBridge().then(async (bridge) => {
+      if (!bridge) return;
+      if (typeof bridge.logout === 'function') await Promise.resolve(bridge.logout()).catch(() => {});
+      if (typeof bridge.externalUserId?.remove === 'function') {
+        await Promise.resolve(bridge.externalUserId.remove()).catch(() => {});
+      }
+    }).catch((e) => console.warn('[OneSignal] Failed to logout through Median Bridge:', e.message));
     return;
   }
   ensureOneSignalWeb().then((OneSignal) => OneSignal?.logout()).catch(() => {});

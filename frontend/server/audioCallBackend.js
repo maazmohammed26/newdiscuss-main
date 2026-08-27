@@ -230,27 +230,54 @@ const sendCallPush = async (targetId, caller, callId) => {
         targetUrl,
       },
   };
-  const deliver = async (audience) => {
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+  const deliver = async (audience, legacy = false) => {
+    const response = await fetch(
+      legacy ? 'https://onesignal.com/api/v1/notifications' : 'https://api.onesignal.com/notifications?c=push',
+      {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Basic ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: legacy ? `Basic ${apiKey}` : `Key ${apiKey}`,
+      },
       body: JSON.stringify({ ...basePayload, ...audience }),
-    });
+      },
+    );
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(`OneSignal returned ${response.status}`);
+    if (!response.ok || result.errors) {
+      throw new Error(`OneSignal returned ${response.status}: ${JSON.stringify(result.errors || {})}`);
+    }
     return result;
   };
+  const delivered = (result) => Number(result?.recipients) > 0
+    || (Boolean(result?.id) && result?.recipients === undefined);
   const tasks = [sendTelegramCallAlert(targetId, caller, callId).catch((error) => {
     console.warn('[AudioCall] Telegram alert failed:', error.message);
     return false;
   })];
   if (apiKey) {
     tasks.push((async () => {
-      const primary = await deliver({ include_aliases: { external_id: [targetId] }, target_channel: 'push' });
-      if (Number(primary.recipients) === 0) {
-        await deliver({ filters: [{ field: 'tag', key: 'userId', relation: '=', value: targetId }] });
+      const targetProfile = (await primaryDb().ref(`users/${targetId}`).once('value')).val() || {};
+      const attempts = [
+        [{ include_aliases: { external_id: [targetId] }, target_channel: 'push' }, false],
+        [{ include_external_user_ids: [targetId] }, true],
+      ];
+      if (targetProfile.oneSignalSubscriptionId) {
+        attempts.push([{ include_subscription_ids: [String(targetProfile.oneSignalSubscriptionId)] }, false]);
       }
-      return true;
+      const legacyPlayerId = targetProfile.oneSignalUserId || targetProfile.oneSignalPlayerId;
+      if (legacyPlayerId) attempts.push([{ include_player_ids: [String(legacyPlayerId)] }, true]);
+      attempts.push([[{ field: 'tag', key: 'userId', relation: '=', value: targetId }], true]);
+
+      for (const [audienceValue, legacy] of attempts) {
+        const audience = Array.isArray(audienceValue) ? { filters: audienceValue } : audienceValue;
+        try {
+          const result = await deliver(audience, legacy);
+          if (delivered(result)) return true;
+        } catch (error) {
+          console.warn('[AudioCall] OneSignal delivery attempt failed:', error.message);
+        }
+      }
+      return false;
     })());
   }
   const results = await Promise.all(tasks);
