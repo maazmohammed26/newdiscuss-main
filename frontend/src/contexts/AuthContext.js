@@ -64,10 +64,8 @@ const RTDB_TIMEOUT_MS        = 5_000;   // Max wait for RTDB user fetch
 const USERNAME_CHECK_MS      = 3_000;   // Max wait for a single checkUsernameAvailable call
 const REDIRECT_RESULT_MS     = 4_000;   // Max wait for getRedirectResult
 const EMAIL_LINK_REDIRECT_URL = 'https://discussit.in/';
-const NATIVE_GOOGLE_BRIDGE_WAIT_MS = 1_500;
+const NATIVE_GOOGLE_BRIDGE_WAIT_MS = 5_000;
 const NATIVE_GOOGLE_LOGIN_TIMEOUT_MS = 90_000;
-const NATIVE_GOOGLE_FALLBACK_KEY = 'discuss_native_google_fallback_until';
-const NATIVE_GOOGLE_FALLBACK_MS = 6 * 60 * 60 * 1_000;
 const AUTH_SESSION_CACHE_KEY = 'discuss_auth_session_v1';
 const EMAIL_PASSWORD_PROVIDER_MESSAGE = 'This account was created with email and password. Please sign in with your email and password.';
 const GOOGLE_PROVIDER_MESSAGE = 'This account was created with Google. Please continue with Google to sign in.';
@@ -149,46 +147,6 @@ function createProviderConflictError(message) {
   const error = new Error(message);
   error.code = 'auth/provider-conflict';
   return error;
-}
-
-function shouldSkipMedianNativeGoogle() {
-  try {
-    return Number(window.localStorage.getItem(NATIVE_GOOGLE_FALLBACK_KEY) || 0) > Date.now();
-  } catch (_) {
-    return false;
-  }
-}
-
-function rememberMedianNativeFailure() {
-  try {
-    window.localStorage.setItem(NATIVE_GOOGLE_FALLBACK_KEY, String(Date.now() + NATIVE_GOOGLE_FALLBACK_MS));
-  } catch (_) {}
-}
-
-function clearMedianNativeFailure() {
-  try {
-    window.localStorage.removeItem(NATIVE_GOOGLE_FALLBACK_KEY);
-  } catch (_) {}
-}
-
-function canRecoverWithMedianBrowserBridge(error) {
-  if (error?.code === 'auth/provider-conflict') return false;
-  const message = String(error?.message || error || '').toLowerCase();
-  if (/cancelled|canceled|user cancel|activity is cancelled/.test(message)) return false;
-  return [
-    'no credential',
-    'credential available',
-    'cannot find a matching credential',
-    'legacy mode',
-    'unexpected error during google sign-in',
-    'developer error',
-    'status code 10',
-    'sign_in_failed',
-    'valid identity token',
-    'timed out',
-    'network error',
-    'temporarily unavailable',
-  ].some((fragment) => message.includes(fragment));
 }
 
 async function lookupExistingAccount(email) {
@@ -968,6 +926,9 @@ export function AuthProvider({ children }) {
         prompt: 'select_account',
       });
       window.localStorage.removeItem('pendingVerification');
+      // Older builds remembered a native failure and forced later attempts into
+      // Chrome for six hours. Native-capable APKs must always retry natively.
+      window.localStorage.removeItem('discuss_native_google_fallback_until');
       setPendingVerification(false);
 
       // Detect if running inside the Median.co wrapped mobile app.
@@ -981,37 +942,43 @@ export function AuthProvider({ children }) {
         // Preferred APK flow: Median's native Google SDK presents the account
         // chooser over the app and returns an ID token directly to this page.
         // This is Google's supported alternative to OAuth inside a WebView.
-        const nativeGoogleLogin = shouldSkipMedianNativeGoogle()
-          ? null
-          : await getMedianGoogleLogin();
+        const nativeGoogleLogin = await getMedianGoogleLogin();
         if (nativeGoogleLogin) {
+          let idToken;
           try {
-            const idToken = await requestMedianGoogleToken(nativeGoogleLogin);
+            idToken = await requestMedianGoogleToken(nativeGoogleLogin);
+          } catch (nativeError) {
+            console.error('[MedianAuth] Native Google token request failed:', nativeError);
+            const message = String(nativeError?.message || nativeError || '');
+            const cancelled = /cancelled|canceled|user cancel|activity is cancelled/i.test(message);
+            return {
+              success: false,
+              error: cancelled
+                ? 'Google sign-in was cancelled.'
+                : 'Google sign-in could not be completed on this device. Please update Google Play services and try again.',
+            };
+          }
+
+          // A Firebase or profile-sync error after account selection must not
+          // launch a second authentication flow in Chrome.
+          try {
             await assertGoogleProvider(decodeGoogleEmail(idToken));
             const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
             const credential = GoogleAuthProvider.credential(idToken);
             const result = await signInWithCredential(auth, credential);
-            clearMedianNativeFailure();
             return await completeGoogleSignIn(result);
-          } catch (nativeError) {
-            console.error('[MedianAuth] Native Google sign-in failed:', nativeError);
-            const canUseBrowserFallback = canRecoverWithMedianBrowserBridge(nativeError);
-            if (!canUseBrowserFallback) {
-              return {
-                success: false,
-                error: nativeError.message || 'Native Google sign-in failed. Please try again.',
-              };
-            }
-            rememberMedianNativeFailure();
-            // Continue into the external browser bridge below. This lets users
-            // choose an account when Android Credential Manager has no saved
-            // credential or Median's legacy Google path is unavailable.
+          } catch (credentialError) {
+            console.error('[MedianAuth] Google credential sign-in failed:', credentialError);
+            return {
+              success: false,
+              error: credentialError?.message || 'Google sign-in failed. Please try again.',
+            };
           }
         }
 
-        // Compatibility fallback for APK builds that do not yet include the
-        // Median Social Login plugin. Keep the existing external-browser flow
-        // until that APK is rebuilt with the plugin enabled.
+        // Compatibility fallback only for APK builds that genuinely do not
+        // expose Median's native Social Login bridge. Never reach this path
+        // after a native account chooser has opened.
         const randomFlowPart = window.crypto?.randomUUID?.()
           || Math.random().toString(36).substring(2, 11);
         const flowId = `flow_${Date.now()}_${randomFlowPart}`;
