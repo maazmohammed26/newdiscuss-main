@@ -69,7 +69,62 @@ function MobileAccessSection() {
           <p className="mt-3 text-sm leading-6 text-neutral-600 sm:text-base">Android early access or an app-like iOS PWA.</p>
         </div>
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
+        {/* Brand Icon Evolution Notice Card */}
+        <div className="mt-10 rounded-[28px] border border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-amber-50/60 p-5 sm:p-7 shadow-[0_12px_36px_rgba(15,23,42,.05)]">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            
+            {/* Visual Icon Transition Flow */}
+            <div className="flex items-center gap-3 sm:gap-5">
+              {/* Previous Logo */}
+              <div className="flex flex-col items-center">
+                <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-sm">
+                  <img src="/logo-old.png" alt="Previous Discuss App Icon" className="h-full w-full object-contain rounded-xl" />
+                </div>
+                <span className="mt-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-neutral-400">Previous Icon</span>
+              </div>
+
+              {/* Hand-drawn SVG Arrow */}
+              <div className="flex flex-col items-center justify-center px-1 sm:px-2">
+                <svg width="68" height="32" viewBox="0 0 68 32" fill="none" className="overflow-visible">
+                  <path
+                    d="M4 16 C 22 5, 42 5, 58 16 M48 8 L60 16 L50 24"
+                    stroke="#0095F6"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lp-arrow-sketch"
+                  />
+                </svg>
+                <span className="lp-handwritten text-[#0095F6] text-xs sm:text-sm font-bold -mt-0.5">Updated</span>
+              </div>
+
+              {/* New 3D Robot Logo */}
+              <div className="flex flex-col items-center">
+                <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border-2 border-[#0095F6]/40 bg-white p-1.5 shadow-[0_8px_24px_rgba(0,149,246,0.22)]">
+                  <img src="/logo-new.png" alt="New Discuss 2.0 App Icon" className="h-full w-full object-contain rounded-xl" />
+                  <span className="absolute -top-2 -right-2 rounded-full bg-[#0095F6] px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white shadow-xs">NEW</span>
+                </div>
+                <span className="mt-1.5 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#0095F6]">Discuss 2.0</span>
+              </div>
+            </div>
+
+            {/* Handwritten Professional Notification Message */}
+            <div className="flex-1 lg:border-l lg:border-neutral-200 lg:pl-6 border-t border-neutral-200/80 pt-4 lg:pt-0">
+              <div className="inline-flex items-center rounded-full bg-blue-100/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0072C6]">
+                BRAND REFRESH
+              </div>
+              <p className="lp-handwritten mt-2 text-neutral-800 text-base sm:text-lg lg:text-xl font-medium leading-snug">
+                “This is our new official app logo. The iOS & Android PWA has been updated with the new design, while the Google Play Store build currently shows our previous logo as the update rolls out.”
+              </p>
+              <p className="mt-1 text-[11px] font-semibold text-neutral-500">
+                Play Store build will reflect the new 3D logo soon. Standalone PWA is live with the new icon & flash screen.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
           <article className="relative overflow-hidden rounded-[28px] border border-neutral-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,.07)] sm:p-8">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#34A853] via-[#FBBC04] to-[#4285F4]" />
             <div className="flex items-start justify-between gap-4">

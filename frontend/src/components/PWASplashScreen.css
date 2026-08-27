@@ -1,0 +1,238 @@
+.pwa-splash-container {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: radial-gradient(circle at 50% 40%, #0d1527 0%, #060913 60%, #020408 100%);
+  color: #ffffff;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: env(safe-area-inset-top, 24px) 24px env(safe-area-inset-bottom, 24px) 24px;
+  animation: pwaSplashFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pwa-splash-container.pwa-splash-exiting {
+  animation: pwaSplashFadeOut 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+/* Ambient glow orbs in background */
+.pwa-splash-ambient-blue {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 149, 246, 0.25) 0%, rgba(37, 99, 235, 0.08) 50%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  animation: pwaAmbientPulse 3s ease-in-out infinite alternate;
+}
+
+.pwa-splash-ambient-red {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.05) 50%, transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+  animation: pwaAmbientPulseRed 2.5s ease-in-out infinite alternate;
+}
+
+/* Main hero badge */
+.pwa-splash-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: auto;
+  z-index: 10;
+}
+
+.pwa-splash-logo-wrapper {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 34px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(0, 149, 246, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: pwaFloat 2.6s ease-in-out infinite alternate;
+}
+
+.pwa-splash-logo-img {
+  width: 108px;
+  height: 108px;
+  object-fit: contain;
+  border-radius: 28px;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.45));
+}
+
+/* Visor eye sheen ripple */
+.pwa-splash-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 34px;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.25) 45%, rgba(0, 149, 246, 0.4) 55%, transparent 75%);
+  background-size: 250% 100%;
+  animation: pwaSheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Typography branding */
+.pwa-splash-title {
+  margin-top: 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pwa-splash-bracket-red {
+  color: #ef4444;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+.pwa-splash-bracket-blue {
+  color: #0095f6;
+  text-shadow: 0 0 12px rgba(0, 149, 246, 0.6);
+}
+
+.pwa-splash-tagline {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Neon progress line */
+.pwa-splash-progress-track {
+  width: 140px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 28px;
+  position: relative;
+}
+
+.pwa-splash-progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 45%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ef4444, #0095f6);
+  box-shadow: 0 0 10px #0095f6;
+  animation: pwaProgressSweep 1.2s ease-in-out infinite alternate;
+}
+
+/* Footer note in splash */
+.pwa-splash-footer {
+  margin-top: auto;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  z-index: 10;
+}
+
+/* Keyframe Animations */
+@keyframes pwaSplashFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pwaSplashFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(4px);
+  }
+}
+
+@keyframes pwaFloat {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+@keyframes pwaAmbientPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes pwaAmbientPulseRed {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.9;
+  }
+}
+
+@keyframes pwaSheen {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pwaProgressSweep {
+  0% {
+    left: 0%;
+    width: 30%;
+  }
+  100% {
+    left: 70%;
+    width: 30%;
+  }
+}

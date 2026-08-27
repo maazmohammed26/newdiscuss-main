@@ -12,6 +12,7 @@ import { Toaster } from '@/components/ui/sonner';
 import LoadingScreen from '@/components/LoadingScreen';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
 import OfflineBanner from '@/components/OfflineBanner';
+import PWASplashScreen from '@/components/PWASplashScreen';
 import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialogProvider';
 import '@/App.css';
 
@@ -229,6 +230,8 @@ function App() {
 
   return (
     <AppErrorBoundary>
+      {/* PWA Flash Screen (active exclusively on installed standalone PWA) */}
+      <PWASplashScreen />
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>

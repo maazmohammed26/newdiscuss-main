@@ -12,9 +12,17 @@ export default function Footer() {
     <footer className="border-t border-neutral-200 bg-[#FAFAFA] px-4 py-12 text-neutral-950 sm:px-6 sm:py-14">
       <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1.25fr_2fr]">
         <div>
-          <DiscussLogo size="md" tagged />
+          <div className="flex items-center gap-3.5">
+            <div className="relative h-11 w-11 shrink-0 rounded-2xl border border-neutral-200 bg-white p-1 shadow-sm transition hover:scale-105">
+              <img src="/logo-new.png" alt="Discuss 2.0 Icon" className="h-full w-full object-contain rounded-xl" />
+            </div>
+            <DiscussLogo size="md" tagged />
+          </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-neutral-500">A focused, ad-free network where developers exchange ideas, share work, and build useful connections.</p>
-          <div className="mt-5 inline-flex rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[11px] font-bold text-neutral-500 shadow-sm">Discuss 2.0 · Built for people who build</div>
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-[11px] font-bold text-neutral-600 shadow-xs">
+            <span className="h-2 w-2 rounded-full bg-[#0095F6] animate-pulse" />
+            Discuss 2.0 · Built for people who build
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3">{groups.map((group) => <div key={group.title}><h2 className="text-[11px] font-extrabold uppercase tracking-[.16em] text-neutral-400">{group.title}</h2><ul className="mt-4 space-y-3">{group.links.map(([label, path]) => <li key={label}><Link to={path} className="text-sm font-semibold text-neutral-600 transition-colors hover:text-[#0095F6]">{label}</Link></li>)}</ul></div>)}</div>
       </div>
