@@ -295,7 +295,7 @@ export default function LandingPage() {
         <section className="px-4 pb-16 sm:px-6 sm:pb-20"><div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 rounded-[28px] bg-neutral-950 px-6 py-10 text-center text-white sm:px-10 md:flex-row md:text-left"><div><h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Your next useful conversation starts here.</h2><p className="mt-2 text-sm text-neutral-400">Join developers sharing what they know and building what comes next.</p></div><Link to="/register" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-neutral-950 hover:bg-neutral-100">Start discussing <ArrowRight className="h-4 w-4" /></Link></div></section>
       </main>
 
-      <Footer />
+      <Footer isLandingPage />
     </div>
   );
 }
