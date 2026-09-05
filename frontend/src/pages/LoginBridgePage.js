@@ -1,3 +1,4 @@
+import { encryptGoogleRelay, validGoogleRelay } from '@/lib/googleAuthRelay';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
@@ -21,6 +22,13 @@ import {
 export default function LoginBridgePage() {
   const [searchParams] = useSearchParams();
   const flowId = searchParams.get('flowId');
+  const [flow] = useState(() => {
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    return { flowId, secret: fragment.get('key'), expiresAt: Number(fragment.get('expires')) };
+  });
+  useEffect(() => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }, []);
   
   const [authState, setAuthState] = useState('checking'); // 'checking', 'unauthenticated', 'authenticating', 'success', 'error'
   const [errorMessage, setErrorMessage] = useState('');
@@ -28,9 +36,9 @@ export default function LoginBridgePage() {
 
   // 1. Listen to Firebase Auth state on mount
   useEffect(() => {
-    if (!flowId) {
+    if (!validGoogleRelay(flow)) {
       setAuthState('error');
-      setErrorMessage('Missing authentication flow identifier. Please restart the login process inside the mobile app.');
+      setErrorMessage('This sign-in link is invalid or expired. Please start again from Discuss.');
       return;
     }
 
@@ -38,13 +46,13 @@ export default function LoginBridgePage() {
       if (currentUser) {
         setUser(currentUser);
       }
-      setAuthState('unauthenticated');
+      setAuthState(state => state === 'checking' ? 'unauthenticated' : state);
     });
 
     return () => unsubscribe();
-  }, [flowId]);
+  }, [flowId, flow]);
 
-  // 2. Perform the secure bridging: write Google OAuth credentials to RTDB
+  // 2. Encrypt the ID token for the initiating app.
   const handleBridgeAuth = async (signInResult) => {
     setAuthState('authenticating');
     try {
@@ -53,15 +61,9 @@ export default function LoginBridgePage() {
         throw new Error("Unable to obtain secure Google credentials. Please try signing in again.");
       }
       
-      // Write Google credentials to RTDB under /webViewAuth/{flowId}
+      // The database only receives authenticated ciphertext.
       const bridgeRef = ref(database, `webViewAuth/${flowId}`);
-      await set(bridgeRef, {
-        status: 'success',
-        googleIdToken: credential.idToken,
-        googleAccessToken: credential.accessToken || null,
-        uid: signInResult.user.uid,
-        timestamp: Date.now()
-      });
+      await set(bridgeRef, await encryptGoogleRelay(flow, credential.idToken));
       
       setAuthState('success');
     } catch (err) {
@@ -73,6 +75,11 @@ export default function LoginBridgePage() {
 
   // 3. Trigger Google login popup on click
   const handleLoginClick = async () => {
+    if (!validGoogleRelay(flow)) {
+      setAuthState('error');
+      setErrorMessage('This sign-in link has expired. Close this tab and start again from Discuss.');
+      return;
+    }
     setAuthState('authenticating');
     try {
       googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -176,14 +183,14 @@ export default function LoginBridgePage() {
                 <CheckCircle2 className="w-16 h-16 text-green-500 drop-shadow-sm" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-black text-neutral-800">Logged In!</h2>
+                <h2 className="text-2xl font-black text-neutral-800">Ready to return</h2>
                 <p className="text-neutral-600 text-sm leading-relaxed">
-                  Your identity has been securely transferred to the <b>&lt;discuss/&gt;</b> app.
+                  Return to finish signing in to your <b>&lt;discuss/&gt;</b> app.
                 </p>
               </div>
               
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-emerald-800 text-xs font-semibold leading-relaxed shadow-sm">
-                🎉 Authentication successful. You can now close this browser tab and return to the app.
+                Your Google response is ready. Close this browser tab and return to Discuss to finish signing in.
               </div>
               
               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-indigo-800 text-xs font-semibold leading-relaxed shadow-sm text-left">

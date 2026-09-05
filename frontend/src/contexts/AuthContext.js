@@ -1,3 +1,5 @@
+import { getMedianGoogleLogin, requestMedianGoogleToken, nativeGoogleFailure } from '@/lib/nativeGoogleAuth';
+import { createGoogleRelay, decryptGoogleRelay, RELAY_TTL } from '@/lib/googleAuthRelay';
 /**
  * AuthContext.js — Production-hardened authentication state manager
  *
@@ -42,7 +44,7 @@ import {
   deleteUser as firebaseDeleteUser,
   fetchSignInMethodsForEmail,
 } from '@/lib/firebase';
-import { database, ref, onValue, get, set, off } from '@/lib/firebase';
+import { database, ref, onValue, get, set } from '@/lib/firebase';
 import { update, onDisconnect } from 'firebase/database';
 import { isDevRadarDbAvailable, devRadarDatabase } from '@/lib/firebaseSixth';
 import {
@@ -64,8 +66,6 @@ const RTDB_TIMEOUT_MS        = 5_000;   // Max wait for RTDB user fetch
 const USERNAME_CHECK_MS      = 3_000;   // Max wait for a single checkUsernameAvailable call
 const REDIRECT_RESULT_MS     = 4_000;   // Max wait for getRedirectResult
 const EMAIL_LINK_REDIRECT_URL = 'https://discussit.in/';
-const NATIVE_GOOGLE_BRIDGE_WAIT_MS = 5_000;
-const NATIVE_GOOGLE_LOGIN_TIMEOUT_MS = 90_000;
 const AUTH_SESSION_CACHE_KEY = 'discuss_auth_session_v1';
 const EMAIL_PASSWORD_PROVIDER_MESSAGE = 'This account was created with email and password. Please sign in with your email and password.';
 const GOOGLE_PROVIDER_MESSAGE = 'This account was created with Google. Please continue with Google to sign in.';
@@ -163,74 +163,6 @@ async function lookupExistingAccount(email) {
     auth_provider: methods.includes('google.com') ? 'google.com' : 'email',
     _authOnly: true,
   };
-}
-
-// Median injects its JavaScript bridge after the page starts loading. Resolve
-// the native Google method when available, while keeping older GoNative builds
-// compatible. No OAuth request is ever opened inside the WebView.
-async function getMedianGoogleLogin() {
-  const findLogin = () => {
-    const medianGoogle = window.median?.socialLogin?.google;
-    if (typeof medianGoogle?.login === 'function') {
-      return medianGoogle.login.bind(medianGoogle);
-    }
-
-    const goNativeGoogle = window.gonative?.socialLogin?.google;
-    if (typeof goNativeGoogle?.login === 'function') {
-      return goNativeGoogle.login.bind(goNativeGoogle);
-    }
-
-    return null;
-  };
-
-  const immediatelyAvailable = findLogin();
-  if (immediatelyAvailable) return immediatelyAvailable;
-
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < NATIVE_GOOGLE_BRIDGE_WAIT_MS) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const login = findLogin();
-    if (login) return login;
-  }
-
-  return null;
-}
-
-function requestMedianGoogleToken(nativeGoogleLogin) {
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const finish = (handler, value) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      handler(value);
-    };
-
-    const timeoutId = setTimeout(() => {
-      finish(reject, new Error('Google sign-in timed out. Please try again.'));
-    }, NATIVE_GOOGLE_LOGIN_TIMEOUT_MS);
-
-    try {
-      nativeGoogleLogin({
-        callback: (response = {}) => {
-          if (response.error) {
-            finish(reject, new Error(response.error));
-            return;
-          }
-
-          const idToken = response.idToken || response.credential;
-          if (!idToken) {
-            finish(reject, new Error('Google did not return a valid identity token.'));
-            return;
-          }
-
-          finish(resolve, idToken);
-        },
-      });
-    } catch (error) {
-      finish(reject, error);
-    }
-  });
 }
 
 // ─── Helper: fetch user from RTDB with timeout ───────────────────────────────
@@ -900,7 +832,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const googleLoginInFlight = useRef(false);
+  const loginWithGoogle = async ({ useBrowser = false } = {}) => {
+    if (googleLoginInFlight.current) return { success: false, error: 'Google sign-in is already in progress.' };
+    googleLoginInFlight.current = true;
     const assertGoogleProvider = async (email) => {
       if (!email) return;
       const existingUser = await lookupExistingAccount(email);
@@ -921,7 +856,7 @@ export function AuthProvider({ children }) {
     };
 
     try {
-      // Force account picker and override UA hint so Google doesn't block the WebView
+      // Request account selection in supported browser OAuth flows.
       googleProvider.setCustomParameters({
         prompt: 'select_account',
       });
@@ -942,21 +877,15 @@ export function AuthProvider({ children }) {
         // Preferred APK flow: Median's native Google SDK presents the account
         // chooser over the app and returns an ID token directly to this page.
         // This is Google's supported alternative to OAuth inside a WebView.
-        const nativeGoogleLogin = await getMedianGoogleLogin();
+        const nativeGoogleLogin = useBrowser ? null : await getMedianGoogleLogin();
         if (nativeGoogleLogin) {
           let idToken;
           try {
             idToken = await requestMedianGoogleToken(nativeGoogleLogin);
           } catch (nativeError) {
-            console.error('[MedianAuth] Native Google token request failed:', nativeError);
-            const message = String(nativeError?.message || nativeError || '');
-            const cancelled = /cancelled|canceled|user cancel|activity is cancelled/i.test(message);
-            return {
-              success: false,
-              error: cancelled
-                ? 'Google sign-in was cancelled.'
-                : 'Google sign-in could not be completed on this device. Please update Google Play services and try again.',
-            };
+            const failure = nativeGoogleFailure(nativeError);
+            console.warn('[MedianAuth] Native Google sign-in failed:', failure.code);
+            return failure;
           }
 
           // A Firebase or profile-sync error after account selection must not
@@ -976,77 +905,56 @@ export function AuthProvider({ children }) {
           }
         }
 
-        // Compatibility fallback only for APK builds that genuinely do not
-        // expose Median's native Social Login bridge. Never reach this path
-        // after a native account chooser has opened.
-        const randomFlowPart = window.crypto?.randomUUID?.()
-          || Math.random().toString(36).substring(2, 11);
-        const flowId = `flow_${Date.now()}_${randomFlowPart}`;
-        window.localStorage.setItem('median_auth_flow_id', flowId);
-        
-        // 1. Write the pending status to RTDB
-        const bridgeRef = ref(database, `webViewAuth/${flowId}`);
-        await set(bridgeRef, {
-          status: 'pending',
-          timestamp: Date.now()
-        });
-
-        // 2. Open the system browser (Chrome Custom Tab / External Browser)
-        const bridgeUrl = `${window.location.origin}/login-bridge?flowId=${flowId}`;
-        if (window.median?.window?.open) {
-          window.median.window.open(bridgeUrl, 'external');
-        } else if (window.gonative?.window?.open) {
-          window.gonative.window.open(bridgeUrl, 'external');
-        } else {
-          window.open(bridgeUrl, '_blank');
-        }
-
-        // 3. Set up Realtime Database listener to wait for completion
-        return new Promise((resolve) => {
+        const flow = createGoogleRelay();
+        const bridgeRef = ref(database, `webViewAuth/${flow.flowId}`);
+        const bridgeUrl = `${window.location.origin}/login-bridge?flowId=${flow.flowId}#key=${flow.secret}&expires=${flow.expiresAt}`;
+        return await new Promise((resolve) => {
           let settled = false;
-          const finish = (result) => {
+          let processing = false;
+          let unsubscribe = () => {};
+          const cleanup = () => { set(bridgeRef, null).catch(() => {}); };
+          const finish = result => {
             if (settled) return;
             settled = true;
-            clearTimeout(timeoutId);
-            off(bridgeRef);
+            clearTimeout(timer);
+            unsubscribe();
+            cleanup();
             resolve(result);
           };
-
-          const timeoutId = setTimeout(async () => {
-            try { await set(bridgeRef, null); } catch (_) {}
-            window.localStorage.removeItem('median_auth_flow_id');
-            finish({
-              success: false,
-              error: 'Google sign-in was not completed. Please return to the app and try again.',
-            });
-          }, 120_000);
-
-          onValue(bridgeRef, async (snapshot) => {
+          const timer = setTimeout(() => {
+            finish({ success: false, error: 'Browser sign-in timed out. Check your connection and return to Discuss.' });
+          }, RELAY_TTL);
+          unsubscribe = onValue(bridgeRef, async snapshot => {
             const data = snapshot.val();
-            if (data && data.status === 'success' && data.googleIdToken) {
-              // Clean up the database node
-              await set(bridgeRef, null);
-              
-              try {
-                // Re-create the Google credential and sign in securely!
-                const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
-                await assertGoogleProvider(decodeGoogleEmail(data.googleIdToken));
-                const credential = GoogleAuthProvider.credential(data.googleIdToken, data.googleAccessToken || undefined);
-                const result = await signInWithCredential(auth, credential);
-                await completeGoogleSignIn(result);
-                window.localStorage.removeItem('median_auth_flow_id');
-                
-                // Return success
-                finish({ success: true });
-                
-                // Full reload to establish state and load caches instantly
-                window.location.reload();
-              } catch (signInErr) {
-                console.error('[AuthBridge] Sign-in with credential failed:', signInErr);
-                finish({ success: false, error: signInErr.message || 'Credential sign-in failed' });
-              }
+            if (settled || processing || data?.status !== 'success') return;
+            processing = true;
+            try {
+              const idToken = await decryptGoogleRelay(flow, data);
+              if (settled) return;
+              unsubscribe();
+              cleanup();
+              await assertGoogleProvider(decodeGoogleEmail(idToken));
+              if (settled) return;
+              const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+              if (settled) return;
+              const result = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+              if (settled) return;
+              finish(await completeGoogleSignIn(result));
+            } catch (_) {
+              finish({ success: false, error: 'Browser sign-in could not be completed. Please return to Discuss and try again.' });
             }
-          });
+          }, () => finish({ success: false, error: 'Browser sign-in is currently unavailable. Please retry native Google sign-in or contact support.' }));
+          try {
+            const bridge = window.median?.window || window.gonative?.window;
+            if (bridge?.open) {
+              const opened = bridge.open(bridgeUrl, 'external');
+              if (opened?.catch) opened.catch(() => finish({ success: false, error: 'Could not open your browser. Please try again.' }));
+            } else if (!window.open(bridgeUrl, '_blank')) {
+              finish({ success: false, error: 'Your browser blocked sign-in. Allow popups and try again.' });
+            }
+          } catch (_) {
+            finish({ success: false, error: 'Could not open your browser. Please try again.' });
+          }
         });
       }
 
@@ -1077,6 +985,8 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('[Auth] Google auth error:', error);
       return { success: false, error: error.message || 'Google sign-in failed' };
+    } finally {
+      googleLoginInFlight.current = false;
     }
   };
 

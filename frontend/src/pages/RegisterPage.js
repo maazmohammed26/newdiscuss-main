@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleRecovery, setGoogleRecovery] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState(null);
   const [emailStatus, setEmailStatus] = useState(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -115,14 +116,16 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogle = async (useBrowser = false) => {
     if (!termsAccepted) {
       setError('Please accept the Terms and Conditions before continuing.');
       return;
     }
     setError('');
     setGoogleLoading(true);
-    const r = await loginWithGoogle();
+    setGoogleRecovery(false);
+    const r = await loginWithGoogle({ useBrowser });
+    setGoogleRecovery(Boolean(r.canUseBrowser));
     setGoogleLoading(false);
     if (r.success) navigate(location.state?.from || '/feed', { replace: true });
     else if (r.error) setError(r.error);
@@ -181,7 +184,14 @@ export default function RegisterPage() {
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DC2626] to-[#2563EB]" />
 
               <>
-                {error && (
+                {googleRecovery && (
+              <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950" role="status">
+                <p className="font-semibold">Another way to sign in</p>
+                <p className="mt-1 leading-5">Continue securely with Google in your browser, then return to Discuss.</p>
+                <Button type="button" className="mt-3 w-full" disabled={googleLoading} onClick={() => handleGoogle(true)}>Continue in browser</Button>
+              </div>
+            )}
+            {error && (
                   <div data-testid="register-error" role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold leading-5 text-red-700 shadow-sm">
                     <span>{error}</span>
                   </div>
@@ -293,7 +303,7 @@ export default function RegisterPage() {
                   <div className="relative flex justify-center text-[10px]"><span className="bg-white px-3 text-neutral-400 uppercase tracking-widest font-bold">Or continue with</span></div>
                 </div>
 
-                <Button type="button" data-testid="register-google-btn" onClick={handleGoogle} disabled={googleLoading}
+                <Button type="button" data-testid="register-google-btn" onClick={() => handleGoogle()} disabled={googleLoading}
                   className="mb-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-neutral-200 bg-white py-2.5 font-bold text-neutral-900 shadow-sm hover:bg-neutral-50">
                   {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><GoogleIcon /> Continue with Google</>}
                 </Button>
