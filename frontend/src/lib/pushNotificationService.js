@@ -68,11 +68,24 @@ const ensureOneSignalWeb = () => {
       try {
         await OneSignal.init({
           appId: ONESIGNAL_APP_ID,
-          serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
+          serviceWorkerPath: '/push/onesignal/OneSignalSDKWorker.js',
           serviceWorkerParam: { scope: '/push/onesignal/' },
           notifyButton: { enable: false },
           allowLocalhostAsSecureOrigin: window.location.hostname === 'localhost',
         });
+
+        // Listen for subscription state changes and persist to RTDB
+        OneSignal.User?.PushSubscription?.addEventListener?.('change', (change) => {
+          const current = change?.current;
+          if (activeNativeOneSignalUid && current?.id) {
+            persistOneSignalInfo(activeNativeOneSignalUid, {
+              oneSignalSubscriptionId: current.id,
+              oneSignalId: OneSignal.User?.onesignalId || '',
+              externalId: activeNativeOneSignalUid,
+            });
+          }
+        });
+
         window.clearTimeout(timeout);
         resolve(OneSignal);
       } catch (error) {
@@ -269,8 +282,10 @@ export const markNotificationSent = (type, id) => {
 
 // Synchronize logged-in user session with OneSignal Native Android/iOS Wrapper
 export const syncOneSignalUser = (uid, username) => {
+  if (!uid) return;
+  activeNativeOneSignalUid = uid;
+
   if (isMedianApp()) {
-    activeNativeOneSignalUid = uid;
     (async () => {
       try {
         const bridge = await getNativeOneSignalBridge();
@@ -301,10 +316,21 @@ export const syncOneSignalUser = (uid, username) => {
     })();
     return;
   }
+
   ensureOneSignalWeb().then(async (OneSignal) => {
     if (!OneSignal) return;
     await OneSignal.login(uid);
     await OneSignal.User.addTags({ userId: uid, username: username || 'user', platform: 'web' });
+    const subId = OneSignal.User?.PushSubscription?.id;
+    const onesignalId = OneSignal.User?.onesignalId;
+    if (subId || onesignalId) {
+      await persistOneSignalInfo(uid, {
+        oneSignalSubscriptionId: subId || '',
+        oneSignalId: onesignalId || '',
+        externalId: uid,
+      });
+    }
+    console.log(`[OneSignal] Web identity synchronized: uid=${uid}`);
   }).catch((error) => console.warn('[OneSignal] Web identity sync failed:', error.message));
 };
 
@@ -359,8 +385,12 @@ export const sendOneSignalNotification = async (targetUserId, title, bodyText, d
         data,
       }),
     });
-    const result = await response.json();
-    return response.ok && result.ok === true;
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) {
+      console.warn('[OneSignal] Delivery notification result:', response.status, result);
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error('[OneSignal] Notification send error:', error);
     return false;
@@ -393,7 +423,16 @@ export const registerPushSubscription = async () => {
       if (Notification.permission !== 'granted') return null;
       await OneSignal.User.PushSubscription.optIn();
       setNotificationsEnabled(true);
-      return { provider: 'onesignal' };
+      const subId = OneSignal.User?.PushSubscription?.id;
+      const onesignalId = OneSignal.User?.onesignalId;
+      if (activeNativeOneSignalUid && (subId || onesignalId)) {
+        persistOneSignalInfo(activeNativeOneSignalUid, {
+          oneSignalSubscriptionId: subId || '',
+          oneSignalId: onesignalId || '',
+          externalId: activeNativeOneSignalUid,
+        }).catch(() => {});
+      }
+      return { provider: 'onesignal', subscriptionId: subId };
     }
 
     // Check permission first

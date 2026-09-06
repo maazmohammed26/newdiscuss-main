@@ -36,10 +36,24 @@ const getServiceAccount = () => {
 let apps;
 const getApps = () => {
   if (apps) return apps;
-  const credential = admin.credential.cert(getServiceAccount());
+  const existing = admin.apps.find((app) => app.name === 'discuss-audio-primary');
+  if (existing) {
+    apps = { primary: existing };
+    return apps;
+  }
+  let config = { databaseURL: PRIMARY_DATABASE_URL, projectId: 'discuss-13fbc' };
+  try {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (raw) {
+      const value = JSON.parse(raw);
+      if (value.private_key) value.private_key = value.private_key.replace(/\\n/g, '\n');
+      config.credential = admin.credential.cert(value);
+    }
+  } catch (e) {
+    console.warn('[AudioCall] Service account credential initialization deferred:', e.message);
+  }
   apps = {
-    primary: admin.apps.find((app) => app.name === 'discuss-audio-primary')
-      || admin.initializeApp({ credential, databaseURL: PRIMARY_DATABASE_URL }, 'discuss-audio-primary'),
+    primary: admin.initializeApp(config, 'discuss-audio-primary'),
   };
   return apps;
 };
@@ -616,4 +630,4 @@ const handleWebhook = async (rawBody, authorization) => {
   return 'ok';
 };
 
-module.exports = { ApiError, handleAction, handleWebhook, verifyUser };
+module.exports = { ApiError, handleAction, handleWebhook, verifyUser, primaryDb };

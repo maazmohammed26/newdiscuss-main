@@ -8,9 +8,9 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["newdiscuss-main/frontend/src/*"]
+      "@/*": ["frontend/src/*"]
     }
   },
   "exclude": ["**/node_modules/**", "**/build/**"],
-  "include": ["newdiscuss-main/frontend/src/**/*"]
+  "include": ["frontend/src/**/*"]
 }

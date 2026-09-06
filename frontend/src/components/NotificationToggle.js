@@ -36,12 +36,18 @@ export default function NotificationToggle({ compact = false }) {
   const { theme } = useTheme();
   const isBlack = false;
   
+  const isNativeWrapper = () => typeof window !== 'undefined' && Boolean(
+    window.median
+    || window.gonative
+    || /median|gonative/i.test(navigator.userAgent || '')
+  );
+
   useEffect(() => {
     const checkStatus = async () => {
       try {
         setEnabled(isNotificationsEnabled());
         setPreviewEnabled(isNotificationPreviewEnabled());
-        setIsAndroidApp(Boolean(window.median?.onesignal));
+        setIsAndroidApp(isNativeWrapper());
       } catch (error) {
         console.error('Error checking notification status:', error);
       }
@@ -53,7 +59,7 @@ export default function NotificationToggle({ compact = false }) {
   const handleToggle = async () => {
     if (toggling) return;
     
-    const isAndroidAppWrapper = Boolean(window.median?.onesignal);
+    const isAndroidAppWrapper = isNativeWrapper();
     
     if (!isAndroidAppWrapper) {
       if (isIOS() && !isPWAInstalled()) {
@@ -90,9 +96,10 @@ export default function NotificationToggle({ compact = false }) {
           toast.success('Notifications enabled');
           
           // Request native permissions via Median bridge if OneSignal is initialized
-          if (window.median && window.median.onesignal) {
+          const bridge = window.median?.onesignal || window.gonative?.onesignal;
+          if (bridge && typeof bridge.register === 'function') {
             try {
-              window.median.onesignal.register();
+              bridge.register();
             } catch (e) {
               console.warn('[OneSignal] Native permission register call failed:', e.message);
             }
