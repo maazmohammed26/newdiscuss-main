@@ -23,6 +23,8 @@ const postNotification = async (token, payload) => {
   return { response, result };
 };
 
+const isRetryableStatus = (status) => status === 408 || status === 425 || status === 429 || status >= 500;
+
 /**
  * Small, eager-loaded transport for remote alerts. Keeping this separate from
  * the permission/SDK module prevents a stale lazy chunk from silently dropping
@@ -39,6 +41,12 @@ export const sendRemoteNotification = async (targetUserId, title, bodyText, data
     // Mobile WebViews occasionally resume with an expired cached token.
     if (response.status === 401) {
       token = await getAuthenticatedIdToken({ forceRefresh: true });
+      ({ response, result } = await postNotification(token, payload));
+    }
+
+    // One immediate retry covers serverless cold-start/provider transients.
+    // The same eventId is preserved so OneSignal can deduplicate the request.
+    if (!response.ok && isRetryableStatus(response.status)) {
       ({ response, result } = await postNotification(token, payload));
     }
 

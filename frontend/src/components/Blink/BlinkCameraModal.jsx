@@ -66,6 +66,10 @@ export default function BlinkCameraModal({
   onClose,
   initialRecipientId = null,
   initialGroupId = null,
+  initialRecipientLabel = '',
+  initialGroupLabel = '',
+  recipientFriends = null,
+  recipientGroups = null,
   onSent
 }) {
   const { user } = useAuth();
@@ -99,8 +103,8 @@ export default function BlinkCameraModal({
   // Recipient selection state
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' | 'groups'
   const [searchQuery, setSearchQuery] = useState('');
-  const [friendsList, setFriendsList] = useState([]);
-  const [groupsList, setGroupsList] = useState([]);
+  const [friendsList, setFriendsList] = useState(() => recipientFriends || []);
+  const [groupsList, setGroupsList] = useState(() => recipientGroups || []);
   const [loadingRecipients, setLoadingRecipients] = useState(false);
 
   // Selected targets
@@ -110,6 +114,7 @@ export default function BlinkCameraModal({
   // Confirmation modal & Sending state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const hasFixedTarget = Boolean(initialRecipientId || initialGroupId);
 
   // ── 1. First-time Introduction Check ────────────────────────
   useEffect(() => {
@@ -345,7 +350,16 @@ export default function BlinkCameraModal({
   // ── 4. Fetch Friends & Real Groups ────────────────────────────
   const loadRecipients = useCallback(async () => {
     if (!user?.id) return;
-    setLoadingRecipients(true);
+    const hasWarmData = Array.isArray(recipientFriends) && Array.isArray(recipientGroups)
+      && (recipientFriends.length > 0 || recipientGroups.length > 0);
+
+    if (hasWarmData) {
+      setFriendsList(recipientFriends);
+      setGroupsList(recipientGroups);
+      setLoadingRecipients(false);
+    } else {
+      setLoadingRecipients(true);
+    }
     try {
       const [friends, groups] = await Promise.all([
         getFriendsWithDetails(user.id),
@@ -359,9 +373,13 @@ export default function BlinkCameraModal({
     } finally {
       setLoadingRecipients(false);
     }
-  }, [user?.id]);
+  }, [recipientFriends, recipientGroups, user?.id]);
 
   const handleProceedToRecipients = () => {
+    if (hasFixedTarget) {
+      setShowConfirmModal(true);
+      return;
+    }
     loadRecipients();
     setStep('recipients');
   };
@@ -404,12 +422,14 @@ export default function BlinkCameraModal({
   const getRecipientSummary = () => {
     if (selectedGroupId) {
       const group = groupsList.find((g) => (g.id || g.groupId) === selectedGroupId);
-      return group ? `Group: ${group.name || group.groupName}` : 'Group selected';
+      return group
+        ? `Group: ${group.name || group.groupName}`
+        : initialGroupLabel ? `Group: ${initialGroupLabel}` : 'Group selected';
     }
     if (selectedFriendIds.length === 0) return 'No recipient selected';
     if (selectedFriendIds.length === 1) {
       const friend = friendsList.find((f) => f.id === selectedFriendIds[0]);
-      return friend ? `@${friend.username}` : '1 friend selected';
+      return friend ? `@${friend.username}` : initialRecipientLabel ? `@${initialRecipientLabel}` : '1 friend selected';
     }
     if (selectedFriendIds.length === friendsList.length && friendsList.length > 0) {
       return `All Friends (${friendsList.length})`;
@@ -663,7 +683,7 @@ export default function BlinkCameraModal({
                   onClick={handleProceedToRecipients}
                   className="blink-send-btn"
                 >
-                  Send
+                  {hasFixedTarget ? 'Send as Blink' : 'Choose recipients'}
                   <Send className="w-4 h-4" />
                 </button>
               </div>

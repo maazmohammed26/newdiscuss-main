@@ -11,6 +11,7 @@ import {
   getPermissionStatus,
   registerPushSubscription,
   unsubscribePush,
+  syncOneSignalUser,
   isNotificationsEnabled,
   isNotificationPreviewEnabled,
   setNotificationPreviewEnabled
@@ -90,20 +91,13 @@ export default function NotificationToggle({ compact = false }) {
     try {
       if (!enabled) {
         if (isAndroidAppWrapper) {
-          // Inside Android APK - simply save preferences locally and sync
+          // Native Median wrapper: save the preference, then run the single
+          // shared identity/permission path so enabling notifications also
+          // links this signed-in user to the current OneSignal subscription.
           localStorage.setItem('discuss_notifications_enabled', 'true');
           setEnabled(true);
+          syncOneSignalUser(user?.id, user?.username);
           toast.success('Notifications enabled');
-          
-          // Request native permissions via Median bridge if OneSignal is initialized
-          const bridge = window.median?.onesignal || window.gonative?.onesignal;
-          if (bridge && typeof bridge.register === 'function') {
-            try {
-              bridge.register();
-            } catch (e) {
-              console.warn('[OneSignal] Native permission register call failed:', e.message);
-            }
-          }
         } else {
           const subscription = await registerPushSubscription();
           if (subscription) {

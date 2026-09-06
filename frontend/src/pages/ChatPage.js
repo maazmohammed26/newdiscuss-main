@@ -1000,6 +1000,8 @@ export default function ChatPage() {
         <BlinkCameraModal
           isOpen={showBlinkModal}
           onClose={() => setShowBlinkModal(false)}
+          recipientFriends={friends}
+          recipientGroups={groups}
         />
       )}
 

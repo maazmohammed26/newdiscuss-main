@@ -44,6 +44,7 @@ export default function GroupConversationPage() {
   const { groupId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const normalCameraRef = useRef(null);
   
   const initialGroup = typeof window !== 'undefined' && window.__discuss_active_group?.id === groupId
     ? window.__discuss_active_group
@@ -69,6 +70,7 @@ export default function GroupConversationPage() {
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const [pendingMedia, setPendingMedia] = useState([]);
+  const [normalCameraUploading, setNormalCameraUploading] = useState(false);
   const [messageLimit, setMessageLimit] = useState(50);
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
@@ -1011,16 +1013,48 @@ export default function GroupConversationPage() {
               </div>
             )}
 
+            <MediaUpload
+              ref={normalCameraRef}
+              hidden
+              capture="environment"
+              folder="group_chats"
+              disabled={sending || normalCameraUploading || (isAdminOnlyMode && !isAdmin)}
+              onUploadingChange={setNormalCameraUploading}
+              onUploadComplete={(result) => {
+                if (result) setPendingMedia((prev) => [...prev, result].slice(0, 5));
+              }}
+            />
+
             <form onSubmit={handleSendMessage} className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowBlinkModal(true)}
-                disabled={sending || (isAdminOnlyMode && !isAdmin)}
-                className="p-2 rounded-lg transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 hover:text-[#0095F6] dark:hover:text-[#0095F6]"
-                title="Blink (Private Camera)"
-              >
-                <Camera size={22} />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={sending || normalCameraUploading || (isAdminOnlyMode && !isAdmin)}
+                    className="p-2 rounded-lg transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 hover:text-[#0095F6] dark:hover:text-[#0095F6] disabled:opacity-50"
+                    title="Camera"
+                    aria-label="Choose camera mode"
+                  >
+                    {normalCameraUploading ? <Loader2 size={22} className="animate-spin" /> : <Camera size={22} />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={8} className="w-56 rounded-xl p-1.5">
+                  <DropdownMenuItem onSelect={() => normalCameraRef.current?.open()} className="gap-3 rounded-lg py-2.5 cursor-pointer">
+                    <IoImage size={19} className="text-[#0095F6]" />
+                    <div>
+                      <p className="font-semibold">Normal photo</p>
+                      <p className="text-xs text-neutral-500">Keep it in the group</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setShowBlinkModal(true)} className="gap-3 rounded-lg py-2.5 cursor-pointer">
+                    <Clock size={19} className="text-violet-500" />
+                    <div>
+                      <p className="font-semibold">Blink</p>
+                      <p className="text-xs text-neutral-500">View once · 24 hours</p>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <button
                 type="button"
                 onClick={() => setShowMediaUpload(!showMediaUpload)}
@@ -1255,6 +1289,7 @@ export default function GroupConversationPage() {
           isOpen={showBlinkModal}
           onClose={() => setShowBlinkModal(false)}
           initialGroupId={groupId}
+          initialGroupLabel={groupInfo?.name || groupInfo?.groupName || ''}
         />
       )}
 

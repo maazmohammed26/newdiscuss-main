@@ -236,16 +236,7 @@ export function AuthProvider({ children }) {
       sessionCleanupRef.current();
       sessionCleanupRef.current = null;
     }
-    registerSession(userData.id, async () => {
-      console.warn('[Auth] Session kicked — signing out.');
-      try {
-        await purgeUserSessionCaches(userData.id);
-        await firebaseSignOut(auth);
-        setUser(null);
-      } catch (e) {
-        console.error('[Auth] Kick sign-out error:', e);
-      }
-    }).then((cleanup) => {
+    registerSession(userData.id).then((cleanup) => {
       sessionCleanupRef.current = cleanup;
     });
   }, []);

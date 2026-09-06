@@ -1,11 +1,10 @@
 /**
- * sessionManager.js — Multi-device session enforcement
+ * sessionManager.js — Session presence tracking
  *
  * Strategy:
  *   - Each login writes a session record to RTDB: sessions/{userId}/{sessionId}
- *   - Each session listens to its own record for { kicked: true }
- *   - On login, if active sessions > MAX_SESSIONS, the OLDEST sessions are kicked
- *   - Kicked sessions detect the flag and call signOut automatically
+ *   - Sessions are informational and are removed on explicit logout
+ *   - Opening another tab or device must never invalidate an authenticated user
  *
  * Data shape in RTDB:
  *   sessions/{userId}/{sessionId}: {
@@ -15,9 +14,7 @@
  *   }
  */
 
-import { database, ref, set, remove, onValue, get, off } from '@/lib/firebase';
-
-const MAX_SESSIONS = 2;
+import { database, ref, set, remove } from '@/lib/firebase';
 
 // ── Generate or retrieve a stable session ID for this tab/device ──
 function getOrCreateSessionId() {
@@ -45,11 +42,10 @@ function getDeviceInfo() {
 // Call this after a successful login / auth state confirmation.
 // Returns an unsubscribe function to call on logout or unmount.
 // ─────────────────────────────────────────────────────────────
-export async function registerSession(userId, onKicked) {
+export async function registerSession(userId) {
   if (!userId) return () => {};
 
   const sessionId = getOrCreateSessionId();
-  const sessionsRootRef = ref(database, `sessions/${userId}`);
   const mySessionRef = ref(database, `sessions/${userId}/${sessionId}`);
 
   try {
@@ -61,43 +57,13 @@ export async function registerSession(userId, onKicked) {
       kicked: false,
     });
 
-    // 2. Read all current sessions for this user
-    const snapshot = await get(sessionsRootRef);
-    if (snapshot.exists()) {
-      const sessions = Object.entries(snapshot.val())
-        // Filter out already-kicked sessions
-        .filter(([, v]) => !v.kicked)
-        // Sort oldest first
-        .sort(([, a], [, b]) => a.createdAt - b.createdAt);
-
-      // 3. If over the limit, kick the oldest sessions
-      const overflow = sessions.length - MAX_SESSIONS;
-      if (overflow > 0) {
-        const toKick = sessions.slice(0, overflow);
-        await Promise.all(
-          toKick.map(([id]) =>
-            set(ref(database, `sessions/${userId}/${id}/kicked`), true)
-          )
-        );
-      }
-    }
   } catch (err) {
     console.warn('[SessionManager] registerSession error:', err?.message);
     return () => {};
   }
 
-  // 4. Watch my own session record for a kick signal
-  const kickListener = onValue(mySessionRef, (snap) => {
-    if (snap.exists() && snap.val()?.kicked === true) {
-      console.warn('[SessionManager] This session was kicked (max sessions exceeded).');
-      onKicked?.();
-    }
-  });
-
-  // 5. Return cleanup function
+  // Return cleanup function for explicit logout/account deletion.
   return async () => {
-    off(mySessionRef, 'value', kickListener);
-    // Remove own session record on explicit logout
     try { await remove(mySessionRef); } catch {}
   };
 }

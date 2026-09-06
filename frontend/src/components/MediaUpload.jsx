@@ -1,15 +1,34 @@
-import React, { useState, useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { compressImage, getLocalPreview, revokeLocalPreview } from '@/lib/mediaUtils';
 import { uploadImage } from '@/lib/cloudinary';
 import { uploadVideo } from '@/lib/imagekit';
 import { IoClose, IoImage, IoVideocam, IoCloudUpload } from 'react-icons/io5';
 import './MediaUpload.css';
 
-const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', folder = 'general', multiple = false, maxFiles = null, disabled = false, disabledMessage = '' }) => {
+const MediaUpload = forwardRef(function MediaUpload({
+  onUploadComplete,
+  onUploadingChange,
+  type = 'image',
+  folder = 'general',
+  multiple = false,
+  maxFiles = null,
+  disabled = false,
+  disabledMessage = '',
+  capture,
+  hidden = false,
+}, ref) {
   const [previews, setPreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef(null);
+
+  // Keeps camera/gallery opening inside the original click gesture. This is
+  // required by iOS WebKit and Median WebViews; do not defer it to an effect.
+  useImperativeHandle(ref, () => ({
+    open: () => {
+      if (!disabled) fileInputRef.current?.click();
+    },
+  }), [disabled]);
 
   const handleFileSelect = async (e) => {
     if (disabled) return;
@@ -69,7 +88,7 @@ const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', fold
   };
 
   return (
-    <div className={`media-upload-container ${disabled ? 'media-upload-disabled' : ''}`}>
+    <div className={`${hidden ? 'hidden' : 'media-upload-container'} ${disabled ? 'media-upload-disabled' : ''}`}>
       <div className="media-preview-grid">
         {previews.map((preview, index) => (
           <div key={index} className="media-preview-item relative">
@@ -100,6 +119,7 @@ const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', fold
         onChange={handleFileSelect}
         accept={type === 'image' ? 'image/*' : 'video/*'}
         multiple={multiple}
+        capture={capture}
         disabled={disabled}
         style={{ display: 'none' }}
       />
@@ -117,6 +137,6 @@ const MediaUpload = ({ onUploadComplete, onUploadingChange, type = 'image', fold
       )}
     </div>
   );
-};
+});
 
 export default MediaUpload;

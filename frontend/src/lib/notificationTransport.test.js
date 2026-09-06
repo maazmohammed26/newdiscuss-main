@@ -49,5 +49,18 @@ describe('notificationTransport', () => {
     await expect(sendRemoteNotification('recipient_123', 'Hello', 'Body')).resolves.toBe(false);
     expect(fetch).not.toHaveBeenCalled();
   });
-});
 
+  it('retries a transient server failure once with the same event id', async () => {
+    getAuthenticatedIdToken.mockResolvedValue('token-1');
+    fetch
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ code: 'temporarily-unavailable' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true }) });
+
+    await expect(sendRemoteNotification('recipient_123', 'Hello', 'Body')).resolves.toBe(true);
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const firstBody = JSON.parse(fetch.mock.calls[0][1].body);
+    const secondBody = JSON.parse(fetch.mock.calls[1][1].body);
+    expect(secondBody.eventId).toBe(firstBody.eventId);
+  });
+});
