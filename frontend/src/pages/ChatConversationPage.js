@@ -56,8 +56,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Send, Loader2, Lock, MoreVertical, Trash2, User, AlertTriangle, Clock, 
-  Copy, X, Reply, Flag, Check, ChevronDown, Phone
+  Copy, X, Reply, Flag, Check, ChevronDown, Phone, Camera
 } from 'lucide-react';
+import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
+import BlinkViewer from '@/components/Blink/BlinkViewer';
+import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
 import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
 import { notifyTelegramDM } from '@/lib/telegramService';
@@ -142,6 +145,8 @@ export default function ChatConversationPage() {
   const [forwardTargets, setForwardTargets] = useState({ chats: [], groups: [] });
   const [forwardSearch, setForwardSearch] = useState('');
   const [recommendedUsers, setRecommendedUsers] = useState([]);
+  const [showBlinkModal, setShowBlinkModal] = useState(false);
+  const [activeBlink, setActiveBlink] = useState(null);
 
   const clearAllHighlights = useCallback(() => {
     Object.values(messageRefs.current).forEach(element => {
@@ -1171,6 +1176,30 @@ export default function ChatConversationPage() {
                 if (message.type === 'audio_call') {
                   return <AudioCallLogCard key={message.id} message={message} />;
                 }
+                if (message.type === 'blink') {
+                  const isOwn = message.sender === user?.id;
+                  return (
+                    <div
+                      key={message.id}
+                      ref={el => messageRefs.current[message.id] = el}
+                      className={`flex items-end gap-2 mb-3 ${isOwn ? 'justify-end' : 'justify-start'}`}
+                    >
+                      {!isOwn && (
+                        <UserAvatar
+                          src={otherUser?.photo_url}
+                          username={otherUser?.username}
+                          className="w-6 h-6 shrink-0 mb-1"
+                        />
+                      )}
+                      <BlinkMessageCard
+                        message={message}
+                        currentUserId={user?.id}
+                        isOwn={isOwn}
+                        onOpenBlink={(msg) => setActiveBlink(msg)}
+                      />
+                    </div>
+                  );
+                }
                 const isOwn = message.sender === user.id;
                 const showAvatar = !isOwn && (index === 0 || dateMessages[index - 1]?.sender !== message.sender);
                 const swipeState = swipeStates[message.id];
@@ -1479,6 +1508,14 @@ export default function ChatConversationPage() {
             )}
 
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBlinkModal(true)}
+                className="p-2 rounded-full transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 hover:text-[#0095F6] dark:hover:text-[#0095F6]"
+                title="Blink (Private Camera)"
+              >
+                <Camera size={22} />
+              </button>
               <button
                 type="button"
                 onClick={() => setShowMediaUpload(!showMediaUpload)}
@@ -1871,6 +1908,25 @@ export default function ChatConversationPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showBlinkModal && (
+        <BlinkCameraModal
+          isOpen={showBlinkModal}
+          onClose={() => setShowBlinkModal(false)}
+          initialRecipientId={otherUserId}
+        />
+      )}
+
+      {activeBlink && (
+        <BlinkViewer
+          message={activeBlink}
+          chatId={chatId}
+          sender={otherUser}
+          currentUserId={user?.id}
+          currentUsername={user?.username}
+          onClose={() => setActiveBlink(null)}
+        />
       )}
 
       <style dangerouslySetInnerHTML={{__html: `

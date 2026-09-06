@@ -40,8 +40,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Search, X, MessageCircle, Users, Loader2, 
-  MessageSquarePlus, Timer, MoreVertical, UserPlus, Inbox, Globe
+  MessageSquarePlus, Timer, MoreVertical, UserPlus, Inbox, Globe, Camera
 } from 'lucide-react';
+import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
+import { runRegistry24HourPurge } from '@/lib/blinkService';
 import {
   Dialog,
   DialogContent,
@@ -118,6 +120,12 @@ export default function ChatPage() {
   const [searching, setSearching] = useState(false);
   const [activeTab, setActiveTab] = useState('chats'); // 'chats' or 'friends'
   const [chatSettings, setChatSettings] = useState({});
+  const [showBlinkModal, setShowBlinkModal] = useState(false);
+
+  // Background 24-hour purge check for expired Blink media
+  useEffect(() => {
+    runRegistry24HourPurge().catch(() => {});
+  }, []);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [searchGroupsOpen, setSearchGroupsOpen] = useState(false);
   const [publicGroups, setPublicGroups] = useState([]);
@@ -705,6 +713,17 @@ export default function ChatPage() {
           <h1 className="font-heading text-xl font-bold text-neutral-900 dark:text-neutral-50 dark:text-white flex-1">
             <span>Messages</span>
           </h1>
+
+          {/* Blink Camera Action */}
+          <button
+            type="button"
+            onClick={() => setShowBlinkModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs font-bold transition-all border border-neutral-200/80 dark:border-neutral-800 active:scale-95"
+            title="Capture Blink"
+          >
+            <Camera className="w-3.5 h-3.5 text-[#0095F6]" />
+            <span className="font-['Grand_Hotel'] text-sm tracking-wide pt-0.5">Blink</span>
+          </button>
           
           {/* Three-dot menu */}
           <DropdownMenu>
@@ -976,6 +995,13 @@ export default function ChatPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {showBlinkModal && (
+        <BlinkCameraModal
+          isOpen={showBlinkModal}
+          onClose={() => setShowBlinkModal(false)}
+        />
+      )}
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

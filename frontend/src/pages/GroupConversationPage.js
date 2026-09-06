@@ -24,7 +24,10 @@ import ChatLinkText from '@/components/ChatLinkText';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, Clock, AlertCircle, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, Clock, AlertCircle, ChevronDown, Camera } from 'lucide-react';
+import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
+import BlinkViewer from '@/components/Blink/BlinkViewer';
+import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -69,6 +72,8 @@ export default function GroupConversationPage() {
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [showBlinkModal, setShowBlinkModal] = useState(false);
+  const [activeBlink, setActiveBlink] = useState(null);
 
   const messagesCountRef = useRef(0);
   useEffect(() => {
@@ -621,6 +626,28 @@ export default function GroupConversationPage() {
       );
     }
 
+    if (message.type === 'blink') {
+      return (
+        <div key={message.id} ref={(el) => (messageRefs.current[message.id] = el)} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 message-item`}>
+          <div className={`max-w-[80%] ${isOwn ? 'items-end' : 'items-start'}`}>
+            {!isOwn && (
+              <div className="flex items-center gap-1 mb-1 ml-1">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white">@{senderDetails?.username || message.senderName || 'User'}</span>
+                {senderDetails?.verified && <VerifiedBadge size="xs" />}
+              </div>
+            )}
+            <BlinkMessageCard
+              message={message}
+              currentUserId={user?.id}
+              isOwn={isOwn}
+              isGroup={true}
+              onOpenBlink={(blinkMsg) => setActiveBlink(blinkMsg)}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div key={message.id} ref={(el) => (messageRefs.current[message.id] = el)} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 message-item`}>
         <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
@@ -948,6 +975,15 @@ export default function GroupConversationPage() {
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <button
                 type="button"
+                onClick={() => setShowBlinkModal(true)}
+                disabled={sending || (isAdminOnlyMode && !isAdmin)}
+                className="p-2 rounded-lg transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 hover:text-[#0095F6] dark:hover:text-[#0095F6]"
+                title="Blink (Private Camera)"
+              >
+                <Camera size={22} />
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowMediaUpload(!showMediaUpload)}
                 className={`p-2 rounded-lg transition-colors ${showMediaUpload ? 'bg-[#0095F6] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500'}`}
               >
@@ -1173,6 +1209,26 @@ export default function GroupConversationPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showBlinkModal && (
+        <BlinkCameraModal
+          isOpen={showBlinkModal}
+          onClose={() => setShowBlinkModal(false)}
+          initialGroupId={groupId}
+        />
+      )}
+
+      {activeBlink && (
+        <BlinkViewer
+          message={activeBlink}
+          groupId={groupId}
+          isGroup={true}
+          sender={userDetails[activeBlink.sender] || { username: activeBlink.senderName }}
+          currentUserId={user?.id}
+          currentUsername={user?.username}
+          onClose={() => setActiveBlink(null)}
+        />
       )}
 
       <style dangerouslySetInnerHTML={{__html: `

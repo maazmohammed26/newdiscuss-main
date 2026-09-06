@@ -606,3 +606,95 @@ exports.onUserEmailVerified = functions.database
     }
     return null;
   });
+
+// ─── Cloudinary Asset Deletion for Expired Blinks ──────────────────────────────
+const crypto = require('crypto');
+
+async function destroyCloudinaryAsset(publicId, cloudName, apiKey, apiSecret) {
+  if (!publicId || !cloudName || !apiKey || !apiSecret) return false;
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const shasum = crypto.createHash('sha1');
+    shasum.update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`);
+    const signature = shasum.digest('hex');
+
+    const formData = new URLSearchParams();
+    formData.append('public_id', publicId);
+    formData.append('api_key', apiKey);
+    formData.append('timestamp', timestamp.toString());
+    formData.append('signature', signature);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await res.json();
+    return data.result === 'ok' || data.result === 'not found';
+  } catch (e) {
+    console.error('[Cloudinary] Failed to destroy asset:', e.message);
+    return false;
+  }
+}
+
+async function runBlinkStoragePurgeInternal() {
+  const chatsUrl = AUXILIARY_DATABASES.chats;
+  const db = admin.app().database(chatsUrl);
+  const registryRef = db.ref('blinkMediaRegistry');
+  const snap = await registryRef.once('value');
+  if (!snap.exists()) return { purged: 0 };
+
+  const registry = snap.val();
+  const now = Date.now();
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  const updates = {};
+  let purgedCount = 0;
+
+  for (const [key, item] of Object.entries(registry)) {
+    if (item.deletedFromCloudinary) continue;
+    const expireTime = item.expiresAt ? new Date(item.expiresAt).getTime() : 0;
+    if (expireTime > 0 && now > expireTime) {
+      if (item.publicId && cloudName && apiKey && apiSecret) {
+        await destroyCloudinaryAsset(item.publicId, cloudName, apiKey, apiSecret);
+      }
+      updates[`${key}/deletedFromCloudinary`] = true;
+      updates[`${key}/deletedAt`] = new Date().toISOString();
+      purgedCount++;
+    }
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await registryRef.update(updates);
+  }
+
+  return { purged: purgedCount };
+}
+
+// Hourly scheduled background job to purge expired Blinks from Cloudinary
+exports.purgeExpiredBlinksScheduled = functions.pubsub
+  .schedule('every 1 hours')
+  .onRun(async (context) => {
+    try {
+      const result = await runBlinkStoragePurgeInternal();
+      console.log(`[PurgeExpiredBlinksScheduled] Purged ${result.purged} expired Blinks`);
+    } catch (err) {
+      console.error(`[PurgeExpiredBlinksScheduled] Error:`, err.message);
+    }
+    return null;
+  });
+
+// On-demand HTTPS endpoint to trigger 24-hour Blink storage purge
+exports.purgeExpiredBlinksNow = onRequest(
+  { timeoutSeconds: 60, memory: '256MiB', cors: true },
+  async (req, res) => {
+    try {
+      const result = await runBlinkStoragePurgeInternal();
+      res.status(200).send({ success: true, ...result });
+    } catch (err) {
+      res.status(500).send({ success: false, error: err.message });
+    }
+  }
+);
+
