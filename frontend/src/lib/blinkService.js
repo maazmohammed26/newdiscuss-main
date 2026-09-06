@@ -171,7 +171,7 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
     const chatRef = chatsRef(thirdDatabase, `chats/${chatId}`);
     await chatsUpdate(chatRef, {
       lastMessage: {
-        text: '📸 Blink',
+        text: 'Blink',
         sender: senderId,
         timestamp
       }
@@ -181,7 +181,7 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
     const senderChatRef = chatsRef(thirdDatabase, `userChats/${senderId}/${chatId}`);
     await chatsUpdate(senderChatRef, {
       otherUser: recipientId,
-      lastMessage: '📸 Blink',
+      lastMessage: 'Blink',
       lastMessageTime: timestamp,
       status: 'active'
     });
@@ -191,7 +191,7 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
     const curUnread = recipientChatSnap.exists() ? (recipientChatSnap.val().unreadCount || 0) : 0;
     await chatsUpdate(recipientChatRef, {
       otherUser: senderId,
-      lastMessage: '📸 Blink',
+      lastMessage: 'Blink',
       lastMessageTime: timestamp,
       unreadCount: curUnread + 1,
       status: 'active'
@@ -205,7 +205,7 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
       { url: `/chat/${senderId}`, type: 'blink' }
     );
 
-    notifyChatMessage(recipientId, senderUsername, '📸 Sent a private Blink');
+    notifyChatMessage(recipientId, senderUsername, 'Sent a private Blink');
 
     return { id: newMessageRef.key, ...message };
   } catch (error) {
@@ -266,7 +266,7 @@ export const sendGroupBlink = async ({ groupId, senderId, senderUsername, mediaD
     const groupMetaRef = groupsRef(fourthDatabase, `groups/${groupId}`);
     await groupsUpdate(groupMetaRef, {
       lastMessage: {
-        text: `📸 ${senderUsername || 'Someone'} sent a Blink`,
+        text: `${senderUsername || 'Someone'} sent a Blink`,
         sender: senderId,
         timestamp
       }

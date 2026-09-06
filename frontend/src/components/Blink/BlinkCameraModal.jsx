@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { getFriendsWithDetails } from '@/lib/relationshipsDb';
 import { getUserGroups } from '@/lib/groupsDb';
 import { compressImage } from '@/lib/mediaUtils';
@@ -11,10 +12,35 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import BlinkIntroModal, { INTRO_STORAGE_KEY } from './BlinkIntroModal';
 import {
   X, RotateCcw, Send, RefreshCw, Zap, ZapOff, Check,
-  Search, Users, User, AlertTriangle, Loader2, Camera
+  Search, Users, User, AlertTriangle, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import './Blink.css';
+
+/**
+ * Request Median wrapper camera permissions if running inside Median/GoNative app.
+ */
+const requestMedianCameraPermission = async () => {
+  const isMedian = typeof window !== 'undefined' && Boolean(
+    window.median || window.gonative || /median|gonative/i.test(navigator?.userAgent || '')
+  );
+  if (!isMedian) return;
+
+  const bridge = window.median?.permissions || window.gonative?.permissions;
+  if (typeof bridge?.request === 'function') {
+    try {
+      await new Promise((resolve) => {
+        bridge.request({
+          permissions: ['camera'],
+          callback: () => resolve(true)
+        });
+        setTimeout(() => resolve(true), 1200);
+      });
+    } catch (err) {
+      console.warn('Median native camera permission bridge error:', err);
+    }
+  }
+};
 
 export default function BlinkCameraModal({
   isOpen,
@@ -24,6 +50,8 @@ export default function BlinkCameraModal({
   onSent
 }) {
   const { user } = useAuth();
+  const themeContext = useTheme();
+  const isDark = themeContext?.theme === 'dark' || document.documentElement.classList.contains('dark');
 
   // First-time introduction state
   const [showIntro, setShowIntro] = useState(false);
@@ -97,6 +125,9 @@ export default function BlinkCameraModal({
     }
 
     try {
+      // Prompt Median wrapper native permission if applicable
+      await requestMedianCameraPermission();
+
       const constraints = {
         video: {
           facingMode: { ideal: facingMode },
@@ -124,7 +155,7 @@ export default function BlinkCameraModal({
       console.error('Camera access error:', err);
       let message = 'Unable to access camera. Please check your camera permissions.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        message = 'Camera permission was denied. Please allow camera access in your device/browser settings.';
+        message = 'Camera permission was denied. Please allow camera access in your device or browser settings.';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
         message = 'No camera device found on this system.';
       }
@@ -132,7 +163,7 @@ export default function BlinkCameraModal({
     }
   }, [facingMode, stopCameraStream]);
 
-  // Start camera when intro is closed or not shown
+  // Start camera ONLY when Blink is intentionally opened
   useEffect(() => {
     if (isOpen && introChecked && !showIntro && step === 'camera') {
       startCameraStream();
@@ -207,7 +238,7 @@ export default function BlinkCameraModal({
     setStep('camera');
   };
 
-  // ── 4. Fetch Friends & Groups ────────────────────────────────
+  // ── 4. Fetch Friends & Real Groups ────────────────────────────
   const loadRecipients = useCallback(async () => {
     if (!user?.id) return;
     setLoadingRecipients(true);
@@ -261,14 +292,15 @@ export default function BlinkCameraModal({
 
   const filteredGroups = groupsList.filter((g) => {
     const q = searchQuery.toLowerCase().trim();
-    return !q || g.name?.toLowerCase().includes(q);
+    const gName = g.name || g.groupName || '';
+    return !q || gName.toLowerCase().includes(q);
   });
 
   // Calculate recipient summary text
   const getRecipientSummary = () => {
     if (selectedGroupId) {
-      const group = groupsList.find((g) => g.id === selectedGroupId);
-      return group ? `Group: ${group.name}` : 'Group selected';
+      const group = groupsList.find((g) => (g.id || g.groupId) === selectedGroupId);
+      return group ? `Group: ${group.name || group.groupName}` : 'Group selected';
     }
     if (selectedFriendIds.length === 0) return 'No recipient selected';
     if (selectedFriendIds.length === 1) {
@@ -364,7 +396,7 @@ export default function BlinkCameraModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="blink-overlay" role="dialog" aria-modal="true">
+    <div className={`blink-overlay ${isDark ? 'dark' : 'light'}`} role="dialog" aria-modal="true">
       {/* 1. First-time Introduction Dialog */}
       {showIntro && (
         <BlinkIntroModal
@@ -375,7 +407,7 @@ export default function BlinkCameraModal({
 
       {/* 2. Main Camera / Preview / Recipient Container */}
       {!showIntro && (
-        <div className="blink-camera-container">
+        <div className={`blink-camera-container ${step === 'recipients' ? (isDark ? 'theme-dark' : 'theme-light') : ''}`}>
           {/* ── STEP 1: LIVE CAMERA ─────────────────────────────── */}
           {step === 'camera' && (
             <>
@@ -430,7 +462,7 @@ export default function BlinkCameraModal({
                     <button
                       type="button"
                       onClick={startCameraStream}
-                      className="rounded-full bg-white px-5 py-2 text-xs font-bold text-neutral-950 hover:bg-neutral-200"
+                      className="rounded-full bg-white px-5 py-2 text-xs font-bold text-neutral-950 hover:bg-neutral-200 transition-colors"
                     >
                       Try Again
                     </button>
@@ -526,18 +558,23 @@ export default function BlinkCameraModal({
 
           {/* ── STEP 3: RECIPIENT SELECTOR ──────────────────────── */}
           {step === 'recipients' && (
-            <div className="blink-selector-sheet">
+            <div className={`blink-selector-sheet ${isDark ? 'dark' : 'light'}`}>
               {/* Sheet Header */}
-              <div className="blink-selector-header">
+              <div className={`blink-selector-header ${isDark ? 'border-neutral-800 bg-neutral-950' : 'border-neutral-200 bg-white'}`}>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setStep('preview')}
-                    className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                    className={`p-1.5 rounded-full transition-colors ${
+                      isDark
+                        ? 'text-neutral-300 hover:bg-neutral-800'
+                        : 'text-neutral-600 hover:bg-neutral-100'
+                    }`}
+                    aria-label="Back to preview"
                   >
                     <X className="w-5 h-5" />
                   </button>
-                  <h3 className="font-bold text-base text-neutral-900 dark:text-white">
+                  <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                     Select Recipients
                   </h3>
                 </div>
@@ -554,14 +591,16 @@ export default function BlinkCameraModal({
               </div>
 
               {/* Tabs: Friends | Groups */}
-              <div className="flex items-center border-b border-neutral-200/80 dark:border-neutral-800 px-4 pt-1">
+              <div className={`flex items-center px-4 pt-1 border-b ${isDark ? 'border-neutral-800 bg-neutral-950' : 'border-neutral-200 bg-white'}`}>
                 <button
                   type="button"
                   onClick={() => setActiveTab('friends')}
                   className={`flex items-center gap-2 pb-2.5 px-3 text-sm font-bold border-b-2 transition-colors ${
                     activeTab === 'friends'
                       ? 'border-[#0095F6] text-[#0095F6]'
-                      : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400'
+                      : isDark
+                      ? 'border-transparent text-neutral-400 hover:text-white'
+                      : 'border-transparent text-neutral-500 hover:text-neutral-900'
                   }`}
                 >
                   <User className="w-4 h-4" />
@@ -573,7 +612,9 @@ export default function BlinkCameraModal({
                   className={`flex items-center gap-2 pb-2.5 px-3 text-sm font-bold border-b-2 transition-colors ${
                     activeTab === 'groups'
                       ? 'border-[#0095F6] text-[#0095F6]'
-                      : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400'
+                      : isDark
+                      ? 'border-transparent text-neutral-400 hover:text-white'
+                      : 'border-transparent text-neutral-500 hover:text-neutral-900'
                   }`}
                 >
                   <Users className="w-4 h-4" />
@@ -582,7 +623,7 @@ export default function BlinkCameraModal({
               </div>
 
               {/* Search Bar */}
-              <div className="p-3 border-b border-neutral-100 dark:border-neutral-800/60">
+              <div className={`p-3 border-b ${isDark ? 'border-neutral-800 bg-neutral-950' : 'border-neutral-100 bg-neutral-50/50'}`}>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                   <input
@@ -590,13 +631,17 @@ export default function BlinkCameraModal({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={activeTab === 'friends' ? 'Search friends...' : 'Search groups...'}
-                    className="w-full bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder:text-neutral-400 text-xs rounded-xl pl-9 pr-4 py-2 border border-transparent focus:border-[#0095F6] focus:outline-none"
+                    className={`w-full text-xs rounded-xl pl-9 pr-8 py-2.5 border transition-all focus:outline-none ${
+                      isDark
+                        ? 'bg-neutral-900 text-white placeholder:text-neutral-500 border-neutral-800 focus:border-[#0095F6]'
+                        : 'bg-neutral-100 text-neutral-900 placeholder:text-neutral-500 border-neutral-200 focus:border-[#0095F6] focus:bg-white'
+                    }`}
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -614,7 +659,7 @@ export default function BlinkCameraModal({
                 ) : activeTab === 'friends' ? (
                   filteredFriends.length === 0 ? (
                     <div className="text-center py-12 px-4">
-                      <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
+                      <p className={`text-sm font-semibold ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
                         {searchQuery ? 'No matching friends found.' : 'No friends yet.'}
                       </p>
                       <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
@@ -629,7 +674,15 @@ export default function BlinkCameraModal({
                           <div
                             key={friend.id}
                             onClick={() => toggleFriendSelection(friend.id)}
-                            className="blink-recipient-item"
+                            className={`blink-recipient-item flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
+                              isSelected
+                                ? isDark
+                                  ? 'bg-neutral-900 border border-[#0095F6]/40'
+                                  : 'bg-sky-50/80 border border-[#0095F6]/30'
+                                : isDark
+                                ? 'hover:bg-neutral-900/60 border border-transparent'
+                                : 'hover:bg-neutral-50 border border-transparent'
+                            }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <UserAvatar
@@ -639,19 +692,19 @@ export default function BlinkCameraModal({
                               />
                               <div className="flex flex-col min-w-0">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-sm font-semibold truncate text-neutral-900 dark:text-white">
+                                  <span className={`text-sm font-semibold truncate ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                                     {friend.username}
                                   </span>
                                   {friend.verified && <VerifiedBadge />}
                                 </div>
-                                <span className="text-xs text-neutral-400 truncate">
+                                <span className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                                   {friend.name || `@${friend.username}`}
                                 </span>
                               </div>
                             </div>
 
-                            <div className={`blink-checkbox ${isSelected ? 'checked' : ''}`}>
-                              {isSelected && <Check className="w-3.5 h-3.5" />}
+                            <div className={`blink-checkbox ${isSelected ? 'checked' : ''} ${isDark ? 'dark-check' : 'light-check'}`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                             </div>
                           </div>
                         );
@@ -661,36 +714,58 @@ export default function BlinkCameraModal({
                 ) : (
                   filteredGroups.length === 0 ? (
                     <div className="text-center py-12 px-4">
-                      <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
+                      <p className={`text-sm font-semibold ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
                         {searchQuery ? 'No matching groups found.' : 'No groups joined yet.'}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-1">
                       {filteredGroups.map((group) => {
-                        const isSelected = selectedGroupId === group.id;
+                        const gId = group.id || group.groupId;
+                        const isSelected = selectedGroupId === gId;
+                        const groupName = group.name || group.groupName || 'Group';
+                        const photo = group.photo_url || group.photoUrl || group.avatar || group.image;
+                        const memberCount = group.memberCount || group.membersCount || (group.members ? Object.keys(group.members).length : 1);
+                        const initials = groupName.slice(0, 2).toUpperCase();
+
                         return (
                           <div
-                            key={group.id}
-                            onClick={() => handleSelectGroup(group.id)}
-                            className="blink-recipient-item"
+                            key={gId}
+                            onClick={() => handleSelectGroup(gId)}
+                            className={`blink-recipient-item flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
+                              isSelected
+                                ? isDark
+                                  ? 'bg-neutral-900 border border-[#0095F6]/40'
+                                  : 'bg-sky-50/80 border border-[#0095F6]/30'
+                                : isDark
+                                ? 'hover:bg-neutral-900/60 border border-transparent'
+                                : 'hover:bg-neutral-50 border border-transparent'
+                            }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-700 dark:text-neutral-300 font-bold shrink-0">
-                                {group.name?.charAt(0)?.toUpperCase() || 'G'}
-                              </div>
+                              {photo ? (
+                                <img
+                                  src={photo}
+                                  alt={groupName}
+                                  className="w-10 h-10 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs shrink-0 select-none">
+                                  {initials}
+                                </div>
+                              )}
                               <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-semibold truncate text-neutral-900 dark:text-white">
-                                  {group.name}
+                                <span className={`text-sm font-semibold truncate ${isDark ? 'text-white' : 'text-neutral-900'}`}>
+                                  {groupName}
                                 </span>
-                                <span className="text-xs text-neutral-400 truncate">
-                                  {group.membersCount || Object.keys(group.members || {}).length || 0} members
+                                <span className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                                  {memberCount} {memberCount === 1 ? 'member' : 'members'}
                                 </span>
                               </div>
                             </div>
 
-                            <div className={`blink-checkbox ${isSelected ? 'checked' : ''}`}>
-                              {isSelected && <Check className="w-3.5 h-3.5" />}
+                            <div className={`blink-checkbox ${isSelected ? 'checked' : ''} ${isDark ? 'dark-check' : 'light-check'}`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                             </div>
                           </div>
                         );
@@ -701,10 +776,14 @@ export default function BlinkCameraModal({
               </div>
 
               {/* Bottom Dispatch Footer */}
-              <div className="p-4 border-t border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex items-center justify-between gap-3">
+              <div className={`p-4 border-t flex items-center justify-between gap-3 ${
+                isDark
+                  ? 'border-neutral-800 bg-neutral-950'
+                  : 'border-neutral-200 bg-white'
+              }`}>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs text-neutral-400 font-medium">Recipient</span>
-                  <span className="text-sm font-bold text-neutral-800 dark:text-neutral-100 truncate">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Recipient</span>
+                  <span className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                     {getRecipientSummary()}
                   </span>
                 </div>
@@ -713,7 +792,7 @@ export default function BlinkCameraModal({
                   type="button"
                   disabled={!hasSelectedRecipient}
                   onClick={() => setShowConfirmModal(true)}
-                  className="rounded-xl bg-[#0095F6] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#1877F2] disabled:opacity-40 disabled:pointer-events-none shadow-sm transition-all"
+                  className="rounded-xl bg-[#0095F6] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#1877F2] disabled:opacity-40 disabled:pointer-events-none shadow-sm transition-all active:scale-95"
                 >
                   Send Blink
                 </button>
@@ -730,17 +809,25 @@ export default function BlinkCameraModal({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-neutral-900 dark:text-white">
+          <div className={`w-full max-w-sm rounded-2xl border p-6 shadow-2xl ${
+            isDark
+              ? 'border-neutral-800 bg-neutral-950 text-white'
+              : 'border-neutral-200 bg-white text-neutral-900'
+          }`}>
+            <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>
               Send this Blink?
             </h3>
 
-            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300 font-medium">
+            <p className={`mt-2 text-sm font-medium ${isDark ? 'text-neutral-300' : 'text-neutral-600'}`}>
               Once sent, this Blink cannot be undone.
             </p>
 
-            <div className="mt-3 p-2.5 rounded-xl bg-neutral-100 dark:bg-neutral-900 text-xs text-neutral-500 dark:text-neutral-400">
-              Sending to: <span className="font-semibold text-neutral-800 dark:text-neutral-200">{getRecipientSummary()}</span>
+            <div className={`mt-3 p-2.5 rounded-xl text-xs ${
+              isDark
+                ? 'bg-neutral-900 text-neutral-300'
+                : 'bg-neutral-100 text-neutral-700'
+            }`}>
+              Sending to: <span className={`font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>{getRecipientSummary()}</span>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">
@@ -748,7 +835,11 @@ export default function BlinkCameraModal({
                 type="button"
                 disabled={sending}
                 onClick={() => setShowConfirmModal(false)}
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                  isDark
+                    ? 'text-neutral-400 hover:text-white'
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
               >
                 Cancel
               </button>
@@ -757,7 +848,7 @@ export default function BlinkCameraModal({
                 type="button"
                 disabled={sending}
                 onClick={handleConfirmSend}
-                className="rounded-xl bg-[#0095F6] px-5 py-2 text-sm font-bold text-white hover:bg-[#1877F2] flex items-center gap-2 shadow-sm"
+                className="rounded-xl bg-[#0095F6] px-5 py-2 text-sm font-bold text-white hover:bg-[#1877F2] flex items-center gap-2 shadow-sm transition-all active:scale-95"
               >
                 {sending && <Loader2 className="w-4 h-4 animate-spin" />}
                 Confirm Send

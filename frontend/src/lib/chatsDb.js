@@ -180,6 +180,25 @@ const updateUserChatListAfterMessage = async (userId, chatId, otherUserId, messa
   }
 };
 
+const processMessageMedia = (msg) => {
+  if (!msg) return null;
+  if (Array.isArray(msg.media)) {
+    return msg.media.map(m => ({
+      ...m,
+      url: m.url ? decryptData(m.url) : '',
+      thumbnail: m.thumbnail ? decryptData(m.thumbnail) : ''
+    }));
+  }
+  if (msg.media && typeof msg.media === 'object') {
+    return {
+      ...msg.media,
+      url: msg.media.url ? decryptData(msg.media.url) : '',
+      thumbnail: msg.media.thumbnail ? decryptData(msg.media.thumbnail || msg.media.url) : ''
+    };
+  }
+  return null;
+};
+
 /**
  * Get all messages for a chat
  * @param {string} chatId - Chat ID
@@ -198,11 +217,7 @@ export const getMessages = async (chatId, limit = 1000) => {
       .map(([id, msg]) => ({ 
         id, 
         ...msg,
-        media: (msg.media || []).map(m => ({ 
-          ...m, 
-          url: decryptData(m.url), 
-          thumbnail: decryptData(m.thumbnail) 
-        }))
+        media: processMessageMedia(msg)
       }))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   } catch (error) {
@@ -221,25 +236,25 @@ export const subscribeToMessages = (chatId, callback, limit = 50) => {
   const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(limit));
   
   const handleMessages = (snapshot) => {
-    if (!snapshot.exists()) {
-      callback([]);
-      return;
-    }
-    
-    const messages = snapshot.val();
-    const messagesList = Object.entries(messages)
-      .map(([id, msg]) => ({ 
-        id, 
-        ...msg,
-        media: (msg.media || []).map(m => ({ 
-          ...m, 
-          url: decryptData(m.url), 
-          thumbnail: decryptData(m.thumbnail) 
+    try {
+      if (!snapshot.exists()) {
+        callback([]);
+        return;
+      }
+      
+      const messages = snapshot.val();
+      const messagesList = Object.entries(messages)
+        .map(([id, msg]) => ({ 
+          id, 
+          ...msg,
+          media: processMessageMedia(msg)
         }))
-      }))
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    
-    callback(messagesList);
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      
+      callback(messagesList);
+    } catch (err) {
+      console.error('Error processing messages in subscribeToMessages:', err);
+    }
   };
   
   onValue(messagesQuery, handleMessages);

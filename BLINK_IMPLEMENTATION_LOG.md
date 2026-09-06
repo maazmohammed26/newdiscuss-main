@@ -171,7 +171,12 @@ When Cloudinary asset deletion is executed server-side via `destroyCloudinaryAss
 | Alphabetical signature verification | Unit test | PASS — Signature string parameters ordered alphabetically |
 | Zero frontend secret audit | Entire repo search | PASS — Zero `CLOUDINARY_API_SECRET` in frontend/build |
 | Full build compilation | `craco build` | PASS — Exited with code 0 |
-| Complete automated test suite | Jest / JSDOM | PASS — 71/71 tests passing across 6 test suites |
+| Complete automated test suite | Jest / JSDOM | PASS — 82/82 tests passing across 7 test suites |
+| Missing-chat-message root cause fix | `chatsDb.js` & `groupsDb.js` | PASS — Safe `processMessageMedia` handles object media without throwing TypeError |
+| Camera emoji removal | `blinkService.js` & `BlinkMessageCard.jsx` | PASS — `📸` removed completely; replaced with Discuss `< Blink />` badge |
+| Recipient selector theme consistency | Light & Dark Mode | PASS — Pure white in light mode, pure dark in dark mode; no contrast collapse |
+| Real group data rendering | Groups tab | PASS — Real group avatar / Discuss initials gradient fallback, real group name, real member count |
+| Median wrapper camera bridge | Median iOS / Android | PASS — `window.median?.permissions?.request` invoked gracefully |
 
 ---
 
@@ -181,3 +186,49 @@ When Cloudinary asset deletion is executed server-side via `destroyCloudinaryAss
 2. **Cloudinary Key Rotation:** As noted in Section 2, the old Cloudinary secret must be rotated in the Cloudinary Console as a security precaution.
 3. **Database Locks:** View-once integrity relies on Firebase Realtime Database `runTransaction` on `/claim` (1-on-1) and `/viewedBy/{uid}` (groups).
 4. **Scheduled Functions:** For non-Blaze Firebase environments, use the `purgeExpiredBlinksNow` HTTPS webhook endpoint for cron automation.
+
+---
+
+## 7. Deep-Dive Fix Log: Missing Chat Message, Badge Redesign & Theme Harmonization
+
+### 7.1 Root Cause Analysis: Blink Sent But Missing Inside Chat
+- **Bug Symptom:** A Blink photo was captured, sent, and appeared in the sidebar chat list preview, but opening the conversation revealed only older messages; the Blink card was missing.
+- **Root Cause:** In `frontend/src/lib/chatsDb.js` (lines 201, 234) and `frontend/src/lib/groupsDb.js` (lines 407, 435), the message mapping pipeline transformed incoming messages with:
+  ```javascript
+  // Legacy code:
+  media: (msg.media || []).map(m => ...)
+  ```
+  While normal messages store attachments as an Array, Blink messages store media as an Object (`{ url, thumbnail, publicId, width, height }`). Because an Object is truthy, calling `.map()` threw an unhandled `TypeError: (msg.media || []).map is not a function` inside the Firebase Realtime Database `.on('value', ...)` callback! This uncaught exception aborted the listener callback before `callback(messagesList)` could execute, causing the conversation page to freeze at cached messages and hide the new Blink card.
+- **Fix:** Implemented `processMessageMedia(msg)` in both `chatsDb.js` and `groupsDb.js` to safely inspect whether `msg.media` is an Array vs a single Object, decrypting URLs and returning the sanitized payload without throwing.
+
+### 7.2 Discuss Brand Badge `< Blink />` & Complete Removal of Camera Emojis
+- **Bug Symptom:** Emojis (`📸`) and decorative icons (Camera, Eye, Lock) were used on message previews, cards, and notifications.
+- **Fix:**
+  - Removed all `📸` emojis from `blinkService.js` (`lastMessage.text`, `userChats.lastMessage`, `notifyChatMessage`, and group messages).
+  - Created a small custom Discuss product badge `< Blink />` in `BlinkMessageCard.jsx` with:
+    - Opening tag `<` in Discuss Blue (`#0095F6`)
+    - Bold Discuss typography `Blink`
+    - Closing tag `/>` in Discuss Red (`#EF4444`)
+  - Implemented exact required state text:
+    - **Recipient:**
+      - Unopened: `< Blink />` + `Tap to view · View once` (interactive trigger)
+      - Opened: `< Blink />` + `Opened · Cannot be viewed again`
+      - Expired: `< Blink />` + `Blink expired`
+    - **Sender:**
+      - Immediately after sending: `< Blink />` + `Waiting to be viewed`
+      - When recipient opens: `< Blink />` + `Opened` (updates live via RTDB without manual refresh)
+      - Expired: `< Blink />` + `Expired`
+    - **Group Blink:** Independent per-member tracking (`viewedBy/{userId}`). One member viewing does not mark the message opened for others.
+
+### 7.3 Recipient Selector Theme Harmonization
+- **Bug Symptom:** In Light Mode, the recipient selector rendered dark text on an unintentionally black background, resulting in unreadable text and theme mixing.
+- **Root Cause:** In `frontend/src/components/Blink/Blink.css`, `.blink-selector-sheet` specified `background-color: var(--background, #ffffff);`. In Discuss's `index.css`, `--background` is defined as an HSL triple (`0 0% 100%`), which is invalid CSS syntax when passed directly to `background-color:` without `hsl()`. The browser discarded the invalid declaration, making the sheet transparent and exposing `.blink-camera-container`'s hardcoded `#000000` background.
+- **Fix:** Integrated `useTheme()` in `BlinkCameraModal.jsx` and added clean, explicit `.theme-light` and `.theme-dark` styles in `Blink.css` and Tailwind classes. Backgrounds, headers, tabs, search bar, usernames, display names, verification badges, selection circles, dividers, and bottom recipient dispatch bars now fully adapt to the active theme.
+
+### 7.4 Real Group Data Integration
+- **Bug Symptom:** The Groups tab displayed placeholder data (`'G'`, `'0 members'`).
+- **Fix:** Enriched `getUserGroups` and `subscribeToUserGroups` in `groupsDb.js` by joining real metadata from `/groups/{groupId}`. The selector now renders real group avatars (or Discuss 2-letter uppercase initials gradient fallback), real group names, and accurate member counts (e.g. `Developers Bangalore`, `18 members`), dispatching Blinks directly into that exact group conversation.
+
+### 7.5 Camera Permissions (PWA + Median Android/iOS Wrapper)
+- **Fix:** Added bridge invocation (`window.median?.permissions?.request`) for Median.co Android and iOS wrappers. Stream is requested strictly when Blink is intentionally opened, never on app launch. Reuses granted permissions without repeated application-level prompts. Hardware streams cleanly shut down (`track.stop()`) when Blink closes. Shows clean guidance only when access is explicitly denied or unavailable.
+

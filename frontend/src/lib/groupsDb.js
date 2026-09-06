@@ -401,18 +401,29 @@ export const getGroupMessages = async (groupId, userId) => {
     const userGroupRef = ref(fourthDatabase, `userGroups/${userId}/${groupId}`);
     const userGroupSnap = await get(userGroupRef);
     const joinTime = userGroupSnap.exists() ? userGroupSnap.val().joinedAt : null;
-    
     const messages = snapshot.val();
     return Object.entries(messages)
-      .map(([id, msg]) => ({ 
-        id, 
-        ...msg,
-        media: (msg.media || []).map(m => ({ 
-          ...m, 
-          url: decryptData(m.url), 
-          thumbnail: decryptData(m.thumbnail) 
-        }))
-      }))
+      .map(([id, msg]) => {
+        let processedMedia = null;
+        if (Array.isArray(msg.media)) {
+          processedMedia = msg.media.map(m => ({
+            ...m,
+            url: decryptData(m.url),
+            thumbnail: decryptData(m.thumbnail)
+          }));
+        } else if (msg.media && typeof msg.media === 'object') {
+          processedMedia = {
+            ...msg.media,
+            url: decryptData(msg.media.url),
+            thumbnail: decryptData(msg.media.thumbnail || msg.media.url)
+          };
+        }
+        return {
+          id,
+          ...msg,
+          media: processedMedia
+        };
+      })
       .filter(msg => !joinTime || new Date(msg.timestamp) >= new Date(joinTime))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   } catch (error) {
@@ -429,20 +440,36 @@ export const subscribeToGroupMessages = (groupId, callback, limit = 50) => {
   const messagesRef = ref(fourthDatabase, `groups/${groupId}/messages`);
   const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(limit));
   const handleMessages = (snapshot) => {
-    if (!snapshot.exists()) { callback([]); return; }
-    const messages = snapshot.val();
-    const messagesList = Object.entries(messages)
-      .map(([id, msg]) => ({ 
-        id, 
-        ...msg,
-        media: (msg.media || []).map(m => ({ 
-          ...m, 
-          url: decryptData(m.url), 
-          thumbnail: decryptData(m.thumbnail) 
-        }))
-      }))
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    callback(messagesList);
+    try {
+      if (!snapshot.exists()) { callback([]); return; }
+      const messages = snapshot.val();
+      const messagesList = Object.entries(messages)
+        .map(([id, msg]) => {
+          let processedMedia = null;
+          if (Array.isArray(msg.media)) {
+            processedMedia = msg.media.map(m => ({
+              ...m,
+              url: decryptData(m.url),
+              thumbnail: decryptData(m.thumbnail)
+            }));
+          } else if (msg.media && typeof msg.media === 'object') {
+            processedMedia = {
+              ...msg.media,
+              url: decryptData(msg.media.url),
+              thumbnail: decryptData(msg.media.thumbnail || msg.media.url)
+            };
+          }
+          return {
+            id,
+            ...msg,
+            media: processedMedia
+          };
+        })
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      callback(messagesList);
+    } catch (err) {
+      console.error('Error processing group messages in subscribeToGroupMessages:', err);
+    }
   };
   onValue(messagesQuery, handleMessages);
   return () => off(messagesQuery);
@@ -464,31 +491,16 @@ export const deleteGroupMessageForEveryone = async (groupId, messageId, userId) 
   try {
     if (!fourthDatabase) throw new Error('Database not available');
     const messageRef = ref(fourthDatabase, `groups/${groupId}/messages/${messageId}`);
-    const snapshot = await get(messageRef);
-    if (!snapshot.exists()) throw new Error('Message not found');
-    
-    const message = snapshot.val();
-    if (message.sender !== userId) throw new Error('Only sender can delete for everyone');
-    
-    await update(messageRef, { deleted: true, deletedAt: new Date().toISOString(), deletedBy: userId, text: 'This message was deleted' });
-    
-    // Update last message if it was the deleted message
-    const groupRef = ref(fourthDatabase, `groups/${groupId}`);
-    const groupSnap = await get(groupRef);
-    if (groupSnap.exists()) {
-      const group = groupSnap.val();
-      if (group.lastMessage?.text === message.text) {
-        const membersSnap = await get(ref(fourthDatabase, `groups/${groupId}/members`));
-        if (membersSnap.exists()) {
-          const members = membersSnap.val();
-          for (const uid of Object.keys(members)) {
-            const userGroupRef = ref(fourthDatabase, `userGroups/${uid}/${groupId}`);
-            await update(userGroupRef, { lastMessage: 'This message was deleted' });
-          }
-        }
-      }
-    }
-    
+    const messageSnap = await get(messageRef);
+    if (!messageSnap.exists()) throw new Error('Message not found');
+    const message = messageSnap.val();
+    if (message.sender !== userId) throw new Error('You can only delete your own messages');
+    await update(messageRef, {
+      deleted: true,
+      text: 'This message was deleted',
+      media: null,
+      deletedAt: new Date().toISOString()
+    });
     return { success: true };
   } catch (error) {
     console.error('Error deleting message for everyone:', error);
@@ -542,7 +554,21 @@ export const getUserGroups = async (userId) => {
           await autoDeleteOldGroupMessages(groupId);
         }
         
-        validGroups.push({ groupId, ...group });
+        const count = groupData.memberCount 
+          || (groupData.members ? Object.keys(groupData.members).length : 1);
+
+        validGroups.push({ 
+          ...group,
+          ...groupData,
+          id: groupId,
+          groupId,
+          name: groupData.name || group.groupName || 'Group',
+          groupName: groupData.name || group.groupName || 'Group',
+          photo_url: groupData.photo_url || groupData.photoUrl || group.photo_url || null,
+          photoUrl: groupData.photo_url || groupData.photoUrl || group.photo_url || null,
+          memberCount: count,
+          membersCount: count
+        });
       } else {
         // Group was deleted, remove from user's list
         await remove(userGroupsRef.child(groupId));
@@ -585,7 +611,21 @@ export const subscribeToUserGroups = (userId, callback) => {
           autoDeleteOldGroupMessages(groupId).catch(err => console.error('Auto-delete error:', err));
         }
         
-        validGroups.push({ groupId, ...group });
+        const count = groupData.memberCount 
+          || (groupData.members ? Object.keys(groupData.members).length : 1);
+
+        validGroups.push({ 
+          ...group,
+          ...groupData,
+          id: groupId,
+          groupId,
+          name: groupData.name || group.groupName || 'Group',
+          groupName: groupData.name || group.groupName || 'Group',
+          photo_url: groupData.photo_url || groupData.photoUrl || group.photo_url || null,
+          photoUrl: groupData.photo_url || groupData.photoUrl || group.photo_url || null,
+          memberCount: count,
+          membersCount: count
+        });
       } else {
         // Group was deleted, remove from user's list
         const userGroupRef = ref(fourthDatabase, `userGroups/${userId}/${groupId}`);
