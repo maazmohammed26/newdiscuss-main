@@ -1,9 +1,23 @@
+import { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 import Footer from '@/components/Footer';
 
 export default function PublicPageShell({ eyebrow, title, description, children, compact = false }) {
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+    root.style.backgroundColor = '#ffffff';
+    root.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
+    root.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
+    if (body) {
+      body.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+      body.style.backgroundColor = '#ffffff';
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-neutral-950">
       <header className="sticky top-0 z-50 border-b border-neutral-200/80 bg-white/90 backdrop-blur-xl">

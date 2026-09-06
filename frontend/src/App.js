@@ -130,27 +130,45 @@ function AppRoutes() {
 
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
     
     // Public routes that should always render in default light theme
     const isPublicRoute = isPublicPath(location.pathname) && !(location.pathname === '/' && user);
 
-    const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+    // Dark mode applies ONLY inside the logged-in Discuss app
+    const isInsideApp = Boolean(user) && !isPublicRoute;
 
-    if (isPublicRoute || (!user && !isAppRoute)) {
+    if (!isInsideApp) {
       // Force default light theme (remove all active theme selectors)
       root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+      if (body) {
+        body.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+        body.style.backgroundColor = '#ffffff';
+      }
+      root.style.backgroundColor = '#ffffff';
       root.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
       root.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
     } else {
       // Restore selected inside-app theme
-      root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+      root.classList.remove('discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+      if (body) body.classList.remove('discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
       
       if (theme === 'dark') {
         root.classList.add('dark');
+        if (body) {
+          body.classList.add('dark');
+          body.style.backgroundColor = '#000000';
+        }
+        root.style.backgroundColor = '#000000';
         root.style.setProperty('--splash-bg', 'oklch(0.13 0.01 265)');
         root.style.setProperty('--splash-script', 'oklch(0.96 0.005 250)');
       } else {
         root.classList.remove('dark');
+        if (body) {
+          body.classList.remove('dark');
+          body.style.backgroundColor = '#ffffff';
+        }
+        root.style.backgroundColor = '#ffffff';
         root.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
         root.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
       }
@@ -315,7 +333,7 @@ function OnboardingWrapper({ children }) {
 
   return (
     <>
-      <div className={showNavbar ? "md:pl-[100px] lg:pl-0 transition-all duration-300 min-h-screen w-full flex flex-col" : "min-h-screen w-full flex flex-col"}>
+      <div className="min-h-screen w-full flex flex-col">
         {children}
       </div>
       <WelcomeOnboardingModal

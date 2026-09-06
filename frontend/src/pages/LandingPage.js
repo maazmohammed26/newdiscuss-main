@@ -226,6 +226,19 @@ export default function LandingPage() {
     setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    root.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+    root.style.backgroundColor = '#ffffff';
+    root.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
+    root.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
+    if (body) {
+      body.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+      body.style.backgroundColor = '#ffffff';
+    }
+  }, []);
+
   // Guests see the public landing page immediately while Firebase resolves in
   // the background. Cached signed-in users already hydrate synchronously and
   // continue to the feed without flashing this page.

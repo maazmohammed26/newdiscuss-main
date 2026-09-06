@@ -1,5 +1,20 @@
 html { scroll-behavior: smooth; }
-.lp-page { overflow-x: hidden; }
+.lp-page {
+  overflow-x: hidden;
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  color-scheme: light;
+}
+.lp-page header {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: rgba(229, 231, 235, 0.8) !important;
+}
+.lp-page header a[aria-label="Discuss home"] .font-script {
+  color: #171717 !important;
+}
+.lp-page footer .font-script {
+  color: #171717 !important;
+}
 .lp-grid { background-image: linear-gradient(rgba(15,23,42,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,.035) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(to bottom, black, transparent 88%); }
 .lp-gradient-text { background: linear-gradient(110deg, #ef4444 5%, #0095f6 82%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 

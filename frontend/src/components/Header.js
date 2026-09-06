@@ -47,9 +47,7 @@ export default function Header() {
     setShowCreateModal(true);
   };
 
-  const headerClass = `sticky top-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-[#DBDBDB] dark:border-[#262626] select-none transition-colors duration-200 ${
-    hasNavbar ? 'md:fixed md:top-0 md:left-0 md:w-full md:pl-[100px] lg:pl-0 md:z-40' : 'w-full'
-  }`;
+  const headerClass = 'sticky top-0 z-40 w-full bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-[#DBDBDB] dark:border-[#262626] select-none transition-colors duration-200';
 
   return (
     <>

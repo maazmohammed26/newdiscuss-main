@@ -37,16 +37,19 @@ const isNativePlatform = () => {
 
 const getEffectiveTheme = () => {
   try {
+    if (typeof window === 'undefined') return 'light';
+    const pathname = window.location.pathname;
+    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
+    const session = localStorage.getItem('discuss_auth_session_v1');
+    const isPublic = publicRoutes.includes(pathname);
+
+    // Splash on public/landing pages should always stay in original light theme
+    if (isPublic || !session) {
+      return 'light';
+    }
+
     const saved = localStorage.getItem('discuss_theme');
     if (saved === 'dark' || saved === 'discuss-black') return 'dark';
-    if (saved === 'light' || saved === 'discuss-light' || saved === 'discuss-retro') return 'light';
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches
-    ) {
-      return 'dark';
-    }
     return 'light';
   } catch (e) {
     return 'light';

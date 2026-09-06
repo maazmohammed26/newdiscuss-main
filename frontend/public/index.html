@@ -186,24 +186,32 @@
         <script>
             (function() {
                 try {
-                    var saved = localStorage.getItem('discuss_theme');
-                    var isDark = false;
-                    if (saved === 'dark' || saved === 'discuss-black') {
-                        isDark = true;
-                    } else if (saved === 'light' || saved === 'discuss-light' || saved === 'discuss-retro') {
-                        isDark = false;
-                    } else {
-                        // If no manually selected theme stored yet, fall back to device/system preference
-                        isDark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                    }
+                    var pathname = window.location.pathname;
+                    var publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
+                    var session = localStorage.getItem('discuss_auth_session_v1');
+                    var isPublic = publicRoutes.indexOf(pathname) !== -1;
+                    
                     var html = document.documentElement;
+
+                    // Public landing page and public pages must ALWAYS stay in original light theme
+                    if (isPublic || !session) {
+                        html.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
+                        html.style.backgroundColor = '#fafafa';
+                        html.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
+                        html.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
+                        return;
+                    }
+
+                    // Inside logged-in Discuss app: apply saved dark-mode preference
+                    var saved = localStorage.getItem('discuss_theme');
+                    var isDark = (saved === 'dark' || saved === 'discuss-black');
                     if (isDark) {
                         html.classList.add('dark');
-                        html.style.backgroundColor = '#0b0c10';
+                        html.style.backgroundColor = '#000000';
                         html.style.setProperty('--splash-bg', 'oklch(0.13 0.01 265)');
                         html.style.setProperty('--splash-script', 'oklch(0.96 0.005 250)');
                     } else {
-                        html.classList.remove('dark');
+                        html.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
                         html.style.backgroundColor = '#fafafa';
                         html.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
                         html.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
