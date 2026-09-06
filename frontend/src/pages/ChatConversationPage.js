@@ -62,6 +62,7 @@ import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
 import { notifyTelegramDM } from '@/lib/telegramService';
 import { notifyDiscordDM } from '@/lib/discordService';
+import { sendRemoteNotification } from '@/lib/notificationTransport';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
 import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
@@ -614,14 +615,12 @@ export default function ChatConversationPage() {
         notifyDiscordDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
         
         // Trigger OneSignal Push Notification (native mobile push)
-        import('@/lib/pushNotificationService').then(({ sendOneSignalNotification }) => {
-          sendOneSignalNotification(
-            otherUserId,
-            `New message from @${user?.username || 'user'}`,
-            messageText || (isImage ? "📷 Sent an image" : "Sent a message"),
-            { url: `/chat/${chatId}`, type: 'chat' }
-          );
-        }).catch(err => console.error('[OneSignal] Push trigger failed:', err));
+        sendRemoteNotification(
+          otherUserId,
+          `New message from @${user?.username || 'user'}`,
+          messageText || (isImage ? '📷 Sent an image' : 'Sent a message'),
+          { url: `/chat/${chatId}`, type: 'chat' }
+        );
         
         // Remove from optimistic list since it's successfully written
         setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));

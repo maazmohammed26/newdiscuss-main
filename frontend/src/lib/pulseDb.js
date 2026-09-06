@@ -20,6 +20,7 @@ import {
 import { database, ref as primaryRef, get as primaryGet } from './firebase';
 import { notifyTelegramLike } from './telegramService';
 import { notifyDiscordLike } from './discordService';
+import { sendRemoteNotification } from './notificationTransport';
 
 const pulseRef = () => ref(fifthDatabase, 'pulse');
 const pulseItemRef = (id) => ref(fifthDatabase, `pulse/${id}`);
@@ -126,14 +127,12 @@ export const togglePulseLike = async (pulseId, userId) => {
           notifyTelegramLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Telegram]', e));
           notifyDiscordLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Discord]', e));
           
-          import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
-            sendOneSignalNotification(
-              pulseData.authorId,
-              `New Like on Your Pulse`,
-              `@${likerUsername} liked your pulse video.`,
-              { url: `/pulse`, type: 'pulse_like' }
-            );
-          }).catch(e => console.warn('[OneSignal] Pulse like alert failed:', e.message));
+          sendRemoteNotification(
+            pulseData.authorId,
+            'New Like on Your Pulse',
+            `@${likerUsername} liked your pulse video.`,
+            { url: '/pulse', type: 'pulse_like' }
+          );
         }
       } catch (e) {
         console.error('Error sending pulse like notification:', e);

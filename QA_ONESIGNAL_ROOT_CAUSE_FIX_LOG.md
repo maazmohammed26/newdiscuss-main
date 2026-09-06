@@ -2,7 +2,76 @@
 
 **Platform**: Discuss (`discussit.in` / PWA / Android APK Wrapper / Desktop Web)  
 **Date**: September 6, 2026  
-**Status**: RESOLVED & PRODUCTION READY  
+**Status**: SUPERSEDED BY THE SEPTEMBER 6 PRODUCTION INCIDENT FOLLOW-UP BELOW
+
+> **Correction:** The original report claimed end-to-end foreground, background,
+> and killed-state delivery had passed. Those claims were not backed by a real
+> authenticated production-device test. Vercel runtime logs contained no POST
+> requests to `/api/send-notification` for the inspected 24-hour window. Treat
+> the scenario table later in this document as the previous agent's assertions,
+> not verified evidence.
+
+## Production incident follow-up — September 6, 2026
+
+### Evidence collected
+
+- GitHub `origin/master`, local `master`, and the active Vercel production
+  deployment all pointed at `ca18991`.
+- Both `https://discussit.in` and `https://www.discussit.in` pointed at that
+  release.
+- `/api/send-notification` and `/api/audio-call` were deployed and returned the
+  expected JSON `405` response to a read-only GET probe.
+- Both OneSignal worker paths returned JavaScript with HTTP 200 and no-cache
+  headers; the SPA rewrite was not swallowing them.
+- The required OneSignal and Firebase service-account variable names existed in
+  Vercel Production. Their secret values are intentionally not retrievable.
+- Vercel's 24-hour runtime query showed no production POST reaching either the
+  notification or audio-call endpoint during the inspected window. Telegram is
+  client-triggered independently, so its success does not validate either API.
+
+### Root causes corrected
+
+1. The prior patch added `android_channel_id: "discuss_notifications"` to every
+   general push. OneSignal expects this field to contain the notification-channel
+   UUID created in its dashboard, not an arbitrary Android channel name. The
+   invalid hardcode could make OneSignal reject the entire payload. The field is
+   now omitted by default and is sent only when `ONESIGNAL_ANDROID_CHANNEL_ID`
+   contains a UUID.
+2. React restored a cached Discuss profile before Firebase Auth necessarily
+   restored `auth.currentUser`. Notifications returned `false` and calls threw
+   before making a network request whenever that temporary split state occurred.
+   Both paths now wait for Firebase auth restoration and retry once with a forced
+   token refresh after HTTP 401.
+3. Remote push triggers were late dynamic imports. The notification chunk changed
+   between adjacent production deployments (`8510.0fd97e7b` to
+   `8510.cb1ae723`), making long-lived PWA/webview sessions vulnerable to a stale
+   chunk failure before the API request. The transport and identity sync are now
+   eager dependencies, and notification POSTs use `keepalive`.
+4. `/api/audio-call` still used the old exact-origin comparison, unlike the
+   notification endpoint. The shared validator now accepts the apex/www pair,
+   Vercel hosts, localhost, and supported native origins while rejecting malformed
+   or untrusted origins.
+5. The previous Firebase Admin change silently initialized without credentials
+   when the service-account JSON was missing or invalid, turning configuration
+   problems into misleading authentication/database errors. Initialization is
+   fail-closed again with the configured certificate.
+6. OneSignal identifier persistence wrote empty strings and could erase a valid
+   identifier stored by another device. Empty identifier values are no longer
+   written, and common native bridge field names are normalized.
+
+### Verification performed for this follow-up
+
+- `npm test -- --watchAll=false --runInBand`: **5 suites, 50 tests passed**.
+- `npm run build`: **production build succeeded**. Three pre-existing React Hook
+  warnings remain in `PulseFeed.jsx` and `SecurityLockScreen.js`; none are in the
+  notification/call changes.
+- The built `/api/send-notification` transport is now present in the main bundle.
+- Regression tests cover native/web origin acceptance, hostile-origin rejection,
+  authenticated keepalive delivery, 401 token refresh, stable event IDs, and the
+  no-auth failure path.
+- A real two-device OneSignal delivery test remains required after Vercel deploys
+  this follow-up; it must not be recorded as passed until a notification is
+  observed on the receiving device and the matching Vercel event log is present.
 
 ---
 

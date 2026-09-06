@@ -59,6 +59,7 @@ import {
 import { syncUserVerificationInCommentsFirestore } from '@/lib/commentsDb';
 import { notifyAdminUserSignup } from '@/lib/telegramService';
 import { sendVerificationOTPDirectly } from '@/lib/emailService';
+import { logoutOneSignalUser, syncOneSignalUser } from '@/lib/pushNotificationService';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fire
@@ -1074,15 +1075,9 @@ export function AuthProvider({ children }) {
   // ── Sync OneSignal user session on auth status changes ──────────────────────
   useEffect(() => {
     if (user?.id) {
-      // User is logged in
-      import('@/lib/pushNotificationService').then(({ syncOneSignalUser }) => {
-        syncOneSignalUser(user.id, user.username);
-      }).catch(err => console.error('[Auth] Failed to load pushNotificationService for OneSignal:', err));
+      syncOneSignalUser(user.id, user.username);
     } else if (user === null) {
-      // User is logged out
-      import('@/lib/pushNotificationService').then(({ logoutOneSignalUser }) => {
-        logoutOneSignalUser();
-      }).catch(err => console.error('[Auth] Failed to load pushNotificationService for OneSignal logout:', err));
+      logoutOneSignalUser();
     }
   }, [user]);
 

@@ -1,22 +1,15 @@
 import {
-  auth,
   database,
   ref,
   onValue,
   off,
 } from './firebase';
+import { getAuthenticatedIdToken } from './authenticatedRequest';
 
 export const CALL_MAX_PARTICIPANTS = 4;
 export const CALL_FIRST_PHASE_MESSAGE = 'Sorry, it is us, not you. Discuss audio calling is in its first phase and the available calling capacity has been reached. We are improving it.';
 
 const request = async (action, payload = {}) => {
-  const user = auth.currentUser;
-  if (!user) {
-    const error = new Error('Sign in to use Discuss audio calling.');
-    error.code = 'unauthenticated';
-    throw error;
-  }
-
   const send = (token) => fetch('/api/audio-call', {
     method: 'POST',
     headers: {
@@ -29,9 +22,9 @@ const request = async (action, payload = {}) => {
   // Firebase normally refreshes ID tokens automatically. Mobile WebViews and
   // resumed PWAs can occasionally retain a stale token, so retry once with a
   // forced refresh before asking the user to sign in again.
-  let response = await send(await user.getIdToken());
-  if (response.status === 401 && auth.currentUser) {
-    response = await send(await auth.currentUser.getIdToken(true));
+  let response = await send(await getAuthenticatedIdToken());
+  if (response.status === 401) {
+    response = await send(await getAuthenticatedIdToken({ forceRefresh: true }));
   }
 
   const result = await response.json().catch(() => ({}));

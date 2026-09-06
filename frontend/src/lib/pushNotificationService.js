@@ -1,6 +1,8 @@
 // Simple Push Notification Service - No Database Storage
 // Just push notifications directly using Service Worker
 
+import { sendRemoteNotification } from './notificationTransport';
+
 // VAPID Public Key for Web Push
 export const VAPID_PUBLIC_KEY = 'BD3rYWCGmkrNvyQ8t2GzPdnUySdy4WnEZwm51t_LLIApOK5iI2WQ15ckapmOQQplhiLA68_Ryyifq4ERe4UDTec';
 
@@ -32,13 +34,20 @@ const getNativeOneSignalBridge = async () => {
 const persistOneSignalInfo = async (uid, info = {}) => {
   if (!uid || !info || typeof info !== 'object') return;
   const subscription = info.subscription || {};
-  const identifiers = {
-    oneSignalId: info.oneSignalId || '',
+  const values = {
+    oneSignalId: info.oneSignalId || info.onesignalId,
     oneSignalExternalId: info.externalId || uid,
-    oneSignalSubscriptionId: subscription.id || info.oneSignalSubscriptionId || '',
-    oneSignalUserId: info.oneSignalUserId || '',
+    oneSignalSubscriptionId: subscription.id
+      || info.oneSignalSubscriptionId
+      || info.subscriptionId
+      || info.pushSubscriptionId,
+    oneSignalUserId: info.oneSignalUserId || info.playerId,
   };
-  if (!Object.values(identifiers).some(Boolean)) return;
+  // Never replace a valid identifier from another device with an empty string.
+  const identifiers = Object.fromEntries(
+    Object.entries(values).filter(([, value]) => value !== undefined && value !== null && String(value).trim())
+  );
+  if (Object.keys(identifiers).length === 0) return;
   try {
     const { updateUser } = await import('./db');
     await updateUser(uid, identifiers);
@@ -336,8 +345,8 @@ export const syncOneSignalUser = (uid, username) => {
 
 // Terminate OneSignal identity session on user logout
 export const logoutOneSignalUser = () => {
+  activeNativeOneSignalUid = null;
   if (isMedianApp()) {
-    activeNativeOneSignalUid = null;
     getNativeOneSignalBridge().then(async (bridge) => {
       if (!bridge) return;
       if (typeof bridge.logout === 'function') await Promise.resolve(bridge.logout()).catch(() => {});
@@ -353,48 +362,7 @@ export const logoutOneSignalUser = () => {
 // Deliver through the authenticated server endpoint. The OneSignal REST key is
 // intentionally never included in the browser bundle.
 export const sendOneSignalNotification = async (targetUserId, title, bodyText, data = {}) => {
-  // Respect the privacy settings of the receiver from their database profile
-  let isPreview = true;
-  try {
-    const { getUser } = await import('./db');
-    const receiverProfile = await getUser(targetUserId);
-    if (receiverProfile && receiverProfile.notificationPreviewEnabled !== undefined) {
-      isPreview = receiverProfile.notificationPreviewEnabled;
-    }
-  } catch (err) {
-    console.warn('[OneSignal] Failed to fetch receiver privacy settings, falling back to sender default:', err.message);
-    isPreview = isNotificationPreviewEnabled();
-  }
-  
-  const maskedBody = formatBodyForPreview(bodyText, isPreview);
-
-  try {
-    const { auth } = await import('./firebase');
-    if (!auth.currentUser) return false;
-    const token = await auth.currentUser.getIdToken();
-    const response = await fetch('/api/send-notification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        targetUserId,
-        title,
-        bodyText: maskedBody,
-        data,
-      }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.ok) {
-      console.warn('[OneSignal] Delivery notification result:', response.status, result);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error('[OneSignal] Notification send error:', error);
-    return false;
-  }
+  return sendRemoteNotification(targetUserId, title, bodyText, data);
 };
 
 // ============ PERMISSION & REGISTRATION ============

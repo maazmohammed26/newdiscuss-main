@@ -1,6 +1,7 @@
 'use strict';
 
 const { ApiError, handleAction } = require('../server/audioCallBackend');
+const { isAllowedOrigin } = require('../server/requestSecurity');
 
 const requestWindows = new Map();
 const WINDOW_MS = 60 * 1000;
@@ -29,14 +30,8 @@ module.exports = async function handler(req, res) {
   }
   const origin = req.headers.origin;
   const host = req.headers.host;
-  if (origin && host) {
-    try {
-      if (new URL(origin).host !== host) {
-        return res.status(403).json({ error: 'Request origin is not allowed.', code: 'origin-not-allowed' });
-      }
-    } catch (_) {
-      return res.status(403).json({ error: 'Request origin is not allowed.', code: 'origin-not-allowed' });
-    }
+  if (!isAllowedOrigin(origin, host)) {
+    return res.status(403).json({ error: 'Request origin is not allowed.', code: 'origin-not-allowed' });
   }
   if (isRateLimited(clientIp(req))) {
     return res.status(429).json({ error: 'Too many call requests. Please wait and try again.', code: 'rate-limit' });

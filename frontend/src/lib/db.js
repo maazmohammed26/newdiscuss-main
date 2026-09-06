@@ -23,6 +23,7 @@ import {
 import { openDB } from 'idb';
 import { notifyTelegramLike } from './telegramService';
 import { notifyDiscordLike } from './discordService';
+import { sendRemoteNotification } from './notificationTransport';
 import { checkContentSafety } from './nvidiaApi';
 
 // IndexedDB for offline caching
@@ -600,14 +601,12 @@ export const toggleVote = async (postId, voteType, userId) => {
           notifyTelegramLike(authorId, likerUsername, 'post').catch(e => console.error('[Telegram]', e));
           notifyDiscordLike(authorId, likerUsername, 'post').catch(e => console.error('[Discord]', e));
           
-          import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
-            sendOneSignalNotification(
-              authorId,
-              `New Like on Your Post`,
-              `@${likerUsername} liked your post.`,
-              { url: `/post/${postId}`, type: 'like' }
-            );
-          }).catch(e => console.warn('[OneSignal] Like alert failed:', e.message));
+          sendRemoteNotification(
+            authorId,
+            'New Like on Your Post',
+            `@${likerUsername} liked your post.`,
+            { url: `/post/${postId}`, type: 'like' }
+          );
         }
       } catch (e) {
         console.error('Error sending like notification:', e);

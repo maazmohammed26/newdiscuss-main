@@ -1,6 +1,7 @@
 'use strict';
 
 const { ApiError, verifyUser, primaryDb } = require('../server/audioCallBackend');
+const { isAllowedOrigin } = require('../server/requestSecurity');
 
 const ONESIGNAL_APP_ID = '280791b6-7711-4b32-8897-449efe155f2b';
 const windows = new Map();
@@ -27,23 +28,6 @@ const cleanData = (value) => {
   return result;
 };
 
-const isAllowedOrigin = (origin, host) => {
-  if (!origin) return true; // Mobile wrappers, webviews, and native APK callers often have null/empty origin
-  if (origin === 'null' || origin === 'file://') return true;
-  try {
-    const parsed = new URL(origin);
-    const hostname = parsed.hostname.toLowerCase();
-    if (parsed.protocol === 'capacitor:' || parsed.protocol === 'ionic:') return true;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
-    if (hostname === 'discussit.in' || hostname.endsWith('.discussit.in')) return true;
-    if (hostname.endsWith('.vercel.app')) return true;
-    if (host && (parsed.host === host || hostname === host.split(':')[0].toLowerCase())) return true;
-    return false;
-  } catch (_) {
-    return true; // Allow custom native scheme headers
-  }
-};
-
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -67,6 +51,7 @@ module.exports = async function handler(req, res) {
     const targetUserId = String(body.targetUserId || '').trim();
     const title = String(body.title || '').trim().slice(0, 100);
     const bodyText = String(body.bodyText || '').trim().slice(0, 300);
+    const eventId = String(body.eventId || req.headers['x-discuss-event-id'] || '').trim().slice(0, 80);
 
     if (!/^[A-Za-z0-9_-]{8,160}$/.test(targetUserId) || !title || !bodyText) {
       return res.status(400).json({ error: 'Notification details are invalid.' });
@@ -94,16 +79,20 @@ module.exports = async function handler(req, res) {
     const relativeUrl = rawUrl ? (String(rawUrl).startsWith('/') ? String(rawUrl) : `/${rawUrl}`) : '/';
     const targetUrl = `https://www.discussit.in${relativeUrl}`;
 
+    const previewBody = targetProfile.notificationPreviewEnabled === false
+      ? 'New secure alert received. Open app to view.'
+      : bodyText;
+    const configuredChannelId = String(process.env.ONESIGNAL_ANDROID_CHANNEL_ID || '').trim();
+
     const basePayload = {
       app_id: ONESIGNAL_APP_ID,
       headings: { en: title },
-      contents: { en: bodyText },
+      contents: { en: previewBody },
       url: targetUrl,
       web_url: targetUrl,
       app_url: targetUrl,
       priority: 10,
       android_visibility: 1,
-      android_channel_id: 'discuss_notifications',
       ios_sound: 'default',
       android_sound: 'default',
       data: {
@@ -111,8 +100,17 @@ module.exports = async function handler(req, res) {
         url: relativeUrl,
         targetUrl,
         senderId: sender.uid,
+        eventId,
       },
     };
+    // OneSignal expects its dashboard channel UUID here, not an arbitrary
+    // Android channel name. Omitting it safely uses the app's default channel.
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(configuredChannelId)) {
+      basePayload.android_channel_id = configuredChannelId;
+    }
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventId)) {
+      basePayload.idempotency_key = eventId;
+    }
 
     const deliver = async (audience, legacy = false) => {
       const endpoint = legacy
@@ -129,7 +127,7 @@ module.exports = async function handler(req, res) {
       });
 
       const result = await response.json().catch(() => ({}));
-      if (!response.ok || (result.errors && !result.id)) {
+      if (!response.ok || result.errors) {
         throw new Error(`OneSignal returned ${response.status}: ${JSON.stringify(result.errors || {})}`);
       }
       return result;
@@ -169,22 +167,29 @@ module.exports = async function handler(req, res) {
         const result = await deliver(audience, legacy);
         lastResult = result;
         if (delivered(result)) {
-          console.log(`[Notification API] Push delivered to ${targetUserId} (id=${result.id}, legacy=${legacy})`);
+          console.log(`[Notification API] Push accepted event=${eventId || 'none'} id=${result.id || 'none'} recipients=${result.recipients ?? 'pending'} legacy=${legacy}`);
           return res.status(200).json({ ok: true, id: result.id || null, recipients: result.recipients });
         }
       } catch (err) {
         lastError = err;
-        console.warn(`[Notification API] Strategy attempt failed for ${targetUserId} (legacy=${legacy}):`, err.message);
+        console.warn(`[Notification API] Strategy failed event=${eventId || 'none'} legacy=${legacy}:`, err.message);
       }
     }
 
-    if (lastResult?.id) {
-      return res.status(200).json({ ok: true, id: lastResult.id, recipients: lastResult.recipients || 0 });
+    if (lastResult) {
+      console.warn(`[Notification API] No subscribed recipient event=${eventId || 'none'}`);
+      return res.status(200).json({
+        ok: false,
+        code: 'no-subscribed-recipient',
+        id: lastResult.id || null,
+        recipients: Number(lastResult.recipients) || 0,
+      });
     }
 
-    console.error(`[Notification API] All OneSignal delivery strategies failed for target=${targetUserId}:`, lastError?.message);
+    console.error(`[Notification API] All delivery strategies failed event=${eventId || 'none'}:`, lastError?.message);
     return res.status(502).json({
       error: 'Notification delivery failed.',
+      code: 'provider-rejected',
       details: lastError?.message || 'No audience matched'
     });
   } catch (error) {

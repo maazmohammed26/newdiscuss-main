@@ -18,6 +18,7 @@ import {
 } from './firebaseSecondary';
 import { notifyTelegramFriendRequest, notifyTelegramFriendAccepted } from './telegramService';
 import { notifyDiscordFriendRequest, notifyDiscordFriendAccepted } from './discordService';
+import { sendRemoteNotification } from './notificationTransport';
 
 // Relationship statuses
 export const RELATIONSHIP_STATUS = {
@@ -125,14 +126,12 @@ export const sendFriendRequest = async (fromUserId, toUserId, fromUsername = nul
     notifyTelegramFriendRequest(toUserId, fromUsername).catch(e => console.error('[Telegram]', e));
     notifyDiscordFriendRequest(toUserId, fromUsername).catch(e => console.error('[Discord]', e));
     
-    import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
-      sendOneSignalNotification(
-        toUserId,
-        `New Friend Request`,
-        `@${fromUsername || 'Someone'} sent you a friend request.`,
-        { url: '/profile', type: 'friend' }
-      );
-    }).catch(e => console.warn('[OneSignal] Friend request alert failed:', e.message));
+    sendRemoteNotification(
+      toUserId,
+      'New Friend Request',
+      `@${fromUsername || 'Someone'} sent you a friend request.`,
+      { url: '/profile', type: 'friend' }
+    );
     
     return { success: true };
   } catch (error) {
@@ -177,14 +176,12 @@ export const acceptFriendRequest = async (currentUserId, fromUserId, currentUser
     notifyTelegramFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Telegram]', e));
     notifyDiscordFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Discord]', e));
     
-    import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
-      sendOneSignalNotification(
-        fromUserId,
-        `Friend Request Accepted`,
-        `@${currentUsername || 'Someone'} accepted your friend request.`,
-        { url: `/user/${currentUserId}`, type: 'friend' }
-      );
-    }).catch(e => console.warn('[OneSignal] Friend acceptance alert failed:', e.message));
+    sendRemoteNotification(
+      fromUserId,
+      'Friend Request Accepted',
+      `@${currentUsername || 'Someone'} accepted your friend request.`,
+      { url: `/user/${currentUserId}`, type: 'friend' }
+    );
     
     return { success: true };
   } catch (error) {
@@ -680,4 +677,3 @@ export const getSuggestedFriends = async (userId, limit = 10) => {
     return [];
   }
 };
-

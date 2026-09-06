@@ -18,6 +18,7 @@ import {
 } from './firebaseFourth';
 import { getUser } from './db';
 import { encryptData, decryptData } from './securityUtils';
+import { sendRemoteNotification } from './notificationTransport';
 
 // Group types
 export const GROUP_TYPE = {
@@ -358,14 +359,12 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
           const currentUnread = userGroupSnap.exists() ? (userGroupSnap.val().unreadCount || 0) : 0;
           await update(userGroupRef, { lastMessage: lastMsgText, lastMessageTime: timestamp, unreadCount: currentUnread + 1 });
           
-          import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
-            sendOneSignalNotification(
-              userId,
-              `New in ${groupName}`,
-              `@${senderUsername}: ${lastMsgText}`,
-              { url: `/group/${groupId}`, type: 'group_chat' }
-            );
-          }).catch(() => {});
+          sendRemoteNotification(
+            userId,
+            `New in ${groupName}`,
+            `@${senderUsername}: ${lastMsgText}`,
+            { url: `/group/${groupId}`, type: 'group_chat' }
+          );
         } else {
           await update(userGroupRef, { lastMessage: lastMsgText, lastMessageTime: timestamp, unreadCount: 0 });
         }
@@ -815,14 +814,12 @@ export const acceptJoinRequest = async (groupId, userId, acceptedBy) => {
       const groupSnap = await get(ref(fourthDatabase, `groups/${groupId}`));
       if (groupSnap.exists()) {
         const groupName = groupSnap.val().name || 'group';
-        import('./pushNotificationService').then(({ sendOneSignalNotification }) => {
-          sendOneSignalNotification(
-            userId,
-            `Group Join Request Approved`,
-            `Your request to join "${groupName}" was accepted! 🎉`,
-            { url: `/group/${groupId}`, type: 'group' }
-          );
-        }).catch(() => {});
+        sendRemoteNotification(
+          userId,
+          'Group Join Request Approved',
+          `Your request to join "${groupName}" was accepted! 🎉`,
+          { url: `/group/${groupId}`, type: 'group' }
+        );
       }
     } catch {}
 
