@@ -3,16 +3,10 @@
  *
  * Source of truth: Lovable implementation from Discuss Animation Studio
  * Brand tokens: red "<", handwritten "Discuss", blue "/>".
- * Dark mode swaps only the script word to off-white, keeping brackets on-brand.
- * Supports user-selected theme and fallback system theme with zero flash.
+ * Clean vector SVG rendering: eliminates all jagged edges, clipping, and distortion on high-DPI PWA screens.
  */
 
 :root {
-  --splash-font-script: "Caveat", "Segoe Script", cursive;
-  --splash-font-bracket: "Space Grotesk", system-ui, sans-serif;
-  --font-splash-script: var(--splash-font-script);
-  --font-splash-bracket: var(--splash-font-bracket);
-
   --splash-bg: #fafafa;
   --splash-bg: oklch(0.995 0.002 95);
   --splash-script: #18191f;
@@ -54,11 +48,11 @@ html.dark {
 @keyframes splash-char-pop {
   0% {
     opacity: 0;
-    transform: translateY(0.14em) scale(0.6);
+    transform: translateY(120px) scale(0.6);
   }
   62% {
     opacity: 1;
-    transform: translateY(-0.015em) scale(1.08);
+    transform: translateY(-15px) scale(1.08);
   }
   100% {
     opacity: 1;
@@ -91,52 +85,46 @@ html.dark {
   pointer-events: none;
 }
 
-.splash-wordmark {
+.splash-wordmark-container {
   display: flex;
-  align-items: baseline;
-  font-family: var(--font-splash-script), var(--splash-font-script), cursive;
-  font-size: clamp(3rem, 14vw, 6.5rem);
-  line-height: 1;
-  white-space: nowrap;
-  max-width: 95vw;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0 16px;
   box-sizing: border-box;
 }
 
+.splash-wordmark-svg {
+  width: clamp(260px, 86vw, 680px);
+  height: auto;
+  max-width: 92vw;
+  max-height: 28vh;
+  display: block;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+}
+
 .splash-char {
-  display: inline-block;
   opacity: 0;
   animation: splash-char-pop 520ms cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  transform-box: view-box;
   will-change: transform, opacity;
 }
 
 .splash-bracket-red {
   color: var(--splash-bracket-red);
-  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
-  font-weight: 500;
-  font-size: 0.82em;
-  margin-right: 0.08em;
+  fill: var(--splash-bracket-red);
 }
 
 .splash-bracket-blue {
   color: var(--splash-bracket-blue);
-  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
-  font-weight: 500;
-  font-size: 0.82em;
-  margin-left: 0.08em;
+  fill: var(--splash-bracket-blue);
 }
 
 .splash-script {
   color: var(--splash-script);
-}
-
-.splash-bracket-red-static {
-  color: var(--splash-bracket-red);
-  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
-}
-
-.splash-bracket-blue-static {
-  color: var(--splash-bracket-blue);
-  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
+  fill: var(--splash-script);
 }
 
 @media (prefers-reduced-motion: reduce) {
