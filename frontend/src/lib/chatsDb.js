@@ -18,6 +18,7 @@ import {
 } from './firebaseThird';
 import { notifyTelegramDM } from './telegramService';
 import { encryptData, decryptData } from './securityUtils';
+import { previewFromLastMessageString } from './chatMessageUtils';
 
 // Chat statuses
 export const CHAT_STATUS = {
@@ -545,7 +546,7 @@ export const searchChats = async (userId, searchQuery) => {
     
     return chats.filter(chat =>
       chat.otherUserDetails?.username?.toLowerCase().includes(query) ||
-      chat.lastMessage?.toLowerCase().includes(query)
+      previewFromLastMessageString(chat.lastMessage).toLowerCase().includes(query)
     );
   } catch (error) {
     console.error('Error searching chats:', error);
@@ -1061,4 +1062,3 @@ export const runAutoDeleteCleanup = async () => {
     console.error('Error running auto-delete cleanup:', error);
   }
 };
-

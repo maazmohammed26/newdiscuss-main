@@ -58,10 +58,20 @@ jest.mock('../../lib/pushNotificationService', () => ({
   notifyChatMessage: jest.fn(),
 }));
 
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'sender_123', username: 'sender' } }),
+}));
+
+jest.mock('../../contexts/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light' }),
+}));
+
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { createRoot } from 'react-dom/client';
+import { act } from 'react';
 import BlinkMessageCard, { BlinkBadge } from './BlinkMessageCard';
-import { verifyCameraContext } from './BlinkCameraModal';
+import BlinkCameraModal, { verifyCameraContext } from './BlinkCameraModal';
 
 describe('verifyCameraContext', () => {
   const originalSecureContext = window.isSecureContext;
@@ -95,6 +105,42 @@ describe('verifyCameraContext', () => {
     });
     const res = verifyCameraContext();
     expect(res.allowed).toBe(true);
+  });
+
+  it('keeps the newly started stream alive and requests it once per session', async () => {
+    const previousActEnvironment = globalThis.IS_REACT_ACT_ENVIRONMENT;
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    localStorage.setItem('discuss_blink_intro_seen', 'true');
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    const stop = jest.fn();
+    const stream = {
+      getTracks: () => [{ stop }],
+      getVideoTracks: () => [{ getCapabilities: () => ({ torch: false }) }],
+    };
+    const getUserMedia = jest.fn().mockResolvedValue(stream);
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia },
+      configurable: true,
+    });
+    const playSpy = jest.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<BlinkCameraModal isOpen onClose={jest.fn()} />);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    expect(stop).toHaveBeenCalledTimes(1);
+    playSpy.mockRestore();
+    container.remove();
+    globalThis.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
   });
 });
 

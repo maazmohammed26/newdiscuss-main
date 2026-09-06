@@ -663,7 +663,7 @@ export default function ChatConversationPage() {
           otherUserId,
           `New message from @${user?.username || 'user'}`,
           messageText || (isImage ? '📷 Sent an image' : 'Sent a message'),
-          { url: `/chat/${chatId}`, type: 'chat' }
+          { url: `/chat/${user.id}`, type: 'chat' }
         );
         
         // Remove from optimistic list since it's successfully written

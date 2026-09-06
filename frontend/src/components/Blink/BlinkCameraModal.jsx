@@ -149,10 +149,12 @@ export default function BlinkCameraModal({
 
   const startCameraStream = useCallback(async () => {
     if (isStartingRef.current) return;
+    // Release a previous stream before allocating the new session id. Calling
+    // stopCameraStream after allocating it invalidates the request we are just
+    // about to start and causes every successful stream to be stopped.
+    stopCameraStream();
     isStartingRef.current = true;
     const sessionId = ++activeSessionRef.current;
-
-    stopCameraStream();
     setCameraError(null);
 
     // Verify browser context before requesting stream
@@ -164,7 +166,6 @@ export default function BlinkCameraModal({
     }
 
     try {
-      let stream = null;
       const primaryConstraints = {
         video: {
           facingMode: { ideal: facingMode },
@@ -174,19 +175,10 @@ export default function BlinkCameraModal({
         audio: false
       };
 
-      try {
-        stream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
-      } catch (firstErr) {
-        // If ideal constraints fail (OverconstrainedError), retry with basic constraint
-        if (firstErr.name === 'OverconstrainedError' || firstErr.name === 'ConstraintNotSatisfiedError') {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: facingMode },
-            audio: false
-          });
-        } else {
-          throw firstErr;
-        }
-      }
+      // One permission request per camera session. All constraints are ideals,
+      // so browsers can select the closest supported camera without a second
+      // getUserMedia call (important for WebKit user activation and prompts).
+      const stream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
 
       // Check if session was invalidated or modal closed while awaiting getUserMedia
       if (activeSessionRef.current !== sessionId) {
@@ -211,6 +203,15 @@ export default function BlinkCameraModal({
         }
       }
 
+      // Closing, flipping, or unmounting while play() was pending invalidates
+      // this callback. Never revive stale camera UI state afterward.
+      if (activeSessionRef.current !== sessionId) {
+        stream.getTracks().forEach((track) => {
+          try { track.stop(); } catch {}
+        });
+        return;
+      }
+
       setCameraActive(true);
 
       // Check torch/flash support safely without throwing on iOS WebKit
@@ -226,6 +227,7 @@ export default function BlinkCameraModal({
         setTorchSupported(false);
       }
     } catch (err) {
+      if (activeSessionRef.current !== sessionId) return;
       console.error('[Blink Camera] Access error:', err);
       let message = 'Unable to access camera. Please check your camera permissions.';
 
@@ -252,7 +254,10 @@ export default function BlinkCameraModal({
 
       setCameraError(message);
     } finally {
-      isStartingRef.current = false;
+      // An obsolete request must not unlock a newer in-flight session.
+      if (activeSessionRef.current === sessionId) {
+        isStartingRef.current = false;
+      }
     }
   }, [facingMode, stopCameraStream]);
 

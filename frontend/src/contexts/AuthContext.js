@@ -1073,13 +1073,15 @@ export function AuthProvider({ children }) {
   };
 
   // ── Sync OneSignal user session on auth status changes ──────────────────────
+  const oneSignalUserId = user?.id;
+  const oneSignalUsername = user?.username;
   useEffect(() => {
-    if (user?.id) {
-      syncOneSignalUser(user.id, user.username);
-    } else if (user === null) {
+    if (oneSignalUserId) {
+      syncOneSignalUser(oneSignalUserId, oneSignalUsername);
+    } else {
       logoutOneSignalUser();
     }
-  }, [user]);
+  }, [oneSignalUserId, oneSignalUsername]);
 
   return (
     <AuthContext.Provider

@@ -3,6 +3,19 @@
 export const DELETED_MESSAGE_PREVIEW = 'Deleted message';
 export const LEGACY_DELETED_TEXT = 'This message was deleted';
 
+/**
+ * Normalize legacy/current chat metadata. Some chat/group records store
+ * lastMessage as { text, sender, timestamp }, while list rows store a string.
+ * React must never receive the metadata object as a text child.
+ */
+export function lastMessageText(lastMessage) {
+  if (typeof lastMessage === 'string') return lastMessage;
+  if (lastMessage && typeof lastMessage === 'object') {
+    return typeof lastMessage.text === 'string' ? lastMessage.text : '';
+  }
+  return '';
+}
+
 export function isDeletedForEveryone(msg) {
   if (!msg || typeof msg !== 'object') return false;
   if (msg.deleted === true) return true;
@@ -18,18 +31,20 @@ export function displayMessageText(msg) {
 
 /** Chat list / group row: lastMessage string from RTDB userChats / userGroups. */
 export function isDeletedListPreview(lastMessage) {
+  const text = lastMessageText(lastMessage);
   return (
-    lastMessage === LEGACY_DELETED_TEXT || lastMessage === DELETED_MESSAGE_PREVIEW
+    text === LEGACY_DELETED_TEXT || text === DELETED_MESSAGE_PREVIEW
   );
 }
 
 export function previewFromLastMessageString(lastMessage, isBlocked, deletedGroup = false) {
   if (isBlocked) return 'Chat unavailable';
   if (deletedGroup) return 'Group was deleted';
-  if (lastMessage === LEGACY_DELETED_TEXT || lastMessage === DELETED_MESSAGE_PREVIEW) {
+  const text = lastMessageText(lastMessage);
+  if (text === LEGACY_DELETED_TEXT || text === DELETED_MESSAGE_PREVIEW) {
     return DELETED_MESSAGE_PREVIEW;
   }
-  return lastMessage || 'No messages yet';
+  return text || 'No messages yet';
 }
 
 export function replyPreviewText(replyTo, messageIndexById = {}) {

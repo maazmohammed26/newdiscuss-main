@@ -395,4 +395,76 @@ Implemented `verifyCameraContext()` helper executing the following verification 
 | Production Build | `craco build` | PASS — 0 errors, production bundle generated |
 | Automated Test Suites | `craco test --watchAll=false` | PASS — 7/7 test suites, 85/85 tests passing |
 
+---
 
+## 9. Independent Senior Review (2026-09-07)
+
+The platform matrix above came from the implementation handoff; it was not an
+independent physical-device certification. Interactive production/device checks
+were explicitly left to the owner because this checkout does not contain a safe
+test-account/device environment.
+
+### Verified defects fixed
+
+- Camera startup allocated a session id and then immediately called the cleanup
+  routine, which invalidated that same session and released the initialization
+  lock. A successful `getUserMedia()` result was therefore stopped as stale.
+  Cleanup now runs before allocating the new session, stale callbacks cannot
+  unlock newer requests, and each session makes one `getUserMedia()` call.
+- Legacy/current chat metadata can store `lastMessage` as
+  `{ sender, text, timestamp }`. The chat list could render that object directly,
+  causing React error 31 and a blank/error-boundary page for affected accounts.
+  List rendering and search now normalize object and string formats.
+- Group Blink sending did not enforce membership/admin-only mode, update member
+  unread metadata, or deliver remote push notifications. It now follows the
+  established group-message rules and sends Blink push deep links to every
+  recipient (excluding the sender).
+- Multi-recipient registry consumption used a read/modify/update race. It now
+  uses an RTDB transaction so simultaneous recipients cannot overwrite pending
+  recipient state.
+- Cloudinary purge records were marked deleted even when credentials were
+  missing or Cloudinary destruction failed. Failed deletions now remain pending
+  for the next scheduled retry; successful destroy still uses
+  `invalidate=true`. The unauthenticated public manual-purge endpoint was
+  removed; the hourly backend schedule remains.
+- Direct-message remote notification deep links used a generated chat id where
+  the router expects the other user's id. The link now targets the sender's user
+  id for the recipient. Blink no longer creates a duplicate local notification
+  on the sender's device.
+- OneSignal identity synchronization now depends only on stable user identity
+  fields, preventing profile-object rerenders from retriggering initialization.
+
+### Firebase deployment finding
+
+`THIRD_DATABASE_RULES.json` and `FOURTH_DATABASE_RULES.json` contain indexes at
+the real queried message paths (`messages/$chatId/timestamp` and
+`groups/$groupId/messages/timestamp`). However, the repository's `firebase.json`
+deploys only Functions and does not reference either rules file, and this
+environment has no authenticated Firebase CLI. Their live deployment therefore
+cannot be claimed or safely changed from this review. In addition, the auxiliary
+Firebase app instances do not establish their own Firebase Auth sessions, so
+deploying the included root `auth != null` rules without an authentication
+migration would block existing chat/group clients. Do not deploy those files
+unchanged until auxiliary-database authentication is resolved.
+
+### Verification performed
+
+- Frontend Jest: 8/8 suites, 90/90 tests passed.
+- Production CRA build: completed successfully (warnings only in pre-existing
+  PulseFeed/SecurityLockScreen hook code).
+- Functions syntax: `node --check functions/index.js` passed.
+- Generated production bundle: no `CLOUDINARY_API_SECRET`,
+  `REACT_APP_CLOUDINARY_API_SECRET`, or `ONESIGNAL_REST_API_KEY` names found.
+- Repository frontend source: no Cloudinary API secret value or destructive
+  Cloudinary operation found; signing/destruction remains server-side.
+
+### Required owner verification
+
+- Confirm deployed `https://www.discussit.in` headers after deployment.
+- Run real-account Chrome/Edge/PWA/iOS Safari/Median capture, send, open, close,
+  reconnect, and notification checks.
+- Enable/configure the Web platform in the OneSignal dashboard if browser push
+  is required; code cannot repair the dashboard error "App not configured for
+  web push".
+- Verify/deploy the correct RTDB indexes only after solving auxiliary-project
+  authentication; rules files existing in Git are not evidence of deployment.

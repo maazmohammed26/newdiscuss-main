@@ -656,6 +656,7 @@ async function runBlinkStoragePurgeInternal() {
 
   const updates = {};
   let purgedCount = 0;
+  let failedCount = 0;
 
   for (const [key, item] of Object.entries(registry)) {
     if (item.deletedFromCloudinary) continue;
@@ -664,9 +665,18 @@ async function runBlinkStoragePurgeInternal() {
     const allViewed = Boolean(item.allViewed);
 
     if (isExpired || allViewed) {
-      if (item.publicId && cloudName && apiKey && apiSecret) {
-        await destroyCloudinaryAsset(item.publicId, cloudName, apiKey, apiSecret);
+      if (!item.publicId || !cloudName || !apiKey || !apiSecret) {
+        failedCount++;
+        console.error(`[Cloudinary] Blink purge configuration/asset id missing for registry key ${key}`);
+        continue;
       }
+
+      const destroyed = await destroyCloudinaryAsset(item.publicId, cloudName, apiKey, apiSecret);
+      if (!destroyed) {
+        failedCount++;
+        continue;
+      }
+
       updates[`${key}/deletedFromCloudinary`] = true;
       updates[`${key}/deletedAt`] = new Date().toISOString();
       if (allViewed && !isExpired) {
@@ -682,7 +692,7 @@ async function runBlinkStoragePurgeInternal() {
     await registryRef.update(updates);
   }
 
-  return { purged: purgedCount };
+  return { purged: purgedCount, failed: failedCount };
 }
 
 // Hourly scheduled background job to purge expired Blinks from Cloudinary
@@ -697,17 +707,4 @@ exports.purgeExpiredBlinksScheduled = functions.pubsub
     }
     return null;
   });
-
-// On-demand HTTPS endpoint to trigger 24-hour Blink storage purge
-exports.purgeExpiredBlinksNow = onRequest(
-  { timeoutSeconds: 60, memory: '256MiB', cors: true },
-  async (req, res) => {
-    try {
-      const result = await runBlinkStoragePurgeInternal();
-      res.status(200).send({ success: true, ...result });
-    } catch (err) {
-      res.status(500).send({ success: false, error: err.message });
-    }
-  }
-);
 

@@ -364,7 +364,9 @@ export const syncOneSignalUser = (uid, username) => {
 
 // Terminate OneSignal identity session on user logout
 export const logoutOneSignalUser = () => {
+  const hadActiveIdentity = Boolean(activeNativeOneSignalUid);
   activeNativeOneSignalUid = null;
+  if (!hadActiveIdentity) return;
   if (isMedianApp()) {
     getNativeOneSignalBridge().then(async (bridge) => {
       if (!bridge) return;

@@ -26,7 +26,6 @@ import {
 
 import { generateChatId, getOrCreateChat } from './chatsDb';
 import { sendRemoteNotification } from './notificationTransport';
-import { notifyChatMessage } from './pushNotificationService';
 
 export const BLINK_EXPIRY_HOURS = 24;
 
@@ -117,7 +116,26 @@ export const registerBlinkMedia = async ({ publicId, url, recipientIds = [], gro
     });
   } catch (err) {
     console.error('Error registering Blink media in registry:', err);
+    throw err;
   }
+};
+
+const consumeRegistryRecipient = async (publicId, viewerId) => {
+  if (!thirdDatabase || !publicId || !viewerId) return;
+  const safeKey = sanitizeStorageKey(publicId);
+  const registryRef = chatsRef(thirdDatabase, `blinkMediaRegistry/${safeKey}`);
+
+  await runChatsTransaction(registryRef, (current) => {
+    if (!current?.pendingRecipients?.[viewerId]) return;
+    const pendingRecipients = { ...current.pendingRecipients };
+    delete pendingRecipients[viewerId];
+    const allViewed = Object.keys(pendingRecipients).length === 0;
+    return {
+      ...current,
+      pendingRecipients: allViewed ? null : pendingRecipients,
+      allViewed
+    };
+  });
 };
 
 /**
@@ -205,8 +223,6 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
       { url: `/chat/${senderId}`, type: 'blink' }
     );
 
-    notifyChatMessage(recipientId, senderUsername, 'Sent a private Blink');
-
     return { id: newMessageRef.key, ...message };
   } catch (error) {
     console.error('Error sending direct Blink:', error);
@@ -229,6 +245,19 @@ export const sendGroupBlink = async ({ groupId, senderId, senderUsername, mediaD
     const timestamp = new Date().toISOString();
     const expiresAt = new Date(Date.now() + BLINK_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();
 
+    const groupRef = groupsRef(fourthDatabase, `groups/${groupId}`);
+    const groupSnap = await groupsGet(groupRef);
+    if (!groupSnap.exists()) throw new Error('Group not found');
+
+    const group = groupSnap.val() || {};
+    const members = group.members || {};
+    const senderMembership = members[senderId];
+    if (!senderMembership) throw new Error('You are not a member of this group');
+    if (group.settings?.adminOnlyMessaging && senderMembership.role !== 'admin') {
+      throw new Error('Only admins can send messages in this group');
+    }
+    const recipientIds = Object.keys(members).filter((memberId) => memberId !== senderId);
+
     const groupMessagesRef = groupsRef(fourthDatabase, `groups/${groupId}/messages`);
     const newMessageRef = groupsPush(groupMessagesRef);
 
@@ -250,27 +279,51 @@ export const sendGroupBlink = async ({ groupId, senderId, senderUsername, mediaD
       status: 'sent'
     };
 
-    await groupsSet(newMessageRef, message);
-
-    // Register in central registry for 24-hour Cloudinary deletion
+    // Register before publishing the message. This ensures every published
+    // Blink with a Cloudinary asset is covered by the server purge lifecycle.
     if (mediaData.publicId) {
       await registerBlinkMedia({
         publicId: mediaData.publicId,
         url: mediaData.url,
+        recipientIds,
         groupId,
         expiresAt
       });
     }
 
+    await groupsSet(newMessageRef, message);
+
     // Update group's last message
-    const groupMetaRef = groupsRef(fourthDatabase, `groups/${groupId}`);
-    await groupsUpdate(groupMetaRef, {
+    await groupsUpdate(groupRef, {
       lastMessage: {
         text: `${senderUsername || 'Someone'} sent a Blink`,
         sender: senderId,
         timestamp
       }
     });
+
+    // Keep every member's group list current and deliver the same remote push
+    // path used by normal group messages.
+    const groupName = group.name || 'group';
+    await Promise.all(Object.keys(members).map(async (memberId) => {
+      const userGroupRef = groupsRef(fourthDatabase, `userGroups/${memberId}/${groupId}`);
+      const userGroupSnap = await groupsGet(userGroupRef);
+      const unreadCount = userGroupSnap.exists() ? (userGroupSnap.val().unreadCount || 0) : 0;
+      await groupsUpdate(userGroupRef, {
+        lastMessage: 'Blink',
+        lastMessageTime: timestamp,
+        ...(memberId === senderId ? {} : { unreadCount: unreadCount + 1 })
+      });
+
+      if (memberId !== senderId) {
+        sendRemoteNotification(
+          memberId,
+          `New Blink in ${groupName}`,
+          `@${senderUsername || 'Someone'} sent a private Blink photo`,
+          { url: `/group/${groupId}`, type: 'blink_group' }
+        );
+      }
+    }));
 
     return { id: newMessageRef.key, ...message };
   } catch (error) {
@@ -302,12 +355,14 @@ export const claimBlinkView = async ({ chatId, groupId, messageId, viewerId, isG
       // Verify expiration before claiming
       const msgRef = groupsRef(fourthDatabase, `groups/${groupId}/messages/${messageId}`);
       const msgSnap = await groupsGet(msgRef);
-      if (msgSnap.exists()) {
-        const msgData = msgSnap.val();
-        if (isBlinkExpired(msgData)) {
-          return { success: false, reason: 'EXPIRED' };
-        }
-      }
+      if (!msgSnap.exists()) return { success: false, reason: 'NOT_FOUND' };
+      const msgData = msgSnap.val();
+      if (msgData.sender === viewerId) return { success: false, reason: 'SENDER_CANNOT_VIEW' };
+      if (isBlinkExpired(msgData)) return { success: false, reason: 'EXPIRED' };
+
+      const membershipRef = groupsRef(fourthDatabase, `groups/${groupId}/members/${viewerId}`);
+      const membershipSnap = await groupsGet(membershipRef);
+      if (!membershipSnap.exists()) return { success: false, reason: 'NOT_AUTHORIZED' };
 
       const viewRef = groupsRef(fourthDatabase, `groups/${groupId}/messages/${messageId}/viewedBy/${viewerId}`);
       
@@ -332,14 +387,14 @@ export const claimBlinkView = async ({ chatId, groupId, messageId, viewerId, isG
       // Verify expiration and current view state before claiming
       const msgRef = chatsRef(thirdDatabase, `messages/${chatId}/${messageId}`);
       const msgSnap = await chatsGet(msgRef);
-      if (msgSnap.exists()) {
-        const msgData = msgSnap.val();
-        if (isBlinkExpired(msgData)) {
-          return { success: false, reason: 'EXPIRED' };
-        }
-        if (msgData.viewed || (msgData.claim && msgData.claim.claimedBy)) {
-          return { success: false, reason: 'ALREADY_VIEWED' };
-        }
+      if (!msgSnap.exists()) return { success: false, reason: 'NOT_FOUND' };
+      const msgData = msgSnap.val();
+      if (msgData.sender === viewerId || (msgData.recipient && msgData.recipient !== viewerId)) {
+        return { success: false, reason: 'NOT_AUTHORIZED' };
+      }
+      if (isBlinkExpired(msgData)) return { success: false, reason: 'EXPIRED' };
+      if (msgData.viewed || (msgData.claim && msgData.claim.claimedBy)) {
+        return { success: false, reason: 'ALREADY_VIEWED' };
       }
 
       const claimRef = chatsRef(thirdDatabase, `messages/${chatId}/${messageId}/claim`);
@@ -403,23 +458,10 @@ export const markBlinkAsViewed = async (chatId, messageId, viewerId, publicId = 
       media: null
     });
 
-    // 2. Update multi-recipient registry: remove viewer from pending
+    // 2. Atomically update multi-recipient registry. Concurrent closes from
+    // different recipients cannot overwrite each other's pending state.
     if (actualPublicId) {
-      const safeKey = sanitizeStorageKey(actualPublicId);
-      const registryRef = chatsRef(thirdDatabase, `blinkMediaRegistry/${safeKey}`);
-      const regSnap = await chatsGet(registryRef);
-
-      if (regSnap.exists()) {
-        const regData = regSnap.val();
-        const pending = regData.pendingRecipients || {};
-        delete pending[viewerId];
-        const remainingCount = Object.keys(pending).length;
-
-        await chatsUpdate(registryRef, {
-          pendingRecipients: remainingCount > 0 ? pending : null,
-          allViewed: remainingCount === 0
-        });
-      }
+      await consumeRegistryRecipient(actualPublicId, viewerId);
     }
   } catch (error) {
     console.error('Error marking Blink as viewed:', error);
@@ -436,10 +478,20 @@ export const markBlinkAsViewed = async (chatId, messageId, viewerId, publicId = 
 export const markGroupBlinkAsViewed = async (groupId, messageId, viewerId) => {
   try {
     if (!fourthDatabase) return;
+    const msgRef = groupsRef(fourthDatabase, `groups/${groupId}/messages/${messageId}`);
+    const msgSnap = await groupsGet(msgRef);
+    if (!msgSnap.exists()) return;
+    const msgData = msgSnap.val();
+    if (msgData.sender === viewerId) return;
+
     const viewRef = groupsRef(fourthDatabase, `groups/${groupId}/messages/${messageId}/viewedBy/${viewerId}`);
-    await groupsSet(viewRef, {
+    await groupsUpdate(viewRef, {
       viewedAt: new Date().toISOString()
     });
+
+    if (msgData.media?.publicId) {
+      await consumeRegistryRecipient(msgData.media.publicId, viewerId);
+    }
   } catch (error) {
     console.error('Error marking group Blink as viewed:', error);
   }

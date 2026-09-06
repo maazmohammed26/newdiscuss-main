@@ -45,6 +45,7 @@ import {
   sanitizeStorageKey,
   claimBlinkView,
   sendDirectBlink,
+  sendGroupBlink,
   markBlinkAsViewed,
   BLINK_EXPIRY_HOURS
 } from './blinkService';
@@ -57,8 +58,10 @@ import {
 import {
   ref as mockGroupsRef,
   get as mockGroupsGet,
+  push as mockGroupsPush,
   runTransaction as mockRunFourthTransaction
 } from './firebaseFourth';
+import { sendRemoteNotification } from './notificationTransport';
 
 describe('Blink Service Unit, Privacy & Security Tests', () => {
   beforeEach(() => {
@@ -66,6 +69,11 @@ describe('Blink Service Unit, Privacy & Security Tests', () => {
     jest.clearAllMocks();
     mockChatsRef.mockImplementation((db, path) => ({ path }));
     mockGroupsRef.mockImplementation((db, path) => ({ path }));
+    mockGroupsPush.mockImplementation(() => ({ key: 'group_msg_123' }));
+    mockGroupsGet.mockResolvedValue({
+      exists: () => true,
+      val: () => ({ role: 'member' })
+    });
   });
 
   describe('24-Hour Expiry Verification', () => {
@@ -397,27 +405,24 @@ describe('Blink Service Unit, Privacy & Security Tests', () => {
       const publicId = 'discuss/blink/shared_asset_456';
       
       // User A views their Blink
-      mockChatsGet
-        // 1. Get message for User A's chat
-        .mockResolvedValueOnce({
+      mockChatsGet.mockResolvedValueOnce({
           exists: () => true,
           val: () => ({
             sender: 'sender_user',
             media: { publicId, url: 'https://res.cloudinary.com/test/image.jpg' }
           })
-        })
-        // 2. Get registry record
-        .mockResolvedValueOnce({
-          exists: () => true,
-          val: () => ({
+        });
+
+      mockRunChatsTransaction.mockImplementationOnce(async (ref, txFn) => ({
+        committed: true,
+        snapshot: {
+          val: () => txFn({
             publicId,
-            pendingRecipients: {
-              user_A: true,
-              user_B: true
-            },
+            pendingRecipients: { user_A: true, user_B: true },
             deletedFromCloudinary: false
           })
-        });
+        }
+      }));
 
       await markBlinkAsViewed('chat_sender_userA', 'msg_userA', 'user_A', publicId);
 
@@ -430,13 +435,56 @@ describe('Blink Service Unit, Privacy & Security Tests', () => {
         })
       );
 
-      // Central registry updated: user_A removed from pending, but user_B remains!
-      expect(mockChatsUpdate).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          pendingRecipients: { user_B: true },
-          allViewed: false
+      // Central registry transaction removes user_A while preserving user_B.
+      const registryCall = mockRunChatsTransaction.mock.calls[0];
+      expect(registryCall[0].path).toContain('blinkMediaRegistry');
+      expect(registryCall[1]({
+        publicId,
+        pendingRecipients: { user_A: true, user_B: true }
+      })).toEqual(expect.objectContaining({
+        pendingRecipients: { user_B: true },
+        allViewed: false
+      }));
+    });
+  });
+
+  describe('Group Blink dispatch', () => {
+    it('validates membership and notifies each recipient except the sender', async () => {
+      mockGroupsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          name: 'Design Team',
+          members: {
+            sender_user: { role: 'admin' },
+            recipient_a: { role: 'member' },
+            recipient_b: { role: 'member' }
+          },
+          settings: { adminOnlyMessaging: true }
         })
+      });
+
+      await sendGroupBlink({
+        groupId: 'group_123',
+        senderId: 'sender_user',
+        senderUsername: 'sender',
+        mediaData: {
+          url: 'https://res.cloudinary.com/test/blink.jpg',
+          publicId: 'discuss/blink/group_123'
+        }
+      });
+
+      expect(sendRemoteNotification).toHaveBeenCalledTimes(2);
+      expect(sendRemoteNotification).toHaveBeenCalledWith(
+        'recipient_a',
+        'New Blink in Design Team',
+        expect.stringContaining('sent a private Blink'),
+        { url: '/group/group_123', type: 'blink_group' }
+      );
+      expect(sendRemoteNotification).not.toHaveBeenCalledWith(
+        'sender_user',
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
       );
     });
   });

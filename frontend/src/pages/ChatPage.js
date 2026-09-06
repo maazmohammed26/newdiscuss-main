@@ -384,11 +384,11 @@ export default function ChatPage() {
           // Search in both chats and groups
           const chatResults = chats.filter(chat =>
             chat.otherUserDetails?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())
+            previewFromLastMessageString(chat.lastMessage).toLowerCase().includes(searchQuery.toLowerCase())
           );
           const groupResults = groups.filter(group =>
             group.groupName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            group.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase())
+            previewFromLastMessageString(group.lastMessage).toLowerCase().includes(searchQuery.toLowerCase())
           );
           setSearchResults([...chatResults, ...groupResults]);
         }
