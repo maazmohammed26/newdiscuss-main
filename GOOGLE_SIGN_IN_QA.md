@@ -21,9 +21,17 @@ Sources:
 - Browser recovery transfers only AES-256-GCM ciphertext through `webViewAuth`. A random key is passed in a URL fragment and immediately removed from browser history. The app retains the key in memory. Flow ID binding and a two-minute expiry prevent cross-flow substitution and stale reuse. Google credentials are still verified by Firebase.
 - The listener handles permission errors, duplicate responses and expiry; cleanup is best effort. Browser copy does not claim the app has signed in before it actually completes.
 
+## September 6 diagnostic follow-up
+
+The user's Android screenshot confirms the updated fallback is running, but its generic message does not identify why the native call failed. No license-expiry or device-specific cause is established by that screenshot.
+
+Native failures now display an allowlisted reference: `G2/<category>/<stage>`. Categories distinguish explicit license restrictions, unsupported native login, missing credentials, missing tokens, configuration, network, timeout and unknown errors. Stages distinguish callback, synchronous bridge exception, rejected bridge promise and timeout. Nested error fields and sibling numeric status codes are preserved for classification. No raw callback, token, email or arbitrary vendor message is displayed or sent to telemetry. An unknown reference remains inconclusive and requires device/vendor diagnostics.
+
+This is a diagnostic update, not a native SDK repair. After deployment, reproduce the failure in the installed app and collect the reference. A license category means the native error reported a restriction; it does not prove when a trial expired or that payment alone will resolve all configuration issues.
+
 ## Verification performed
 
-- 19 automated tests: native response handling, cancellation/error classification, delayed Median/GoNative discovery, timeout/late callback, encrypted roundtrip, wrong-key/wrong-flow rejection, tampering, plaintext rejection and expiry.
+- 29 automated tests: native response handling, cancellation/error classification, delayed Median/GoNative discovery, timeout/late callback, encrypted roundtrip, wrong-key/wrong-flow rejection, tampering, plaintext rejection and expiry, plus nested errors, sibling numeric codes, stage references and diagnostic privacy.
 - Production build passes. Existing hook warnings remain in PulseFeed and SecurityLockScreen.
 - Local login page rendered at http://127.0.0.1:3000/login.
 - Independent QA review completed; no actual phone or Google account sign-in performed.

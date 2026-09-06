@@ -44,3 +44,39 @@ test.each([
   expect(nativeGoogleFailure(error)).toMatchObject({ code, canUseBrowser });
   expect(nativeGoogleFailure(error).error).not.toContain('Google Play services');
 });
+
+test.each([
+  [{ error: { message: 'License required for Social Login' } }, 'native-license'],
+  [{ error: 'Trial expired' }, 'native-license'],
+  [{ error: 'Google sign-in is not supported in legacy mode' }, 'native-unsupported'],
+  [{ error: 'NoCredentialException' }, 'native-no-credentials'],
+  [{ error: 'No credentials available' }, 'native-no-credentials'],
+  [{ error: 'Sign-in failed', statusCode: 10 }, 'native-configuration'],
+  [{ error: 'Sign-in failed', errorCode: '10' }, 'native-configuration'],
+])('preserves native callback reason %p in a safe reference', async (response, code) => {
+  const failure = await requestMedianGoogleToken(({ callback }) => callback(response)).catch(nativeGoogleFailure);
+  expect(failure.code).toBe(code);
+  expect(failure.error).toContain(`G2/${code}/callback`);
+});
+
+test('missing token, rejected promise and synchronous error have distinct references', async () => {
+  const missing = await requestMedianGoogleToken(({ callback }) => callback(null)).catch(nativeGoogleFailure);
+  const promise = await requestMedianGoogleToken(() => Promise.reject(new Error('not supported'))).catch(nativeGoogleFailure);
+  const thrown = await requestMedianGoogleToken(() => { throw new Error('License expired'); }).catch(nativeGoogleFailure);
+  expect(missing.diagnostic).toBe('G2/native-missing-token/callback');
+  expect(promise.diagnostic).toBe('G2/native-unsupported/bridge-promise');
+  expect(thrown.diagnostic).toBe('G2/native-license/bridge-throw');
+});
+
+test('references never expose arbitrary native messages, tokens, or account data', async () => {
+  const response = { error: 'unrecognized failure for private@example.com', idToken: 'secret-token', code: 'sensitive-unknown-code' };
+  const failure = await requestMedianGoogleToken(({ callback }) => callback(response)).catch(nativeGoogleFailure);
+  expect(failure.diagnostic).toBe('G2/native-unavailable/callback');
+  expect(JSON.stringify(failure)).not.toMatch(/private@example|secret-token|sensitive-unknown-code/);
+});
+
+test('cyclic nested error does not break diagnosis or expose raw content', () => {
+  const error = { message: 'unknown' };
+  error.error = error;
+  expect(nativeGoogleFailure(error).code).toBe('native-unavailable');
+});
