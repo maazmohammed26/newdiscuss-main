@@ -101,16 +101,22 @@ export default function UserAvatar({
 
   const altText = alt || username || 'User';
 
+  // Filter out resource URLs that are blocked by cross-origin policies (e.g. drive.google.com)
+  const isBlockedResource = useMemo(() => {
+    if (!resolvedSrc || typeof resolvedSrc !== 'string') return false;
+    return resolvedSrc.includes('drive.google.com') || resolvedSrc.includes('docs.google.com');
+  }, [resolvedSrc]);
+
   // Keep the previous decoded avatar visible until the replacement is ready.
   // This prevents the initials/old-image flash when cached profile data is
   // reconciled with a newly uploaded picture.
   useEffect(() => {
-    if (resolvedSrc === displaySrc) {
-      setFailed(false);
+    if (isBlockedResource || !resolvedSrc) {
+      setDisplaySrc('');
+      setFailed(isBlockedResource);
       return undefined;
     }
-    if (!resolvedSrc) {
-      setDisplaySrc('');
+    if (resolvedSrc === displaySrc) {
       setFailed(false);
       return undefined;
     }
@@ -125,13 +131,16 @@ export default function UserAvatar({
       setFailed(false);
     };
     preload.onerror = () => {
-      if (!cancelled && !displaySrc) setFailed(true);
+      if (!cancelled) {
+        setDisplaySrc('');
+        setFailed(true);
+      }
     };
     preload.src = resolvedSrc;
     return () => {
       cancelled = true;
     };
-  }, [displaySrc, resolvedSrc]);
+  }, [displaySrc, resolvedSrc, isBlockedResource]);
 
   // Derive initials: up to 2 alphanumeric characters from the username
   const raw = username ? username.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() : '';

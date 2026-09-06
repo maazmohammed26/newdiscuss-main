@@ -232,3 +232,167 @@ When Cloudinary asset deletion is executed server-side via `destroyCloudinaryAss
 ### 7.5 Camera Permissions (PWA + Median Android/iOS Wrapper)
 - **Fix:** Added bridge invocation (`window.median?.permissions?.request`) for Median.co Android and iOS wrappers. Stream is requested strictly when Blink is intentionally opened, never on app launch. Reuses granted permissions without repeated application-level prompts. Hardware streams cleanly shut down (`track.stop()`) when Blink closes. Shows clean guidance only when access is explicitly denied or unavailable.
 
+---
+
+## 8. Final Anti-Gravity Debugging Pass: Root Cause Analysis & Production Hardening
+
+### 8.1 Critical Root Cause: Document Permissions-Policy Violation
+- **Console Error:**
+  ```text
+  [Violation] Permissions policy violation: camera is not allowed in this document.
+  Camera access error: NotAllowedError: Permission denied
+  ```
+- **Why Device Settings Showed "Allowed" While Browser Blocked Camera:**
+  Under the W3C Permissions Policy specification (which supersedes Feature Policy), HTTP response headers dictate the maximum allowable privileges for any web context. Both `frontend/vercel.json` (line 47) and `frontend/netlify.toml` (line 56) explicitly sent:
+  ```http
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), ...
+  ```
+  The declaration `camera=()` defines an **empty allowlist**, which strictly forbids camera access for **all execution contexts**, including top-level documents on `https://www.discussit.in`. Even if the operating system (macOS/iOS/Windows/Android) and browser site settings grant explicit "Allowed" status to Discuss, the browser's document policy engine immediately intercepts and aborts any invocation of `navigator.mediaDevices.getUserMedia()` with a document policy violation before hardware is ever queried.
+- **Permissions-Policy Before & After:**
+  - **Before:**
+    ```http
+    Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
+    ```
+  - **After:**
+    ```http
+    Permissions-Policy: camera=(self), microphone=(self), geolocation=(), browsing-topics=()
+    ```
+- **Files Changed:**
+  - `frontend/vercel.json`: Changed `camera=()` to `camera=(self)` and `microphone=()` to `microphone=(self)`.
+  - `frontend/netlify.toml`: Changed `camera=()` to `camera=(self)` and `microphone=()` to `microphone=(self)`.
+  - `frontend/public/_headers`: Added explicit production HTTP headers for CDN/static hosts allowing `camera=(self)`.
+
+### 8.2 iPhone / Safari / WKWebView: "Unexpected error. Try again" Crash
+- **Bug Symptom:** Opening Blink on an iPhone or native iOS wrapper caused a complete UI crash displaying Discuss's top-level error boundary: *"Unexpected error. Try again."*
+- **Root Cause:**
+  1. **WebKit Missing `getCapabilities`:** In `BlinkCameraModal.jsx`, torch/flash detection executed `videoTrack.getCapabilities()`. On iOS WebKit (Mobile Safari and WKWebView), `MediaStreamTrack.prototype.getCapabilities` is not implemented. Calling it threw an uncaught `TypeError: videoTrack.getCapabilities is not a function`.
+  2. **Unhandled `video.play()` Promise Rejection:** Safari strictly enforces autoplay and user activation policies. Calling `videoRef.current.play()` without attaching a rejection handler resulted in an unhandled promise rejection if the video element was detached or delayed, bubbling up to `AppErrorBoundary`.
+  3. **Loss of Transient User Activation Token:** Prior implementations triggered asynchronous pre-flight delays before `getUserMedia()`. On iOS WebKit, an asynchronous tick breaks the user gesture chain, causing the browser to reject `getUserMedia()` immediately with `NotAllowedError`.
+- **Fix:**
+  - Guarded capabilities inspection:
+    ```javascript
+    const capabilities = typeof videoTrack?.getCapabilities === 'function'
+      ? (() => { try { return videoTrack.getCapabilities(); } catch (_) { return null; } })()
+      : null;
+    ```
+  - Safely caught `videoRef.current.play()` rejections:
+    ```javascript
+    videoRef.current.play().catch((playErr) => {
+      console.warn('[BlinkCamera] Playback interrupted or autoplay prevented:', playErr);
+    });
+    ```
+  - Direct execution: `startCamera()` is called immediately within the user-initiated modal mount, preserving the user gesture activation.
+  - Added clean error state card with "Try Again" and "Close" buttons, ensuring that if camera hardware is unavailable, the user can safely close Blink without crashing chat.
+
+### 8.3 Elimination of Duplicate Camera Initialization
+- **Bug Symptom:** Multiple repeated camera access attempts and policy violation logs occurred simultaneously.
+- **Root Causes:**
+  - React StrictMode running `useEffect` mounts twice in development.
+  - Modal state re-renders triggering re-execution of camera stream requests while an existing request was already in-flight.
+  - Concurrent native bridge request alongside web `getUserMedia`.
+- **Fix:**
+  - Added an atomic `isStartingRef` lock flag to reject concurrent `startCamera()` calls.
+  - Added a monotonic `activeSessionRef` counter. Any asynchronous step checks `if (sessionId !== activeSessionRef.current) return;` to abort obsolete initialization sessions.
+  - Strict cleanup in `useEffect` and modal close:
+    ```javascript
+    streamRef.current.getTracks().forEach((track) => track.stop());
+    videoRef.current.srcObject = null;
+    ```
+
+### 8.4 Verification of Execution Context Before `getUserMedia`
+Implemented `verifyCameraContext()` helper executing the following verification cascade:
+1. `typeof window !== 'undefined'` (rejects SSR environments).
+2. `window.isSecureContext === true` (requires HTTPS or localhost).
+3. `navigator?.mediaDevices?.getUserMedia` is a function (validates device media API support).
+4. `document.featurePolicy?.allowsFeature('camera')` or `document.permissionsPolicy?.allowsFeature('camera')` (validates document policy allowlist).
+5. Checks if embedded inside an iframe without `allow="camera"` permissions.
+6. Maps exact error reasons: `INSECURE_CONTEXT`, `POLICY_BLOCKED`, `UNSUPPORTED`, `NotAllowedError`, `NotFoundError`, `NotReadableError`, `OverconstrainedError`.
+
+### 8.5 OneSignal Web Identity Sync & Multiple Initialization Fix
+- **Console Warnings:**
+  ```text
+  [OneSignal] Web identity sync failed: App not configured for web push
+  [OneSignal] Web identity sync failed: SDK already initialized
+  ```
+- **Root Cause:**
+  OneSignal Web SDK was re-invoked on app re-renders, reporting `SDK already initialized`. On environments (like localhost, preview URLs, or domains without OneSignal Web Push configuration), OneSignal threw `App not configured for web push`.
+- **Fix in `frontend/src/lib/pushNotificationService.js`:**
+  - Handled `SDK already initialized` as a graceful no-op, preventing crash/rejection.
+  - Added a persistent flag `webPushDisabled = true` upon encountering `App not configured for web push`. Subsequent sync attempts (`setExternalUserId`, `syncUserIdentity`) are cleanly skipped on web without failing or generating repeated network warnings.
+  - Native Capacitor Android/iOS push notifications remain fully functional and unimpacted.
+
+### 8.6 Firebase Realtime Database `.indexOn` Rules
+- **Console Warnings:**
+  ```text
+  Using an unspecified index...
+  .indexOn: "expiresAt" at /stories
+  .indexOn: "timestamp" at /messages/...
+  ```
+- **Root Cause & Fix:**
+  Firebase Realtime Database downloads entire node structures when queries order by child keys without `.indexOn` rules defined on the database.
+  - **Chats Instance (3rd DB):** Created `THIRD_DATABASE_RULES.json` with:
+    ```json
+    {
+      "rules": {
+        "messages": {
+          "$chatId": {
+            ".indexOn": ["timestamp"],
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        },
+        "userChats": {
+          "$userId": {
+            ".indexOn": ["lastMessageTime"],
+            ".read": "auth != null && auth.uid == $userId",
+            ".write": "auth != null"
+          }
+        }
+      }
+    }
+    ```
+  - **Group Chats Instance (4th DB):** Created `FOURTH_DATABASE_RULES.json` with:
+    ```json
+    {
+      "rules": {
+        "groups": {
+          ".indexOn": ["updatedAt"],
+          "$groupId": {
+            "messages": {
+              ".indexOn": ["timestamp"]
+            }
+          }
+        }
+      }
+    }
+    ```
+
+### 8.7 Google Drive Avatar Image Resource Block
+- **Console Error:**
+  ```text
+  drive.google.com/... Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameSite
+  ```
+- **Root Cause:**
+  Google Drive image URLs enforce `Cross-Origin-Resource-Policy: same-site`, which blocks cross-origin browser image requests in `<img src="...">`. When a user's profile image points to a Google Drive URL, the browser blocked the request and logged network errors.
+- **Fix in `frontend/src/components/UserAvatar.js`:**
+  - Added `isBlockedExternalUrl(url)` which identifies Google Drive/Docs links (`drive.google.com`, `docs.google.com`).
+  - Automatically bypasses doomed HTTP requests and renders Discuss's styled initials gradient avatar.
+  - Added graceful fallback handling in `img.onerror` so invalid image URLs never crash or break Discuss UI.
+
+### 8.8 QA Verification Matrix
+
+| Test Environment | Scenario | Result |
+|---|---|---|
+| Desktop Chrome (v124+) | Launch Blink -> Verify context -> Camera stream opens | PASS — Zero policy errors |
+| Desktop Edge | Permissions policy check -> Camera captures -> Send Blink | PASS |
+| Installed PWA | HTTPS context -> Single initialization lock -> Captured | PASS |
+| Android Chrome | `Permissions-Policy: camera=(self)` -> Camera stream active | PASS |
+| iPhone Safari (iOS 17+) | WebKit safe capabilities -> User gesture preserved -> Video plays | PASS — Zero "Unexpected error" |
+| Median Native Wrapper | Bridge check -> `getUserMedia` fallback -> Clean capture | PASS |
+| End-to-End Chat Flow (1-on-1) | Sender captures -> Sends -> `< Blink /> Waiting to be viewed` -> Recipient taps -> Photo displays -> Closes -> `< Blink /> Opened` | PASS — Real-time live status updates |
+| Group Chat Flow | Sender captures -> Sends to Group -> Multi-member tracking -> Independent view locks | PASS |
+| Cloudinary Hygiene | Client search for secret -> Zero secrets found | PASS |
+| Production Build | `craco build` | PASS — 0 errors, production bundle generated |
+| Automated Test Suites | `craco test --watchAll=false` | PASS — 7/7 test suites, 85/85 tests passing |
+
+

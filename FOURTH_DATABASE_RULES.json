@@ -1,0 +1,18 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "groups": {
+      "$groupId": {
+        "messages": {
+          ".indexOn": ["timestamp"]
+        }
+      }
+    },
+    "userGroups": {
+      "$uid": {
+        ".indexOn": ["lastMessageTime", "joinedAt"]
+      }
+    }
+  }
+}

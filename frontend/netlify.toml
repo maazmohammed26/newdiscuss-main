@@ -52,8 +52,8 @@
     # Referrer info — full URL same-origin, only origin cross-origin HTTPS
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-    # Disable unused device APIs
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), interest-cohort=()"
+    # Device permissions policy: Allow camera & microphone for self (Blink camera & audio calling)
+    Permissions-Policy = "camera=(self), microphone=(self), geolocation=(self), payment=(), usb=(), interest-cohort=()"
 
     # Required for Google Auth popup to work across browser contexts.
     # "same-origin-allow-popups" allows Firebase signInWithPopup() while

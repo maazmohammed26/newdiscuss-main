@@ -1,3 +1,9 @@
+jest.mock('react-router-dom', () => ({
+  useNavigate: () => jest.fn(),
+  useLocation: () => ({ pathname: '/' }),
+  Link: ({ children }) => children,
+}), { virtual: true });
+
 jest.mock('../../lib/firebase', () => ({
   database: {},
   ref: jest.fn((db, path) => ({ path })),
@@ -13,6 +19,20 @@ jest.mock('../../lib/firebaseThird', () => ({
   push: jest.fn(() => ({ key: 'msg_test_123' })),
   update: jest.fn(),
   runTransaction: jest.fn(),
+}));
+
+jest.mock('../../lib/firebaseSecondary', () => ({
+  secondaryDatabase: {},
+  ref: jest.fn((db, path) => ({ path })),
+  get: jest.fn(),
+  set: jest.fn(),
+}));
+
+jest.mock('../../lib/firebaseFifth', () => ({
+  fifthDatabase: {},
+  ref: jest.fn((db, path) => ({ path })),
+  get: jest.fn(),
+  set: jest.fn(),
 }));
 
 jest.mock('../../lib/firebaseFourth', () => ({
@@ -41,6 +61,42 @@ jest.mock('../../lib/pushNotificationService', () => ({
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import BlinkMessageCard, { BlinkBadge } from './BlinkMessageCard';
+import { verifyCameraContext } from './BlinkCameraModal';
+
+describe('verifyCameraContext', () => {
+  const originalSecureContext = window.isSecureContext;
+  const originalMediaDevices = navigator.mediaDevices;
+
+  afterEach(() => {
+    Object.defineProperty(window, 'isSecureContext', { value: originalSecureContext, configurable: true });
+    Object.defineProperty(navigator, 'mediaDevices', { value: originalMediaDevices, configurable: true });
+  });
+
+  it('rejects if window.isSecureContext is false', () => {
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+    const res = verifyCameraContext();
+    expect(res.allowed).toBe(false);
+    expect(res.reason).toBe('INSECURE_CONTEXT');
+  });
+
+  it('rejects if navigator.mediaDevices.getUserMedia is missing', () => {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    Object.defineProperty(navigator, 'mediaDevices', { value: undefined, configurable: true });
+    const res = verifyCameraContext();
+    expect(res.allowed).toBe(false);
+    expect(res.reason).toBe('UNSUPPORTED');
+  });
+
+  it('permits camera if secure context and mediaDevices exist', () => {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: jest.fn() },
+      configurable: true
+    });
+    const res = verifyCameraContext();
+    expect(res.allowed).toBe(true);
+  });
+});
 
 describe('BlinkMessageCard Component', () => {
   const baseMessage = {

@@ -1,0 +1,22 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "messages": {
+      "$chatId": {
+        ".indexOn": ["timestamp"]
+      }
+    },
+    "userChats": {
+      "$uid": {
+        ".indexOn": ["lastMessageTime"]
+      }
+    },
+    "chats": {
+      ".indexOn": ["updatedAt"]
+    },
+    "blinkMediaRegistry": {
+      ".indexOn": ["expiresAt"]
+    }
+  }
+}

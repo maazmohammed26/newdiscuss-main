@@ -66,8 +66,10 @@ if (typeof window !== 'undefined') {
   };
 }
 
-const ensureOneSignalWeb = () => {
-  if (typeof window === 'undefined' || isMedianApp()) return Promise.resolve(null);
+let webPushUnsupported = false;
+
+export const ensureOneSignalWeb = () => {
+  if (typeof window === 'undefined' || isMedianApp() || webPushUnsupported) return Promise.resolve(null);
   if (oneSignalWebReady) return oneSignalWebReady;
 
   oneSignalWebReady = new Promise((resolve, reject) => {
@@ -99,6 +101,16 @@ const ensureOneSignalWeb = () => {
         resolve(OneSignal);
       } catch (error) {
         window.clearTimeout(timeout);
+        if (error?.message?.includes('already initialized')) {
+          resolve(OneSignal || window.OneSignal);
+          return;
+        }
+        if (error?.message?.includes('App not configured for web push')) {
+          webPushUnsupported = true;
+          console.info('[OneSignal] Web push is not enabled in OneSignal dashboard for this app. Skipping web push.');
+          resolve(null);
+          return;
+        }
         reject(error);
       }
     });
@@ -115,6 +127,10 @@ const ensureOneSignalWeb = () => {
       document.head.appendChild(script);
     }
   }).catch((error) => {
+    if (error?.message?.includes('App not configured for web push')) {
+      webPushUnsupported = true;
+      return null;
+    }
     oneSignalWebReady = null;
     throw error;
   });
@@ -340,7 +356,10 @@ export const syncOneSignalUser = (uid, username) => {
       });
     }
     console.log(`[OneSignal] Web identity synchronized: uid=${uid}`);
-  }).catch((error) => console.warn('[OneSignal] Web identity sync failed:', error.message));
+  }).catch((error) => {
+    if (error?.message?.includes('App not configured for web push')) return;
+    console.warn('[OneSignal] Web identity sync skipped:', error.message);
+  });
 };
 
 // Terminate OneSignal identity session on user logout

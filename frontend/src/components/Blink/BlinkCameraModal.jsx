@@ -18,28 +18,47 @@ import { toast } from 'sonner';
 import './Blink.css';
 
 /**
- * Request Median wrapper camera permissions if running inside Median/GoNative app.
+ * Verifies browser execution context before requesting camera permissions
  */
-const requestMedianCameraPermission = async () => {
-  const isMedian = typeof window !== 'undefined' && Boolean(
-    window.median || window.gonative || /median|gonative/i.test(navigator?.userAgent || '')
-  );
-  if (!isMedian) return;
-
-  const bridge = window.median?.permissions || window.gonative?.permissions;
-  if (typeof bridge?.request === 'function') {
-    try {
-      await new Promise((resolve) => {
-        bridge.request({
-          permissions: ['camera'],
-          callback: () => resolve(true)
-        });
-        setTimeout(() => resolve(true), 1200);
-      });
-    } catch (err) {
-      console.warn('Median native camera permission bridge error:', err);
-    }
+export const verifyCameraContext = () => {
+  if (typeof window === 'undefined') {
+    return { allowed: false, reason: 'SSR_ENV', message: 'Camera is unavailable in this environment.' };
   }
+
+  // 1. Check secure context (HTTPS or localhost)
+  if (window.isSecureContext === false) {
+    return {
+      allowed: false,
+      reason: 'INSECURE_CONTEXT',
+      message: 'Camera access requires a secure connection (HTTPS).'
+    };
+  }
+
+  // 2. Check if mediaDevices API is supported
+  if (!navigator?.mediaDevices?.getUserMedia) {
+    return {
+      allowed: false,
+      reason: 'UNSUPPORTED',
+      message: 'Camera is not supported on this browser or platform.'
+    };
+  }
+
+  // 3. Check document feature policy if defined
+  try {
+    if (document.featurePolicy && typeof document.featurePolicy.allowsFeature === 'function') {
+      if (!document.featurePolicy.allowsFeature('camera')) {
+        return {
+          allowed: false,
+          reason: 'POLICY_BLOCKED',
+          message: 'Camera access is restricted by document policy.'
+        };
+      }
+    }
+  } catch {
+    // Ignore featurePolicy inspection errors
+  }
+
+  return { allowed: true };
 };
 
 export default function BlinkCameraModal({
@@ -65,6 +84,10 @@ export default function BlinkCameraModal({
   const [torchOn, setTorchOn] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+
+  // Session ref to prevent race conditions and duplicate initializations
+  const activeSessionRef = useRef(0);
+  const isStartingRef = useRef(false);
 
   // Photo & Preview state
   const [capturedBlob, setCapturedBlob] = useState(null);
@@ -104,8 +127,16 @@ export default function BlinkCameraModal({
 
   // ── 2. Camera Lifecycle ──────────────────────────────────────
   const stopCameraStream = useCallback(() => {
+    activeSessionRef.current++;
+    isStartingRef.current = false;
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach((t) => {
+        try {
+          t.stop();
+        } catch {
+          // Ignore track stop exceptions
+        }
+      });
       streamRef.current = null;
     }
     if (videoRef.current) {
@@ -113,22 +144,28 @@ export default function BlinkCameraModal({
     }
     setCameraActive(false);
     setTorchOn(false);
+    setTorchSupported(false);
   }, []);
 
   const startCameraStream = useCallback(async () => {
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
+    const sessionId = ++activeSessionRef.current;
+
     stopCameraStream();
     setCameraError(null);
 
-    if (!navigator?.mediaDevices?.getUserMedia) {
-      setCameraError('Camera is not supported on this browser or platform.');
+    // Verify browser context before requesting stream
+    const contextCheck = verifyCameraContext();
+    if (!contextCheck.allowed) {
+      isStartingRef.current = false;
+      setCameraError(contextCheck.message);
       return;
     }
 
     try {
-      // Prompt Median wrapper native permission if applicable
-      await requestMedianCameraPermission();
-
-      const constraints = {
+      let stream = null;
+      const primaryConstraints = {
         video: {
           facingMode: { ideal: facingMode },
           width: { ideal: 1920 },
@@ -137,29 +174,85 @@ export default function BlinkCameraModal({
         audio: false
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
+      } catch (firstErr) {
+        // If ideal constraints fail (OverconstrainedError), retry with basic constraint
+        if (firstErr.name === 'OverconstrainedError' || firstErr.name === 'ConstraintNotSatisfiedError') {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingMode },
+            audio: false
+          });
+        } else {
+          throw firstErr;
+        }
+      }
+
+      // Check if session was invalidated or modal closed while awaiting getUserMedia
+      if (activeSessionRef.current !== sessionId) {
+        if (stream) {
+          stream.getTracks().forEach((t) => {
+            try { t.stop(); } catch {}
+          });
+        }
+        isStartingRef.current = false;
+        return;
+      }
+
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          // Play request might be interrupted by new load or require user interaction
+          console.warn('[Blink Camera] Video play warning:', playErr);
+        }
       }
 
       setCameraActive(true);
 
-      // Check torch/flash support
-      const videoTrack = stream.getVideoTracks()[0];
-      const capabilities = videoTrack?.getCapabilities ? videoTrack.getCapabilities() : {};
-      setTorchSupported(Boolean(capabilities.torch));
-    } catch (err) {
-      console.error('Camera access error:', err);
-      let message = 'Unable to access camera. Please check your camera permissions.';
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        message = 'Camera permission was denied. Please allow camera access in your device or browser settings.';
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        message = 'No camera device found on this system.';
+      // Check torch/flash support safely without throwing on iOS WebKit
+      try {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (typeof videoTrack?.getCapabilities === 'function') {
+          const capabilities = videoTrack.getCapabilities();
+          setTorchSupported(Boolean(capabilities?.torch));
+        } else {
+          setTorchSupported(false);
+        }
+      } catch {
+        setTorchSupported(false);
       }
+    } catch (err) {
+      console.error('[Blink Camera] Access error:', err);
+      let message = 'Unable to access camera. Please check your camera permissions.';
+
+      const errName = err?.name || '';
+      const errMsg = (err?.message || '').toLowerCase();
+      const isPolicyViolation =
+        errMsg.includes('permissions policy') ||
+        errMsg.includes('not allowed in this document') ||
+        errMsg.includes('feature policy') ||
+        (typeof document !== 'undefined' && document.featurePolicy && typeof document.featurePolicy.allowsFeature === 'function' && !document.featurePolicy.allowsFeature('camera'));
+
+      if (isPolicyViolation) {
+        console.warn('[Blink Camera] Document Permissions-Policy restricts camera access on origin:', window.location.origin);
+        message = 'Camera is restricted by document policy on this domain. Please ensure camera=(self) is enabled in site headers.';
+      } else if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        message = 'Camera permission was denied. Please allow camera access in your device or browser settings.';
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+        message = 'No camera device found on this system.';
+      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+        message = 'Camera is currently in use by another app or tab. Please close other apps using the camera and try again.';
+      } else if (errName === 'SecurityError') {
+        message = 'Camera access was blocked by browser security policy (requires HTTPS).';
+      }
+
       setCameraError(message);
+    } finally {
+      isStartingRef.current = false;
     }
   }, [facingMode, stopCameraStream]);
 
@@ -171,7 +264,7 @@ export default function BlinkCameraModal({
     return () => {
       stopCameraStream();
     };
-  }, [isOpen, introChecked, showIntro, step, startCameraStream, stopCameraStream]);
+  }, [isOpen, introChecked, showIntro, step, facingMode, startCameraStream, stopCameraStream]);
 
   // Toggle Torch
   const handleToggleTorch = async () => {
@@ -184,7 +277,7 @@ export default function BlinkCameraModal({
       });
       setTorchOn(nextTorch);
     } catch (err) {
-      console.error('Torch toggle failed:', err);
+      console.error('[Blink Camera] Torch toggle failed:', err);
     }
   };
 
@@ -195,37 +288,43 @@ export default function BlinkCameraModal({
 
   // ── 3. Capture Photo ─────────────────────────────────────────
   const handleCapturePhoto = () => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
-    if (video.videoWidth === 0 || video.videoHeight === 0) return;
+    try {
+      if (!videoRef.current) return;
+      const video = videoRef.current;
+      if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    // If front camera, mirror image to match view
-    if (facingMode === 'user') {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
+      // If front camera, mirror image to match view
+      if (facingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            toast.error('Failed to capture photo. Please try again.');
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          setCapturedBlob(blob);
+          setPreviewUrl(url);
+          stopCameraStream();
+          setStep('preview');
+        },
+        'image/jpeg',
+        0.92
+      );
+    } catch (err) {
+      console.error('[Blink Camera] Capture error:', err);
+      toast.error('Could not capture photo. Please try again.');
     }
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          toast.error('Failed to capture photo. Please try again.');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        setCapturedBlob(blob);
-        setPreviewUrl(url);
-        stopCameraStream();
-        setStep('preview');
-      },
-      'image/jpeg',
-      0.92
-    );
   };
 
   // Retake Photo
@@ -459,19 +558,29 @@ export default function BlinkCameraModal({
                     </div>
                     <p className="text-sm font-semibold text-white mb-2">Camera Unavailable</p>
                     <p className="text-xs text-neutral-400 mb-5 leading-relaxed">{cameraError}</p>
-                    <button
-                      type="button"
-                      onClick={startCameraStream}
-                      className="rounded-full bg-white px-5 py-2 text-xs font-bold text-neutral-950 hover:bg-neutral-200 transition-colors"
-                    >
-                      Try Again
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCloseAll}
+                        className="rounded-full bg-neutral-800 px-5 py-2 text-xs font-semibold text-neutral-300 hover:bg-neutral-700 transition-colors"
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        onClick={startCameraStream}
+                        className="rounded-full bg-white px-5 py-2 text-xs font-bold text-neutral-950 hover:bg-neutral-200 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <video
                     ref={videoRef}
                     autoPlay
                     playsInline
+                    webkit-playsinline="true"
                     muted
                     className={`blink-video ${facingMode === 'user' ? 'mirror' : ''}`}
                   />
