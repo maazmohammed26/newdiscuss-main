@@ -61,6 +61,7 @@ import {
 import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
 import BlinkViewer from '@/components/Blink/BlinkViewer';
 import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
+import { claimBlinkView, isBlinkExpired, isBlinkViewed } from '@/lib/blinkService';
 import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
 import { notifyTelegramDM } from '@/lib/telegramService';
@@ -147,6 +148,44 @@ export default function ChatConversationPage() {
   const [recommendedUsers, setRecommendedUsers] = useState([]);
   const [showBlinkModal, setShowBlinkModal] = useState(false);
   const [activeBlink, setActiveBlink] = useState(null);
+  const [openingBlinkId, setOpeningBlinkId] = useState(null);
+
+  const handleOpenBlink = useCallback(async (blinkMsg) => {
+    if (!blinkMsg || !user?.id) return;
+    if (openingBlinkId === blinkMsg.id) return;
+
+    if (isBlinkExpired(blinkMsg)) {
+      toast.error('This Blink has expired.');
+      return;
+    }
+
+    if (isBlinkViewed(blinkMsg, user.id, false)) {
+      toast.error('This Blink has already been opened.');
+      return;
+    }
+
+    setOpeningBlinkId(blinkMsg.id);
+    try {
+      const result = await claimBlinkView({
+        chatId,
+        messageId: blinkMsg.id,
+        viewerId: user.id,
+        isGroup: false
+      });
+
+      if (!result.success) {
+        toast.error('This Blink has already been opened.');
+        return;
+      }
+
+      setActiveBlink(blinkMsg);
+    } catch (err) {
+      console.error('Failed to open Blink:', err);
+      toast.error('Could not open Blink. Please try again.');
+    } finally {
+      setOpeningBlinkId(null);
+    }
+  }, [user?.id, openingBlinkId, chatId]);
 
   const clearAllHighlights = useCallback(() => {
     Object.values(messageRefs.current).forEach(element => {
@@ -1195,7 +1234,7 @@ export default function ChatConversationPage() {
                         message={message}
                         currentUserId={user?.id}
                         isOwn={isOwn}
-                        onOpenBlink={(msg) => setActiveBlink(msg)}
+                        onOpenBlink={handleOpenBlink}
                       />
                     </div>
                   );

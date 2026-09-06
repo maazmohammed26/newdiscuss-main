@@ -28,6 +28,7 @@ import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, C
 import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
 import BlinkViewer from '@/components/Blink/BlinkViewer';
 import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
+import { claimBlinkView, isBlinkExpired, isBlinkViewed } from '@/lib/blinkService';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -74,6 +75,44 @@ export default function GroupConversationPage() {
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showBlinkModal, setShowBlinkModal] = useState(false);
   const [activeBlink, setActiveBlink] = useState(null);
+  const [openingBlinkId, setOpeningBlinkId] = useState(null);
+
+  const handleOpenBlink = useCallback(async (blinkMsg) => {
+    if (!blinkMsg || !user?.id) return;
+    if (openingBlinkId === blinkMsg.id) return;
+
+    if (isBlinkExpired(blinkMsg)) {
+      toast.error('This Blink has expired.');
+      return;
+    }
+
+    if (isBlinkViewed(blinkMsg, user.id, true)) {
+      toast.error('This Blink has already been opened.');
+      return;
+    }
+
+    setOpeningBlinkId(blinkMsg.id);
+    try {
+      const result = await claimBlinkView({
+        groupId,
+        messageId: blinkMsg.id,
+        viewerId: user.id,
+        isGroup: true
+      });
+
+      if (!result.success) {
+        toast.error('This Blink has already been opened.');
+        return;
+      }
+
+      setActiveBlink(blinkMsg);
+    } catch (err) {
+      console.error('Failed to open group Blink:', err);
+      toast.error('Could not open Blink. Please try again.');
+    } finally {
+      setOpeningBlinkId(null);
+    }
+  }, [user?.id, openingBlinkId, groupId]);
 
   const messagesCountRef = useRef(0);
   useEffect(() => {
@@ -641,7 +680,7 @@ export default function GroupConversationPage() {
               currentUserId={user?.id}
               isOwn={isOwn}
               isGroup={true}
-              onOpenBlink={(blinkMsg) => setActiveBlink(blinkMsg)}
+              onOpenBlink={handleOpenBlink}
             />
           </div>
         </div>

@@ -1,6 +1,8 @@
 // Blink Database & Privacy Service
 // Integrates view-once photo capture with Firebase Realtime Database (Third & Fourth instances)
-// Handles multi-recipient tracking, view-once consumption, 24-hour expiry purge, and Cloudinary storage deletion.
+// Handles atomic view-once claims, multi-recipient tracking, and 24-hour expiry lifecycle.
+// NOTE: All Cloudinary asset deletion is handled strictly server-side via Cloud Functions.
+// The browser NEVER possesses the Cloudinary API secret or generates destroy signatures.
 
 import {
   thirdDatabase,
@@ -8,7 +10,8 @@ import {
   get as chatsGet,
   set as chatsSet,
   push as chatsPush,
-  update as chatsUpdate
+  update as chatsUpdate,
+  runTransaction as runChatsTransaction
 } from './firebaseThird';
 
 import {
@@ -17,11 +20,11 @@ import {
   get as groupsGet,
   set as groupsSet,
   push as groupsPush,
-  update as groupsUpdate
+  update as groupsUpdate,
+  runTransaction as runFourthTransaction
 } from './firebaseFourth';
 
 import { generateChatId, getOrCreateChat } from './chatsDb';
-import { deleteImage } from './cloudinary';
 import { sendRemoteNotification } from './notificationTransport';
 import { notifyChatMessage } from './pushNotificationService';
 
@@ -36,7 +39,6 @@ export const sanitizeStorageKey = (publicId) => {
   if (!publicId) return `blink_${Date.now()}`;
   return publicId.replace(/[.#$/[\]]+/g, '___');
 };
-
 
 /**
  * Checks if a Blink message has expired based on its 24-hour availability window
@@ -67,12 +69,11 @@ export const isBlinkViewed = (message, userId, isGroup = false) => {
   if (isGroup) {
     return Boolean(message.viewedBy && message.viewedBy[userId]);
   }
-  return Boolean(message.viewed);
+  return Boolean(message.viewed || message.claim?.claimedBy);
 };
 
 /**
  * Returns media payload for presentation in the viewer
- * Note: Transparently handles the storage URL without misleading encryption claims.
  * @param {Object} media - Media object { url, thumbnail, publicId, ... }
  * @returns {Object|null}
  */
@@ -86,7 +87,7 @@ export const getDecryptedBlinkMedia = (media) => {
 };
 
 /**
- * Registers an uploaded Blink media item in the central registry for multi-recipient tracking and storage deletion
+ * Registers an uploaded Blink media item in the central registry for multi-recipient tracking
  * @param {Object} params
  * @param {string} params.publicId - Cloudinary public ID
  * @param {string} params.url - Cloudinary URL
@@ -157,6 +158,7 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
       },
       viewed: false,
       viewedAt: null,
+      claim: null,
       status: 'sent',
       screenshotTaken: false,
       screenshotBy: null,
@@ -278,14 +280,109 @@ export const sendGroupBlink = async ({ groupId, senderId, senderUsername, mediaD
 };
 
 /**
- * Marks a direct 1-on-1 Blink as viewed by the recipient.
- * Ensures the viewing recipient is permanently blocked from reopening.
- * Removes the recipient from pending recipients in registry.
- * If all recipients of this media have viewed it, permanently deletes the image from Cloudinary storage.
+ * Atomically claims the view-once rights for a Blink photo.
+ * Prevents race conditions across tabs, devices, double taps, or refreshes.
+ * If another request has already claimed or viewed it, the transaction aborts
+ * and returns { success: false, reason: 'ALREADY_VIEWED' }.
+ * @param {Object} params
+ * @param {string} params.chatId - Chat ID (for 1-on-1)
+ * @param {string} params.groupId - Group ID (for group)
+ * @param {string} params.messageId - Message ID
+ * @param {string} params.viewerId - Current user ID
+ * @param {boolean} params.isGroup - Group flag
+ * @returns {Promise<{ success: boolean, reason?: string }>}
+ */
+export const claimBlinkView = async ({ chatId, groupId, messageId, viewerId, isGroup = false }) => {
+  try {
+    const timestamp = new Date().toISOString();
+
+    if (isGroup && groupId) {
+      if (!fourthDatabase) return { success: false, reason: 'DB_UNAVAILABLE' };
+
+      // Verify expiration before claiming
+      const msgRef = groupsRef(fourthDatabase, `groups/${groupId}/messages/${messageId}`);
+      const msgSnap = await groupsGet(msgRef);
+      if (msgSnap.exists()) {
+        const msgData = msgSnap.val();
+        if (isBlinkExpired(msgData)) {
+          return { success: false, reason: 'EXPIRED' };
+        }
+      }
+
+      const viewRef = groupsRef(fourthDatabase, `groups/${groupId}/messages/${messageId}/viewedBy/${viewerId}`);
+      
+      const txResult = await runFourthTransaction(viewRef, (current) => {
+        if (current !== null && current !== undefined) {
+          // Already claimed or viewed by this specific member! Abort transaction
+          return; // Returning undefined aborts in Firebase RTDB
+        }
+        return {
+          claimedAt: timestamp,
+          viewedAt: timestamp
+        };
+      });
+
+      if (!txResult.committed) {
+        return { success: false, reason: 'ALREADY_VIEWED' };
+      }
+      return { success: true };
+    } else if (chatId) {
+      if (!thirdDatabase) return { success: false, reason: 'DB_UNAVAILABLE' };
+
+      // Verify expiration and current view state before claiming
+      const msgRef = chatsRef(thirdDatabase, `messages/${chatId}/${messageId}`);
+      const msgSnap = await chatsGet(msgRef);
+      if (msgSnap.exists()) {
+        const msgData = msgSnap.val();
+        if (isBlinkExpired(msgData)) {
+          return { success: false, reason: 'EXPIRED' };
+        }
+        if (msgData.viewed || (msgData.claim && msgData.claim.claimedBy)) {
+          return { success: false, reason: 'ALREADY_VIEWED' };
+        }
+      }
+
+      const claimRef = chatsRef(thirdDatabase, `messages/${chatId}/${messageId}/claim`);
+      
+      const txResult = await runChatsTransaction(claimRef, (current) => {
+        if (current !== null && current !== undefined) {
+          // Already claimed or viewed in this chat! Abort transaction
+          return;
+        }
+        return {
+          claimedBy: viewerId,
+          claimedAt: timestamp
+        };
+      });
+
+      if (!txResult.committed) {
+        return { success: false, reason: 'ALREADY_VIEWED' };
+      }
+
+      // Mark message viewed immediately in the database
+      await chatsUpdate(msgRef, {
+        viewed: true,
+        viewedAt: timestamp
+      });
+
+      return { success: true };
+    }
+
+    return { success: false, reason: 'INVALID_PARAMETERS' };
+  } catch (err) {
+    console.error('Error in atomic claimBlinkView:', err);
+    return { success: false, reason: err.message };
+  }
+};
+
+/**
+ * Marks a direct 1-on-1 Blink as consumed when the viewer manually closes it.
+ * Nullifies the media payload in the database to prevent extraction.
+ * Updates multi-recipient registry. Server handles physical Cloudinary deletion.
  * @param {string} chatId - Chat ID
  * @param {string} messageId - Blink Message ID
  * @param {string} viewerId - Current user ID
- * @param {string} publicId - Cloudinary publicId if known
+ * @param {string} [publicId] - Cloudinary publicId if known
  */
 export const markBlinkAsViewed = async (chatId, messageId, viewerId, publicId = null) => {
   try {
@@ -299,14 +396,14 @@ export const markBlinkAsViewed = async (chatId, messageId, viewerId, publicId = 
 
     const actualPublicId = publicId || msgData.media?.publicId;
 
-    // 1. Mark message as viewed & remove media payload for this specific chat
+    // 1. Mark message viewed and strip media payload from this chat record
     await chatsUpdate(msgRef, {
       viewed: true,
       viewedAt: new Date().toISOString(),
       media: null
     });
 
-    // 2. Multi-recipient registry check: check if all recipients have viewed
+    // 2. Update multi-recipient registry: remove viewer from pending
     if (actualPublicId) {
       const safeKey = sanitizeStorageKey(actualPublicId);
       const registryRef = chatsRef(thirdDatabase, `blinkMediaRegistry/${safeKey}`);
@@ -316,23 +413,12 @@ export const markBlinkAsViewed = async (chatId, messageId, viewerId, publicId = 
         const regData = regSnap.val();
         const pending = regData.pendingRecipients || {};
         delete pending[viewerId];
+        const remainingCount = Object.keys(pending).length;
 
-        const remainingPendingCount = Object.keys(pending).length;
-
-        if (remainingPendingCount === 0 && !regData.deletedFromCloudinary) {
-          // All intended recipients have viewed! Permanently destroy image from Cloudinary
-          await deleteImage(actualPublicId);
-          await chatsUpdate(registryRef, {
-            pendingRecipients: null,
-            deletedFromCloudinary: true,
-            deletedAt: new Date().toISOString()
-          });
-        } else {
-          // Update remaining pending list
-          await chatsUpdate(registryRef, {
-            pendingRecipients: remainingPendingCount > 0 ? pending : null
-          });
-        }
+        await chatsUpdate(registryRef, {
+          pendingRecipients: remainingCount > 0 ? pending : null,
+          allViewed: remainingCount === 0
+        });
       }
     }
   } catch (error) {
@@ -341,9 +427,8 @@ export const markBlinkAsViewed = async (chatId, messageId, viewerId, publicId = 
 };
 
 /**
- * Marks a group Blink as viewed by a specific member.
- * Records the member's view in `viewedBy`.
- * Only blocks that specific member; does not remove access for other group members.
+ * Records view-once state for a group Blink when the viewer closes it.
+ * Only marks that member; does not consume views for other group members.
  * @param {string} groupId - Group ID
  * @param {string} messageId - Message ID
  * @param {string} viewerId - Current user ID
@@ -408,29 +493,15 @@ export const recordBlinkScreenshot = async ({
 };
 
 /**
- * Purges expired Blink media from database and permanently destroys image from Cloudinary storage
+ * Wipes expired media payload from RTDB record.
+ * Physical Cloudinary asset destruction is executed server-side.
  * @param {Object} params
  * @param {string} params.id - Chat ID or Group ID
  * @param {string} params.messageId - Message ID
- * @param {string} params.publicId - Cloudinary publicId
  * @param {boolean} params.isGroup - Whether it is a group
  */
-export const purgeExpiredBlinkMedia = async ({ id, messageId, publicId, isGroup = false }) => {
+export const purgeExpiredBlinkMedia = async ({ id, messageId, isGroup = false }) => {
   try {
-    // 1. Physically destroy image from Cloudinary storage
-    if (publicId) {
-      await deleteImage(publicId);
-      if (thirdDatabase) {
-        const safeKey = sanitizeStorageKey(publicId);
-        const regRef = chatsRef(thirdDatabase, `blinkMediaRegistry/${safeKey}`);
-        await chatsUpdate(regRef, {
-          deletedFromCloudinary: true,
-          deletedAt: new Date().toISOString()
-        }).catch(() => {});
-      }
-    }
-
-    // 2. Wipe media payload in database message record
     const updates = {
       media: null,
       expired: true,
@@ -447,13 +518,13 @@ export const purgeExpiredBlinkMedia = async ({ id, messageId, publicId, isGroup 
       await chatsUpdate(msgRef, updates);
     }
   } catch (error) {
-    console.error('Error purging expired Blink media:', error);
+    console.error('Error purging expired Blink media in RTDB:', error);
   }
 };
 
 /**
- * Scans registry and purges any Blink media that has exceeded the 24-hour expiration window.
- * Ensures images do not remain indefinitely in Cloudinary storage even if recipients never open them.
+ * Scans registry and marks expired Blinks in RTDB.
+ * Physical Cloudinary deletion with CDN cache invalidation is executed server-side.
  */
 export const runRegistry24HourPurge = async () => {
   try {
@@ -464,30 +535,22 @@ export const runRegistry24HourPurge = async () => {
 
     const registry = snap.val();
     const now = Date.now();
-    const purgePromises = [];
+    const updates = {};
 
     for (const [key, item] of Object.entries(registry)) {
-      if (item.deletedFromCloudinary) continue;
+      if (item.expired) continue;
       const expireTime = item.expiresAt ? new Date(item.expiresAt).getTime() : 0;
 
       if (expireTime > 0 && now > expireTime) {
-        purgePromises.push(
-          (async () => {
-            if (item.publicId) {
-              await deleteImage(item.publicId);
-            }
-            const itemRef = chatsRef(thirdDatabase, `blinkMediaRegistry/${key}`);
-            await chatsUpdate(itemRef, {
-              deletedFromCloudinary: true,
-              deletedAt: new Date().toISOString()
-            });
-          })()
-        );
+        updates[`${key}/expired`] = true;
+        updates[`${key}/expiredAt`] = new Date().toISOString();
       }
     }
 
-    await Promise.all(purgePromises);
+    if (Object.keys(updates).length > 0) {
+      await chatsUpdate(registryRef, updates);
+    }
   } catch (err) {
-    console.error('Error during 24-hour Blink registry purge:', err);
+    console.error('Error during 24-hour Blink registry status check:', err);
   }
 };

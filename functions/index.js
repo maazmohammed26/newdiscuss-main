@@ -614,12 +614,15 @@ async function destroyCloudinaryAsset(publicId, cloudName, apiKey, apiSecret) {
   if (!publicId || !cloudName || !apiKey || !apiSecret) return false;
   try {
     const timestamp = Math.floor(Date.now() / 1000);
+    // Parameters in Cloudinary signature must be sorted alphabetically: invalidate, public_id, timestamp
+    const stringToSign = `invalidate=true&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
     const shasum = crypto.createHash('sha1');
-    shasum.update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`);
+    shasum.update(stringToSign);
     const signature = shasum.digest('hex');
 
     const formData = new URLSearchParams();
     formData.append('public_id', publicId);
+    formData.append('invalidate', 'true');
     formData.append('api_key', apiKey);
     formData.append('timestamp', timestamp.toString());
     formData.append('signature', signature);
@@ -631,7 +634,7 @@ async function destroyCloudinaryAsset(publicId, cloudName, apiKey, apiSecret) {
     const data = await res.json();
     return data.result === 'ok' || data.result === 'not found';
   } catch (e) {
-    console.error('[Cloudinary] Failed to destroy asset:', e.message);
+    console.error('[Cloudinary] Failed to destroy asset with CDN invalidation:', e.message);
     return false;
   }
 }
@@ -645,9 +648,11 @@ async function runBlinkStoragePurgeInternal() {
 
   const registry = snap.val();
   const now = Date.now();
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  
+  const fnConfig = typeof functions.config === 'function' ? (functions.config().cloudinary || {}) : {};
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || fnConfig.cloud_name;
+  const apiKey = process.env.CLOUDINARY_API_KEY || fnConfig.api_key;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET || fnConfig.api_secret;
 
   const updates = {};
   let purgedCount = 0;
@@ -655,12 +660,20 @@ async function runBlinkStoragePurgeInternal() {
   for (const [key, item] of Object.entries(registry)) {
     if (item.deletedFromCloudinary) continue;
     const expireTime = item.expiresAt ? new Date(item.expiresAt).getTime() : 0;
-    if (expireTime > 0 && now > expireTime) {
+    const isExpired = expireTime > 0 && now > expireTime;
+    const allViewed = Boolean(item.allViewed);
+
+    if (isExpired || allViewed) {
       if (item.publicId && cloudName && apiKey && apiSecret) {
         await destroyCloudinaryAsset(item.publicId, cloudName, apiKey, apiSecret);
       }
       updates[`${key}/deletedFromCloudinary`] = true;
       updates[`${key}/deletedAt`] = new Date().toISOString();
+      if (allViewed && !isExpired) {
+        updates[`${key}/purgedReason`] = 'all_viewed';
+      } else {
+        updates[`${key}/purgedReason`] = 'expired';
+      }
       purgedCount++;
     }
   }

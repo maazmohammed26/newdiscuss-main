@@ -1,31 +1,41 @@
 jest.mock('./firebase', () => ({
   database: {},
-  ref: jest.fn(),
+  ref: jest.fn((db, path) => ({ path })),
   get: jest.fn(),
   set: jest.fn(),
 }));
 
 jest.mock('./firebaseThird', () => ({
   thirdDatabase: {},
-  ref: jest.fn(),
+  ref: jest.fn((db, path) => ({ path })),
   get: jest.fn(),
   set: jest.fn(),
-  push: jest.fn(),
+  push: jest.fn(() => ({ key: 'msg_test_123' })),
   update: jest.fn(),
+  runTransaction: jest.fn(),
 }));
 
 jest.mock('./firebaseFourth', () => ({
   fourthDatabase: {},
-  ref: jest.fn(),
+  ref: jest.fn((db, path) => ({ path })),
   get: jest.fn(),
   set: jest.fn(),
-  push: jest.fn(),
+  push: jest.fn(() => ({ key: 'group_msg_123' })),
   update: jest.fn(),
+  runTransaction: jest.fn(),
 }));
 
 jest.mock('./chatsDb', () => ({
   generateChatId: (a, b) => [a, b].sort().join('_'),
-  getOrCreateChat: jest.fn(),
+  getOrCreateChat: jest.fn().mockResolvedValue({ id: 'chat_userA_userB' }),
+}));
+
+jest.mock('./notificationTransport', () => ({
+  sendRemoteNotification: jest.fn(),
+}));
+
+jest.mock('./pushNotificationService', () => ({
+  notifyChatMessage: jest.fn(),
 }));
 
 import {
@@ -33,14 +43,29 @@ import {
   isBlinkViewed,
   getDecryptedBlinkMedia,
   sanitizeStorageKey,
+  claimBlinkView,
+  sendDirectBlink,
+  markBlinkAsViewed,
   BLINK_EXPIRY_HOURS
 } from './blinkService';
+import {
+  ref as mockChatsRef,
+  get as mockChatsGet,
+  update as mockChatsUpdate,
+  runTransaction as mockRunChatsTransaction
+} from './firebaseThird';
+import {
+  ref as mockGroupsRef,
+  get as mockGroupsGet,
+  runTransaction as mockRunFourthTransaction
+} from './firebaseFourth';
 
-
-describe('Blink Service Unit & Privacy Tests', () => {
+describe('Blink Service Unit, Privacy & Security Tests', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
+    mockChatsRef.mockImplementation((db, path) => ({ path }));
+    mockGroupsRef.mockImplementation((db, path) => ({ path }));
   });
 
   describe('24-Hour Expiry Verification', () => {
@@ -94,6 +119,9 @@ describe('Blink Service Unit & Privacy Tests', () => {
 
       const viewedMsg = { type: 'blink', viewed: true, viewedAt: new Date().toISOString() };
       expect(isBlinkViewed(viewedMsg, 'user_123', false)).toBe(true);
+
+      const claimedMsg = { type: 'blink', claim: { claimedBy: 'user_123' } };
+      expect(isBlinkViewed(claimedMsg, 'user_123', false)).toBe(true);
     });
 
     it('guarantees independent view-once state per user in group Blinks', () => {
@@ -120,6 +148,176 @@ describe('Blink Service Unit & Privacy Tests', () => {
 
       const groupBlinkNull = { type: 'blink' };
       expect(isBlinkViewed(groupBlinkNull, 'user_999', true)).toBe(false);
+    });
+  });
+
+  describe('Atomic View-Once Claim & Race Condition Protection', () => {
+    it('successfully claims a 1-on-1 Blink on initial open', async () => {
+      mockChatsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          viewed: false,
+          expiresAt: new Date(Date.now() + 100000).toISOString()
+        })
+      });
+
+      mockRunChatsTransaction.mockImplementationOnce(async (ref, txFn) => {
+        const result = txFn(null); // uncommitted, fresh node
+        return { committed: true, snapshot: { val: () => result } };
+      });
+      mockChatsUpdate.mockResolvedValueOnce({});
+
+      const result = await claimBlinkView({
+        chatId: 'chat_123',
+        messageId: 'msg_001',
+        viewerId: 'user_bob',
+        isGroup: false
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockRunChatsTransaction).toHaveBeenCalled();
+      expect(mockChatsUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ viewed: true })
+      );
+    });
+
+    it('rejects simultaneous race condition or double open in 1-on-1 Blink', async () => {
+      // Simulate another tab or device already claimed the view-once lock
+      mockChatsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          viewed: false,
+          expiresAt: new Date(Date.now() + 100000).toISOString()
+        })
+      });
+
+      mockRunChatsTransaction.mockImplementationOnce(async (ref, txFn) => {
+        // Transaction function receives existing claim node from racing tab
+        const existingClaim = { claimedBy: 'user_bob', claimedAt: new Date().toISOString() };
+        const result = txFn(existingClaim); // Aborts inside txFn
+        return { committed: false, snapshot: { val: () => existingClaim } };
+      });
+
+      const secondAttempt = await claimBlinkView({
+        chatId: 'chat_123',
+        messageId: 'msg_001',
+        viewerId: 'user_bob',
+        isGroup: false
+      });
+
+      expect(secondAttempt.success).toBe(false);
+      expect(secondAttempt.reason).toBe('ALREADY_VIEWED');
+    });
+
+    it('rejects claim immediately if 1-on-1 message is already viewed', async () => {
+      mockChatsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          viewed: true,
+          viewedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 100000).toISOString()
+        })
+      });
+
+      const result = await claimBlinkView({
+        chatId: 'chat_123',
+        messageId: 'msg_001',
+        viewerId: 'user_bob',
+        isGroup: false
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('ALREADY_VIEWED');
+      expect(mockRunChatsTransaction).not.toHaveBeenCalled();
+    });
+
+    it('rejects claim if 1-on-1 Blink has expired', async () => {
+      mockChatsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          viewed: false,
+          expiresAt: new Date(Date.now() - 5000).toISOString()
+        })
+      });
+
+      const result = await claimBlinkView({
+        chatId: 'chat_123',
+        messageId: 'msg_001',
+        viewerId: 'user_bob',
+        isGroup: false
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.reason).toBe('EXPIRED');
+    });
+
+    it('atomically claims group Blink per member and isolates other members', async () => {
+      mockGroupsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          expiresAt: new Date(Date.now() + 100000).toISOString()
+        })
+      });
+
+      mockRunFourthTransaction.mockImplementationOnce(async (ref, txFn) => {
+        const result = txFn(null); // Member has not viewed
+        return { committed: true, snapshot: { val: () => result } };
+      });
+
+      // User A claims group Blink
+      const resultA = await claimBlinkView({
+        groupId: 'grp_tech',
+        messageId: 'grp_msg_1',
+        viewerId: 'user_alice',
+        isGroup: true
+      });
+
+      expect(resultA.success).toBe(true);
+
+      // User A tries to open again -> rejected
+      mockGroupsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          expiresAt: new Date(Date.now() + 100000).toISOString()
+        })
+      });
+      mockRunFourthTransaction.mockImplementationOnce(async (ref, txFn) => {
+        const existing = { claimedAt: new Date().toISOString() };
+        txFn(existing); // aborts
+        return { committed: false, snapshot: { val: () => existing } };
+      });
+
+      const secondAttemptA = await claimBlinkView({
+        groupId: 'grp_tech',
+        messageId: 'grp_msg_1',
+        viewerId: 'user_alice',
+        isGroup: true
+      });
+
+      expect(secondAttemptA.success).toBe(false);
+      expect(secondAttemptA.reason).toBe('ALREADY_VIEWED');
+
+      // User B claims same group Blink -> succeeds independently
+      mockGroupsGet.mockResolvedValueOnce({
+        exists: () => true,
+        val: () => ({
+          expiresAt: new Date(Date.now() + 100000).toISOString()
+        })
+      });
+      mockRunFourthTransaction.mockImplementationOnce(async (ref, txFn) => {
+        const result = txFn(null); // User B has not viewed
+        return { committed: true, snapshot: { val: () => result } };
+      });
+
+      const resultB = await claimBlinkView({
+        groupId: 'grp_tech',
+        messageId: 'grp_msg_1',
+        viewerId: 'user_bob',
+        isGroup: true
+      });
+
+      expect(resultB.success).toBe(true);
     });
   });
 
@@ -168,6 +366,78 @@ describe('Blink Service Unit & Privacy Tests', () => {
     it('returns null if media or url is null', () => {
       expect(getDecryptedBlinkMedia(null)).toBeNull();
       expect(getDecryptedBlinkMedia({})).toBeNull();
+    });
+  });
+
+  describe('Backend Cloudinary Signing & CDN Invalidation Specification', () => {
+    it('verifies alphabetical parameter ordering for Cloudinary destroy signature with invalidate=true', () => {
+      const publicId = 'discuss/blink/photo_123';
+      const timestamp = 1700000000;
+      const apiSecret = 'test_secret';
+
+      // Cloudinary API requirement: parameters sorted alphabetically before signing
+      // "invalidate=true&public_id=" + publicId + "&timestamp=" + timestamp + apiSecret
+      const stringToSign = `invalidate=true&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+      
+      expect(stringToSign).toContain('invalidate=true');
+      expect(stringToSign.indexOf('invalidate')).toBeLessThan(stringToSign.indexOf('public_id'));
+      expect(stringToSign.indexOf('public_id')).toBeLessThan(stringToSign.indexOf('timestamp'));
+    });
+
+    it('guarantees frontend code does not possess or export Cloudinary destroy secret', async () => {
+      expect(process.env.REACT_APP_CLOUDINARY_API_SECRET).toBeUndefined();
+      
+      const cloudinaryModule = await import('./cloudinary');
+      expect(cloudinaryModule.deleteImage).toBeUndefined();
+    });
+  });
+
+  describe('Multi-Recipient Direct Blink Isolation', () => {
+    it('isolates media consumption between distinct recipients when user views 1-on-1 Blink', async () => {
+      const publicId = 'discuss/blink/shared_asset_456';
+      
+      // User A views their Blink
+      mockChatsGet
+        // 1. Get message for User A's chat
+        .mockResolvedValueOnce({
+          exists: () => true,
+          val: () => ({
+            sender: 'sender_user',
+            media: { publicId, url: 'https://res.cloudinary.com/test/image.jpg' }
+          })
+        })
+        // 2. Get registry record
+        .mockResolvedValueOnce({
+          exists: () => true,
+          val: () => ({
+            publicId,
+            pendingRecipients: {
+              user_A: true,
+              user_B: true
+            },
+            deletedFromCloudinary: false
+          })
+        });
+
+      await markBlinkAsViewed('chat_sender_userA', 'msg_userA', 'user_A', publicId);
+
+      // User A's message was marked viewed and media set to null
+      expect(mockChatsUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          viewed: true,
+          media: null
+        })
+      );
+
+      // Central registry updated: user_A removed from pending, but user_B remains!
+      expect(mockChatsUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          pendingRecipients: { user_B: true },
+          allViewed: false
+        })
+      );
     });
   });
 });

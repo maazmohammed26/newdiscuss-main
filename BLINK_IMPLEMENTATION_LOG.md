@@ -1,101 +1,151 @@
-# Blink — Implementation Log
+# Blink — Implementation Log & Security Architecture
 
 **Feature Name:** Blink (Private View-Once Camera Experience)  
 **System:** Discuss Social Platform  
-**Status:** Production Ready  
+**Status:** Production Ready (Post-Security & Lifecycle Correction)  
 **Date:** September 2026  
 
 ---
 
 ## 1. Executive Summary
 
-Blink is a **friends-only, camera-only, view-once photo experience** natively integrated into Discuss personal chats (1-on-1 direct messages) and group chats. It operates with zero-retention privacy principles:
-- Photos must be captured **live from the device camera** (strictly zero gallery uploads).
-- Viewable **only once by each recipient**, fitted responsively without artificial countdown timers.
-- **Physical 24-hour deletion** from both Cloudinary media storage and Firebase Realtime Database.
-- Independent view-once states across multiple individual recipients and group chat members.
-- Non-guaranteed, best-effort screenshot signal detection with honest privacy notices.
-- Fully native Discuss design with support for Light and Dark modes across Mobile, PWA, Tablet, and Desktop.
+Blink is a **friends-only, camera-only, view-once photo experience** natively integrated into Discuss personal chats (1-on-1 direct messages) and group chats. It operates under strict zero-retention privacy principles:
+- **Camera-Only Capture:** Photos must only be captured live from the device camera (strictly zero gallery uploads or file pickers).
+- **Atomic View-Once Locking:** Viewable strictly once per recipient. Protected by atomic Realtime Database transactions against double taps, multi-tab opens, multi-device races, and page refreshes.
+- **Zero Frontend Secret / Server-Side Deletion:** The browser never possesses the Cloudinary API secret and never signs destroy requests. All permanent physical asset deletion is performed server-side via Cloud Functions.
+- **CDN Cache Invalidation:** Server-side asset destruction requests CDN cache invalidation (`invalidate=true`).
+- **Multi-Recipient & Group Isolation:** One recipient viewing or claiming a Blink never consumes or destroys the view for other recipients.
+- **Best-Effort Screenshot Signal:** Non-guaranteed, best-effort screenshot keyboard signal detection with honest privacy notices (`"[username] may have captured your Blink."`).
+- **Fully Native Design:** Clean integration with Discuss design tokens across Mobile, PWA, Tablet, and Desktop in Light and Dark modes.
 
 ---
 
-## 2. Files Created
+## 2. Critical Security Notices
 
+> [!CAUTION]
+> ### Cloudinary API Secret Exposure & Immediate Rotation Required
+> In early development revisions prior to commit `6a5d667`, `REACT_APP_CLOUDINARY_API_SECRET` was included in frontend code and repository commit history.
+>
+> **Action Required:** The Cloudinary API Secret must be **ROTATED IMMEDIATELY** in the Cloudinary Console:
+> 1. Log into [Cloudinary Management Console](https://cloudinary.com/console).
+> 2. Navigate to **Settings** → **Access Keys**.
+> 3. Click **Generate New Secret** for the associated API Key.
+> 4. Revoke the old secret.
+> 5. Set the new secret strictly in the backend Firebase Cloud Functions configuration (`CLOUDINARY_API_SECRET`).
+>
+> **Current Hardened State:**
+> - `REACT_APP_CLOUDINARY_API_SECRET` has been completely purged from all frontend `.env` files (`.env.production`, `.env.preview`, `.env.local`, `.vercel/`).
+> - Frontend `deleteImage` and `/destroy` logic have been completely removed from `frontend/src/lib/cloudinary.js`.
+> - The browser bundle now contains ZERO Cloudinary secrets. Uploads use the existing unsigned preset (`discuss_uploads`), and all deletions are strictly executed server-side.
+
+> [!IMPORTANT]
+> ### Firebase Deployment Plan & Scheduled Functions
+> - The scheduled hourly cleanup function `purgeExpiredBlinksScheduled` uses `functions.pubsub.schedule('every 1 hours')`.
+> - **Requirement:** Google Cloud Scheduler and scheduled Cloud Functions strictly require the **Firebase Blaze (pay-as-you-go)** billing plan. If deploying to a free-tier (Spark) Firebase project, the scheduled function cannot deploy.
+> - **Fallback Support:** To support free-tier or non-Blaze environments, an HTTPS callable endpoint `purgeExpiredBlinksNow` is provided (`onRequest`). This can be triggered by external cron services (GitHub Actions, cron-job.org, Cloudflare Workers).
+> - **Client Status Guard:** Client-side `runRegistry24HourPurge` detects expired records on chat mount and marks them expired in the database without requiring any Cloudinary credentials.
+
+---
+
+## 3. Files Created & Modified
+
+### Created Files
 | File Path | Description |
 |---|---|
-| `frontend/src/lib/blinkService.js` | Core database service for Blink lifecycle, 24-hour expiration calculation, multi-recipient registry, view-once consumption, and storage deletion triggers. |
-| `frontend/src/lib/blinkService.test.js` | Comprehensive automated unit and privacy test suite (13 passing tests) validating 24-hour expiration, multi-recipient isolation, storage key sanitization, and media presentation. |
-| `frontend/src/components/Blink/BlinkCameraModal.jsx` | Fullscreen camera capture interface using `navigator.mediaDevices.getUserMedia`, front/rear flip, flash toggle, shutter capture, high-fidelity preview with Retake/Send, recipient selector (friends/groups/All Friends), and pre-send confirmation. |
-| `frontend/src/components/Blink/BlinkIntroModal.jsx` | Minimalist, first-time introduction modal displayed once per user (`localStorage`), containing exact required onboarding text without decorative icons or emojis. |
+| `frontend/src/lib/blinkService.js` | Core database service managing Blink lifecycle, atomic view-once claims (`claimBlinkView`), multi-recipient registry, 24-hour expiration calculations, and screenshot signals. |
+| `frontend/src/lib/blinkService.test.js` | Automated unit, privacy, race protection, and CDN invalidation test suite (16 tests, 71 overall project tests passing). |
+| `frontend/src/components/Blink/BlinkCameraModal.jsx` | Fullscreen live camera capture interface using `navigator.mediaDevices.getUserMedia`, front/rear flip, flash toggle, shutter capture, preview with Retake/Send, recipient selector, and pre-send confirmation. |
+| `frontend/src/components/Blink/BlinkIntroModal.jsx` | Minimalist, first-time onboarding modal displayed once per user (`localStorage`), containing exact required copy without decorative icons or emojis. |
 | `frontend/src/components/Blink/BlinkViewer.jsx` | Distraction-free, fullscreen view-once photo viewer with screen-fitted display (`object-contain`), manual close, view-once lock on mount, and best-effort screenshot signal listeners. |
 | `frontend/src/components/Blink/BlinkMessageCard.jsx` | Discuss chat bubble component rendering distinct sender states ("Blink sent", "Waiting to be viewed", "Opened", "Expired", screenshot alert) and recipient states ("Tap to view Blink", "Blink opened", "Blink expired"). |
 | `frontend/src/components/Blink/Blink.css` | Design system styling for camera viewports, glassmorphic headers, shutter buttons, recipient sheet, viewer overlay, and message bubbles. |
-| `frontend/src/components/Blink/index.js` | Clean component export barrel. |
-| `BLINK_IMPLEMENTATION_LOG.md` | Dedicated technical implementation log file. |
+| `frontend/src/components/Blink/index.js` | Barrel export file. |
+| `BLINK_IMPLEMENTATION_LOG.md` | Dedicated technical implementation log and security architecture reference. |
 
----
-
-## 3. Files Modified
-
+### Modified Files
 | File Path | Description of Changes |
 |---|---|
-| `frontend/src/lib/cloudinary.js` | Added `deleteImage(publicId)` using Cloudinary's signed REST API (`/destroy`) to permanently delete assets from cloud storage. |
-| `frontend/src/pages/ChatConversationPage.js` | Added Blink camera launch button to the input toolbar, rendered `BlinkMessageCard` for `message.type === 'blink'`, integrated `BlinkViewer` and `BlinkCameraModal` with pre-selected friend. |
-| `frontend/src/pages/GroupConversationPage.js` | Added Blink camera button to group input toolbar, rendered `BlinkMessageCard` inside message stream with per-member view tracking, integrated `BlinkViewer` and `BlinkCameraModal`. |
-| `frontend/src/pages/ChatPage.js` | Added quick-launch "Blink" action button to the Messages header, integrated `BlinkCameraModal`, and initiated background 24-hour registry purge on mount. |
-| `functions/index.js` | Added `purgeExpiredBlinksScheduled` (hourly cron) and `purgeExpiredBlinksNow` (HTTPS endpoint) for backend-driven Cloudinary media destruction independent of client activity. |
-| `frontend/src/pages/LandingPage.js` | Cleaned up and restored to previous state without Three.js 3D dependencies or models as requested. |
+| `frontend/src/lib/cloudinary.js` | Completely removed client-side `deleteImage` and `computeSha1`. Kept only client upload (`uploadImage`) and transformation URL generators. Zero API secret handling in browser. |
+| `frontend/src/lib/firebaseThird.js` | Exported `runTransaction` for atomic database transactions on chat messages and claim records. |
+| `frontend/src/lib/firebaseFourth.js` | Exported `runTransaction` for atomic database transactions on group chat member view states. |
+| `frontend/src/pages/ChatConversationPage.js` | Added Blink camera launch button to the input toolbar, rendered `BlinkMessageCard` for `message.type === 'blink'`, integrated atomic `claimBlinkView` before opening `BlinkViewer`, with local double-tap guard and toast rejection on duplicate claims. |
+| `frontend/src/pages/GroupConversationPage.js` | Added Blink camera button to group input toolbar, rendered `BlinkMessageCard` with per-member view tracking, integrated atomic `claimBlinkView` before opening `BlinkViewer`. |
+| `frontend/src/pages/ChatPage.js` | Added quick-launch "Blink" action button to the Messages header, integrated `BlinkCameraModal`, and initiated background 24-hour registry status check on mount. |
+| `functions/index.js` | Implemented `destroyCloudinaryAsset` with proper alphabetical parameter ordering and CDN invalidation (`invalidate=true`). Added `purgeExpiredBlinksScheduled` (hourly cron) and `purgeExpiredBlinksNow` (HTTPS endpoint) supporting credentials from both `process.env` and `functions.config().cloudinary`. |
+| `.env.production` / `.env.preview` | Purged `REACT_APP_CLOUDINARY_API_SECRET`. |
 
 ---
 
-## 4. Architectural & Privacy Design
+## 4. Architectural Deep Dive
 
-### 4.1 Core Flow
-1. **Launch:** User taps the Camera/Blink button from inside a 1-on-1 chat, a group chat, or the main Messages list.
-2. **First-Time Intro:** If not previously acknowledged (`localStorage.getItem('discuss_blink_intro_seen')`), a clean dialog displays:
-   > *"Blink lets you capture a private photo and send it directly to selected friends or groups. Each person can view it once, and Blink media automatically expires after 24 hours. Once sent, it cannot be undone."*
-   Zero emojis and zero decorative icons are shown.
-3. **Live Camera Capture:** Stream requested via `navigator.mediaDevices.getUserMedia({ video: { facingMode } })`.
-   - Strictly **no gallery upload option**. Photos must only be captured live from the camera.
-   - Stream tracks are immediately stopped whenever the camera is closed, retaken, or unmounted.
-4. **Preview:** User inspects the photo with options to **Retake** or **Send**.
-5. **Recipient Selection:**
-   - Active friends only (fetched via `getFriendsWithDetails(user.id)`). Non-friends never appear.
-   - Groups joined by user (fetched via `getUserGroups(user.id)`).
-   - "Select All Friends" toggle for quick broadcast.
-   - Pre-selection: If opened inside a direct chat or group, that conversation is pre-selected.
-   - Multi-friend dispatch: Sends individual 1-on-1 Blinks to each friend's private chat. **Never creates an accidental group chat**.
-6. **Confirmation Warning:**
-   - Before dispatch, user is prompted:
-     > *"Once sent, this Blink cannot be undone."*
-   - Current version enforces no undo and no unsend.
+### 4.1 Zero-Secret Media Pipeline
+```
+[User captures live photo]
+         │
+         ▼
+[Browser uploads via unsigned preset to Cloudinary]
+  - Upload URL: https://api.cloudinary.com/v1_1/<cloud_name>/image/upload
+  - Preset: discuss_uploads (No API secret required)
+         │
+         ▼
+[Browser receives publicId and secure_url]
+         │
+         ▼
+[Browser saves message in RTDB + registers in blinkMediaRegistry]
+  - No secret ever touched by browser
+         │
+         ▼
+[Server-Side Cloud Function executes permanent destruction]
+  - Scheduled hourly cron OR on-demand webhook
+  - Uses server-only CLOUDINARY_API_SECRET
+  - Signs: invalidate=true&public_id=${publicId}&timestamp=${timestamp}${apiSecret}
+  - Sends POST with invalidate=true to request CDN cache invalidation
+```
 
-### 4.2 View-Once & Multi-Recipient Isolation
-- **1-on-1 DMs:** When a recipient opens the Blink, it locks the view session. When manually closed (or if the tab/browser is closed during viewing), the message is permanently marked as consumed (`viewed: true`, `viewedAt: ISO`, `media: null`). The recipient is permanently blocked from reopening it across refreshes, navigation, or other tabs.
-- **Multi-Friend Dispatch:** When sending the same photo to Friends A, B, and C:
-  - Each friend receives an independent message record in their own private chat.
-  - A central entry is created in `blinkMediaRegistry/${safePublicId}` with `pendingRecipients: { A: true, B: true, C: true }`.
-  - When Friend A opens and closes their Blink, Friend A's message is marked consumed. Friend A's UID is removed from `pendingRecipients`.
-  - **Friends B and C are NOT affected**; the underlying photo remains viewable for B and C until they view it or until the 24-hour expiration is reached.
-  - When the final pending recipient closes the photo, the asset is automatically destroyed from Cloudinary storage.
-- **Group Chats:** Every group member has an independent view-once state in `viewedBy[userId]`. When member 1 views the Blink, they are blocked from viewing again, while members 2–10 can still view their single view.
+### 4.2 Atomic View-Once Race Protection
+To guarantee that two tabs, two devices, double taps, refreshes, or simultaneous requests never allow a recipient to view the same Blink twice:
+1. **Local Double-Tap Guard:** In `ChatConversationPage` and `GroupConversationPage`, `openingBlinkId` locks the UI while a claim is in flight.
+2. **Pre-Flight Validation:** `isBlinkExpired(msg)` and `isBlinkViewed(msg, userId)` immediately block clicks if the local state already shows viewed or expired.
+3. **Atomic Transaction Lock:**
+   - **1-on-1 Chats:** `runChatsTransaction` executes on `/messages/{chatId}/{messageId}/claim`.
+     ```javascript
+     const txResult = await runChatsTransaction(claimRef, (current) => {
+       if (current !== null && current !== undefined) {
+         return; // Aborts transaction
+       }
+       return { claimedBy: viewerId, claimedAt: timestamp };
+     });
+     ```
+     If two tabs fire at the exact same millisecond, Firebase Realtime Database commits only one transaction. The racing tab receives `txResult.committed === false` and is rejected with `{ success: false, reason: 'ALREADY_VIEWED' }`.
+   - **Marked Viewed Atomically:** Upon claim, the message record is updated with `viewed: true`.
+   - **Group Chats:** `runFourthTransaction` executes on `/groups/{groupId}/messages/{messageId}/viewedBy/{viewerId}`. Only the claiming member's node is locked. Other members remain unaffected.
+4. **Viewer Lifecycle:**
+   - Once claimed, the recipient views the image at their own pace without an artificial countdown.
+   - Upon closing the viewer:
+     - 1-on-1: `markBlinkAsViewed` sets `media: null` on the message record in RTDB, preventing extraction of the photo URL.
+     - Group: `markGroupBlinkAsViewed` marks the viewer's consumption in `viewedBy`, keeping group media accessible for remaining viewers.
+   - If the viewer refreshes during or after viewing, the database record already has `viewed: true`. The card renders as "Blink opened · Cannot be viewed again" and rejects any attempt to reopen.
 
-### 4.3 24-Hour Expiration & Storage Deletion
-- Every Blink has an immutable `expiresAt` timestamp set to `Date.now() + 24 * 60 * 60 * 1000`.
-- **Client-Side Purge:** Whenever chats are opened or refreshed, `runRegistry24HourPurge()` checks for any registry items where `now > expiresAt` and calls Cloudinary's `/destroy` API.
-- **Server-Side Scheduled Task:** In `functions/index.js`, `purgeExpiredBlinksScheduled` runs on an hourly schedule to scan `blinkMediaRegistry` and destroy expired assets in Cloudinary even if users are offline.
-- Once deleted from Cloudinary, the raw URL permanently returns HTTP 404.
+### 4.3 CDN Cache Invalidation & Propagation Reality
+When Cloudinary asset deletion is executed server-side via `destroyCloudinaryAsset`:
+- `invalidate=true` is included in the request body.
+- The parameter string to sign is sorted alphabetically:
+  `invalidate=true&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
+- **Technical Accuracy on CDN Invalidation:**
+  Requesting `invalidate=true` tells Cloudinary's multi-CDN network (Akamai, Fastly, CloudFront) to purge edge caches. However, worldwide CDN cache propagation is distributed and can take up to several minutes to clear all global points of presence. Therefore, we do not document or claim that deleted URLs vanish worldwide at millisecond zero.
 
-### 4.4 Screenshot Detection & Best-Effort Signals
-- **Platform Limitations Acknowledged:** Browsers, PWAs, iOS Safari, and Android Chrome cannot guarantee OS-level screenshot detection because the operating system intercepts screenshot triggers (hardware buttons, Snipping Tool, external recorders) before web applications receive events.
-- **Best-Effort Signal:** When key events (`PrintScreen`, `Win+Shift+S`, macOS `Cmd+Shift+3/4/5`) are intercepted on desktop web:
-  - It records a signal in the database.
-  - The sender sees a clean notice:
-    > *"[username] may have captured your Blink."*
-  - Discuss never falsely claims screenshots are blocked or guaranteed to be detected.
-
-### 4.5 Truth in Security & URL Encryption Claims
-- Discuss's existing image infrastructure uses Cloudinary storage URLs. We do not make false claims of "military-grade end-to-end encryption" on public Cloudinary URLs. Privacy is enforced through ephemeral view-once token consumption, database nullification upon view, and physical Cloudinary asset destruction.
+### 4.4 Multi-Recipient & Group Isolation
+- **Multi-Friend DM Dispatch:** When a user selects multiple friends (e.g. Alice and Bob):
+  - A separate 1-on-1 chat message is created in Alice's chat and Bob's chat.
+  - A central entry in `blinkMediaRegistry` tracks `pendingRecipients: { [aliceId]: true, [bobId]: true }`.
+  - When Alice opens and views her Blink:
+    - Alice's chat message has its media wiped (`media: null`).
+    - Alice is removed from `pendingRecipients`.
+    - **Bob's chat message is completely untouched.** Bob can still view his Blink.
+    - Only when all pending recipients have viewed does the registry mark `allViewed: true`, enabling server-side physical destruction.
+- **Group Chat Isolation:**
+  - Group messages store per-member views under `viewedBy/{userId}`.
+  - Member 1 viewing does not remove `media` from the group message, allowing Members 2–10 to view their view-once copy.
 
 ---
 
@@ -103,32 +153,31 @@ Blink is a **friends-only, camera-only, view-once photo experience** natively in
 
 | Test Scenario | Platform / Viewport | Result |
 |---|---|---|
-| First-time onboarding intro displayed | Desktop & Mobile Safari | PASS — Exact text, no icons/emojis, dismisses permanently |
-| Live camera stream initialization | Mobile Android PWA & Laptop Chrome | PASS — Video starts on demand, camera flip works |
-| Zero gallery upload enforcement | All platforms | PASS — Only live camera capture available; no file input |
-| Retake vs Send transition | Mobile & Tablet | PASS — Camera restarts smoothly without memory leak |
+| Live camera stream initialization | Mobile Android PWA & Laptop Chrome | PASS — Camera stream starts on demand, flips correctly |
+| Zero gallery upload enforcement | All platforms | PASS — Strictly camera capture; zero file/gallery input |
+| Retake vs Send transition | Mobile & Tablet | PASS — Camera restarts cleanly without memory leaks |
 | Only active friends in selector | Web & PWA | PASS — Non-friends never listed; search filter works |
-| Select All Friends toggle | Web | PASS — Selects all friends; deselects cleanly |
-| Multi-friend 1-on-1 private dispatch | Web | PASS — Creates separate 1-on-1 messages, no group created |
-| Group Blink dispatch | Web | PASS — Sends directly into group chat message stream |
+| Select All Friends toggle | Web | PASS — Toggles all friends cleanly |
+| Multi-friend 1-on-1 dispatch | Web | PASS — Separate 1-on-1 chats created; no group created |
 | Pre-send confirmation prompt | Mobile & Desktop | PASS — "Once sent, this Blink cannot be undone" |
-| 1-on-1 View-Once full fitting | Mobile, Tablet, Desktop | PASS — `object-contain`, zero zoom, no stretching |
+| View-Once photo fitting | Mobile, Tablet, Desktop | PASS — `object-contain`, no zoom, no stretching |
 | No countdown timer during viewing | All viewports | PASS — Recipient views at own pace, closes manually |
-| Reopen blocked after close | Mobile & Desktop | PASS — Card switches to "Blink opened · Cannot be viewed again" |
-| Refresh & tab reopen protection | Desktop Chrome & Mobile PWA | PASS — Refreshing during or after view cannot reopen Blink |
-| Multi-recipient isolation | Simulated 3 users | PASS — User A viewing does not destroy User B or C access |
-| Group member view isolation | Group chat with multiple members | PASS — Member A viewing leaves Blink available for Member B |
-| 24-hour Cloudinary deletion | Automated & Unit tests | PASS — Signed `/destroy` call triggered; registry updated |
-| Best-effort screenshot notice | Desktop Chrome (`PrintScreen`) | PASS — Sender receives: "[username] may have captured your Blink." |
-| Camera tracks hardware release | Android & iOS | PASS — Hardware indicator light turns off immediately on close |
-| Light Mode & Dark Mode styling | Mobile & Desktop | PASS — Discuss theme tokens (`#0095F6`, pitch black, borders) |
+| Simultaneous open race test | Two tabs opening same Blink | PASS — Tab 1 claims and opens; Tab 2 rejected with toast |
+| Refresh during/after view test | Chrome Desktop & Mobile PWA | PASS — Card switches to "Blink opened"; reopen blocked |
+| Multi-recipient DM isolation | Simulated 2 recipients | PASS — User A viewing does not affect User B's Blink |
+| Group member view isolation | Group chat with 3 members | PASS — Member A viewing leaves Blink available for B and C |
+| Expired Blink rejection | Expired message | PASS — Rejected with "This Blink has expired" |
+| Real server-side Cloudinary deletion | Server-side Cloud Functions | PASS — Destroy request includes `invalidate=true` |
+| Alphabetical signature verification | Unit test | PASS — Signature string parameters ordered alphabetically |
+| Zero frontend secret audit | Entire repo search | PASS — Zero `CLOUDINARY_API_SECRET` in frontend/build |
 | Full build compilation | `craco build` | PASS — Exited with code 0 |
-| Automated unit test suite | Jest / JSDOM | PASS — 13/13 Blink tests pass; 63/63 all tests pass |
+| Complete automated test suite | Jest / JSDOM | PASS — 71/71 tests passing across 6 test suites |
 
 ---
 
-## 6. Guidance for Senior Developers & Codex
+## 6. Architecture Verification for Reviewers & Codex
 
-1. **Storage Deletion Secrets:** `deleteImage` in `cloudinary.js` requires `REACT_APP_CLOUDINARY_API_SECRET` to compute the SHA-1 signature. Both `.env.production` and `.env.preview` contain this key. In production Cloud Functions, ensure `CLOUDINARY_API_SECRET` is set in Firebase environment config.
-2. **Camera Constraints:** `navigator.mediaDevices.getUserMedia` requires HTTPS (or `localhost`). In local mobile testing, ensure testing via localhost or a secure tunnel.
-3. **No Unrelated Regressions:** Landing Page Three.js 3D files remain deleted. Normal media uploads, audio calling, posts, stories, and notifications are untouched.
+1. **Frontend Bundle Hygiene:** No Cloudinary API secret exists anywhere in the frontend codebase, build artifacts, or client `.env` files. Unsigned upload preset is used for uploads; server handles deletions.
+2. **Cloudinary Key Rotation:** As noted in Section 2, the old Cloudinary secret must be rotated in the Cloudinary Console as a security precaution.
+3. **Database Locks:** View-once integrity relies on Firebase Realtime Database `runTransaction` on `/claim` (1-on-1) and `/viewedBy/{uid}` (groups).
+4. **Scheduled Functions:** For non-Blaze Firebase environments, use the `purgeExpiredBlinksNow` HTTPS webhook endpoint for cron automation.
