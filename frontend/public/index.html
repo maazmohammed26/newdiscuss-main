@@ -62,7 +62,7 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Grand+Hotel&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Grand+Hotel&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500&display=swap" rel="stylesheet" />
         
         <!-- Structured Data - Organization -->
         <script type="application/ld+json">
@@ -186,67 +186,32 @@
         <script>
             (function() {
                 try {
-                    var theme = localStorage.getItem('discuss_theme') || 'light';
-                    var publicPaths = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
-                    var hasCachedSession = !!localStorage.getItem('discuss_auth_session_v1');
-                    var isPublicPath = publicPaths.indexOf(window.location.pathname) !== -1 && !(window.location.pathname === '/' && hasCachedSession);
-                    if (theme === 'discuss-light' || theme === 'discuss-black' || theme === 'discuss-retro') {
-                        theme = (theme === 'discuss-black') ? 'dark' : 'light';
-                        localStorage.setItem('discuss_theme', theme);
+                    var saved = localStorage.getItem('discuss_theme');
+                    var isDark = false;
+                    if (saved === 'dark' || saved === 'discuss-black') {
+                        isDark = true;
+                    } else if (saved === 'light' || saved === 'discuss-light' || saved === 'discuss-retro') {
+                        isDark = false;
+                    } else {
+                        // If no manually selected theme stored yet, fall back to device/system preference
+                        isDark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
                     }
                     var html = document.documentElement;
-                    if (theme === 'dark' && !isPublicPath) {
+                    if (isDark) {
                         html.classList.add('dark');
-                        html.style.setProperty('--splash-bg', '#000000');
-                        html.style.setProperty('--splash-text', '#FFFFFF');
+                        html.style.backgroundColor = '#0b0c10';
+                        html.style.setProperty('--splash-bg', 'oklch(0.13 0.01 265)');
+                        html.style.setProperty('--splash-script', 'oklch(0.96 0.005 250)');
                     } else {
                         html.classList.remove('dark');
-                        html.style.setProperty('--splash-bg', '#FFFFFF');
-                        html.style.setProperty('--splash-text', '#262626');
+                        html.style.backgroundColor = '#fafafa';
+                        html.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
+                        html.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
                     }
                 } catch(e) {}
             })();
         </script>
         <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div id="root">
-            <style>
-                .splash-screen {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 100vh;
-                    min-height: 100dvh;
-                    background-color: var(--splash-bg, #FFFFFF);
-                    color: var(--splash-text, #262626);
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                }
-                .splash-logo {
-                    font-family: 'Grand Hotel', cursive, -apple-system, sans-serif;
-                    font-size: 42px;
-                    font-weight: 400;
-                    letter-spacing: 0.5px;
-                    line-height: 1.1;
-                }
-                .splash-spinner {
-                    width: 84px;
-                    height: 2px;
-                    border-radius: 999px;
-                    background: linear-gradient(90deg, transparent, #0095F6, #ED4956, transparent);
-                    background-size: 200% 100%;
-                    animation: splash-progress 0.9s ease-in-out infinite;
-                    margin-top: 24px;
-                }
-                @keyframes splash-progress {
-                    from { background-position: 200% 0; opacity: .45; }
-                    50% { opacity: 1; }
-                    to { background-position: -200% 0; opacity: .45; }
-                }
-            </style>
-            <div class="splash-screen">
-                <div class="splash-logo"><span style="color:#EF4444">&lt;</span>Discuss<span style="color:#0095F6">/&gt;</span></div>
-                <div class="splash-spinner"></div>
-            </div>
-        </div>
+        <div id="root"></div>
     </body>
 </html>

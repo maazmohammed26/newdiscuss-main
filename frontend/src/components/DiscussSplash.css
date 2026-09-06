@@ -1,0 +1,148 @@
+/*
+ * Discuss splash screen
+ *
+ * Source of truth: Lovable implementation from Discuss Animation Studio
+ * Brand tokens: red "<", handwritten "Discuss", blue "/>".
+ * Dark mode swaps only the script word to off-white, keeping brackets on-brand.
+ * Supports user-selected theme and fallback system theme with zero flash.
+ */
+
+:root {
+  --splash-font-script: "Caveat", "Segoe Script", cursive;
+  --splash-font-bracket: "Space Grotesk", system-ui, sans-serif;
+  --font-splash-script: var(--splash-font-script);
+  --font-splash-bracket: var(--splash-font-bracket);
+
+  --splash-bg: #fafafa;
+  --splash-bg: oklch(0.995 0.002 95);
+  --splash-script: #18191f;
+  --splash-script: oklch(0.18 0.01 265);
+  --splash-bracket-red: #ef4444;
+  --splash-bracket-red: oklch(0.62 0.21 28);
+  --splash-bracket-blue: #0095f6;
+  --splash-bracket-blue: oklch(0.62 0.19 240);
+}
+
+.dark,
+[data-theme="dark"],
+html.dark {
+  --splash-bg: #0b0c10;
+  --splash-bg: oklch(0.13 0.01 265);
+  --splash-script: #f3f4f6;
+  --splash-script: oklch(0.96 0.005 250);
+}
+
+/* Explicit container theme guarantees user-selected mode */
+.splash-root[data-theme="dark"],
+.splash-root.splash-theme-dark {
+  --splash-bg: #0b0c10;
+  --splash-bg: oklch(0.13 0.01 265);
+  --splash-script: #f3f4f6;
+  --splash-script: oklch(0.96 0.005 250);
+  background-color: var(--splash-bg);
+}
+
+.splash-root[data-theme="light"],
+.splash-root.splash-theme-light {
+  --splash-bg: #fafafa;
+  --splash-bg: oklch(0.995 0.002 95);
+  --splash-script: #18191f;
+  --splash-script: oklch(0.18 0.01 265);
+  background-color: var(--splash-bg);
+}
+
+@keyframes splash-char-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(0.14em) scale(0.6);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(-0.015em) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes splash-exit {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.splash-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--splash-bg);
+  z-index: 999999;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+.splash-leaving {
+  animation: splash-exit 450ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+.splash-wordmark {
+  display: flex;
+  align-items: baseline;
+  font-family: var(--font-splash-script), var(--splash-font-script), cursive;
+  font-size: clamp(3rem, 14vw, 6.5rem);
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 95vw;
+  box-sizing: border-box;
+}
+
+.splash-char {
+  display: inline-block;
+  opacity: 0;
+  animation: splash-char-pop 520ms cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.splash-bracket-red {
+  color: var(--splash-bracket-red);
+  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
+  font-weight: 500;
+  font-size: 0.82em;
+  margin-right: 0.08em;
+}
+
+.splash-bracket-blue {
+  color: var(--splash-bracket-blue);
+  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
+  font-weight: 500;
+  font-size: 0.82em;
+  margin-left: 0.08em;
+}
+
+.splash-script {
+  color: var(--splash-script);
+}
+
+.splash-bracket-red-static {
+  color: var(--splash-bracket-red);
+  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
+}
+
+.splash-bracket-blue-static {
+  color: var(--splash-bracket-blue);
+  font-family: var(--font-splash-bracket), var(--splash-font-bracket), sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-char,
+  .splash-leaving {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
