@@ -65,40 +65,18 @@ export default function AccountPanel({ open, onClose, anchorRef, position = 'aut
 
   const menuItems = [
     {
-      id: 'view-profile',
-      label: 'View Profile',
-      icon: User,
-      onClick: () => handleAction('/profile'),
-      description: 'Your identity and public showcase',
-    },
-    {
-      id: 'your-posts',
-      label: 'Your Posts',
-      icon: FileText,
-      onClick: () => handleAction('/profile?tab=posts'),
-      description: 'Discussions and shared media',
-    },
-    {
-      id: 'friends',
-      label: 'Friends & Connections',
-      icon: Users,
-      onClick: () => handleAction('/profile?tab=friends'),
-      badge: friendsCount > 0 ? `${friendsCount}` : null,
-      description: 'Circle, requests, and discover',
-    },
-    {
       id: 'bookmarks',
       label: 'Bookmarks',
       icon: Bookmark,
       onClick: () => handleAction('/bookmarks'),
-      description: 'Saved discussions and tools',
+      description: 'Saved discussions and resources',
     },
     {
       id: 'settings',
       label: 'Settings & Privacy',
       icon: Settings,
       onClick: () => handleAction('/settings'),
-      description: 'Account, security, themes, and radar',
+      description: 'Account, preferences, and security',
     },
   ];
 
@@ -206,7 +184,7 @@ export default function AccountPanel({ open, onClose, anchorRef, position = 'aut
                     className="w-full px-3.5 py-3 rounded-xl flex items-center justify-between text-left hover:bg-neutral-100 dark:hover:bg-[#1a1a1a] transition-colors group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0095F6]"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-700 dark:text-neutral-300 group-hover:bg-[#0095F6] group-hover:text-white transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-neutral-600 dark:text-neutral-300 group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
                         <Icon className="w-4 h-4 stroke-[2px]" />
                       </div>
                       <div className="min-w-0">

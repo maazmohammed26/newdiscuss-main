@@ -28,10 +28,12 @@ export const getUserProfile = async (userId) => {
     const snapshot = await get(profileRef);
     
     if (snapshot.exists()) {
+      const val = snapshot.val();
       return {
         id: userId,
-        ...snapshot.val(),
-        socialLinks: snapshot.val().socialLinks || []
+        ...val,
+        bannerThemeId: val.bannerThemeId || null,
+        socialLinks: val.socialLinks || []
       };
     }
     return null;
@@ -129,19 +131,41 @@ export const deleteBio = async (userId) => {
 };
 
 /**
+ * Update banner theme preset ID
+ * @param {string} userId - Firebase Auth UID
+ * @param {string} bannerThemeId - Preset ID (e.g. 'gradient-07')
+ */
+export const updateBannerTheme = async (userId, bannerThemeId) => {
+  return saveUserProfile(userId, { bannerThemeId });
+};
+
+/**
  * Update social links
  * @param {string} userId - Firebase Auth UID
- * @param {Array<{name: string, url: string}>} socialLinks - Array of social links (max 5)
+ * @param {Array<Object>} socialLinks - Array of social links (max 5)
  */
 export const updateSocialLinks = async (userId, socialLinks) => {
+  if (!Array.isArray(socialLinks)) return saveUserProfile(userId, { socialLinks: [] });
   // Validate and clean social links (max 5)
   const cleanedLinks = socialLinks
-    .filter(link => link.name && link.url)
-    .slice(0, MAX_SOCIAL_LINKS)
-    .map(link => ({
-      name: link.name.trim(),
-      url: link.url.trim()
-    }));
+    .map(link => {
+      if (!link || typeof link !== 'object') return null;
+      const rawUrl = (link.url || '').trim();
+      if (!rawUrl) return null;
+      let validUrl = rawUrl;
+      if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
+        validUrl = `https://${validUrl}`;
+      }
+      const label = (link.name || link.platform || link.label || 'Website').trim();
+      const platform = (link.platform || link.name || 'website').toLowerCase().trim();
+      return {
+        name: label,
+        platform: platform,
+        url: validUrl
+      };
+    })
+    .filter(Boolean)
+    .slice(0, MAX_SOCIAL_LINKS);
   
   return saveUserProfile(userId, { socialLinks: cleanedLinks });
 };
@@ -149,12 +173,12 @@ export const updateSocialLinks = async (userId, socialLinks) => {
 /**
  * Add a single social link
  * @param {string} userId - Firebase Auth UID
- * @param {Object} link - {name: string, url: string}
+ * @param {Object} link - {name/platform/label: string, url: string}
  */
 export const addSocialLink = async (userId, link) => {
   const profile = await getUserProfile(userId);
   const currentLinks = profile?.socialLinks || [];
-  const updatedLinks = [...currentLinks, { name: link.name.trim(), url: link.url.trim() }];
+  const updatedLinks = [...currentLinks, link];
   return updateSocialLinks(userId, updatedLinks);
 };
 
@@ -162,14 +186,14 @@ export const addSocialLink = async (userId, link) => {
  * Update a single social link
  * @param {string} userId - Firebase Auth UID
  * @param {number} index - Index of link to update
- * @param {Object} link - {name: string, url: string}
+ * @param {Object} link - {name/platform/label: string, url: string}
  */
 export const editSocialLink = async (userId, index, link) => {
   const profile = await getUserProfile(userId);
-  const currentLinks = profile?.socialLinks || [];
+  const currentLinks = [...(profile?.socialLinks || [])];
   
   if (index >= 0 && index < currentLinks.length) {
-    currentLinks[index] = { name: link.name.trim(), url: link.url.trim() };
+    currentLinks[index] = link;
     return updateSocialLinks(userId, currentLinks);
   }
   throw new Error('Invalid link index');
@@ -182,7 +206,7 @@ export const editSocialLink = async (userId, index, link) => {
  */
 export const deleteSocialLink = async (userId, index) => {
   const profile = await getUserProfile(userId);
-  const currentLinks = profile?.socialLinks || [];
+  const currentLinks = [...(profile?.socialLinks || [])];
   
   if (index >= 0 && index < currentLinks.length) {
     currentLinks.splice(index, 1);

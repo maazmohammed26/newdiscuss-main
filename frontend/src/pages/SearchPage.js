@@ -6,8 +6,9 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import { isUserVerified } from '@/lib/verification';
 import { useAuth } from '@/contexts/AuthContext';
 import { searchPosts } from '@/lib/db';
-import { searchUsers } from '@/lib/relationshipsDb';
-import { ArrowLeft, FileText, Search, Users, X, Loader2, Hash, ChevronRight, Home } from 'lucide-react';
+import { searchUsers, getSuggestedFriends } from '@/lib/relationshipsDb';
+import FriendRequestButton from '@/components/FriendRequestButton';
+import { ArrowLeft, FileText, Search, Users, X, Loader2, Hash, ChevronRight, Home, UserPlus } from 'lucide-react';
 import { SearchSkeleton } from '@/components/skeletons';
 
 const tabs = [
@@ -26,12 +27,37 @@ export default function SearchPage() {
   const [posts, setPosts] = useState([]);
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [suggestedPeople, setSuggestedPeople] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const normalizedQuery = query.trim();
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Bounded query for 'People you may know' on empty query
+  useEffect(() => {
+    const currentUserId = user?.id || user?.uid;
+    if (!currentUserId || suggestedPeople.length > 0) return;
+
+    let isMounted = true;
+    setLoadingSuggestions(true);
+    getSuggestedFriends(currentUserId, 8)
+      .then((suggestions) => {
+        if (isMounted) setSuggestedPeople(suggestions || []);
+      })
+      .catch((err) => {
+        console.error('Error fetching suggestions:', err);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingSuggestions(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, user?.uid, suggestedPeople.length]);
 
   useEffect(() => {
     if (normalizedQuery.length < 2) {
@@ -111,11 +137,64 @@ export default function SearchPage() {
 
         <div className="px-4 py-4">
           {!normalizedQuery && (
-            <div className="flex min-h-[46vh] flex-col items-center justify-center text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0095F6]/10 text-[#0095F6]"><Search className="h-7 w-7" /></div>
-              <h2 className="text-base font-bold text-neutral-900 dark:text-white">Discover what matters</h2>
-              <p className="mt-1 max-w-xs text-[13px] leading-relaxed text-neutral-500">Search by username, post title, content, project type, or hashtag.</p>
-              <Link to="/feed" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0095F6] px-4 py-2.5 text-[13px] font-bold text-white hover:bg-[#1877F2]"><Home className="h-4 w-4" /> Go to home</Link>
+            <div>
+              {user && suggestedPeople.length > 0 && (
+                <section className="mb-8">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-[#222222] mb-1">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900 dark:text-white flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                      People you may know
+                    </h2>
+                    {loadingSuggestions && <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-400" />}
+                  </div>
+
+                  <div className="divide-y divide-neutral-100 dark:divide-[#222222]">
+                    {suggestedPeople.map((person) => (
+                      <div key={person.id} className="flex items-center justify-between py-3.5">
+                        <Link to={`/user/${person.id}`} className="flex items-center gap-3 flex-1 min-w-0 group">
+                          <UserAvatar
+                            src={person.photo_url}
+                            username={person.username}
+                            className="w-10 h-10 rounded-full shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate text-sm font-bold text-neutral-900 dark:text-white group-hover:underline">
+                                @{person.username}
+                              </span>
+                              {isUserVerified(person) && <VerifiedBadge size="xs" />}
+                            </div>
+                            <p className="text-xs text-neutral-400 truncate">
+                              {person.mutualCount > 0
+                                ? `${person.mutualCount} mutual connection${person.mutualCount > 1 ? 's' : ''}`
+                                : (person.fullName || 'Suggested for you')}
+                            </p>
+                          </div>
+                        </Link>
+                        <div className="shrink-0 ml-3">
+                          <FriendRequestButton
+                            targetUserId={person.id}
+                            targetUsername={person.username}
+                            size="sm"
+                            showChat={false}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <div className="flex flex-col items-center justify-center text-center py-8">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#0095F6]/10 text-[#0095F6]">
+                  <Search className="h-6 w-6" />
+                </div>
+                <h2 className="text-base font-bold text-neutral-900 dark:text-white">Discover what matters</h2>
+                <p className="mt-1 max-w-xs text-xs leading-relaxed text-neutral-500">Search by username, post title, content, project type, or hashtag.</p>
+                <Link to="/feed" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0095F6] px-4 py-2 text-xs font-bold text-white hover:bg-[#1877F2]">
+                  <Home className="h-3.5 w-3.5" /> Go to home
+                </Link>
+              </div>
             </div>
           )}
 

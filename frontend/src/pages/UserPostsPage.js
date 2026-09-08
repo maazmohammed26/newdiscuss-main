@@ -6,13 +6,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getUser, getPostsByUser } from '@/lib/db';
 import { getUserPulses } from '@/lib/pulseDb';
 import { getUserProfile } from '@/lib/userProfileDb';
+import { resolveBanner } from '@/lib/bannerPresets';
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 import PostCard from '@/components/PostCard';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import { isUserVerified } from '@/lib/verification';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
-import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock, ShieldCheck, Flag } from 'lucide-react';
+import ProfileSocialLinks from '@/components/ProfileSocialLinks';
+import ProfileShareModal from '@/components/ProfileShareModal';
+import LinkifiedText from '@/components/LinkifiedText';
+import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2 } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 import ReportModal from '@/components/ReportModal';
@@ -30,11 +35,12 @@ export default function UserPostsPage() {
   const [userPulses, setUserPulses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [bioExpanded, setBioExpanded] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [presenceData, setPresenceData] = useState({ isOnline: false, lastSeen: 0 });
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportedLocally, setReportedLocally] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'pulses'
 
   useEffect(() => {
     if (userId) {
@@ -42,9 +48,7 @@ export default function UserPostsPage() {
     }
   }, [userId]);
 
-  // Max characters before truncation
-  const BIO_TRUNCATE_LENGTH = 150;
-
+  // Real presence subscription
   useEffect(() => {
     if (!userId) return;
     const presenceRef = ref(database, `users/${userId}`);
@@ -59,20 +63,23 @@ export default function UserPostsPage() {
         setPresenceData({ isOnline: false, lastSeen: 0 });
       }
     }, (err) => {
-      console.error("Presence subscribe error:", err);
+      console.error('Presence subscribe error:', err);
     });
     return () => unsubscribe();
   }, [userId]);
 
   const formatLastSeen = () => {
-    const isActuallyOnline = presenceData.isOnline && (Date.now() - presenceData.lastSeen < 20000);
+    if (userData?.isOnlineVisible === false || profileData?.isOnlineVisible === false) {
+      return 'Offline';
+    }
+    const isActuallyOnline = presenceData.isOnline && (Date.now() - (presenceData.lastSeen || 0) < 60000);
     if (isActuallyOnline) return 'Online';
-    if (!presenceData.lastSeen) return 'Offline';
-    
+    if (!presenceData.lastSeen || presenceData.lastSeen <= 0) return 'Offline';
+
     const diffMs = Date.now() - presenceData.lastSeen;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
-    
+
     if (diffMins < 1) {
       return 'Just now';
     } else if (diffMins < 60) {
@@ -85,23 +92,22 @@ export default function UserPostsPage() {
     }
   };
 
-
   useEffect(() => {
     if (userId) {
       setLoading(true);
       setLoadingProfile(true);
-      
-      // Fetch from primary Firebase (user data + posts)
+
+      // Fetch primary user data, posts, and pulses
       Promise.all([getUser(userId), getPostsByUser(userId), getUserPulses(userId)])
-        .then(([u, p, pulses]) => { 
-          setUserData(u); 
-          setPosts(p); 
-          setUserPulses(pulses);
+        .then(([u, p, pulses]) => {
+          setUserData(u);
+          setPosts(p || []);
+          setUserPulses(pulses || []);
         })
         .catch(() => {})
         .finally(() => setLoading(false));
-      
-      // Fetch from secondary Firebase (profile data)
+
+      // Fetch profile data from secondary Firebase
       getUserProfile(userId)
         .then(data => setProfileData(data))
         .catch(() => {})
@@ -127,261 +133,297 @@ export default function UserPostsPage() {
     setShowReportModal(true);
   };
 
-  const joinDate = userData?.created_at
-    ? new Date(userData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : '';
+  // Safe joined date formatting (empty string if invalid or absent)
+  const rawCreatedAt = userData?.created_at || userData?.createdAt || profileData?.createdAt;
+  let joinDate = '';
+  if (rawCreatedAt) {
+    try {
+      const parsed = new Date(rawCreatedAt);
+      if (!isNaN(parsed.getTime())) {
+        joinDate = parsed.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      }
+    } catch {}
+  }
 
-  const initials = (userData?.username || 'U').slice(0, 2).toUpperCase();
-
-  // Retrieve bio from multiple database sources (secondary profile, primary user, or talentGraph)
+  // Bio from multiple potential fields
   const userBio = profileData?.bio || userData?.bio || userData?.talentGraph?.bio || '';
 
-  // Check if bio needs truncation
-  const bioNeedsTruncation = userBio && userBio.length > BIO_TRUNCATE_LENGTH;
-  const displayBio = bioNeedsTruncation && !bioExpanded 
-    ? userBio.slice(0, BIO_TRUNCATE_LENGTH) + '...'
-    : userBio;
+  // Banner resolution with strict priority:
+  // selected bannerThemeId -> existing legacy banner image -> default fallback
+  const resolvedBanner = resolveBanner({
+    bannerThemeId: profileData?.bannerThemeId,
+    bannerUrl: profileData?.bannerUrl,
+    banner_url: userData?.banner_url
+  });
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] dark:bg-[#0F172A]  pb-28">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-900 dark:text-white pb-28 select-none">
       <Header />
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-8 py-6 pb-32">
-        <button
-          data-testid="user-posts-back"
-          onClick={() => {
-            if (location.state?.fromMap) {
-              navigate('/devradar');
-            } else {
-              navigate(location.state?.from || '/feed');
-            }
-          }}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> {location.state?.fromMap ? 'Back to Map' : 'Back'}
-        </button>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-32"><Loader2 className="w-6 h-6 animate-spin text-[#6275AF]" /></div>
-        ) : !userData ? (
-          <div className="text-center py-16">
-            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">This account has been deleted or removed from Discuss.</p>
-          </div>
-        ) : (
-          <>
-            {/* User header card */}
-            <div className="bg-white dark:bg-[#1E293B] dark:bg-black border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] rounded-2xl p-5 mb-6">
-              <div className="flex items-start gap-4">
-                {/* Profile Picture - Clickable if exists */}
-                {userData.photo_url && currentUser ? (
-                  <button 
-                    onClick={() => setShowImagePreview(true)}
-                    className="relative group shrink-0"
+      <div className="w-full max-w-5xl lg:max-w-[1240px] mx-auto px-0 md:px-4 py-0 md:py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_600px_300px] justify-center gap-6">
+          <Sidebar />
+          <div className="w-full max-w-[600px] mx-auto min-w-0 flex-1">
+            {/* Top Bar */}
+            <div className="px-4 py-3 flex items-center justify-between border-b border-[#EFEFEF] dark:border-[#262626]">
+              <button
+                onClick={() => {
+                  if (location.state?.fromMap) {
+                    navigate('/devradar');
+                  } else {
+                    navigate(location.state?.from || -1);
+                  }
+                }}
+                className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 stroke-[2.2px]" />
+                <span>{location.state?.fromMap ? 'Back to Map' : 'Back'}</span>
+              </button>
+              <span className="text-sm font-bold text-neutral-900 dark:text-white truncate max-w-[200px]">
+                {profileData?.fullName || userData?.full_name || userData?.username || 'Profile'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  title="Share Profile"
+                  aria-label="Share Profile"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                {currentUser && currentUser.id !== userId && (
+                  <button
+                    onClick={handleReportClick}
+                    className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                    title={reportedLocally ? 'Already Reported' : 'Report User'}
+                    aria-label="Report User"
                   >
-                    <UserAvatar
-                      userId={userId}
-                      src={userData.photo_url}
-                      username={userData.username}
-                      className="w-14 h-14 shadow-md discuss:shadow-none discuss:border dark:border-[#262626] group-hover:opacity-90 transition-opacity"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                      <div className="bg-black/50 rounded-full p-1.5">
-                        <User className="w-3.5 h-3.5 text-white" />
+                    <Flag className={`w-4 h-4 ${reportedLocally ? 'text-red-500 fill-current' : ''}`} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-32">
+                <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+              </div>
+            ) : !userData ? (
+              <div className="text-center py-20 px-4">
+                <p className="text-sm font-medium text-neutral-500">This account has been deleted or does not exist.</p>
+              </div>
+            ) : (
+              <>
+                {/* Banner */}
+                <div className={`relative w-full h-32 sm:h-36 md:h-44 overflow-hidden ${resolvedBanner.type === 'gradient' ? resolvedBanner.className : 'bg-neutral-100 dark:bg-neutral-900'}`}>
+                  {resolvedBanner.type === 'image' && (
+                    <img src={resolvedBanner.url} alt="Profile banner" className="w-full h-full object-cover" />
+                  )}
+                  {resolvedBanner.type === 'gradient' && (
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+                  )}
+                </div>
+
+                {/* Profile Hero Body */}
+                <div className="px-4 pb-4 border-b border-[#EFEFEF] dark:border-[#262626] bg-white dark:bg-black">
+                  {/* Overlapping Avatar & Action Buttons */}
+                  <div className="flex items-end justify-between -mt-11 sm:-mt-12 md:-mt-14 mb-3">
+                    <div className="relative group">
+                      <div
+                        onClick={() => userData?.photo_url && currentUser ? setShowImagePreview(true) : null}
+                        className="w-[88px] h-[88px] sm:w-[96px] sm:h-[96px] md:w-[104px] md:h-[104px] rounded-full ring-4 ring-white dark:ring-black bg-white dark:bg-black overflow-hidden shadow-md cursor-pointer"
+                      >
+                        <UserAvatar
+                          src={userData?.photo_url}
+                          username={userData?.username}
+                          userId={userId}
+                          priority
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </div>
-                  </button>
-                ) : (
-                  <div className="shrink-0 flex flex-col items-center">
-                    <UserAvatar userId={userId} src={null} username={userData?.username} className="w-14 h-14 opacity-70 grayscale" />
-                    {!currentUser && (
-                      <span className="text-[9px] text-[#EF4444] mt-2 font-medium bg-[#EF4444]/10 rounded px-1.5 py-0.5 border border-[#EF4444]/20 max-w-[80px] text-center leading-tight">
-                        Secured
-                      </span>
-                    )}
+
+                    {/* Relationship Actions */}
+                    <div className="flex items-center gap-2">
+                      {currentUser && currentUser.id !== userId && (
+                        <FriendRequestButton
+                          targetUserId={userId}
+                          targetUsername={userData?.username}
+                          size="sm"
+                          showChat={true}
+                        />
+                      )}
+                      <button
+                        onClick={() => setShowShareModal(true)}
+                        className="p-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                        aria-label="Share profile"
+                        title="Share profile"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  {/* Full Name (if available) */}
-                  {profileData?.fullName && (
-                    <h1 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[18px] flex items-center gap-1 no-copy">
-                      {profileData.fullName}
-                      {(isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="sm" />}
-                    </h1>
-                  )}
-                  
-                  {/* Username */}
-                  <div data-testid="user-posts-username" className={`flex items-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[14px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[18px]'}`}>
-                    @{userData.username}
-                    {!profileData?.fullName && (isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="sm" />}
+
+                  {/* Names & Badges */}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h1 className="font-heading text-lg sm:text-xl font-bold text-neutral-900 dark:text-white truncate">
+                        {profileData?.fullName || userData?.full_name || userData?.username}
+                      </h1>
+                      {(isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="md" />}
+                    </div>
+                    <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm font-medium">
+                      @{userData?.username}
+                    </p>
                   </div>
 
                   {userId === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && (
-                    <div className="mt-1 flex items-center gap-1">
+                    <div className="mt-2 flex items-center gap-1">
                       <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase tracking-wider shadow-sm">
                         <ShieldCheck className="w-3 h-3" /> Discuss Team
                       </span>
                     </div>
                   )}
-                  
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[12px]">
-                      <Calendar className="w-3.5 h-3.5" /> Joined {joinDate}
-                    </span>
-                    <span className="flex items-center gap-1 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[12px]">
-                      <FileText className="w-3.5 h-3.5" /> {posts.length} posts
-                    </span>
-                    <span className="flex items-center gap-1.5 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[12px]">
-                      <div className={`w-2 h-2 rounded-full ${formatLastSeen() === 'Online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-neutral-400 dark:bg-neutral-500'}`} />
-                      <span className={formatLastSeen() === 'Online' ? 'text-emerald-500 font-semibold tracking-wide' : 'font-medium'}>
+
+                  {/* Bio */}
+                  {userBio && (
+                    <div className="mt-2 text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed max-w-xl whitespace-pre-wrap">
+                      <LinkifiedText text={userBio} />
+                    </div>
+                  )}
+
+                  {/* Metadata Row */}
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                    {joinDate && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                        <span>Joined {joinDate}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>{posts.length} {posts.length === 1 ? 'post' : 'posts'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-2 h-2 rounded-full ${formatLastSeen() === 'Online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-neutral-400 dark:bg-neutral-500'}`} />
+                      <span className={formatLastSeen() === 'Online' ? 'text-emerald-500 font-semibold' : 'font-medium'}>
                         {formatLastSeen() === 'Online' ? 'Online' : formatLastSeen() === 'Offline' ? 'Offline' : `Last seen ${formatLastSeen()}`}
                       </span>
-                    </span>
+                    </div>
                   </div>
 
-                  {/* Friend Request Button - Show if not viewing own profile */}
-                  {currentUser && currentUser.id !== userId && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <FriendRequestButton
-                        targetUserId={userId}
-                        targetUsername={userData.username}
-                        size="sm"
-                        showChat={true}
-                      />
-                      <button
-                        onClick={handleReportClick}
-                        className={`p-2 rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm ${
-                          reportedLocally 
-                            ? 'bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444] shadow-[#EF4444]/10' 
-                            : 'bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 border-neutral-200 dark:border-neutral-700 dark:bg-[#1A1A1A] dark:border-[#262626] dark:text-neutral-400'
-                        }`}
-                        title={reportedLocally ? 'Already Reported' : 'Report User'}
-                      >
-                        <Flag className={`w-4 h-4 ${reportedLocally ? 'fill-current animate-pulse' : ''}`} />
-                      </button>
+                  {/* Social Links */}
+                  {currentUser && profileData?.socialLinks?.length > 0 && (
+                    <ProfileSocialLinks links={profileData.socialLinks} className="mt-3" />
+                  )}
+
+                  {!currentUser && (
+                    <div className="mt-3 text-xs text-neutral-400">
+                      Sign in to view full developer links, media, and direct messaging.
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Bio Section */}
-              {loadingProfile ? (
-                <div className="mt-4 flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6275AF]" />
-                  <span className="text-[#6275AF] dark:text-[#94A3B8] text-xs">Loading profile...</span>
-                </div>
-              ) : userBio && currentUser && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] no-copy">
-                  <p className="text-[#0F172A] dark:text-[#E2E8F0] dark:text-neutral-200 text-[13px] leading-relaxed whitespace-pre-wrap">
-                    {displayBio}
-                  </p>
-                  {bioNeedsTruncation && (
+                {/* Tabs: Posts & Pulses ONLY (No Friends tab or count) */}
+                <div className="border-b border-[#EFEFEF] dark:border-[#262626] bg-white dark:bg-black">
+                  <div className="flex">
                     <button
-                      onClick={() => setBioExpanded(!bioExpanded)}
-                      className="text-[#0095F6] discuss:text-[#60A5FA] hover:underline text-[12px] mt-1 flex items-center gap-1"
+                      onClick={() => setActiveTab('posts')}
+                      className={`flex-1 py-3 text-xs font-bold transition-colors flex items-center justify-center gap-2 border-b-2 ${
+                        activeTab === 'posts'
+                          ? 'border-[#0095F6] text-[#0095F6]'
+                          : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      }`}
                     >
-                      {bioExpanded ? (
-                        <>Show less <ChevronUp className="w-3 h-3" /></>
-                      ) : (
-                        <>Show more <ChevronDown className="w-3 h-3" /></>
-                      )}
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Posts ({posts.length})</span>
                     </button>
-                  )}
-                </div>
-              )}
-
-              {/* Social Links Section */}
-              {!loadingProfile && currentUser && profileData?.socialLinks?.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                  <div className="flex flex-wrap gap-2">
-                    {profileData.socialLinks.map((link, index) => (
-                      <a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-[#1A1A1A] hover:bg-[#E8EBF0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#333333] text-[#0095F6] discuss:text-[#60A5FA] text-[12px] font-medium px-3 py-1.5 rounded-full border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] transition-colors"
-                      >
-                        {link.name}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    ))}
+                    <button
+                      onClick={() => setActiveTab('pulses')}
+                      className={`flex-1 py-3 text-xs font-bold transition-colors flex items-center justify-center gap-2 border-b-2 ${
+                        activeTab === 'pulses'
+                          ? 'border-[#0095F6] text-[#0095F6]'
+                          : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <PlayCircle className="w-3.5 h-3.5" />
+                      <span>Pulses ({userPulses.length})</span>
+                    </button>
                   </div>
                 </div>
-              )}
-              
-              {!currentUser && !loadingProfile && (
-                <div className="mt-4 pt-4 border-t border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                  <p className="text-[11px] text-[#EF4444] font-medium bg-[#EF4444]/10 rounded-md p-2 border border-[#EF4444]/20 inline-block">
-                    For security reasons, we have blocked profile pictures, social media links, and Pulse posts for non-logged-in users.
-                  </p>
-                </div>
-              )}
-            </div>
 
-            {/* Pulse Videos */}
-            {currentUser && (
-              <div className="mb-6">
-                <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-4 flex items-center gap-2">
-                  <PlayCircle className="w-5 h-5 text-[#EF4444]" /> Pulse Videos
-                </h3>
-                {userPulses.length === 0 ? (
-                  <div className="text-center py-8 bg-white dark:bg-[#1E293B] dark:bg-black rounded-2xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                    <PlayCircle className="w-6 h-6 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-2" />
-                    <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">No Pulse videos yet.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {userPulses.map(pulse => (
-                      <div key={pulse.id} className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all" onClick={() => navigate('/pulse')}>
-                        <video src={pulse.videoUrl} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <PlayCircle className="w-10 h-10 text-white" />
-                        </div>
-                        <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
-                          {pulse.caption || 'Pulse Video'}
-                        </div>
+                {/* Tab Content: Posts */}
+                {activeTab === 'posts' && (
+                  <div className="divide-y divide-neutral-100 dark:divide-[#222222]">
+                    {posts.length === 0 ? (
+                      <div className="py-16 text-center text-xs text-neutral-400 dark:text-neutral-500">
+                        This user hasn't posted any discussions yet.
                       </div>
-                    ))}
+                    ) : (
+                      posts.map(post => (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          currentUser={currentUser}
+                          onDeleted={handlePostDeleted}
+                          onUpdated={handlePostUpdated}
+                          onVoteChanged={handleVoteChanged}
+                          onTagClick={() => {}}
+                        />
+                      ))
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Posts */}
-            <h3 className="font-bold text-[16px] text-[#0F172A] dark:text-[#F1F5F9] dark:text-white mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#0095F6]" /> Posts
-            </h3>
-            {posts.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-[#1E293B] dark:bg-black rounded-2xl border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-                <User className="w-8 h-8 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 mx-auto mb-2" />
-                <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]">This user hasn't posted anything yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {posts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    currentUser={currentUser}
-                    onDeleted={handlePostDeleted}
-                    onUpdated={handlePostUpdated}
-                    onVoteChanged={handleVoteChanged}
-                    onTagClick={() => {}}
-                  />
-                ))}
-              </div>
+                {/* Tab Content: Pulses */}
+                {activeTab === 'pulses' && (
+                  <div className="p-4">
+                    {userPulses.length === 0 ? (
+                      <div className="py-16 text-center text-xs text-neutral-400 dark:text-neutral-500">
+                        No Pulse videos posted yet.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {userPulses.map(pulse => (
+                          <div
+                            key={pulse.id}
+                            className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all bg-black"
+                            onClick={() => navigate('/pulse')}
+                          >
+                            <video src={pulse.videoUrl} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <PlayCircle className="w-10 h-10 text-white" />
+                            </div>
+                            <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
+                              {pulse.caption || 'Pulse Video'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
       {/* Image Preview Modal */}
-      <ImagePreviewModal 
+      <ImagePreviewModal
         open={showImagePreview}
         onClose={() => setShowImagePreview(false)}
         imageUrl={userData?.photo_url}
         altText={userData?.username}
       />
 
+      {/* Share Profile Modal */}
+      <ProfileShareModal
+        open={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        user={{ ...userData, full_name: profileData?.fullName || userData?.full_name }}
+      />
+
+      {/* Report Modal */}
       <ReportModal
         open={showReportModal}
         onClose={() => setShowReportModal(false)}

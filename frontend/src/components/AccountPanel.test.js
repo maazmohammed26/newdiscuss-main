@@ -37,18 +37,21 @@ jest.mock('@/components/VerifiedBadge', () => function MockVerifiedBadge() {
 import AccountPanel from './AccountPanel';
 
 describe('AccountPanel Component VNext', () => {
-  it('renders compact identity block and main navigation actions', () => {
+  it('renders compact clickable identity block and only Bookmarks and Settings', () => {
     const html = renderToStaticMarkup(
       <AccountPanel open={true} onClose={jest.fn()} />
     );
 
     expect(html).toContain('Account');
     expect(html).toContain('@maazdev');
-    expect(html).toContain('View Profile');
-    expect(html).toContain('Your Posts');
-    expect(html).toContain('Friends &amp; Connections');
     expect(html).toContain('Bookmarks');
     expect(html).toContain('Settings &amp; Privacy');
+
+    // Redundant routes are REMOVED per PRD
+    expect(html).not.toContain('View Profile');
+    expect(html).not.toContain('Your Posts');
+    expect(html).not.toContain('Friends &amp; Connections');
+    expect(html).not.toContain('Logout');
   });
 
   it('renders null when open is false', () => {

@@ -28,6 +28,7 @@ const PrivacyPage           = lazy(() => import('@/pages/PrivacyPage'));
 const SupportPage           = lazy(() => import('@/pages/SupportPage'));
 const FeedPage              = lazy(() => import('@/pages/FeedPage'));
 const ProfilePage           = lazy(() => import('@/pages/ProfilePage'));
+const EditProfilePage       = lazy(() => import('@/pages/EditProfilePage'));
 const SettingsPage          = lazy(() => import('@/pages/SettingsPage'));
 const PostDetailPage        = lazy(() => import('@/pages/PostDetailPage'));
 const UserPostsPage         = lazy(() => import('@/pages/UserPostsPage'));
@@ -210,6 +211,7 @@ function AppRoutes() {
         <Route path="/join-requests"           element={<ProtectedRoute><JoinRequestsPage /></ProtectedRoute>} />
         <Route path="/notifications"           element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/profile"                 element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/profile/edit"            element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
         <Route path="/settings"                element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/pulse"                   element={<ProtectedRoute><PulsePage /></ProtectedRoute>} />
         <Route path="/devradar"                element={<ProtectedRoute><DevRadarPage /></ProtectedRoute>} />

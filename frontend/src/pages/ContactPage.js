@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Instagram, Linkedin, Mail, MapPin } from 'lucide-react';
 import PublicPageShell from '@/components/PublicPageShell';
+import SettingsInfoPageShell from '@/components/SettingsInfoPageShell';
+import { useAuth } from '@/contexts/AuthContext';
 
 const channels = [
   { icon: Mail, label: 'Support email', value: 'support@discussit.in', href: 'mailto:support@discussit.in' },
@@ -9,10 +11,54 @@ const channels = [
 ];
 
 export default function ContactPage() {
+  const { user } = useAuth();
+
   useEffect(() => {
     window.scrollTo(0, 0);
     document.title = 'Contact | Discuss';
   }, []);
+
+  if (user) {
+    return (
+      <SettingsInfoPageShell
+        title="Contact Discuss"
+        description="Talk to the Discuss team. Use an official channel for product feedback, account help, safety reports, or collaboration enquiries."
+        icon={Mail}
+      >
+        <div className="divide-y divide-neutral-100 dark:divide-[#222222]">
+          {channels.map(({ icon: Icon, label, value, href }) => (
+            <a
+              key={label}
+              href={href}
+              target={href.startsWith('http') ? '_blank' : undefined}
+              rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+              className="flex items-center gap-4 py-4 transition-colors hover:opacity-80"
+            >
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">{label}</p>
+                <p className="mt-0.5 truncate text-sm font-semibold text-neutral-900 dark:text-white">{value}</p>
+              </div>
+            </a>
+          ))}
+          <div className="flex items-start gap-4 py-4">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+              <MapPin className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Registered Location</p>
+              <h2 className="mt-0.5 text-sm font-semibold text-neutral-900 dark:text-white">Bengaluru, Karnataka</h2>
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Discuss operates from Bengaluru, India, and serves developers wherever they build.
+              </p>
+            </div>
+          </div>
+        </div>
+      </SettingsInfoPageShell>
+    );
+  }
 
   return (
     <PublicPageShell eyebrow="Contact" title="Talk to the Discuss team." description="Use an official channel for product feedback, account help, safety reports, or collaboration enquiries." compact>

@@ -28,6 +28,8 @@ import {
   BIO_CHAR_LIMIT,
   MAX_SOCIAL_LINKS
 } from '@/lib/userProfileDb';
+import { resolveBanner } from '@/lib/bannerPresets';
+import ProfileSocialLinks from '@/components/ProfileSocialLinks';
 import {
   saveUserLocation,
   deleteUserLocation,
@@ -1117,15 +1119,17 @@ export default function ProfilePage() {
 
   // Friend request handlers
   const handleAcceptRequest = async (fromUserId) => {
+    const prevReceived = receivedRequests;
+    setReceivedRequests(prev => prev.filter(r => r.fromUserId !== fromUserId));
     setProcessingRequest(fromUserId);
     try {
       await acceptFriendRequest(user.id, fromUserId);
-      setReceivedRequests(prev => prev.filter(r => r.fromUserId !== fromUserId));
       // Refresh friends list
       const friendsData = await getFriendsWithDetails(user.id);
       setFriends(friendsData);
       toast.success('Friend request accepted!');
     } catch (error) {
+      setReceivedRequests(prevReceived);
       toast.error('Failed to accept request');
     } finally {
       setProcessingRequest(null);
@@ -1133,12 +1137,14 @@ export default function ProfilePage() {
   };
 
   const handleDeclineRequest = async (fromUserId) => {
+    const prevReceived = receivedRequests;
+    setReceivedRequests(prev => prev.filter(r => r.fromUserId !== fromUserId));
     setProcessingRequest(fromUserId);
     try {
       await declineFriendRequest(user.id, fromUserId);
-      setReceivedRequests(prev => prev.filter(r => r.fromUserId !== fromUserId));
       toast.success('Friend request declined');
     } catch (error) {
+      setReceivedRequests(prevReceived);
       toast.error('Failed to decline request');
     } finally {
       setProcessingRequest(null);
@@ -1146,12 +1152,14 @@ export default function ProfilePage() {
   };
 
   const handleCancelRequest = async (toUserId) => {
+    const prevSent = sentRequests;
+    setSentRequests(prev => prev.filter(r => r.toUserId !== toUserId));
     setProcessingRequest(toUserId);
     try {
       await cancelFriendRequest(user.id, toUserId);
-      setSentRequests(prev => prev.filter(r => r.toUserId !== toUserId));
       toast.success('Friend request cancelled');
     } catch (error) {
+      setSentRequests(prevSent);
       toast.error('Failed to cancel request');
     } finally {
       setProcessingRequest(null);
@@ -1392,6 +1400,12 @@ export default function ProfilePage() {
     setShowBadgeModal(true);
   };
 
+  const resolvedBanner = resolveBanner({
+    bannerThemeId: profileData?.bannerThemeId,
+    bannerUrl: profileData?.bannerUrl,
+    banner_url: user?.banner_url
+  });
+
   return (
     <div className="min-h-screen bg-white dark:bg-black text-neutral-900 dark:text-white pb-28 select-none">
       <Header />
@@ -1410,14 +1424,6 @@ export default function ProfilePage() {
               <span className="text-sm font-bold text-neutral-900 dark:text-white">Profile</span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowShareModal(true)}
-                  className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                  title="Share Profile"
-                  aria-label="Share Profile"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button
                   onClick={() => navigate('/settings')}
                   className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                   title="Settings & Privacy"
@@ -1428,8 +1434,13 @@ export default function ProfilePage() {
               </div>
             </div>
         {/* Banner */}
-        <div className="relative w-full h-32 sm:h-36 md:h-44 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-neutral-900 dark:via-neutral-850 dark:to-neutral-900 overflow-hidden">
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        <div className={`relative w-full h-32 sm:h-36 md:h-44 overflow-hidden ${resolvedBanner.type === 'gradient' ? resolvedBanner.className : 'bg-neutral-100 dark:bg-neutral-900'}`}>
+          {resolvedBanner.type === 'image' && (
+            <img src={resolvedBanner.url} alt="Profile banner" className="w-full h-full object-cover" />
+          )}
+          {resolvedBanner.type === 'gradient' && (
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+          )}
           {adminMessage && (
             <div className="absolute top-3 right-3 z-10">
               <Popover open={adminPopoverOpen} onOpenChange={handleAdminPopoverToggle}>
@@ -1485,89 +1496,12 @@ export default function ProfilePage() {
                   className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
                 />
               </div>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button 
-                    aria-label="Update profile picture"
-                    className="absolute -bottom-1 -right-1 p-1.5 bg-[#0095F6] text-white rounded-full shadow-md hover:scale-110 transition-transform border-2 border-white dark:border-black cursor-pointer z-10"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1A1A1A] border-[#DBDBDB] dark:border-[#262626]">
-                  <div className="p-3 border-b border-[#DBDBDB] dark:border-[#262626]">
-                    <h4 className="font-semibold text-sm">Update Profile Picture</h4>
-                  </div>
-                  <div className="p-3">
-                    {!pendingProfilePic ? (
-                      <>
-                        <MediaUpload 
-                          type="image" 
-                          folder="profiles" 
-                          onUploadComplete={(result) => setPendingProfilePic(result.url)} 
-                        />
-                        {user?.photo_url && (
-                          <button 
-                            onClick={async () => {
-                              const { updateProfilePicture } = await import('@/lib/db');
-                              await updateProfilePicture(user.id, '');
-                              patchUser({ photo_url: '' });
-                              toast.success('Profile picture removed');
-                            }}
-                            className="w-full mt-3 flex items-center justify-center gap-2 text-[#EF4444] text-xs font-medium py-2 hover:bg-[#EF4444]/10 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Remove Current Picture
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border border-neutral-200 dark:border-neutral-700">
-                          <img src={pendingProfilePic} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                        <p className="text-sm font-medium mb-4 dark:text-neutral-200">Save this profile picture?</p>
-                        <div className="flex w-full gap-2">
-                          <Button 
-                            onClick={() => setPendingProfilePic(null)} 
-                            variant="outline" 
-                            className="flex-1 dark:border-neutral-600 dark:text-neutral-300"
-                            disabled={savingProfilePic}
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            onClick={async () => {
-                              setSavingProfilePic(true);
-                              try {
-                                const { updateProfilePicture } = await import('@/lib/db');
-                                await updateProfilePicture(user.id, pendingProfilePic);
-                                patchUser({ photo_url: pendingProfilePic });
-                                setPendingProfilePic(null);
-                                setSavingProfilePic(false);
-                                toast.success('Profile picture updated!');
-                              } catch (e) {
-                                toast.error('Failed to update picture');
-                                setSavingProfilePic(false);
-                              }
-                            }} 
-                            className="flex-1 bg-[#0095F6] text-white hover:bg-[#1877F2]"
-                            disabled={savingProfilePic}
-                          >
-                            {savingProfilePic ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
             </div>
 
             {/* Profile Actions */}
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => navigate('/settings?section=profile')}
+                onClick={() => navigate('/profile/edit')}
                 variant="outline"
                 size="sm"
                 className="rounded-xl px-3.5 py-1.5 text-xs font-bold border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -1578,7 +1512,7 @@ export default function ProfilePage() {
                 onClick={() => setShowShareModal(true)}
                 variant="outline"
                 size="sm"
-                className="rounded-xl px-3 py-1.5 text-xs font-bold border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="rounded-xl px-3.5 py-1.5 text-xs font-bold border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 aria-label="Share profile"
               >
                 <Share2 className="w-3.5 h-3.5" />
@@ -1610,21 +1544,8 @@ export default function ProfilePage() {
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             {shareLocation && locationCoords && (
               <div className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#0095F6]" />
+                <MapPin className="w-3.5 h-3.5 text-neutral-400" />
                 <span>DevRadar active</span>
-              </div>
-            )}
-            {profileData?.socialLinks?.length > 0 && (
-              <div className="flex items-center gap-1">
-                <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-                <a 
-                  href={profileData.socialLinks[0].url.startsWith('http') ? profileData.socialLinks[0].url : `https://${profileData.socialLinks[0].url}`}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[#0095F6] hover:underline truncate max-w-[180px]"
-                >
-                  {profileData.socialLinks[0].platform}
-                </a>
               </div>
             )}
             {!user?.verified && (
@@ -1637,6 +1558,9 @@ export default function ProfilePage() {
               </button>
             )}
           </div>
+
+          {/* Social Links */}
+          <ProfileSocialLinks links={profileData?.socialLinks} className="mt-2.5" />
 
           {/* User Admin Message */}
           {user?.admin_message && (
@@ -1998,19 +1922,19 @@ export default function ProfilePage() {
         {/* --- 3. FRIENDS TAB --- */}
         {activeTab === 'friends' && (
           <div id="profile-friend-requests" className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] text-left">
-            <div className="flex flex-col gap-4 bg-[#FAFAFA] px-4 py-4 dark:bg-[#080808]">
-              {/* Received Friend Requests */}
+            <div className="flex flex-col bg-white dark:bg-black px-4 py-4 space-y-6">
+              {/* Received Friend Requests (if any) */}
               {receivedRequests.length > 0 && (
-                <div className="rounded-2xl bg-[#F59E0B]/10 p-4 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.18)]">
-                  <h3 className="text-sm font-semibold text-[#92400E] dark:text-[#FCD34D] mb-3 flex items-center gap-2">
-                    <UserPlus className="w-4 h-4" />
+                <div className="border border-neutral-200 dark:border-[#262626] rounded-2xl p-4">
+                  <h3 className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <UserPlus className="w-3.5 h-3.5 text-[#0095F6]" />
                     Friend Requests ({receivedRequests.length})
                   </h3>
-                  <div className="space-y-2">
+                  <div className="divide-y divide-neutral-100 dark:divide-[#222222]">
                     {receivedRequests.map((request) => {
                       const reqUser = requestUserDetails[request.fromUserId];
                       return (
-                        <div key={request.fromUserId} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-[#111111]">
+                        <div key={request.fromUserId} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                           <button
                             onClick={() => navigate(`/user/${request.fromUserId}`)}
                             className="flex items-center gap-3 flex-1 min-w-0"
@@ -2018,13 +1942,13 @@ export default function ProfilePage() {
                             <UserAvatar
                               src={reqUser?.photo_url}
                               username={reqUser?.username || 'User'}
-                              className="w-10 h-10"
+                              className="w-10 h-10 rounded-full"
                             />
                             <div className="text-left min-w-0">
                               <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate">
                                 @{reqUser?.username || 'Unknown'}
                               </span>
-                              <span className="text-neutral-500 dark:text-neutral-400 text-xs">
+                              <span className="text-neutral-400 text-xs">
                                 {new Date(request.createdAt).toLocaleDateString()}
                               </span>
                             </div>
@@ -2034,7 +1958,7 @@ export default function ProfilePage() {
                               onClick={() => handleAcceptRequest(request.fromUserId)}
                               disabled={processingRequest === request.fromUserId}
                               size="sm"
-                              className="bg-[#10B981] hover:bg-[#059669] text-white h-8 px-3"
+                              className="bg-[#0095F6] hover:bg-[#1877F2] text-white h-8 px-3 rounded-lg"
                             >
                               {processingRequest === request.fromUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                             </Button>
@@ -2043,7 +1967,7 @@ export default function ProfilePage() {
                               disabled={processingRequest === request.fromUserId}
                               variant="outline"
                               size="sm"
-                              className="border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 h-8 px-3"
+                              className="border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 h-8 px-3 rounded-lg"
                             >
                               <X className="w-3 h-3" />
                             </Button>
@@ -2055,107 +1979,19 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Sent Requests */}
-              {sentRequests.length > 0 && (
-                <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                  <h3 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>Sent Requests ({sentRequests.length})</span>
+              {/* Your Friends FIRST - Flat full-width list */}
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-[#222222]">
+                  <h3 className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                    Your Friends ({friends.length})
                   </h3>
-                  <div className="space-y-2">
-                    {sentRequests.map((request) => {
-                      const reqUser = requestUserDetails[request.toUserId];
-                      return (
-                        <div key={request.toUserId} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
-                          <button
-                            onClick={() => navigate(`/user/${request.toUserId}`)}
-                            className="flex items-center gap-3 flex-1 min-w-0"
-                          >
-                            <UserAvatar
-                              src={reqUser?.photo_url}
-                              username={reqUser?.username || 'User'}
-                              className="w-10 h-10"
-                            />
-                            <div className="text-left min-w-0">
-                              <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate">
-                                @{reqUser?.username || 'Unknown'}
-                              </span>
-                              <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
-                            </div>
-                          </button>
-                          <Button
-                            onClick={() => handleCancelRequest(request.toUserId)}
-                            disabled={processingRequest === request.toUserId}
-                            variant="outline"
-                            size="sm"
-                            className="border-[#6275AF] text-neutral-500 hover:bg-[#6275AF]/10 h-8 px-3 shrink-0 ml-2"
-                          >
-                            {processingRequest === request.toUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cancel'}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
-              )}
-
-              {/* Find Friends Search */}
-              <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
-                  <Search className="w-4 h-4 text-[#0095F6]" />
-                  <span>Find Friends</span>
-                </h3>
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 dark:text-neutral-400" />
-                  <Input
-                    value={friendSearchQuery}
-                    onChange={(e) => setFriendSearchQuery(e.target.value)}
-                    placeholder="Search users by username..."
-                    className="h-11 rounded-xl border-neutral-200 bg-neutral-50 pl-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-[#0095F6]/20 dark:border-[#262626] dark:bg-black dark:text-white"
-                  />
-                  {friendSearchQuery && (
-                    <button
-                      onClick={() => setFriendSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {searchingFriends ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
-                  </div>
-                ) : friendSearchResults.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
-                    {friendSearchResults.map((searchUser) => (
-                      <UserSearchResult
-                        key={searchUser.id}
-                        user={searchUser}
-                        currentUserId={user?.id}
-                        onClose={() => setFriendSearchQuery('')}
-                      />
-                    ))}
-                  </div>
-                ) : friendSearchQuery && !searchingFriends ? (
-                  <p className="text-neutral-500 dark:text-neutral-400 text-sm text-center py-4">
-                    <span>No users found</span>
-                  </p>
-                ) : null}
-              </div>
-
-              {/* Your Friends */}
-              <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#10B981]" />
-                  Your Friends ({friends.length})
-                </h3>
 
                 {friends.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                  <div className="divide-y divide-neutral-100 dark:divide-[#222222]">
                     {friends.map((friend) => (
-                      <div key={friend.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
+                      <div key={friend.id} className="flex items-center justify-between py-3">
                         <button
                           onClick={() => navigate(`/user/${friend.id}`)}
                           className="flex items-center gap-3 flex-1 min-w-0"
@@ -2163,7 +1999,7 @@ export default function ProfilePage() {
                           <UserAvatar
                             src={friend?.photo_url}
                             username={friend?.username || 'User'}
-                            className="w-10 h-10"
+                            className="w-10 h-10 rounded-full"
                           />
                           <div className="text-left min-w-0">
                             <div className="flex items-center gap-1">
@@ -2172,25 +2008,79 @@ export default function ProfilePage() {
                               </span>
                               {isUserVerified(friend) && <VerifiedBadge size="xs" />}
                             </div>
+                            {friend.fullName && (
+                              <span className="text-xs text-neutral-400 truncate block">
+                                {friend.fullName}
+                              </span>
+                            )}
                           </div>
                         </button>
                         <Button
                           onClick={() => navigate(`/chat/${friend.id}`)}
                           size="sm"
-                          className="bg-[#0095F6] hover:bg-[#1877F2] text-white h-8 px-3 shrink-0 ml-2"
+                          variant="outline"
+                          className="border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 h-8 px-3 rounded-lg shrink-0 ml-2"
                         >
-                          <MessageCircle className="w-3 h-3" />
+                          <MessageCircle className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-neutral-50 p-6 text-center dark:bg-black">
-                    <Users className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">You haven't added any friends yet.</p>
+                  <div className="py-8 text-center text-neutral-400 dark:text-neutral-500 text-xs">
+                    You haven't added any friends yet.
                   </div>
                 )}
               </div>
+
+              {/* Sent Requests - Collapsible Below Your Friends */}
+              {sentRequests.length > 0 && (
+                <div className="pt-2 border-t border-neutral-100 dark:border-[#222222]">
+                  <details className="group">
+                    <summary className="flex items-center justify-between cursor-pointer list-none text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider py-2">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5" />
+                        Sent Requests ({sentRequests.length})
+                      </span>
+                      <ChevronRight className="w-4 h-4 transform group-open:rotate-90 transition-transform text-neutral-400" />
+                    </summary>
+                    <div className="divide-y divide-neutral-100 dark:divide-[#222222] mt-2">
+                      {sentRequests.map((request) => {
+                        const reqUser = requestUserDetails[request.toUserId];
+                        return (
+                          <div key={request.toUserId} className="flex items-center justify-between py-2.5">
+                            <button
+                              onClick={() => navigate(`/user/${request.toUserId}`)}
+                              className="flex items-center gap-3 flex-1 min-w-0"
+                            >
+                              <UserAvatar
+                                src={reqUser?.photo_url}
+                                username={reqUser?.username || 'User'}
+                                className="w-9 h-9 rounded-full"
+                              />
+                              <div className="text-left min-w-0">
+                                <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate">
+                                  @{reqUser?.username || 'Unknown'}
+                                </span>
+                                <span className="text-neutral-400 text-xs">Pending request</span>
+                              </div>
+                            </button>
+                            <Button
+                              onClick={() => handleCancelRequest(request.toUserId)}
+                              disabled={processingRequest === request.toUserId}
+                              variant="outline"
+                              size="sm"
+                              className="border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs h-7 px-2.5 rounded-lg shrink-0 ml-2"
+                            >
+                              {processingRequest === request.toUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cancel'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                </div>
+              )}
             </div>
           </div>
         )}
