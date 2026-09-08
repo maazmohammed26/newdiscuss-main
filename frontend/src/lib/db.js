@@ -573,23 +573,23 @@ export const deletePost = async (postId, userId) => {
 
 // ==================== VOTE OPERATIONS ====================
 
-export const toggleVote = async (postId, voteType, userId) => {
+export const setVote = async (postId, desiredVote, userId, options = {}) => {
+  if (desiredVote !== null && desiredVote !== 'up' && desiredVote !== 'down') {
+    throw new Error('Invalid vote type');
+  }
   const voteRef = ref(database, `votes/${postId}/${userId}`);
   const allVotesRef = ref(database, `votes/${postId}`);
-  
-  // Get current user's vote
   const currentVoteSnap = await get(voteRef);
   const currentVote = currentVoteSnap.exists() ? currentVoteSnap.val() : null;
-  
-  if (currentVote === voteType) {
-    // Same vote clicked again - toggle it off (unlike/un-dislike)
+
+  if (desiredVote === null) {
     await remove(voteRef);
-  } else {
-    // Set new vote (or switch from like to dislike / dislike to like)
-    await set(voteRef, voteType);
-    
-    // Notify via Telegram on new Upvote
-    if (voteType === 'up') {
+  } else if (currentVote !== desiredVote) {
+    await set(voteRef, desiredVote);
+
+    // Notify only on the transition into an upvote. Retrying the same final
+    // state is idempotent and will not emit another notification.
+    if (desiredVote === 'up') {
       try {
         const [userSnap, postSnap] = await Promise.all([
           get(ref(database, `users/${userId}`)),
@@ -605,7 +605,8 @@ export const toggleVote = async (postId, voteType, userId) => {
             authorId,
             'New Like on Your Post',
             `@${likerUsername} liked your post.`,
-            { url: `/post/${postId}`, type: 'like' }
+            { url: `/post/${postId}`, type: 'like' },
+            { eventId: options.eventId }
           );
         }
       } catch (e) {
@@ -614,7 +615,6 @@ export const toggleVote = async (postId, voteType, userId) => {
     }
   }
   
-  // Get updated vote counts
   const updatedVotesSnap = await get(allVotesRef);
   const updatedVotes = updatedVotesSnap.exists() ? updatedVotesSnap.val() : {};
   
@@ -623,6 +623,14 @@ export const toggleVote = async (postId, voteType, userId) => {
     downvote_count: Object.values(updatedVotes).filter(v => v === 'down').length,
     votes: updatedVotes
   };
+};
+
+export const toggleVote = async (postId, voteType, userId) => {
+  const voteRef = ref(database, `votes/${postId}/${userId}`);
+  const currentVoteSnap = await get(voteRef);
+  const currentVote = currentVoteSnap.exists() ? currentVoteSnap.val() : null;
+  const desiredVote = currentVote === voteType ? null : voteType;
+  return setVote(postId, desiredVote, userId);
 };
 
 // ==================== COMMENT OPERATIONS ====================

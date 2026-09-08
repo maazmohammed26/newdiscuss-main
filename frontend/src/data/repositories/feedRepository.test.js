@@ -36,6 +36,26 @@ test('repository fetches a page and persists it without changing the source resu
   expect(cache.writePage).toHaveBeenCalledWith(page, cursor);
 });
 
+test('local optimistic helpers delegate to the cache', async () => {
+  const source = {
+    fetchPage: jest.fn(),
+    subscribeHead: jest.fn(),
+  };
+  const cache = {
+    read: jest.fn(),
+    writePage: jest.fn(),
+    upsert: jest.fn().mockResolvedValue(undefined),
+    remove: jest.fn().mockResolvedValue(undefined),
+  };
+  const repository = createFeedRepository({ source, cache });
+
+  await repository.upsertLocal(post('new', '2026-01-01T00:00:00.000Z'));
+  await repository.removeLocal('new');
+
+  expect(cache.upsert).toHaveBeenCalledWith(expect.objectContaining({ id: 'new' }));
+  expect(cache.remove).toHaveBeenCalledWith('new');
+});
+
 test('realtime events update cache and reach repository consumers', async () => {
   let sourceHandlers;
   const source = {

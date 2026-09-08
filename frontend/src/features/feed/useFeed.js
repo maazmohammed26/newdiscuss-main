@@ -142,17 +142,22 @@ export const useFeed = ({
 
   const removePost = useCallback((postId) => {
     updatePosts((current) => current.filter((post) => post.id !== postId));
-  }, [updatePosts]);
+    repository.removeLocal(postId);
+  }, [repository, updatePosts]);
 
   const updatePost = useCallback((post) => {
     updatePosts((current) => mergeFeedPosts(current, [post]));
-  }, [updatePosts]);
+    repository.upsertLocal(post);
+  }, [repository, updatePosts]);
 
   const patchPost = useCallback((postId, updates) => {
-    updatePosts((current) => current.map((post) => (
-      post.id === postId ? { ...post, ...updates, id: postId } : post
-    )));
-  }, [updatePosts]);
+    updatePosts((current) => current.map((post) => {
+      if (post.id !== postId) return post;
+      const patched = { ...post, ...updates, id: postId };
+      repository.upsertLocal(patched);
+      return patched;
+    }));
+  }, [repository, updatePosts]);
 
   return {
     posts,

@@ -30,8 +30,14 @@ const isRetryableStatus = (status) => status === 408 || status === 425 || status
  * the permission/SDK module prevents a stale lazy chunk from silently dropping
  * a notification after a production deployment.
  */
-export const sendRemoteNotification = async (targetUserId, title, bodyText, data = {}) => {
-  const eventId = newEventId();
+export const sendRemoteNotification = async (
+  targetUserId,
+  title,
+  bodyText,
+  data = {},
+  options = {}
+) => {
+  const eventId = options.eventId || newEventId();
   const payload = { targetUserId, title, bodyText, data, eventId };
 
   try {

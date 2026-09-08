@@ -15,6 +15,8 @@ import OfflineBanner from '@/components/OfflineBanner';
 import DiscussSplash from '@/components/DiscussSplash';
 import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialogProvider';
 import '@/App.css';
+import { initializeSyncHandlers } from '@/data/sync/registerSyncHandlers';
+import { startOutboxSync } from '@/data/sync/outboxSync';
 
 // ── Lazy-loaded page components ──────────────────────────────────────────────
 const LandingPage           = lazy(() => import('@/pages/LandingPage'));
@@ -256,6 +258,7 @@ function App() {
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
+            <SyncBridge />
             <AudioCallProvider>
             <SecurityProvider>
               <HighlightsProvider>
@@ -277,6 +280,19 @@ function App() {
       </BrowserRouter>
     </AppErrorBoundary>
   );
+}
+
+function SyncBridge() {
+  const { user } = useAuth();
+  const accountId = user?.uid || user?.id;
+
+  useEffect(() => {
+    initializeSyncHandlers();
+    if (!accountId) return undefined;
+    return startOutboxSync(() => accountId);
+  }, [accountId]);
+
+  return null;
 }
 
 function SecurityWrapper({ children }) {

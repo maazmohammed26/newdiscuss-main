@@ -7,16 +7,16 @@ Last updated: 2026-09-08
 | Check | Result |
 |---|---|
 | Pre-migration unit tests | 91/91 passed |
-| Current unit tests | 100/100 passed |
+| Current unit tests | 118/118 passed |
 | Production build | Passed |
-| Main bundle after first slice | 258.85 kB gzip |
+| Main bundle after outbox slice | 261.69 kB gzip |
 | Feed page size | 20 posts |
 | Realtime feed-head bound | 20 posts |
 | Maximum repository page size | 50 posts |
 | Cache retention | 300 posts / 20 page descriptors |
 | Scroll prefetch threshold | 600 px |
 
-The main bundle increased by approximately 170 bytes gzip across the first implementation/build iterations; no new runtime dependency was added.
+The feed slice increased the main bundle by approximately 170 bytes gzip. The durable outbox, cross-tab coordinator, and first mutation handler add approximately 2.84 kB gzip. No new runtime dependency was added.
 
 ## Structural read improvement
 

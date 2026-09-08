@@ -63,4 +63,18 @@ describe('notificationTransport', () => {
     const secondBody = JSON.parse(fetch.mock.calls[1][1].body);
     expect(secondBody.eventId).toBe(firstBody.eventId);
   });
+
+  it('uses a caller supplied logical event id', async () => {
+    getAuthenticatedIdToken.mockResolvedValue('token-1');
+    fetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true }),
+    });
+
+    await sendRemoteNotification('recipient_123', 'Hello', 'Body', {}, { eventId: 'vote-operation-1' });
+
+    const body = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(body.eventId).toBe('vote-operation-1');
+  });
 });

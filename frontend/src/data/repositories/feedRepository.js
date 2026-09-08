@@ -41,6 +41,22 @@ export const createFeedRepository = ({ source, cache }) => {
       return page;
     },
 
+    async upsertLocal(post) {
+      try {
+        await cache.upsert(post);
+      } catch (error) {
+        console.warn('[FEED] Local optimistic upsert failed:', error?.message);
+      }
+    },
+
+    async removeLocal(postId) {
+      try {
+        await cache.remove(postId);
+      } catch (error) {
+        console.warn('[FEED] Local optimistic delete failed:', error?.message);
+      }
+    },
+
     subscribeHead(handlers) {
       return source.subscribeHead({
         ...handlers,

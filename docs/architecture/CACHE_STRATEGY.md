@@ -43,7 +43,11 @@ Small device/UI preferences may remain in localStorage.
 
 ## Multi-tab schema upgrades
 
-The database reports blocked upgrades, closes on a newer-version request, and clears its singleton after termination. Outbox ownership/leader election is a separate phase.
+The database reports blocked upgrades, closes on a newer-version request, and clears its singleton after termination. Outbox flushes use browser locks when available and transactional expiring leases otherwise.
+
+## Outbox retention
+
+Due operations are claimed in batches of ten for the current authenticated user. Completed operations older than one day are pruned while retaining the newest 100 for diagnostics. Failed operations remain until explicitly retried or a later user-facing cleanup policy is implemented.
 
 ## Freshness
 

@@ -43,3 +43,7 @@ AppError provides stable categories and retryability without exposing raw Fireba
 ## Legacy coexistence
 
 lib/db.js remains the write/legacy-read adapter while the migration is incomplete. New feature code must not add direct Firebase calls to React components; it should add a source and repository under src/data.
+
+## Mutation path
+
+The first migrated write follows UI -> vote repository -> IndexedDB outbox -> registered sync handler -> Firebase. Vote operations store the desired final value rather than a toggle command, so replay cannot invert the user's intent.

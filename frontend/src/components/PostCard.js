@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toggleVote, deletePost } from '@/lib/db';
+import { deletePost } from '@/lib/db';
+import { queuePostVote } from '@/features/posts/voteRepository';
 import { createCommentFirestore } from '@/lib/commentsDb';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
@@ -237,7 +238,21 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
     setDownvoteCount(newDown);
 
     try {
-      const res = await toggleVote(post.id, type, currentUser.id);
+      const optimisticVotes = { ...(post.votes || {}) };
+      if (newVote) optimisticVotes[currentUser.id] = newVote;
+      else delete optimisticVotes[currentUser.id];
+      onVoteChanged?.(post.id, {
+        upvote_count: newUp,
+        downvote_count: newDown,
+        votes: optimisticVotes,
+      });
+
+      const operation = await queuePostVote({
+        postId: post.id,
+        userId: currentUser.id,
+        vote: newVote,
+      });
+      const res = operation?.result;
       if (res) {
         setUpvoteCount(res.upvote_count);
         setDownvoteCount(res.downvote_count);
@@ -247,6 +262,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
       setUserVote(prevUserVote);
       setUpvoteCount(prevUpvotes);
       setDownvoteCount(prevDownvotes);
+      onVoteChanged?.(post.id, {
+        upvote_count: prevUpvotes,
+        downvote_count: prevDownvotes,
+        votes: post.votes || {},
+      });
       toast.error('Failed to register reaction');
     } finally {
       setVoting(false);

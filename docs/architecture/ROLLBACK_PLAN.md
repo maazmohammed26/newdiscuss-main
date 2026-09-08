@@ -18,6 +18,8 @@ The version 6 IndexedDB upgrade is additive. Rolling the code back to a client t
 
 The current slice performs reads only against existing feed/vote/comment paths and writes only browser-local cache. It requires no remote data rollback and introduces no production migration.
 
+The outbox slice writes existing votes/{postId}/{uid} values using the same up/down/null model as the legacy toggle. To roll it back, stop new queueing first, allow or inspect pending operations, then restore direct toggle consumers while retaining local database version 6. Do not delete pending outbox rows automatically.
+
 ## Deployment rollback sequence
 
 1. Stop rollout at preview/staging.

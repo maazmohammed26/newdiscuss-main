@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPostById, toggleVote, updatePost, deletePost } from '@/lib/db';
+import { getPostById, updatePost, deletePost } from '@/lib/db';
+import { queuePostVote } from '@/features/posts/voteRepository';
+import { feedRepository } from '@/data/repositories/feedRepository';
 import Header from '@/components/Header';
 import CommentsSection from '@/components/CommentsSection';
 import ShareModal from '@/components/ShareModal';
@@ -94,11 +96,36 @@ export default function PostDetailPage() {
     }
     if (voting || !post) return;
     setVoting(true);
+    const previousPost = post;
+    const previousVote = post.votes?.[user.id] || null;
+    const desiredVote = previousVote === voteType ? null : voteType;
+    const votes = { ...(post.votes || {}) };
+    if (desiredVote) votes[user.id] = desiredVote;
+    else delete votes[user.id];
+    const optimisticPost = {
+      ...post,
+      votes,
+      upvote_count: Object.values(votes).filter((vote) => vote === 'up').length,
+      downvote_count: Object.values(votes).filter((vote) => vote === 'down').length,
+    };
+    setPost(optimisticPost);
+    feedRepository.upsertLocal(optimisticPost);
+
     try {
-      const data = await toggleVote(post.id, voteType, user.id);
-      setPost(prev => ({ ...prev, upvote_count: data.upvote_count, downvote_count: data.downvote_count, votes: data.votes }));
+      const operation = await queuePostVote({
+        postId: post.id,
+        userId: user.id,
+        vote: desiredVote,
+      });
+      if (operation?.result) {
+        const syncedPost = { ...optimisticPost, ...operation.result };
+        setPost(syncedPost);
+        feedRepository.upsertLocal(syncedPost);
+      }
     } catch (err) {
-      if (err.message?.includes('below 0')) toast.error('Vote score cannot go below 0');
+      setPost(previousPost);
+      feedRepository.upsertLocal(previousPost);
+      toast.error('Failed to register reaction');
     } finally { setVoting(false); }
   };
 
