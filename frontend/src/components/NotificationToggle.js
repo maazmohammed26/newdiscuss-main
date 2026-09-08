@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/popover';
 import { Bell, BellOff, Loader2, AlertCircle, Smartphone, Info, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { isNativeApp } from '@/platform/platformAdapter';
 
 export default function NotificationToggle({ compact = false }) {
   const { user } = useAuth();
@@ -37,18 +38,12 @@ export default function NotificationToggle({ compact = false }) {
   const { theme } = useTheme();
   const isBlack = false;
   
-  const isNativeWrapper = () => typeof window !== 'undefined' && Boolean(
-    window.median
-    || window.gonative
-    || /median|gonative/i.test(navigator.userAgent || '')
-  );
-
   useEffect(() => {
     const checkStatus = async () => {
       try {
         setEnabled(isNotificationsEnabled());
         setPreviewEnabled(isNotificationPreviewEnabled());
-        setIsAndroidApp(isNativeWrapper());
+        setIsAndroidApp(isNativeApp());
       } catch (error) {
         console.error('Error checking notification status:', error);
       }
@@ -60,7 +55,7 @@ export default function NotificationToggle({ compact = false }) {
   const handleToggle = async () => {
     if (toggling) return;
     
-    const isAndroidAppWrapper = isNativeWrapper();
+    const isAndroidAppWrapper = isNativeApp();
     
     if (!isAndroidAppWrapper) {
       if (isIOS() && !isPWAInstalled()) {

@@ -67,7 +67,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
       };
       fetchFollow();
     }
-  }, [pulse.id, userId, checkLiked, isOwner]);
+  }, [pulse.id, pulse.authorId, userId, checkLiked, isOwner]);
 
   useEffect(() => {
     const options = {
@@ -88,13 +88,14 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
       });
     }, options);
 
-    if (videoRef.current) {
-      observer.observe(videoRef.current);
+    const videoElement = videoRef.current;
+    if (videoElement) {
+      observer.observe(videoElement);
     }
 
     return () => {
-      if (videoRef.current) {
-        observer.unobserve(videoRef.current);
+      if (videoElement) {
+        observer.unobserve(videoElement);
       }
     };
   }, []);

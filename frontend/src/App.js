@@ -17,6 +17,7 @@ import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialogProvider';
 import '@/App.css';
 import { initializeSyncHandlers } from '@/data/sync/registerSyncHandlers';
 import { startOutboxSync } from '@/data/sync/outboxSync';
+import { normalizeDeepLink } from '@/platform/deepLinks';
 
 // ── Lazy-loaded page components ──────────────────────────────────────────────
 const LandingPage           = lazy(() => import('@/pages/LandingPage'));
@@ -34,12 +35,9 @@ const ChatConversationPage  = lazy(() => import('@/pages/ChatConversationPage'))
 const GroupConversationPage = lazy(() => import('@/pages/GroupConversationPage'));
 const GroupInfoPage         = lazy(() => import('@/pages/GroupInfoPage'));
 const JoinRequestsPage      = lazy(() => import('@/pages/JoinRequestsPage'));
+const NotificationsPage     = lazy(() => import('@/pages/NotificationsPage'));
 const PulsePage             = lazy(() => import('@/pages/PulsePage'));
 const DevRadarPage          = lazy(() => import('@/pages/DevRadarPage'));
-const NewsPage              = lazy(() => import('@/pages/NewsPage'));
-const NewsDetailPage        = lazy(() => import('@/pages/NewsDetailPage'));
-const JobsPage              = lazy(() => import('@/pages/JobsPage'));
-const JobDetailPage         = lazy(() => import('@/pages/JobDetailPage'));
 const EditorPage            = lazy(() => import('@/pages/EditorPage'));
 const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
 const AiChatPage            = lazy(() => import('@/pages/AiChatPage'));
@@ -209,13 +207,10 @@ function AppRoutes() {
         <Route path="/group/:groupId"          element={<ProtectedRoute><GroupConversationPage /></ProtectedRoute>} />
         <Route path="/group/:groupId/info"     element={<ProtectedRoute><GroupInfoPage /></ProtectedRoute>} />
         <Route path="/join-requests"           element={<ProtectedRoute><JoinRequestsPage /></ProtectedRoute>} />
+        <Route path="/notifications"           element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
         <Route path="/profile"                 element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/pulse"                   element={<ProtectedRoute><PulsePage /></ProtectedRoute>} />
         <Route path="/devradar"                element={<ProtectedRoute><DevRadarPage /></ProtectedRoute>} />
-        <Route path="/news"                    element={<NewsPage />} />
-        <Route path="/news/:newsId"            element={<NewsDetailPage />} />
-        <Route path="/jobs"                    element={<JobsPage />} />
-        <Route path="/jobs/:jobId"             element={<JobDetailPage />} />
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
         <Route path="/ai-assistant"            element={<ProtectedRoute><AiChatPage /></ProtectedRoute>} />
@@ -258,6 +253,7 @@ function App() {
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
+            <DeepLinkBridge />
             <SyncBridge />
             <AudioCallProvider>
             <SecurityProvider>
@@ -291,6 +287,39 @@ function SyncBridge() {
     if (!accountId) return undefined;
     return startOutboxSync(() => accountId);
   }, [accountId]);
+
+  return null;
+}
+
+function DeepLinkBridge() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const open = (value) => {
+      const url = normalizeDeepLink(value);
+      try { sessionStorage.setItem('discuss_last_notification_open', JSON.stringify({ url, at: new Date().toISOString() })); } catch (_) {}
+      navigate(url);
+    };
+    const onWorkerMessage = (event) => {
+      if (event.data?.type === 'NOTIFICATION_CLICK') open(event.data.url);
+    };
+    const onNotificationOpen = (event) => open(event.detail?.url);
+    navigator.serviceWorker?.addEventListener?.('message', onWorkerMessage);
+    window.addEventListener('discuss:notification-open', onNotificationOpen);
+
+    const previousMedianCallback = window.median_onesignal_notification_opened;
+    window.median_onesignal_notification_opened = (notification) => {
+      try { previousMedianCallback?.(notification); } catch (_) {}
+      const data = notification?.notification?.additionalData || notification?.additionalData || notification?.data || {};
+      open(data.url || data.targetUrl || notification?.url);
+    };
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener?.('message', onWorkerMessage);
+      window.removeEventListener('discuss:notification-open', onNotificationOpen);
+      window.median_onesignal_notification_opened = previousMedianCallback;
+    };
+  }, [navigate]);
 
   return null;
 }
@@ -343,7 +372,7 @@ function OnboardingWrapper({ children }) {
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
+  const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
   const isAiChatRoute = location.pathname === '/ai-assistant';
   const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 

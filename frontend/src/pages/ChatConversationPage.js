@@ -10,8 +10,8 @@ import { getUserProfile } from '@/lib/userProfileDb';
 import { isChatEnabled, getRelationshipStatus, getRelationshipDetails, RELATIONSHIP_STATUS, unfollowFriend } from '@/lib/relationshipsDb';
 import { 
   getOrCreateChat, 
-  sendMessage, 
   subscribeToMessages, 
+  getMessagesPage,
   markMessagesAsRead,
   toggleAutoDelete,
   deleteOldMessages,
@@ -20,7 +20,6 @@ import {
   deleteMessageForMe,
   deleteMessageForEveryone,
   getDeletedMessages,
-  sendReplyMessage,
   reportAndRestrictUser,
   runAutoDeleteCleanup,
   subscribeToChatSettings,
@@ -29,7 +28,7 @@ import {
 import {
   getCachedMessages,
   getFastCachedMessages,
-  cacheMessages,
+  mergeCachedMessages,
   patchCachedUserProfile,
   clearDmThreadCaches,
   removeDmMessageFromCaches,
@@ -64,14 +63,18 @@ import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
 import { claimBlinkView, isBlinkExpired, isBlinkViewed } from '@/lib/blinkService';
 import { toast } from 'sonner';
 import { notifyChatMessage, isNotificationsEnabled } from '@/lib/pushNotificationService';
-import { notifyTelegramDM } from '@/lib/telegramService';
-import { notifyDiscordDM } from '@/lib/discordService';
-import { sendRemoteNotification } from '@/lib/notificationTransport';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
 import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
 import { MapPin } from 'lucide-react';
 import LocationMessage from '@/components/LocationMessage';
+import { promptNativeLocationServices } from '@/platform/platformAdapter';
+import {
+  queueDirectMessage,
+  getQueuedMessages,
+  retryMessage,
+  subscribeToMessageSync,
+} from '@/features/messages/messageRepository';
 
 const reconcileMessages = (current, incoming) => {
   if (!Array.isArray(incoming)) return current;
@@ -87,6 +90,14 @@ const reconcileMessages = (current, incoming) => {
     return message;
   });
   return changed ? reconciled : current;
+};
+
+const mergeChronological = (current, incoming) => {
+  const byId = new Map(current.map((message) => [message.id, message]));
+  incoming.forEach((message) => byId.set(message.id, { ...(byId.get(message.id) || {}), ...message }));
+  return [...byId.values()].sort(
+    (a, b) => new Date(a.timestamp) - new Date(b.timestamp) || String(a.id).localeCompare(String(b.id))
+  );
 };
 
 export default function ChatConversationPage() {
@@ -127,14 +138,13 @@ export default function ChatConversationPage() {
   const [joiningLiveCall, setJoiningLiveCall] = useState(false);
   const liveCallInvite = useMemo(() => incomingCallInvites?.find((invite) => invite.chatId === chatId) || null, [chatId, incomingCallInvites]);
   const [reporting, setReporting] = useState(false);
-  const [chatCreated, setChatCreated] = useState(false);
   const [liveMessagesSynced, setLiveMessagesSynced] = useState(false);
   const [positionedChatId, setPositionedChatId] = useState(null);
-  const [messageLimit, setMessageLimit] = useState(50);
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [callingPreferenceBusy, setCallingPreferenceBusy] = useState(false);
+  const historyCursorRef = useRef(null);
 
   useEffect(() => {
     messagesCountRef.current = messages.length;
@@ -196,6 +206,30 @@ export default function ChatConversationPage() {
     });
   }, []);
 
+  const loadOlderMessages = useCallback(async (container) => {
+    if (!chatId || !user?.id || loadingOld || !hasMoreOld) return;
+    setLoadingOld(true);
+    const scrollHeightBefore = container?.scrollHeight || 0;
+    try {
+      const oldest = messages[0];
+      const cursor = historyCursorRef.current || (oldest ? { id: oldest.id, timestamp: oldest.timestamp } : null);
+      const page = await getMessagesPage(chatId, { cursor, limit: 50 });
+      historyCursorRef.current = page.cursor;
+      setHasMoreOld(page.hasMore);
+      if (page.items.length) {
+        setMessages((current) => mergeChronological(current, page.items));
+        await mergeCachedMessages(user.id, chatId, page.items);
+        requestAnimationFrame(() => {
+          if (container) container.scrollTop = container.scrollHeight - scrollHeightBefore;
+        });
+      }
+    } catch (error) {
+      toast.error('Could not load older messages');
+    } finally {
+      setLoadingOld(false);
+    }
+  }, [chatId, hasMoreOld, loadingOld, messages, user?.id]);
+
   const handleScroll = useCallback((e) => {
     const container = e.currentTarget;
     
@@ -203,13 +237,8 @@ export default function ChatConversationPage() {
     const isFar = container.scrollHeight - container.scrollTop - container.clientHeight > 300;
     setShowScrollDown(isFar);
 
-    if (container.scrollTop === 0 && !loadingOld && hasMoreOld && liveMessagesSynced) {
-      setLoadingOld(true);
-      setTimeout(() => {
-        setMessageLimit((prev) => Math.min(prev + 50, 100000));
-      }, 800);
-    }
-  }, [loadingOld, hasMoreOld, liveMessagesSynced]);
+    if (container.scrollTop <= 24 && liveMessagesSynced) loadOlderMessages(container);
+  }, [liveMessagesSynced, loadOlderMessages]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -407,7 +436,6 @@ export default function ChatConversationPage() {
         if (canChat) {
           try {
             await getOrCreateChat(user.id, otherUserId);
-            setChatCreated(true);
           } catch (err) {
             console.error('Error creating chat:', err);
           }
@@ -425,6 +453,8 @@ export default function ChatConversationPage() {
   useEffect(() => {
     setLiveMessagesSynced(false);
     prevSeenMessageIdsRef.current = new Set();
+    historyCursorRef.current = null;
+    setHasMoreOld(true);
   }, [chatId, user?.id]);
 
   // Subscribe to chat settings
@@ -460,6 +490,10 @@ export default function ChatConversationPage() {
       if (!cancelled && cached?.length) {
         setMessages((current) => reconcileMessages(current, cached));
       }
+      const queued = await getQueuedMessages(user.id, 'directConversation', chatId);
+      if (!cancelled && queued.length) {
+        setMessages((current) => mergeChronological(current, queued));
+      }
 
       unsubscribe = subscribeToMessages(chatId, async (newMessages) => {
         if (cancelled) return;
@@ -484,16 +518,18 @@ export default function ChatConversationPage() {
           : 0;
         const shouldStayAtLatest = distanceFromBottom < 160;
 
-        setMessages((current) => reconcileMessages(current, newMessages));
+        setMessages((current) => mergeChronological(current, newMessages));
 
-        if (newMessages.length < messageLimit) {
+        if (newMessages.length < 50) {
           setHasMoreOld(false);
-        } else {
-          setHasMoreOld(true);
+        }
+        const oldestLive = newMessages[0];
+        if (!historyCursorRef.current && oldestLive) {
+          historyCursorRef.current = { id: oldestLive.id, timestamp: oldestLive.timestamp };
         }
 
         setLiveMessagesSynced(true);
-        cacheMessages(user.id, chatId, newMessages).catch(() => {});
+        mergeCachedMessages(user.id, chatId, newMessages).catch(() => {});
         markChatReadLocally(chatId);
         markMessagesAsRead(chatId, user.id);
         setLoadingOld(false);
@@ -509,14 +545,33 @@ export default function ChatConversationPage() {
             container.scrollTop = container.scrollHeight;
           });
         }
-      }, messageLimit);
+      }, 50);
     })();
 
     return () => {
       cancelled = true;
       if (unsubscribe) unsubscribe();
     };
-  }, [chatId, markChatReadLocally, user?.id, messageLimit]);
+  }, [chatId, markChatReadLocally, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    return subscribeToMessageSync(user.id, (results) => {
+      const statuses = new Map(results.map((result) => [result.operationId, result.status]));
+      const patchStatus = (message) => {
+        const result = statuses.get(message.id);
+        if (!result) return message;
+        return { ...message, status: result === 'failed' ? 'failed' : result === 'completed' ? 'sent' : 'sending' };
+      };
+      setMessages((current) => {
+        const next = current.map(patchStatus);
+        const changed = next.filter((message) => statuses.has(message.id));
+        if (chatId && changed.length) mergeCachedMessages(user.id, chatId, changed).catch(() => {});
+        return next;
+      });
+      setOptimisticMessages((current) => current.map(patchStatus));
+    });
+  }, [chatId, user?.id]);
 
   // Position cached or freshly loaded messages before the browser paints them.
   // This removes the visible oldest-message -> latest-message jump.
@@ -543,21 +598,6 @@ export default function ChatConversationPage() {
     }
   }, []);
 
-  // Ensure chat exists before sending
-  const ensureChatExists = async () => {
-    if (!chatCreated && chatEnabled) {
-      try {
-        await getOrCreateChat(user.id, otherUserId);
-        setChatCreated(true);
-        return true;
-      } catch (err) {
-        console.error('Failed to create chat:', err);
-        return false;
-      }
-    }
-    return true;
-  };
-
   const handleSendLocation = () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser');
@@ -567,18 +607,21 @@ export default function ChatConversationPage() {
     // as the very first thing — before setSending(true) or any other call.
     // Any state update or async call before it breaks the gesture chain and
     // Android Chrome silently denies without showing the popup.
-    if (window.median?.android?.geoLocation?.promptLocationServices) {
-      try { window.median.android.geoLocation.promptLocationServices(); } catch (e) {}
-    }
+    promptNativeLocationServices();
     setSending(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          const chatExists = await ensureChatExists();
-          if (!chatExists) throw new Error('Failed to create chat');
-          await sendMessage(chatId, user.id, '', [], { latitude, longitude });
-          toast.success('Location sent');
+          const optimistic = await queueDirectMessage({
+            userId: user.id,
+            chatId,
+            recipientId: otherUserId,
+            senderName: user?.username,
+            location: { latitude, longitude },
+          });
+          setOptimisticMessages((current) => [...current, optimistic]);
+          toast.success(navigator.onLine === false ? 'Location queued' : 'Location sending');
           if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
           }
@@ -621,62 +664,22 @@ export default function ChatConversationPage() {
       inputRef.current.style.overflowY = 'hidden';
     }
 
-    // 2. Generate and add the optimistic message to state instantly!
-    const tempId = `temp-${Date.now()}`;
-    const optimisticMsg = {
-      id: tempId,
-      sender: user.id,
-      text: messageText,
-      timestamp: new Date().toISOString(),
-      read: false,
-      status: 'sent',
-      media: effectiveMedia || [],
-      location: null,
-      replyTo: currentReplyTo ? {
-        id: currentReplyTo.id,
-        text: currentReplyTo.text?.substring(0, 100) || '',
-        sender: currentReplyTo.sender
-      } : null
-    };
-    
-    setOptimisticMessages(prev => [...prev, optimisticMsg]);
-
-    // 3. Dispatch the database write completely in the background without blocking the UI
     (async () => {
       try {
-        const chatExists = await ensureChatExists();
-        if (!chatExists) {
-          throw new Error('Failed to create chat');
-        }
-
-        if (currentReplyTo) {
-          await sendReplyMessage(chatId, user.id, messageText, currentReplyTo, effectiveMedia);
-        } else {
-          await sendMessage(chatId, user.id, messageText, effectiveMedia);
-        }
-        
-        // Background non-blocking triggers
-        const isImage = !!(effectiveMedia && effectiveMedia.length > 0);
-        notifyTelegramDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
-        notifyDiscordDM(otherUserId, user?.username, messageText, isImage).catch(() => {});
-        
-        // Trigger OneSignal Push Notification (native mobile push)
-        sendRemoteNotification(
-          otherUserId,
-          `New message from @${user?.username || 'user'}`,
-          messageText || (isImage ? '📷 Sent an image' : 'Sent a message'),
-          { url: `/chat/${user.id}`, type: 'chat' }
-        );
-        
-        // Remove from optimistic list since it's successfully written
-        setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
+        const optimistic = await queueDirectMessage({
+          userId: user.id,
+          chatId,
+          recipientId: otherUserId,
+          senderName: user?.username,
+          text: messageText,
+          media: effectiveMedia || [],
+          replyTo: currentReplyTo,
+        });
+        setOptimisticMessages((current) => [...current, optimistic]);
       } catch (error) {
         console.error('Send message error:', error);
-        // Put the message back in the input box so they don't lose it if it actually failed!
         setNewMessage(messageText);
-        toast.error(error.message || 'Failed to send message');
-        // Clean up this optimistic message since it failed
-        setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
+        toast.error(error.message || 'Could not queue message');
       }
     })();
 
@@ -900,6 +903,14 @@ export default function ChatConversationPage() {
     } else {
       return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
     }
+  };
+
+  const handleRetryMessage = async (message) => {
+    if (message.status !== 'failed' || !user?.id) return;
+    setMessages((current) => current.map((item) => item.id === message.id ? { ...item, status: 'sending' } : item));
+    setOptimisticMessages((current) => current.map((item) => item.id === message.id ? { ...item, status: 'sending' } : item));
+    const retried = await retryMessage(message.id, user.id);
+    if (!retried) toast.error('This message can no longer be retried');
   };
 
   const combinedMessages = useMemo(() => {
@@ -1397,6 +1408,18 @@ export default function ChatConversationPage() {
                           <span className="text-[10px] tabular-nums">
                             {formatMessageTime(message.timestamp)}
                           </span>
+                          {isOwn && message.status === 'sending' && (
+                            <Loader2 className="h-3 w-3 animate-spin" aria-label="Sending" />
+                          )}
+                          {isOwn && message.status === 'failed' && (
+                            <button
+                              type="button"
+                              onClick={(event) => { event.stopPropagation(); handleRetryMessage(message); }}
+                              className="text-[10px] font-semibold underline"
+                            >
+                              Failed · Retry
+                            </button>
+                          )}
                           {isOwn && (
                             <Check className={`w-3 h-3 ${message.read ? 'text-blue-300' : ''}`} />
                           )}

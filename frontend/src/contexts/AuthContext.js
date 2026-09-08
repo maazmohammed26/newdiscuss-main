@@ -60,6 +60,8 @@ import { syncUserVerificationInCommentsFirestore } from '@/lib/commentsDb';
 import { notifyAdminUserSignup } from '@/lib/telegramService';
 import { sendVerificationOTPDirectly } from '@/lib/emailService';
 import { logoutOneSignalUser, syncOneSignalUser } from '@/lib/pushNotificationService';
+import { synchronizeAuxiliaryAuth, signOutAuxiliaryAuth } from '@/lib/auxiliaryAuth';
+import { getMedianBridge, isNativeApp } from '@/platform/platformAdapter';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fire
@@ -859,11 +861,7 @@ export function AuthProvider({ children }) {
       setPendingVerification(false);
 
       // Detect if running inside the Median.co wrapped mobile app.
-      const isMedianApp = typeof window !== 'undefined' && (
-        window.median !== undefined ||
-        window.gonative !== undefined ||
-        /median|gonative/i.test(navigator.userAgent)
-      );
+      const isMedianApp = isNativeApp();
 
       if (isMedianApp) {
         // Preferred APK flow: Median's native Google SDK presents the account
@@ -937,7 +935,7 @@ export function AuthProvider({ children }) {
             }
           }, () => finish({ success: false, error: 'Browser sign-in is currently unavailable. Please retry native Google sign-in or contact support.' }));
           try {
-            const bridge = window.median?.window || window.gonative?.window;
+            const bridge = getMedianBridge()?.window;
             if (bridge?.open) {
               const opened = bridge.open(bridgeUrl, 'external');
               if (opened?.catch) opened.catch(() => finish({ success: false, error: 'Could not open your browser. Please try again.' }));
@@ -1069,8 +1067,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (oneSignalUserId) {
       syncOneSignalUser(oneSignalUserId, oneSignalUsername);
+      synchronizeAuxiliaryAuth(oneSignalUserId).catch((error) => console.warn('[AUTH] Auxiliary authentication failed:', error.message));
     } else {
       logoutOneSignalUser();
+      signOutAuxiliaryAuth().catch(() => {});
     }
   }, [oneSignalUserId, oneSignalUsername]);
 

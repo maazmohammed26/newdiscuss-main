@@ -96,8 +96,6 @@ import {
   removeTelegramChatId,
   saveTelegramPrivacy,
   getTelegramPrivacy,
-  notifyTelegramFriendRequest,
-  notifyTelegramFriendAccepted,
   BOT_USERNAME as TELEGRAM_BOT_USERNAME,
   APP_URL as TELEGRAM_APP_URL,
 } from '@/lib/telegramService';
@@ -942,8 +940,6 @@ export default function ProfilePage() {
               const userData = currentDetails[req.fromUserId];
               const username = userData?.username || 'Someone';
               notifyFriendRequest(req.fromUserId, username);
-              // Also send Telegram notification (fires independently)
-              notifyTelegramFriendRequest(user.id, username);
             }
             return currentDetails;
           });
@@ -1101,8 +1097,6 @@ export default function ProfilePage() {
       const friendsData = await getFriendsWithDetails(user.id);
       setFriends(friendsData);
       toast.success('Friend request accepted!');
-      // Notify the original requester via Telegram
-      notifyTelegramFriendAccepted(fromUserId, user?.username).catch(() => {});
     } catch (error) {
       toast.error('Failed to accept request');
     } finally {

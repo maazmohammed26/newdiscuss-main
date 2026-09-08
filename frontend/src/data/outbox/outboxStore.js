@@ -23,6 +23,17 @@ export const outboxStore = {
     return db.get('outbox', operationId);
   },
 
+  async getForEntity(userId, entityType, entityId, { includeCompleted = false } = {}) {
+    if (!userId || !entityType || !entityId) return [];
+    const db = await getLocalDatabase();
+    const rows = await db.getAll('outbox');
+    return rows
+      .filter((row) => row.userId === userId)
+      .filter((row) => row.entityType === entityType && row.entityId === entityId)
+      .filter((row) => includeCompleted || row.status !== OUTBOX_STATUS.COMPLETED)
+      .sort(byCreatedAt);
+  },
+
   async claimDue({
     userId,
     ownerId,

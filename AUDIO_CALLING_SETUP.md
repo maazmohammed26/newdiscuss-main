@@ -35,7 +35,7 @@ CHATS_DATABASE_URL
 
 `FIREBASE_SERVICE_ACCOUNT_JSON` is the complete JSON for one dedicated server service account. Keep it as one environment-variable value. The backend safely restores escaped private-key line breaks.
 
-The LiveKit credentials shared during development must be rotated in LiveKit Cloud before public release because the original secret was exposed outside a secret manager. The old `REACT_APP_ONESIGNAL_REST_API_KEY` must also be rotated because older browser builds could include it. Save only the rotated server keys under the non-prefixed names above, then remove the old `REACT_APP_` REST-key variable after the new deployment is verified.
+The LiveKit credentials shared during development must be rotated in LiveKit Cloud before public release because the original secret was exposed outside a secret manager. Any OneSignal REST key ever included in a browser-prefixed environment variable must also be rotated because an older browser build could contain it. Save rotated credentials only under the server-only names above.
 
 ## Firebase access
 

@@ -1,7 +1,12 @@
 // Simple Push Notification Service - No Database Storage
 // Just push notifications directly using Service Worker
 
-import { sendRemoteNotification } from './notificationTransport';
+import {
+  getNativeOneSignalBridge,
+  isNativeApp,
+  getPlatform,
+  PLATFORM,
+} from '@/platform/platformAdapter';
 
 // VAPID Public Key for Web Push
 export const VAPID_PUBLIC_KEY = 'BD3rYWCGmkrNvyQ8t2GzPdnUySdy4WnEZwm51t_LLIApOK5iI2WQ15ckapmOQQplhiLA68_Ryyifq4ERe4UDTec';
@@ -15,21 +20,7 @@ const ONESIGNAL_APP_ID = '280791b6-7711-4b32-8897-449efe155f2b';
 let oneSignalWebReady = null;
 let activeNativeOneSignalUid = null;
 
-const isMedianApp = () => typeof window !== 'undefined' && Boolean(
-  window.median
-  || window.gonative
-  || /median|gonative/i.test(window.navigator?.userAgent || '')
-);
-
-const getNativeOneSignalBridge = async () => {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < 8_000) {
-    const bridge = window.median?.onesignal || window.gonative?.onesignal;
-    if (bridge) return bridge;
-    await new Promise((resolve) => window.setTimeout(resolve, 100));
-  }
-  return null;
-};
+const isMedianApp = isNativeApp;
 
 const persistOneSignalInfo = async (uid, info = {}) => {
   if (!uid || !info || typeof info !== 'object') return;
@@ -48,6 +39,7 @@ const persistOneSignalInfo = async (uid, info = {}) => {
     Object.entries(values).filter(([, value]) => value !== undefined && value !== null && String(value).trim())
   );
   if (Object.keys(identifiers).length === 0) return;
+  try { sessionStorage.setItem('discuss_onesignal_identity', JSON.stringify({ uid, ...identifiers })); } catch (_) {}
   try {
     const { updateUser } = await import('./db');
     await updateUser(uid, identifiers);
@@ -95,6 +87,12 @@ export const ensureOneSignalWeb = () => {
               externalId: activeNativeOneSignalUid,
             });
           }
+        });
+        OneSignal.Notifications?.addEventListener?.('click', (event) => {
+          const data = event?.notification?.additionalData || {};
+          window.dispatchEvent(new CustomEvent('discuss:notification-open', {
+            detail: { url: data.url || data.targetUrl || event?.notification?.launchURL || '/' },
+          }));
         });
 
         window.clearTimeout(timeout);
@@ -345,7 +343,7 @@ export const syncOneSignalUser = (uid, username) => {
   ensureOneSignalWeb().then(async (OneSignal) => {
     if (!OneSignal) return;
     await OneSignal.login(uid);
-    await OneSignal.User.addTags({ userId: uid, username: username || 'user', platform: 'web' });
+        await OneSignal.User.addTags({ userId: uid, username: username || 'user', platform: getPlatform() === PLATFORM.PWA ? 'pwa' : 'web' });
     const subId = OneSignal.User?.PushSubscription?.id;
     const onesignalId = OneSignal.User?.onesignalId;
     if (subId || onesignalId) {
@@ -380,10 +378,34 @@ export const logoutOneSignalUser = () => {
   ensureOneSignalWeb().then((OneSignal) => OneSignal?.logout()).catch(() => {});
 };
 
-// Deliver through the authenticated server endpoint. The OneSignal REST key is
-// intentionally never included in the browser bundle.
-export const sendOneSignalNotification = async (targetUserId, title, bodyText, data = {}) => {
-  return sendRemoteNotification(targetUserId, title, bodyText, data);
+export const getNotificationDiagnostics = async () => {
+  const registrations = typeof navigator !== 'undefined' && navigator.serviceWorker
+    ? await navigator.serviceWorker.getRegistrations().catch(() => [])
+    : [];
+  const nativeBridgeReady = isNativeApp()
+    ? Boolean(await getNativeOneSignalBridge({ timeoutMs: 300 }).catch(() => null))
+    : false;
+  const readSession = (key) => {
+    try { return JSON.parse(sessionStorage.getItem(key) || 'null'); } catch (_) { return null; }
+  };
+  const identity = readSession('discuss_onesignal_identity');
+  return {
+    platform: getPlatform(),
+    native: isNativeApp(),
+    firebaseUid: activeNativeOneSignalUid,
+    oneSignalInitialized: isNativeApp() ? nativeBridgeReady : Boolean(oneSignalWebReady),
+    externalId: identity?.oneSignalExternalId || activeNativeOneSignalUid,
+    subscriptionId: identity?.oneSignalSubscriptionId || null,
+    permission: getPermissionStatus(),
+    pushEnabled: isNotificationsEnabled(),
+    medianBridgeReady: nativeBridgeReady,
+    serviceWorkers: registrations.map((registration) => ({
+      scope: registration.scope,
+      active: registration.active?.scriptURL || null,
+    })),
+    lastSend: readSession('discuss_last_notification_send'),
+    lastOpen: readSession('discuss_last_notification_open'),
+  };
 };
 
 // ============ PERMISSION & REGISTRATION ============
@@ -674,6 +696,5 @@ export default {
   notifyFriendRequest,
   notifyFriendAccepted,
   syncOneSignalUser,
-  logoutOneSignalUser,
-  sendOneSignalNotification
+  logoutOneSignalUser
 };

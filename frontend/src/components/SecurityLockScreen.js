@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { verifyBiometric } from '@/lib/securityService';
@@ -27,6 +27,24 @@ export default function SecurityLockScreen() {
   const [showForgotPinModal, setShowForgotPinModal] = useState(false);
   const { user } = useAuth();
 
+  const handleBiometricUnlock = useCallback(async () => {
+    setVerifying(true);
+    setIsBiometricLoading(true);
+    try {
+      const success = await verifyBiometric();
+      if (success) {
+        await unlock('biometric');
+      } else {
+        toast.error('Biometric verification failed. Use your PIN instead.');
+      }
+    } catch {
+      toast.error('Biometric verification failed. Use your PIN instead.');
+    } finally {
+      setVerifying(false);
+      setIsBiometricLoading(false);
+    }
+  }, [unlock]);
+
   // Lockout countdown
   useEffect(() => {
     if (!lockoutUntil) return;
@@ -48,30 +66,11 @@ export default function SecurityLockScreen() {
   }, []);
 
   // Auto-trigger biometric if that's the lock type
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (localSettings?.enabled && localSettings?.type === 'biometric' && !lockoutUntil) {
       handleBiometricUnlock();
     }
-  }, [lockoutUntil]);
-
-  const handleBiometricUnlock = async () => {
-    setVerifying(true);
-    setIsBiometricLoading(true);
-    try {
-      const success = await verifyBiometric();
-      if (success) {
-        await unlock('biometric');
-      } else {
-        toast.error('Biometric verification failed. Use your PIN instead.');
-      }
-    } catch {
-      toast.error('Biometric verification failed. Use your PIN instead.');
-    } finally {
-      setVerifying(false);
-      setIsBiometricLoading(false);
-    }
-  };
+  }, [handleBiometricUnlock, localSettings?.enabled, localSettings?.type, lockoutUntil]);
 
   const handlePinInput = (num) => {
     if (lockoutUntil) return;

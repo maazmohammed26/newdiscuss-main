@@ -50,8 +50,8 @@ jest.mock('../../lib/chatsDb', () => ({
   getOrCreateChat: jest.fn().mockResolvedValue({ id: 'chat_userA_userB' }),
 }));
 
-jest.mock('../../lib/notificationTransport', () => ({
-  sendRemoteNotification: jest.fn(),
+jest.mock('../../lib/notificationService', () => ({
+  emitNotificationEvent: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
 jest.mock('../../lib/pushNotificationService', () => ({

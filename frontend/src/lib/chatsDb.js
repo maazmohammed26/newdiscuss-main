@@ -14,9 +14,9 @@ import {
   off,
   query,
   orderByChild,
+  endBefore,
   limitToLast
 } from './firebaseThird';
-import { notifyTelegramDM } from './telegramService';
 import { encryptData, decryptData } from './securityUtils';
 import { previewFromLastMessageString } from './chatMessageUtils';
 
@@ -104,18 +104,26 @@ const updateUserChatList = async (userId, chatId, otherUserId, lastMessage) => {
  * @param {Array} media - Optional media array
  * @param {Object} location - Optional location {latitude, longitude, address}
  */
-export const sendMessage = async (chatId, senderId, text, media = [], location = null, forwardedInfo = null) => {
+export const sendMessage = async (chatId, senderId, text, media = [], location = null, forwardedInfo = null, options = {}) => {
   try {
     if (!thirdDatabase) {
       console.error('Third database not initialized');
       throw new Error('Database not available');
     }
     
-    const timestamp = new Date().toISOString();
+    const timestamp = options.timestamp || new Date().toISOString();
     
     // Add message
     const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
-    const newMessageRef = push(messagesRef);
+    const newMessageRef = options.messageId
+      ? ref(thirdDatabase, `messages/${chatId}/${options.messageId}`)
+      : push(messagesRef);
+    if (options.messageId) {
+      const existing = await get(newMessageRef);
+      if (existing.exists()) {
+        return { id: options.messageId, ...existing.val(), media: processMessageMedia(existing.val()) };
+      }
+    }
     const message = {
       text: (text || '').trim(),
       media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })), // Array of {url, type}
@@ -225,6 +233,29 @@ export const getMessages = async (chatId, limit = 1000) => {
     console.error('Error getting messages:', error);
     return [];
   }
+};
+
+/** Fetch one bounded page immediately before a timestamp/id cursor. */
+export const getMessagesPage = async (chatId, { cursor = null, limit = 50 } = {}) => {
+  if (!thirdDatabase || !chatId) return { items: [], cursor: null, hasMore: false };
+  const pageSize = Math.max(1, Math.min(Number(limit) || 50, 100));
+  const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
+  const constraints = [orderByChild('timestamp')];
+  if (cursor?.timestamp) constraints.push(endBefore(cursor.timestamp, cursor.id));
+  constraints.push(limitToLast(pageSize + 1));
+  const snapshot = await get(query(messagesRef, ...constraints));
+  if (!snapshot.exists()) return { items: [], cursor: null, hasMore: false };
+  const all = Object.entries(snapshot.val())
+    .map(([id, msg]) => ({ id, ...msg, media: processMessageMedia(msg) }))
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp) || a.id.localeCompare(b.id));
+  const hasMore = all.length > pageSize;
+  const items = hasMore ? all.slice(all.length - pageSize) : all;
+  const oldest = items[0];
+  return {
+    items,
+    cursor: oldest ? { id: oldest.id, timestamp: oldest.timestamp } : null,
+    hasMore,
+  };
 };
 
 /**
@@ -862,15 +893,23 @@ export const getDeletedMessages = async (userId, chatId) => {
  * @param {Object} replyTo - The message being replied to
  * @param {Array} media - Optional media array
  */
-export const sendReplyMessage = async (chatId, senderId, text, replyTo, media = []) => {
+export const sendReplyMessage = async (chatId, senderId, text, replyTo, media = [], options = {}) => {
   try {
     if (!thirdDatabase) throw new Error('Database not available');
     
-    const timestamp = new Date().toISOString();
+    const timestamp = options.timestamp || new Date().toISOString();
     
     // Add message with reply info
     const messagesRef = ref(thirdDatabase, `messages/${chatId}`);
-    const newMessageRef = push(messagesRef);
+    const newMessageRef = options.messageId
+      ? ref(thirdDatabase, `messages/${chatId}/${options.messageId}`)
+      : push(messagesRef);
+    if (options.messageId) {
+      const existing = await get(newMessageRef);
+      if (existing.exists()) {
+        return { id: options.messageId, ...existing.val(), media: processMessageMedia(existing.val()) };
+      }
+    }
     const message = {
       text: (text || '').trim(),
       media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })),

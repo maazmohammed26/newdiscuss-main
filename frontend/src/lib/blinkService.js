@@ -25,7 +25,7 @@ import {
 } from './firebaseFourth';
 
 import { generateChatId, getOrCreateChat } from './chatsDb';
-import { sendRemoteNotification } from './notificationTransport';
+import { emitNotificationEvent } from './notificationService';
 
 export const BLINK_EXPIRY_HOURS = 24;
 
@@ -215,13 +215,12 @@ export const sendDirectBlink = async ({ senderId, senderUsername, recipientId, m
       status: 'active'
     });
 
-    // Dispatch notifications
-    sendRemoteNotification(
+    emitNotificationEvent({
+      type: 'blink',
       recipientId,
-      'New Blink',
-      `@${senderUsername || 'A friend'} sent you a private Blink photo`,
-      { url: `/chat/${senderId}`, type: 'blink' }
-    );
+      entityId: newMessageRef.key,
+      url: `/chat/${encodeURIComponent(senderId)}`,
+    }).catch(() => {});
 
     return { id: newMessageRef.key, ...message };
   } catch (error) {
@@ -315,15 +314,15 @@ export const sendGroupBlink = async ({ groupId, senderId, senderUsername, mediaD
         ...(memberId === senderId ? {} : { unreadCount: unreadCount + 1 })
       });
 
-      if (memberId !== senderId) {
-        sendRemoteNotification(
-          memberId,
-          `New Blink in ${groupName}`,
-          `@${senderUsername || 'Someone'} sent a private Blink photo`,
-          { url: `/group/${groupId}`, type: 'blink_group' }
-        );
-      }
     }));
+
+    emitNotificationEvent({
+      type: 'blink',
+      recipientIds,
+      entityId: newMessageRef.key,
+      url: `/group/${encodeURIComponent(groupId)}`,
+      data: { groupName },
+    }).catch(() => {});
 
     return { id: newMessageRef.key, ...message };
   } catch (error) {

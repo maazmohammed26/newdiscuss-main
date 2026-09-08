@@ -73,8 +73,8 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests. Please try again later.' });
   }
 
-  const botToken = process.env.TELEGRAM_ADMIN_BOT_TOKEN || process.env.REACT_APP_TELEGRAM_ADMIN_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.REACT_APP_TELEGRAM_ADMIN_CHAT_ID;
+  const botToken = process.env.TELEGRAM_ADMIN_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
   if (!botToken || !chatId) {
     return res.status(503).json({ error: 'Access requests are temporarily unavailable.' });

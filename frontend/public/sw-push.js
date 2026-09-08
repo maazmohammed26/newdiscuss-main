@@ -18,11 +18,16 @@
  *   • HTML is NEVER cached (always fetched fresh = no stale auth state)
  */
 
-const CACHE_VERSION = 'discuss-v5';
+// Keep OneSignal's root-scope listeners available for users subscribed by
+// older Discuss builds. New subscriptions use /push/onesignal/ independently.
+try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (_) {}
+
+const CACHE_VERSION = 'discuss-v6';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
 const OFFLINE_URL   = '/offline.html';
 const APP_ICON      = '/favicon-new.png';
+const APP_SHELL_KEY = '/__discuss_app_shell__';
 
 // Pre-cache these on install — critical offline fallbacks only
 const PRECACHE_ASSETS = [
@@ -99,14 +104,18 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request, { cache: 'no-store' })
-        .catch(() =>
-          // Offline: serve the pre-cached offline page
-          caches.match(OFFLINE_URL).then(
-            (cached) => cached || new Response('<h1>Offline</h1>', {
-              headers: { 'Content-Type': 'text/html' },
-            })
-          )
-        )
+        .then((response) => {
+          const contentType = response.headers.get('content-type') || '';
+          if (response.ok && contentType.includes('text/html')) {
+            caches.open(STATIC_CACHE).then((cache) => cache.put(APP_SHELL_KEY, response.clone()));
+          }
+          return response;
+        })
+        .catch(async () => (
+          await caches.match(APP_SHELL_KEY)
+          || await caches.match(OFFLINE_URL)
+          || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } })
+        ))
     );
     return;
   }
@@ -213,6 +222,10 @@ self.addEventListener('push', (event) => {
   } catch (e) {
     console.warn('[SW] Push data parse error:', e);
   }
+
+  // OneSignal's imported worker owns its payloads. Avoid displaying the same
+  // notification a second time in the app-shell fallback handler.
+  if (data.custom?.i || data.i || data.__isOneSignal) return;
 
   event.waitUntil(
     self.registration.showNotification(data.title, {

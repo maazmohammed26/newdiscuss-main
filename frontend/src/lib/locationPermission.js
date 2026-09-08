@@ -20,9 +20,7 @@ const queryGeolocationPermission = async () => {
 
 export const getCurrentPositionWithAndroidSupport = ({ options = DEFAULT_GEO_OPTIONS } = {}) => {
   // Support for median.co mobile wrappers
-  if (window.median?.android?.geoLocation?.promptLocationServices) {
-    try { window.median.android.geoLocation.promptLocationServices(); } catch (e) {}
-  }
+  promptNativeLocationServices();
 
   if (!navigator?.geolocation) {
     return Promise.resolve({
@@ -99,3 +97,4 @@ export const getFriendlyLocationErrorMessage = (reason) => {
       return 'Could not update location right now. Please try again.';
   }
 };
+import { promptNativeLocationServices } from '@/platform/platformAdapter';

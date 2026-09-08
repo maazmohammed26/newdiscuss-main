@@ -14,11 +14,12 @@ import {
   off,
   query,
   orderByChild,
+  endBefore,
   limitToLast
 } from './firebaseFourth';
 import { getUser } from './db';
 import { encryptData, decryptData } from './securityUtils';
-import { sendRemoteNotification } from './notificationTransport';
+import { emitNotificationEvent } from './notificationService';
 
 // Group types
 export const GROUP_TYPE = {
@@ -304,7 +305,7 @@ const addGroupToUserList = async (userId, groupId, groupName, groupType, joinedA
   }
 };
 
-export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, media = [], location = null, forwardedInfo = null) => {
+export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, media = [], location = null, forwardedInfo = null, options = {}) => {
   try {
     if (!fourthDatabase) throw new Error('Database not available');
     const memberRef = ref(fourthDatabase, `groups/${groupId}/members/${senderId}`);
@@ -321,9 +322,17 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
       }
     }
     
-    const timestamp = new Date().toISOString();
+    const timestamp = options.timestamp || new Date().toISOString();
     const messagesRef = ref(fourthDatabase, `groups/${groupId}/messages`);
-    const newMessageRef = push(messagesRef);
+    const newMessageRef = options.messageId
+      ? ref(fourthDatabase, `groups/${groupId}/messages/${options.messageId}`)
+      : push(messagesRef);
+    if (options.messageId) {
+      const existing = await get(newMessageRef);
+      if (existing.exists()) {
+        return { id: options.messageId, ...existing.val(), media: processGroupMessageMedia(existing.val()) };
+      }
+    }
     const message = { 
       text: (text || '').trim(), 
       media: (media || []).map(m => ({ ...m, url: encryptData(m.url), thumbnail: encryptData(m.thumbnail) })),
@@ -342,29 +351,15 @@ export const sendGroupMessage = async (groupId, senderId, text, replyTo = null, 
     const lastMsgText = (text || '').trim() || (location ? '📍 Location' : (media?.length > 0 ? '📷 Media' : ''));
     await update(groupRef, { lastMessage: { text: lastMsgText, sender: senderId, timestamp } });
     
-    let senderUsername = 'Someone';
-    try {
-      const senderProfile = await getUser(senderId);
-      if (senderProfile?.username) senderUsername = senderProfile.username;
-    } catch {}
-
     const membersSnap = await get(ref(fourthDatabase, `groups/${groupId}/members`));
     if (membersSnap.exists()) {
       const members = membersSnap.val();
-      const groupName = groupSnap.exists() ? (groupSnap.val().name || 'group') : 'group';
       for (const userId of Object.keys(members)) {
         const userGroupRef = ref(fourthDatabase, `userGroups/${userId}/${groupId}`);
         if (userId !== senderId) {
           const userGroupSnap = await get(userGroupRef);
           const currentUnread = userGroupSnap.exists() ? (userGroupSnap.val().unreadCount || 0) : 0;
           await update(userGroupRef, { lastMessage: lastMsgText, lastMessageTime: timestamp, unreadCount: currentUnread + 1 });
-          
-          sendRemoteNotification(
-            userId,
-            `New in ${groupName}`,
-            `@${senderUsername}: ${lastMsgText}`,
-            { url: `/group/${groupId}`, type: 'group_chat' }
-          );
         } else {
           await update(userGroupRef, { lastMessage: lastMsgText, lastMessageTime: timestamp, unreadCount: 0 });
         }
@@ -430,6 +425,45 @@ export const getGroupMessages = async (groupId, userId) => {
     console.error('Error getting group messages:', error);
     return [];
   }
+};
+
+const processGroupMessageMedia = (msg) => {
+  if (!msg?.media) return null;
+  if (Array.isArray(msg.media)) {
+    return msg.media.map((item) => ({
+      ...item,
+      url: decryptData(item.url),
+      thumbnail: decryptData(item.thumbnail || item.url),
+    }));
+  }
+  return {
+    ...msg.media,
+    url: decryptData(msg.media.url),
+    thumbnail: decryptData(msg.media.thumbnail || msg.media.url),
+  };
+};
+
+/** Fetch one bounded group-message page immediately before a cursor. */
+export const getGroupMessagesPage = async (groupId, { cursor = null, limit = 50 } = {}) => {
+  if (!fourthDatabase || !groupId) return { items: [], cursor: null, hasMore: false };
+  const pageSize = Math.max(1, Math.min(Number(limit) || 50, 100));
+  const messagesRef = ref(fourthDatabase, `groups/${groupId}/messages`);
+  const constraints = [orderByChild('timestamp')];
+  if (cursor?.timestamp) constraints.push(endBefore(cursor.timestamp, cursor.id));
+  constraints.push(limitToLast(pageSize + 1));
+  const snapshot = await get(query(messagesRef, ...constraints));
+  if (!snapshot.exists()) return { items: [], cursor: null, hasMore: false };
+  const all = Object.entries(snapshot.val())
+    .map(([id, msg]) => ({ id, ...msg, media: processGroupMessageMedia(msg) }))
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp) || a.id.localeCompare(b.id));
+  const hasMore = all.length > pageSize;
+  const items = hasMore ? all.slice(all.length - pageSize) : all;
+  const oldest = items[0];
+  return {
+    items,
+    cursor: oldest ? { id: oldest.id, timestamp: oldest.timestamp } : null,
+    hasMore,
+  };
 };
 
 export const subscribeToGroupMessages = (groupId, callback, limit = 50) => {
@@ -854,12 +888,13 @@ export const acceptJoinRequest = async (groupId, userId, acceptedBy) => {
       const groupSnap = await get(ref(fourthDatabase, `groups/${groupId}`));
       if (groupSnap.exists()) {
         const groupName = groupSnap.val().name || 'group';
-        sendRemoteNotification(
-          userId,
-          'Group Join Request Approved',
-          `Your request to join "${groupName}" was accepted! 🎉`,
-          { url: `/group/${groupId}`, type: 'group' }
-        );
+        emitNotificationEvent({
+          type: 'group_join_accepted',
+          recipientId: userId,
+          entityId: groupId,
+          url: `/group/${encodeURIComponent(groupId)}`,
+          data: { groupName },
+        }).catch(() => {});
       }
     } catch {}
 

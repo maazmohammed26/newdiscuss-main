@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 import UserAvatar from '@/components/UserAvatar';
@@ -8,19 +8,19 @@ import {
   Plus, 
   AlignRight, 
   X, 
-  Newspaper, 
-  Briefcase, 
   Bookmark, 
   ShieldCheck, 
   Users, 
   Radar,
   Send,
-  Search
+  Search,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { subscribeToNotifications } from '@/data/repositories/notificationRepository';
 
 export default function Header() {
   const [showDrawer, setShowDrawer] = useState(false);
@@ -32,10 +32,21 @@ export default function Header() {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { pendingFriendRequests } = useHighlights();
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setUnreadNotifications(0);
+      return undefined;
+    }
+    return subscribeToNotifications(user.id, (items) => {
+      setUnreadNotifications(items.filter((item) => !item.read).length);
+    });
+  }, [user?.id]);
 
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/guidelines'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/news') || location.pathname.startsWith('/jobs');
+  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
   const isAiChatRoute = location.pathname === '/ai-assistant';
   const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 
@@ -81,6 +92,13 @@ export default function Header() {
                 <AlignRight className="w-6 h-6 stroke-[2.2px]" />
               )}
             </button>
+
+            {user && (
+              <button onClick={() => navigate('/notifications')} className="relative p-2 rounded-full text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800" aria-label={`${unreadNotifications} unread notifications`}>
+                <Bell className="h-5 w-5" />
+                {unreadNotifications > 0 && <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ED4956] px-1 text-[9px] font-bold text-white">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
+              </button>
+            )}
           </div>
         </div>
 
@@ -164,6 +182,11 @@ export default function Header() {
                     <Send className="w-5 h-5 text-[#0095F6]" />
                     <span>Direct Messages</span>
                   </button>
+                  <button onClick={() => { navigate('/notifications'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                    <Bell className="w-5 h-5 text-[#ED4956]" />
+                    <span className="flex-1 text-left">Notifications</span>
+                    {unreadNotifications > 0 && <span className="rounded-full bg-[#ED4956] px-2 py-0.5 text-[10px] font-bold text-white">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
+                  </button>
                   <button onClick={() => { navigate('/devradar'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
                     <Radar className="w-5 h-5 text-indigo-500" />
                     <span>DevRadar</span>
@@ -171,14 +194,6 @@ export default function Header() {
                   <button onClick={() => { navigate('/talentgraph'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
                     <Users className="w-5 h-5 text-amber-500" />
                     <span>TalentGraph</span>
-                  </button>
-                  <button onClick={() => { navigate('/news'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Newspaper className="w-5 h-5 text-emerald-500" />
-                    <span>Tech News</span>
-                  </button>
-                  <button onClick={() => { navigate('/jobs'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Briefcase className="w-5 h-5 text-blue-500" />
-                    <span>Tech Jobs</span>
                   </button>
                   <button onClick={() => { navigate('/bookmarks'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
                     <Bookmark className="w-5 h-5 text-pink-500" />

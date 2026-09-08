@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Smartphone, Monitor, Share, Terminal, Sparkles, CheckCircle2, ShieldCheck, Cpu, Share2, Copy, Send, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { isNativeApp } from '@/platform/platformAdapter';
 
 /**
  * AppInstallBanner — Premium Cybernetic HUD Style PWA Installer
@@ -38,12 +39,7 @@ export default function AppInstallBanner() {
 
   useEffect(() => {
     // 1. Silently suppress inside mobile app Native WebViews
-    const isMedianApp = typeof window !== 'undefined' && (
-      window.median !== undefined ||
-      window.gonative !== undefined ||
-      navigator.userAgent.includes('Median') ||
-      navigator.userAgent.includes('GoNative')
-    );
+    const isMedianApp = isNativeApp();
     if (isMedianApp) return;
 
     // 2. Platform & Browser Detection

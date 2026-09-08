@@ -3,14 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUser } from '@/lib/db';
 import {
-  getGroupInfo, getGroupMembers, sendGroupMessage, subscribeToGroupMessages,
+  getGroupInfo, getGroupMembers, sendGroupMessage, subscribeToGroupMessages, getGroupMessagesPage,
   markGroupMessagesAsRead, deleteGroupMessageForMe, deleteGroupMessageForEveryone,
   isGroupMember, isGroupAdmin, GROUP_STATUS, getDeletedGroupMessages, getUserGroups,
 } from '@/lib/groupsDb';
 import {
   getCachedGroupMessages,
   getFastCachedGroupMessages,
-  cacheGroupMessages,
+  mergeCachedGroupMessages,
   removeGroupMessageFromCaches,
   patchGroupMessageDeletedInCaches,
 } from '@/lib/cacheManager';
@@ -32,13 +32,26 @@ import { claimBlinkView, isBlinkExpired, isBlinkViewed } from '@/lib/blinkServic
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { notifyTelegramGroupMessage } from '@/lib/telegramService';
-import { notifyDiscordGroupMessage } from '@/lib/discordService';
 import MediaUpload from '@/components/MediaUpload';
 import FullscreenMedia from '@/components/FullscreenMedia';
 import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
 import { Check, MapPin } from 'lucide-react';
 import LocationMessage from '@/components/LocationMessage';
+import { promptNativeLocationServices } from '@/platform/platformAdapter';
+import {
+  getQueuedMessages,
+  queueGroupMessage,
+  retryMessage,
+  subscribeToMessageSync,
+} from '@/features/messages/messageRepository';
+
+const mergeChronological = (current, incoming) => {
+  const byId = new Map(current.map((message) => [message.id, message]));
+  incoming.forEach((message) => byId.set(message.id, { ...(byId.get(message.id) || {}), ...message }));
+  return [...byId.values()].sort(
+    (a, b) => new Date(a.timestamp) - new Date(b.timestamp) || String(a.id).localeCompare(String(b.id))
+  );
+};
 
 export default function GroupConversationPage() {
   const { groupId } = useParams();
@@ -71,13 +84,13 @@ export default function GroupConversationPage() {
   const [fullscreenMedia, setFullscreenMedia] = useState(null);
   const [pendingMedia, setPendingMedia] = useState([]);
   const [normalCameraUploading, setNormalCameraUploading] = useState(false);
-  const [messageLimit, setMessageLimit] = useState(50);
   const [loadingOld, setLoadingOld] = useState(false);
   const [hasMoreOld, setHasMoreOld] = useState(true);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [showBlinkModal, setShowBlinkModal] = useState(false);
   const [activeBlink, setActiveBlink] = useState(null);
   const [openingBlinkId, setOpeningBlinkId] = useState(null);
+  const historyCursorRef = useRef(null);
 
   const handleOpenBlink = useCallback(async (blinkMsg) => {
     if (!blinkMsg || !user?.id) return;
@@ -139,6 +152,33 @@ export default function GroupConversationPage() {
     });
   }, []);
 
+  const loadOlderMessages = useCallback(async (container) => {
+    if (!groupId || !user?.id || loadingOld || !hasMoreOld) return;
+    setLoadingOld(true);
+    const scrollHeightBefore = container?.scrollHeight || 0;
+    try {
+      const oldest = messages[0];
+      const cursor = historyCursorRef.current || (oldest ? { id: oldest.id, timestamp: oldest.timestamp } : null);
+      const page = await getGroupMessagesPage(groupId, { cursor, limit: 50 });
+      historyCursorRef.current = page.cursor;
+      setHasMoreOld(page.hasMore);
+      const delSet = new Set(deletedIdsRef.current);
+      const joinTime = joinTimeRef.current;
+      const items = page.items.filter((message) => !delSet.has(message.id) && (!joinTime || new Date(message.timestamp) >= new Date(joinTime)));
+      if (items.length) {
+        setMessages((current) => mergeChronological(current, items));
+        await mergeCachedGroupMessages(user.id, groupId, items);
+        requestAnimationFrame(() => {
+          if (container) container.scrollTop = container.scrollHeight - scrollHeightBefore;
+        });
+      }
+    } catch (error) {
+      toast.error('Could not load older messages');
+    } finally {
+      setLoadingOld(false);
+    }
+  }, [groupId, hasMoreOld, loadingOld, messages, user?.id]);
+
   const handleScroll = useCallback((e) => {
     const container = e.currentTarget;
     
@@ -146,13 +186,8 @@ export default function GroupConversationPage() {
     const isFar = container.scrollHeight - container.scrollTop - container.clientHeight > 300;
     setShowScrollDown(isFar);
 
-    if (container.scrollTop === 0 && !loadingOld && hasMoreOld && liveMessagesSynced) {
-      setLoadingOld(true);
-      setTimeout(() => {
-        setMessageLimit((prev) => Math.min(prev + 50, 100000));
-      }, 800);
-    }
-  }, [loadingOld, hasMoreOld, liveMessagesSynced]);
+    if (container.scrollTop <= 24 && liveMessagesSynced) loadOlderMessages(container);
+  }, [liveMessagesSynced, loadOlderMessages]);
 
   const messagesContainerRef = useRef(null);
 
@@ -264,6 +299,8 @@ export default function GroupConversationPage() {
     if (!user?.id || !groupId) return;
 
     setLiveMessagesSynced(false);
+    historyCursorRef.current = null;
+    setHasMoreOld(true);
     let cancelled = false;
     const unsubscribeRef = { current: null };
 
@@ -328,6 +365,8 @@ export default function GroupConversationPage() {
           });
           setMessages(filteredCache);
         }
+        const queued = await getQueuedMessages(user.id, 'groupConversation', groupId);
+        if (queued.length) setMessages((current) => mergeChronological(current, queued));
 
         await markGroupMessagesAsRead(groupId, user.id);
 
@@ -354,15 +393,17 @@ export default function GroupConversationPage() {
             const scrollHeightBefore = container ? container.scrollHeight : 0;
             const scrollTopBefore = container ? container.scrollTop : 0;
 
-            setMessages(filtered);
+            setMessages((current) => mergeChronological(current, filtered));
 
-            if (filtered.length < messageLimit) {
+            if (filtered.length < 50) {
               setHasMoreOld(false);
-            } else {
-              setHasMoreOld(true);
+            }
+            const oldestLive = filtered[0];
+            if (!historyCursorRef.current && oldestLive) {
+              historyCursorRef.current = { id: oldestLive.id, timestamp: oldestLive.timestamp };
             }
 
-            await cacheGroupMessages(user.id, groupId, filtered);
+            await mergeCachedGroupMessages(user.id, groupId, filtered);
             setLiveMessagesSynced(true);
             await markGroupMessagesAsRead(groupId, user.id);
             setLoadingOld(false);
@@ -378,7 +419,7 @@ export default function GroupConversationPage() {
             setIsAdmin(false);
             setLiveMessagesSynced(true);
           }
-        }, messageLimit);
+        }, 50);
         if (cancelled) {
           unsub();
         } else {
@@ -416,7 +457,26 @@ export default function GroupConversationPage() {
       window.removeEventListener('focus', checkWhenVisible);
       document.removeEventListener('visibilitychange', checkWhenVisible);
     };
-  }, [user?.id, groupId, checkMembershipStatus, messageLimit]);
+  }, [user?.id, groupId, checkMembershipStatus]);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    return subscribeToMessageSync(user.id, (results) => {
+      const statuses = new Map(results.map((result) => [result.operationId, result.status]));
+      const patchStatus = (message) => {
+        const result = statuses.get(message.id);
+        if (!result) return message;
+        return { ...message, status: result === 'failed' ? 'failed' : result === 'completed' ? 'sent' : 'sending' };
+      };
+      setMessages((current) => {
+        const next = current.map(patchStatus);
+        const changed = next.filter((message) => statuses.has(message.id));
+        if (changed.length) mergeCachedGroupMessages(user.id, groupId, changed).catch(() => {});
+        return next;
+      });
+      setOptimisticMessages((current) => current.map(patchStatus));
+    });
+  }, [groupId, user?.id]);
 
   useEffect(() => {
     if (messages.length > 0) scrollToBottom();
@@ -428,7 +488,6 @@ export default function GroupConversationPage() {
     if (!messageText.trim() && pendingMedia.length === 0) return;
     
     const text = messageText.trim();
-    const hasMedia = pendingMedia.length > 0;
     const currentReplyTo = replyTo;
 
     // 1. Instantly reset inputs/state for instant feel (0ms lag)
@@ -441,49 +500,23 @@ export default function GroupConversationPage() {
       inputRef.current.style.overflowY = 'hidden';
     }
 
-    // 2. Generate and add the optimistic message to state instantly!
-    const tempId = `temp-${Date.now()}`;
-    const optimisticMsg = {
-      id: tempId,
-      sender: user.id,
-      text,
-      timestamp: new Date().toISOString(),
-      type: 'message',
-      media: pendingMedia || [],
-      location: null,
-      replyTo: currentReplyTo ? {
-        id: currentReplyTo.id,
-        text: currentReplyTo.text?.substring(0, 100) || '',
-        sender: currentReplyTo.sender
-      } : null
-    };
-
-    setOptimisticMessages(prev => [...prev, optimisticMsg]);
-
-    // 3. Dispatch the database write completely in the background without blocking the UI
     (async () => {
       try {
-        await sendGroupMessage(groupId, user.id, text, currentReplyTo, pendingMedia);
-        
-        // Background notification sending
-        const groupName = groupInfo?.name || 'Group';
-        const senderName = user?.username || 'Someone';
-        members
-          .filter(m => m.userId !== user.id)
-          .forEach(m => {
-            notifyTelegramGroupMessage(m.userId, groupName, senderName, text, hasMedia).catch(() => {});
-            notifyDiscordGroupMessage(m.userId, groupName, senderName, text, hasMedia).catch(() => {});
-          });
-
-        // Remove from optimistic list since it's successfully written
-        setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
+        const optimistic = await queueGroupMessage({
+          userId: user.id,
+          groupId,
+          groupName: groupInfo?.name || 'Group',
+          recipientIds: members.filter((member) => member.userId !== user.id).map((member) => member.userId),
+          senderName: user?.username,
+          text,
+          media: pendingMedia,
+          replyTo: currentReplyTo,
+        });
+        setOptimisticMessages((current) => [...current, optimistic]);
       } catch (error) {
         console.error('Error sending message:', error);
-        // Put the message back in the input box so they don't lose it if it actually failed!
         setMessageText(text);
-        toast.error(error.message || 'Failed to send message');
-        // Clean up this optimistic message since it failed
-        setOptimisticMessages(prev => prev.filter(om => om.id !== tempId));
+        toast.error(error.message || 'Could not queue message');
       }
     })();
 
@@ -498,16 +531,22 @@ export default function GroupConversationPage() {
     }
     // ⚠️ ANDROID CHROME FIX: getCurrentPosition MUST be called here directly
     // as the very first thing — before setSending(true) or any other call.
-    if (window.median?.android?.geoLocation?.promptLocationServices) {
-      try { window.median.android.geoLocation.promptLocationServices(); } catch (e) {}
-    }
+    promptNativeLocationServices();
     setSending(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          await sendGroupMessage(groupId, user.id, '', null, [], { latitude, longitude });
-          toast.success('Location sent');
+          const optimistic = await queueGroupMessage({
+            userId: user.id,
+            groupId,
+            groupName: groupInfo?.name || 'Group',
+            recipientIds: members.filter((member) => member.userId !== user.id).map((member) => member.userId),
+            senderName: user?.username,
+            location: { latitude, longitude },
+          });
+          setOptimisticMessages((current) => [...current, optimistic]);
+          toast.success(navigator.onLine === false ? 'Location queued' : 'Location sending');
           scrollToBottom();
         } catch (error) {
           console.error('Error sending location:', error);
@@ -615,6 +654,14 @@ export default function GroupConversationPage() {
       grouped[date].push(msg);
     });
     return grouped;
+  };
+
+  const handleRetryMessage = async (message) => {
+    if (message.status !== 'failed' || !user?.id) return;
+    setMessages((current) => current.map((item) => item.id === message.id ? { ...item, status: 'sending' } : item));
+    setOptimisticMessages((current) => current.map((item) => item.id === message.id ? { ...item, status: 'sending' } : item));
+    const retried = await retryMessage(message.id, user.id);
+    if (!retried) toast.error('This message can no longer be retried');
   };
 
   const combinedMessages = useMemo(() => {
@@ -789,6 +836,18 @@ export default function GroupConversationPage() {
                 <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-neutral-400 dark:text-neutral-500'}`}>
                   {formatTime(message.timestamp)}
                 </p>
+                {isOwn && message.status === 'sending' && (
+                  <Loader2 className="h-3 w-3 animate-spin" aria-label="Sending" />
+                )}
+                {isOwn && message.status === 'failed' && (
+                  <button
+                    type="button"
+                    onClick={(event) => { event.stopPropagation(); handleRetryMessage(message); }}
+                    className="text-[10px] font-semibold underline"
+                  >
+                    Failed · Retry
+                  </button>
+                )}
                 {isOwn && (
                   <Check className={`w-3 h-3 ${message.read ? 'text-blue-300' : 'text-white/40'}`} />
                 )}

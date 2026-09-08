@@ -17,10 +17,7 @@ import {
   query,
   orderByChild,
 } from './firebaseFifth';
-import { database, ref as primaryRef, get as primaryGet } from './firebase';
-import { notifyTelegramLike } from './telegramService';
-import { notifyDiscordLike } from './discordService';
-import { sendRemoteNotification } from './notificationTransport';
+import { emitNotificationEvent } from './notificationService';
 
 const pulseRef = () => ref(fifthDatabase, 'pulse');
 const pulseItemRef = (id) => ref(fifthDatabase, `pulse/${id}`);
@@ -122,17 +119,12 @@ export const togglePulseLike = async (pulseId, userId) => {
       // Notify via Telegram on new Like
       try {
         if (pulseData.authorId && pulseData.authorId !== userId) {
-          const userSnap = await primaryGet(primaryRef(database, `users/${userId}`));
-          const likerUsername = userSnap.exists() ? (userSnap.val().username || 'Someone') : 'Someone';
-          notifyTelegramLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Telegram]', e));
-          notifyDiscordLike(pulseData.authorId, likerUsername, 'pulse').catch(e => console.error('[Discord]', e));
-          
-          sendRemoteNotification(
-            pulseData.authorId,
-            'New Like on Your Pulse',
-            `@${likerUsername} liked your pulse video.`,
-            { url: '/pulse', type: 'pulse_like' }
-          );
+          emitNotificationEvent({
+            type: 'pulse_like',
+            recipientId: pulseData.authorId,
+            entityId: pulseId,
+            url: '/pulse',
+          }).catch(() => {});
         }
       } catch (e) {
         console.error('Error sending pulse like notification:', e);

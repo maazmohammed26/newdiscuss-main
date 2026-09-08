@@ -437,6 +437,17 @@ export const patchCachedUserProfile = async (ownerUserId, profile) => {
 // ==================== MESSAGES CACHE ====================
 
 const dmMessagesFastKey = (userId, chatId) => `dm_messages_${userId}_${chatId}`;
+const MAX_CACHED_MESSAGES_PER_THREAD = 500;
+
+const mergeMessageLists = (...lists) => {
+  const byId = new Map();
+  lists.flat().filter(Boolean).forEach((message) => {
+    byId.set(message.id, { ...(byId.get(message.id) || {}), ...message });
+  });
+  return [...byId.values()]
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp) || String(a.id).localeCompare(String(b.id)))
+    .slice(-MAX_CACHED_MESSAGES_PER_THREAD);
+};
 
 export const getFastCachedMessages = (userId, chatId) => {
   if (!userId || !chatId) return null;
@@ -472,6 +483,14 @@ export const cacheMessages = async (userId, chatId, messages) => {
   } catch (e) {
     console.warn('Messages cache write failed:', e);
   }
+};
+
+export const mergeCachedMessages = async (userId, chatId, messages) => {
+  if (!userId || !chatId || !Array.isArray(messages)) return [];
+  const existing = (await getCachedMessages(userId, chatId)) || [];
+  const merged = mergeMessageLists(existing, normalizeMessagesForCache(messages));
+  await cacheMessages(userId, chatId, merged);
+  return merged;
 };
 
 /**
@@ -700,13 +719,12 @@ export const removeCachedComment = async (postId, commentId) => {
 export const clearAllCache = async () => {
   try {
     const db = await getDB();
-    await db.clear('posts');
-    await db.clear('users');
-    await db.clear('friends');
-    await db.clear('chats');
-    await db.clear('messages');
-    await db.clear('comments');
-    await db.clear('cache_meta');
+    const cacheStores = [
+      'posts', 'users', 'friends', 'chats', 'messages', 'comments',
+      'cache_meta', 'groups', 'group_messages', 'profiles', 'feed_pages',
+      'relationships', 'notifications',
+    ];
+    await Promise.all(cacheStores.map((storeName) => db.clear(storeName)));
     console.log('All cache cleared');
   } catch (e) {
     console.warn('Cache clear failed:', e);
@@ -885,6 +903,14 @@ export const cacheGroupMessages = async (userId, groupId, messages) => {
   } catch (e) {
     console.warn('Group messages cache write failed:', e);
   }
+};
+
+export const mergeCachedGroupMessages = async (userId, groupId, messages) => {
+  if (!userId || !groupId || !Array.isArray(messages)) return [];
+  const existing = (await getCachedGroupMessages(userId, groupId)) || [];
+  const merged = mergeMessageLists(existing, normalizeMessagesForCache(messages));
+  await cacheGroupMessages(userId, groupId, merged);
+  return merged;
 };
 
 /**

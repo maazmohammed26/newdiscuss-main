@@ -20,37 +20,16 @@ import {
   onValue as secondaryOnValue,
   off as secondaryOff
 } from './firebaseSecondary';
-import { openDB } from 'idb';
-import { notifyTelegramLike } from './telegramService';
-import { notifyDiscordLike } from './discordService';
-import { sendRemoteNotification } from './notificationTransport';
+import { getLocalDatabase } from '@/data/db/localDatabase';
+import { emitNotificationEvent } from './notificationService';
 import { checkContentSafety } from './nvidiaApi';
-
-// IndexedDB for offline caching
-const DB_NAME = 'discuss_offline';
-const DB_VERSION = 1;
-
-const getDB = async () => {
-  return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('posts')) {
-        db.createObjectStore('posts', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('users')) {
-        db.createObjectStore('users', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('cache')) {
-        db.createObjectStore('cache', { keyPath: 'key' });
-      }
-    },
-  });
-};
 
 // Cache helpers
 const cacheData = async (key, data) => {
   try {
-    const db = await getDB();
-    await db.put('cache', { key, data, timestamp: Date.now() });
+    const db = await getLocalDatabase();
+    const timestamp = Date.now();
+    await db.put('cache_meta', { key, data, timestamp, lastAccessedAt: timestamp });
   } catch (e) {
     console.warn('Cache write failed:', e);
   }
@@ -58,8 +37,8 @@ const cacheData = async (key, data) => {
 
 const getCachedData = async (key, maxAge = 5 * 60 * 1000) => {
   try {
-    const db = await getDB();
-    const cached = await db.get('cache', key);
+    const db = await getLocalDatabase();
+    const cached = await db.get('cache_meta', key);
     if (cached && Date.now() - cached.timestamp < maxAge) {
       return cached.data;
     }
@@ -591,23 +570,16 @@ export const setVote = async (postId, desiredVote, userId, options = {}) => {
     // state is idempotent and will not emit another notification.
     if (desiredVote === 'up') {
       try {
-        const [userSnap, postSnap] = await Promise.all([
-          get(ref(database, `users/${userId}`)),
-          get(ref(database, `posts/${postId}`))
-        ]);
+        const postSnap = await get(ref(database, `posts/${postId}`));
         const authorId = postSnap.val()?.author_id;
         if (authorId && authorId !== userId) {
-          const likerUsername = userSnap.val()?.username || 'Someone';
-          notifyTelegramLike(authorId, likerUsername, 'post').catch(e => console.error('[Telegram]', e));
-          notifyDiscordLike(authorId, likerUsername, 'post').catch(e => console.error('[Discord]', e));
-          
-          sendRemoteNotification(
-            authorId,
-            'New Like on Your Post',
-            `@${likerUsername} liked your post.`,
-            { url: `/post/${postId}`, type: 'like' },
-            { eventId: options.eventId }
-          );
+          emitNotificationEvent({
+            type: 'like',
+            recipientId: authorId,
+            entityId: postId,
+            url: `/post/${encodeURIComponent(postId)}`,
+            eventId: options.eventId,
+          }).catch(() => {});
         }
       } catch (e) {
         console.error('Error sending like notification:', e);

@@ -16,9 +16,7 @@ import {
   orderByChild,
   equalTo
 } from './firebaseSecondary';
-import { notifyTelegramFriendRequest, notifyTelegramFriendAccepted } from './telegramService';
-import { notifyDiscordFriendRequest, notifyDiscordFriendAccepted } from './discordService';
-import { sendRemoteNotification } from './notificationTransport';
+import { emitNotificationEvent } from './notificationService';
 
 // Relationship statuses
 export const RELATIONSHIP_STATUS = {
@@ -123,15 +121,12 @@ export const sendFriendRequest = async (fromUserId, toUserId, fromUsername = nul
     });
     
     // Notify (fire-and-forget)
-    notifyTelegramFriendRequest(toUserId, fromUsername).catch(e => console.error('[Telegram]', e));
-    notifyDiscordFriendRequest(toUserId, fromUsername).catch(e => console.error('[Discord]', e));
-    
-    sendRemoteNotification(
-      toUserId,
-      'New Friend Request',
-      `@${fromUsername || 'Someone'} sent you a friend request.`,
-      { url: '/profile', type: 'friend' }
-    );
+    emitNotificationEvent({
+      type: 'friend_request',
+      recipientId: toUserId,
+      entityId: fromUserId,
+      url: '/profile',
+    }).catch(() => {});
     
     return { success: true };
   } catch (error) {
@@ -173,15 +168,12 @@ export const acceptFriendRequest = async (currentUserId, fromUserId, currentUser
     });
     
     // Notify (fire-and-forget)
-    notifyTelegramFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Telegram]', e));
-    notifyDiscordFriendAccepted(fromUserId, currentUsername).catch(e => console.error('[Discord]', e));
-    
-    sendRemoteNotification(
-      fromUserId,
-      'Friend Request Accepted',
-      `@${currentUsername || 'Someone'} accepted your friend request.`,
-      { url: `/user/${currentUserId}`, type: 'friend' }
-    );
+    emitNotificationEvent({
+      type: 'friend_accepted',
+      recipientId: fromUserId,
+      entityId: currentUserId,
+      url: `/user/${encodeURIComponent(currentUserId)}`,
+    }).catch(() => {});
     
     return { success: true };
   } catch (error) {

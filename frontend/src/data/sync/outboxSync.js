@@ -23,7 +23,11 @@ export const registerOutboxHandler = (operationType, handler) => (
 
 export const flushOutbox = async (userId) => {
   if (!userId || (typeof navigator !== 'undefined' && navigator.onLine === false)) return [];
-  return withCrossTabLock(() => processor.flush(userId));
+  const results = await withCrossTabLock(() => processor.flush(userId));
+  if (typeof window !== 'undefined' && results?.length) {
+    window.dispatchEvent(new CustomEvent('discuss:outbox-results', { detail: { userId, results } }));
+  }
+  return results;
 };
 
 export const enqueueOutboxOperation = async (input) => {

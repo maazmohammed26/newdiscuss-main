@@ -280,7 +280,7 @@ OneSignal push notifications originally worked when client-side direct REST call
 ## 10. Remaining Risks & Recommendations
 
 1. **Vercel Production Environment Variables**:
-   - Ensure `ONESIGNAL_REST_API_KEY` (or `REACT_APP_ONESIGNAL_REST_API_KEY`) is populated in Vercel Project Settings for Production and Preview environments with the valid REST API Key from the OneSignal Dashboard (Settings > Keys & IDs).
+   - Ensure `ONESIGNAL_REST_API_KEY` is populated in Vercel Project Settings for Production and Preview environments with the valid REST API Key from the OneSignal Dashboard (Settings > Keys & IDs). Never expose this key through a browser-prefixed variable.
    - In accordance with `AUDIO_CALLING_SETUP.md`, prefer setting `ONESIGNAL_REST_API_KEY` without the `REACT_APP_` prefix so it is exclusively exposed to serverless functions.
 2. **Android Notification Channel in Median**:
    - In the Median App configuration dashboard, ensure the default notification channel is configured with High Importance (Make Sound and Pop On Screen) so Android 8.0+ presents heads-up banners when the app is in the background.

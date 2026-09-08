@@ -30,8 +30,8 @@ jest.mock('./chatsDb', () => ({
   getOrCreateChat: jest.fn().mockResolvedValue({ id: 'chat_userA_userB' }),
 }));
 
-jest.mock('./notificationTransport', () => ({
-  sendRemoteNotification: jest.fn(),
+jest.mock('./notificationService', () => ({
+  emitNotificationEvent: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
 jest.mock('./pushNotificationService', () => ({
@@ -61,7 +61,7 @@ import {
   push as mockGroupsPush,
   runTransaction as mockRunFourthTransaction
 } from './firebaseFourth';
-import { sendRemoteNotification } from './notificationTransport';
+import { emitNotificationEvent } from './notificationService';
 
 describe('Blink Service Unit, Privacy & Security Tests', () => {
   beforeEach(() => {
@@ -70,6 +70,7 @@ describe('Blink Service Unit, Privacy & Security Tests', () => {
     mockChatsRef.mockImplementation((db, path) => ({ path }));
     mockGroupsRef.mockImplementation((db, path) => ({ path }));
     mockGroupsPush.mockImplementation(() => ({ key: 'group_msg_123' }));
+    emitNotificationEvent.mockResolvedValue({ ok: true });
     mockGroupsGet.mockResolvedValue({
       exists: () => true,
       val: () => ({ role: 'member' })
@@ -473,19 +474,15 @@ describe('Blink Service Unit, Privacy & Security Tests', () => {
         }
       });
 
-      expect(sendRemoteNotification).toHaveBeenCalledTimes(2);
-      expect(sendRemoteNotification).toHaveBeenCalledWith(
-        'recipient_a',
-        'New Blink in Design Team',
-        expect.stringContaining('sent a private Blink'),
-        { url: '/group/group_123', type: 'blink_group' }
-      );
-      expect(sendRemoteNotification).not.toHaveBeenCalledWith(
-        'sender_user',
-        expect.anything(),
-        expect.anything(),
-        expect.anything()
-      );
+      expect(emitNotificationEvent).toHaveBeenCalledTimes(1);
+      expect(emitNotificationEvent).toHaveBeenCalledWith({
+        type: 'blink',
+        recipientIds: ['recipient_a', 'recipient_b'],
+        entityId: 'group_msg_123',
+        url: '/group/group_123',
+        data: { groupName: 'Design Team' },
+      });
+      expect(emitNotificationEvent.mock.calls[0][0].recipientIds).not.toContain('sender_user');
     });
   });
 });

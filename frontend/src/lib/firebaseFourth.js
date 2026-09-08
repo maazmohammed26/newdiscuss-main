@@ -16,6 +16,7 @@ import {
   query,
   orderByChild,
   equalTo,
+  endBefore,
   limitToLast,
   serverTimestamp,
   runTransaction
@@ -89,6 +90,7 @@ export {
   query,
   orderByChild,
   equalTo,
+  endBefore,
   limitToLast,
   serverTimestamp,
   runTransaction

@@ -195,7 +195,7 @@ const publicCall = (call) => ({
 const directChatId = (firstId, secondId) => [firstId, secondId].sort().join('_');
 
 const sendTelegramCallAlert = async (targetId, caller, callId) => {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return false;
   const profile = (await primaryDb().ref(`users/${targetId}`).once('value')).val() || {};
   const chatId = profile.telegramChatId;
@@ -217,7 +217,7 @@ const sendTelegramCallAlert = async (targetId, caller, callId) => {
 };
 
 const sendCallPush = async (targetId, caller, callId) => {
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY || process.env.REACT_APP_ONESIGNAL_REST_API_KEY;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
   const targetUrl = `https://www.discussit.in/chat/${caller.id}?call=${callId}`;
   const basePayload = {
       app_id: ONESIGNAL_APP_ID,

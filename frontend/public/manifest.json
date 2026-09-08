@@ -1,6 +1,7 @@
 {
   "short_name": "Discuss",
   "name": "Discuss - Developer Discussion Platform",
+  "id": "/",
   "description": "A modern discussion platform for developers to share projects and ideas in real time. Developed and founded by Mohammed Maaz A.",
   "icons": [
     {
@@ -42,5 +43,9 @@
   "scope": "/",
   "categories": ["social", "productivity"],
   "gcm_sender_id": "1039827441866",
-  "permissions": ["notifications", "push"]
+  "shortcuts": [
+    { "name": "Feed", "url": "/feed", "icons": [{ "src": "/logo192.png", "sizes": "192x192" }] },
+    { "name": "Messages", "url": "/chat", "icons": [{ "src": "/logo192.png", "sizes": "192x192" }] },
+    { "name": "Notifications", "url": "/notifications", "icons": [{ "src": "/logo192.png", "sizes": "192x192" }] }
+  ]
 }

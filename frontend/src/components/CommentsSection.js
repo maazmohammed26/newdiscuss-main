@@ -24,9 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Send, Trash2, Loader2, MessageCircle, ChevronDown, ChevronUp, MoreHorizontal, Reply } from 'lucide-react';
 import { toast } from 'sonner';
-import { notifyTelegramComment, notifyTelegramReply } from '@/lib/telegramService';
-import { notifyDiscordComment, notifyDiscordReply } from '@/lib/discordService';
-import { sendRemoteNotification } from '@/lib/notificationTransport';
+import { emitNotificationEvent } from '@/lib/notificationService';
 
 const COMMENT_CHAR_LIMIT = 500;
 
@@ -140,14 +138,13 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
       if (!showReplies) setShowReplies(true);
       
       if (comment.author_id && currentUser?.id !== comment.author_id) {
-        notifyTelegramReply(comment.author_id, currentUser?.username, replyText.trim()).catch(() => {});
-        notifyDiscordReply(comment.author_id, currentUser?.username, replyText.trim()).catch(() => {});
-        sendRemoteNotification(
-          comment.author_id,
-          'New Reply to Your Comment',
-          `@${currentUser?.username || 'Someone'}: ${replyText.trim()}`,
-          { url: `/post/${postId}`, type: 'comment_reply' }
-        );
+        emitNotificationEvent({
+          type: 'reply',
+          recipientId: comment.author_id,
+          entityId: comment.id,
+          url: `/post/${encodeURIComponent(postId)}`,
+          data: { text: replyText.trim() },
+        }).catch(() => {});
       }
       toast.success('Reply posted');
     } catch (err) {
@@ -320,14 +317,13 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
       const postedText = commentText.trim();
       setCommentText('');
       if (postAuthorId && currentUser?.id !== postAuthorId) {
-        notifyTelegramComment(postAuthorId, currentUser?.username, postedText).catch(() => {});
-        notifyDiscordComment(postAuthorId, currentUser?.username, postedText).catch(() => {});
-        sendRemoteNotification(
-          postAuthorId,
-          'New Comment on Your Post',
-          `@${currentUser?.username || 'Someone'}: ${postedText}`,
-          { url: `/post/${postId}`, type: 'comment' }
-        );
+        emitNotificationEvent({
+          type: 'comment',
+          recipientId: postAuthorId,
+          entityId: postId,
+          url: `/post/${encodeURIComponent(postId)}`,
+          data: { text: postedText },
+        }).catch(() => {});
       }
       toast.success('Comment posted');
     } catch (err) {

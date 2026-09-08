@@ -2,12 +2,12 @@ const http = require('http');
 require('dotenv').config({ path: '.env' });
 const fs = require('fs');
 
-const BOT_TOKEN = process.env.REACT_APP_TELEGRAM_BOT_TOKEN;
-const DISCORD_BOT_TOKEN = process.env.REACT_APP_DISCORD_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const APP_URL = 'https://discussit.in/';
 
 if (!BOT_TOKEN) {
-  console.error('❌ Error: REACT_APP_TELEGRAM_BOT_TOKEN is missing in .env');
+  console.error('❌ Error: TELEGRAM_BOT_TOKEN is missing in the server environment');
   process.exit(1);
 }
 

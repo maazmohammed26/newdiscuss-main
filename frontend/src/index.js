@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "@/index.css";
 import App from "@/App";
+import { getNotificationDiagnostics } from "@/lib/pushNotificationService";
 
 // ── Service Worker registration ───────────────────────────────────────────────
 // Must be registered after the app loads to avoid blocking the first paint.
@@ -47,4 +48,7 @@ if ('serviceWorker' in navigator) {
 // to run twice, creating duplicate auth subscribers and making auth debugging
 // unreliable. This has zero effect on production builds.
 const root = ReactDOM.createRoot(document.getElementById("root"));
+if (process.env.NODE_ENV !== 'production') {
+  window.__DISCUSS_NOTIFICATION_DIAGNOSTICS__ = getNotificationDiagnostics;
+}
 root.render(<App />);

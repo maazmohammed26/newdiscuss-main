@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 
 export const LOCAL_DATABASE_NAME = 'discuss_cache';
-export const LOCAL_DATABASE_VERSION = 6;
+export const LOCAL_DATABASE_VERSION = 7;
 
 let databasePromise;
 
@@ -42,6 +42,7 @@ export const getLocalDatabase = () => {
         ensureStore(db, transaction, 'messages', { keyPath: 'id' }, [
           ['chatId', 'chatId'],
           ['timestamp', 'timestamp'],
+          ['chatTimestamp', ['chatId', 'timestamp']],
         ]);
         ensureStore(db, transaction, 'cache_meta', { keyPath: 'key' }, [
           ['lastAccessedAt', 'lastAccessedAt'],
@@ -57,6 +58,7 @@ export const getLocalDatabase = () => {
         ensureStore(db, transaction, 'group_messages', { keyPath: 'id' }, [
           ['groupId', 'groupId'],
           ['timestamp', 'timestamp'],
+          ['groupTimestamp', ['groupId', 'timestamp']],
         ]);
 
         // VNext stores. These do not modify or rewrite existing cached rows.

@@ -1,4 +1,6 @@
 // We've switched to Google Gemini API but kept the file name for backwards compatibility
+import { getAuthenticatedIdToken } from './authenticatedRequest';
+
 const getGeminiProxyUrl = () => {
   if (typeof window !== 'undefined') {
     const { protocol, hostname } = window.location;
@@ -22,15 +24,12 @@ const GEMINI_PROXY = getGeminiProxyUrl();
 export async function chatWithAI(messages, model = "gemini-1.5-flash") {
   try {
     if (model === "poolside-laguna") {
-      const or_k1 = "sk-or-v1-";
-      const or_k2 = "bc32ba3f6b2fe7ea1caa4df5fed";
-      const or_k3 = "14759fd28db4476ec91ad24beb3207b512766";
-      const apiKey = process.env.REACT_APP_OPENROUTER_API_KEY || (or_k1 + or_k2 + or_k3);
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const token = await getAuthenticatedIdToken();
+      const response = await fetch("/api/openrouter", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           model: "poolside/laguna-m.1:free",
@@ -74,11 +73,13 @@ export async function chatWithAI(messages, model = "gemini-1.5-flash") {
         parts: [{ text: String(m.content) }]
       }));
 
+    const token = await getAuthenticatedIdToken();
     const response = await fetch(`${GEMINI_PROXY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-gemini-model": model,
+        "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify({
         systemInstruction,
@@ -118,12 +119,6 @@ export async function chatWithAI(messages, model = "gemini-1.5-flash") {
  */
 export const checkContentSafety = async (text) => {
   if (!text || text.trim().length < 5) return null;
-
-  // Obfuscated key to bypass GitHub Push Protection
-  const k1 = "AQ.Ab8RN6";
-  const k2 = "KvYxJVyRA7vZ85eoUZppkzT3";
-  const k3 = "_Om1sNPWYKBE8pZXjpLA";
-  const SCORING_API_KEY = k1 + k2 + k3;
 
   // List of free models to try sequentially if rate limited
   const freeModels = [
@@ -255,10 +250,13 @@ ${text}`
   for (let i = 0; i < freeModels.length; i++) {
     const model = freeModels[i];
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${SCORING_API_KEY}`, {
+      const token = await getAuthenticatedIdToken();
+      const response = await fetch(GEMINI_PROXY, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-gemini-model": model,
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           contents: contents,
