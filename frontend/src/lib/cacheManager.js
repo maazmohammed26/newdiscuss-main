@@ -2,7 +2,7 @@
 // Caches: Posts, Users, Friends, Chats, Groups for faster loading
 // Uses localStorage for instant rendering, IndexedDB for persistence
 
-import { openDB } from 'idb';
+import { getLocalDatabase as getDB } from '@/data/db/localDatabase';
 import {
   normalizeMessageForCache,
   normalizeMessagesForCache,
@@ -49,9 +49,6 @@ export const fastCacheClear = (key) => {
   } catch (e) {}
 };
 
-const DB_NAME = 'discuss_cache';
-const DB_VERSION = 5;
-
 // Cache duration constants (in milliseconds)
 export const CACHE_DURATION = {
   POSTS: 5 * 60 * 1000,       // 5 minutes
@@ -62,72 +59,6 @@ export const CACHE_DURATION = {
   COMMENTS: 3 * 60 * 1000,    // 3 minutes
   GROUPS: 1 * 60 * 1000,      // 1 minute
   GROUP_MESSAGES: 1 * 60 * 1000  // 1 minute
-};
-
-/**
- * Initialize IndexedDB
- */
-const getDB = async () => {
-  return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
-      // v5: cache behavior only; schema unchanged
-      // Posts store
-      if (!db.objectStoreNames.contains('posts')) {
-        const postsStore = db.createObjectStore('posts', { keyPath: 'id' });
-        postsStore.createIndex('timestamp', 'timestamp');
-        postsStore.createIndex('author_id', 'author_id');
-      }
-      
-      // Users store
-      if (!db.objectStoreNames.contains('users')) {
-        const usersStore = db.createObjectStore('users', { keyPath: 'id' });
-        usersStore.createIndex('username', 'username');
-      }
-      
-      // Friends store
-      if (!db.objectStoreNames.contains('friends')) {
-        db.createObjectStore('friends', { keyPath: 'id' });
-      }
-      
-      // Chats store
-      if (!db.objectStoreNames.contains('chats')) {
-        const chatsStore = db.createObjectStore('chats', { keyPath: 'chatId' });
-        chatsStore.createIndex('lastMessageTime', 'lastMessageTime');
-      }
-      
-      // Messages store
-      if (!db.objectStoreNames.contains('messages')) {
-        const messagesStore = db.createObjectStore('messages', { keyPath: 'id' });
-        messagesStore.createIndex('chatId', 'chatId');
-        messagesStore.createIndex('timestamp', 'timestamp');
-      }
-      
-      // General cache store for metadata
-      if (!db.objectStoreNames.contains('cache_meta')) {
-        db.createObjectStore('cache_meta', { keyPath: 'key' });
-      }
-      
-      // Comments store - added in version 3
-      if (!db.objectStoreNames.contains('comments')) {
-        const commentsStore = db.createObjectStore('comments', { keyPath: 'cacheKey' });
-        commentsStore.createIndex('postId', 'postId');
-        commentsStore.createIndex('timestamp', 'timestamp');
-      }
-      
-      // Groups store - added in version 4
-      if (!db.objectStoreNames.contains('groups')) {
-        const groupsStore = db.createObjectStore('groups', { keyPath: 'groupId' });
-        groupsStore.createIndex('lastMessageTime', 'lastMessageTime');
-      }
-      
-      // Group messages store - added in version 4
-      if (!db.objectStoreNames.contains('group_messages')) {
-        const groupMessagesStore = db.createObjectStore('group_messages', { keyPath: 'id' });
-        groupMessagesStore.createIndex('groupId', 'groupId');
-        groupMessagesStore.createIndex('timestamp', 'timestamp');
-      }
-    },
-  });
 };
 
 // ==================== CACHE METADATA ====================

@@ -36,15 +36,25 @@ let secondaryApp = null;
 let secondaryDatabase = null;
 let initError = null;
 
-try {
-  secondaryApp = getApps().find(app => app.name === 'secondary') 
-    || initializeApp(secondaryFirebaseConfig, 'secondary');
-  
-  // Get Realtime Database instance from secondary app
-  secondaryDatabase = getDatabase(secondaryApp);
-} catch (error) {
-  console.warn('Failed to initialize secondary Firebase:', error.message);
-  initError = error;
+const hasSecondaryConfig = Boolean(
+  secondaryFirebaseConfig.apiKey
+  && secondaryFirebaseConfig.projectId
+  && secondaryFirebaseConfig.databaseURL
+);
+
+if (hasSecondaryConfig) {
+  try {
+    secondaryApp = getApps().find(app => app.name === 'secondary')
+      || initializeApp(secondaryFirebaseConfig, 'secondary');
+
+    // Get Realtime Database instance from secondary app
+    secondaryDatabase = getDatabase(secondaryApp);
+  } catch (error) {
+    console.warn('Failed to initialize secondary Firebase:', error.message);
+    initError = error;
+  }
+} else {
+  initError = new Error('Secondary Firebase configuration is incomplete');
 }
 
 // Helper to check if secondary database is available

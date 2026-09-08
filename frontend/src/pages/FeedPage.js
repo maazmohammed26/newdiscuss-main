@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useMemo, useRef, startTransition, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { subscribeToPostsRealtime } from '@/lib/db';
-import { cachePosts, getFastCachedPosts } from '@/lib/cacheManager';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import { getFastCachedPosts } from '@/lib/cacheManager';
+import { useFeed } from '@/features/feed/useFeed';
 import PostCard from '@/components/PostCard';
 import CreatePostModal from '@/components/CreatePostModal';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
@@ -22,11 +21,24 @@ const MemoPostCard = memo(PostCard);
 
 export default function FeedPage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const initialPostsRef = useRef(getFastCachedPosts());
-  const [allPosts, setAllPosts] = useState(() => initialPostsRef.current || []);
-  const [loading, setLoading] = useState(() => initialPostsRef.current === null);
+  const {
+    posts: allPosts,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    newPostCount,
+    loadMore,
+    refreshHead,
+    showNewPosts,
+    removePost,
+    updatePost,
+    patchPost,
+  } = useFeed({ initialPosts: initialPostsRef.current || [] });
+  const loadMoreRef = useRef(null);
+  const loadMoreVisibleRef = useRef(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [activeTab, setActiveTab] = useState('discussion');
   const [showCreate, setShowCreate] = useState(false);
@@ -43,13 +55,16 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = subscribeToPostsRealtime(async (updatedPosts) => {
-      startTransition(() => setAllPosts(updatedPosts));
-      setLoading(false);
-      await cachePosts(updatedPosts);
-    });
-    return () => unsubscribe();
-  }, []);
+    const target = loadMoreRef.current;
+    if (!target || !hasMore || isOffline) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      const isVisible = entries.some((entry) => entry.isIntersecting);
+      if (isVisible && !loadMoreVisibleRef.current) loadMore();
+      loadMoreVisibleRef.current = isVisible;
+    }, { rootMargin: '600px 0px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, isOffline, loadMore]);
 
   const filteredPosts = useMemo(() => {
     return allPosts.filter(p => p.type === activeTab);
@@ -77,20 +92,20 @@ export default function FeedPage() {
   };
 
   const handlePostDeleted = useCallback((postId) => {
-    setAllPosts((prev) => prev.filter((p) => p.id !== postId));
-  }, []);
+    removePost(postId);
+  }, [removePost]);
 
   const handlePostUpdated = useCallback((updatedPost) => {
-    setAllPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
-  }, []);
+    updatePost(updatedPost);
+  }, [updatePost]);
 
   const handleVoteChanged = useCallback((postId, voteData) => {
-    setAllPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, upvote_count: voteData.upvote_count, downvote_count: voteData.downvote_count, votes: voteData.votes } : p
-      )
-    );
-  }, []);
+    patchPost(postId, {
+      upvote_count: voteData.upvote_count,
+      downvote_count: voteData.downvote_count,
+      votes: voteData.votes,
+    });
+  }, [patchPost]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-neutral-900 dark:text-white pb-24">
@@ -145,11 +160,32 @@ export default function FeedPage() {
               </button>
             </div>
 
+            {newPostCount > 0 && (
+              <button
+                type="button"
+                onClick={showNewPosts}
+                className="sticky top-[58px] z-20 mx-auto mb-2 flex rounded-full bg-[#0095F6] px-4 py-2 text-xs font-bold text-white shadow-lg"
+              >
+                {newPostCount} new {newPostCount === 1 ? 'post' : 'posts'}
+              </button>
+            )}
+
             {/* Posts Feed */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] mb-2" />
                 <p className="text-neutral-400 text-sm">Loading feed...</p>
+              </div>
+            ) : error && allPosts.length === 0 && !isOffline ? (
+              <div className="py-20 text-center">
+                <p className="mb-3 text-sm text-neutral-500">The feed could not sync.</p>
+                <button
+                  type="button"
+                  onClick={refreshHead}
+                  className="text-sm font-semibold text-[#0095F6]"
+                >
+                  Try again
+                </button>
               </div>
             ) : filteredPosts.length === 0 ? (
               <div className="text-center py-20 px-4">
@@ -179,6 +215,34 @@ export default function FeedPage() {
                     onVoteChanged={handleVoteChanged}
                   />
                 ))}
+              </div>
+            )}
+
+            {error && allPosts.length > 0 && !isOffline && (
+              <div className="px-4 py-3 text-center">
+                <button
+                  type="button"
+                  onClick={refreshHead}
+                  className="text-xs font-semibold text-[#0095F6]"
+                >
+                  Feed sync paused. Tap to retry.
+                </button>
+              </div>
+            )}
+
+            {hasMore && (
+              <div ref={loadMoreRef} className="flex min-h-20 items-center justify-center py-6">
+                {loadingMore ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-[#0095F6]" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={loadMore}
+                    className="text-xs font-semibold text-neutral-400 hover:text-[#0095F6]"
+                  >
+                    Load more
+                  </button>
+                )}
               </div>
             )}
           </main>

@@ -79,3 +79,5 @@ Run the complete surviving feature matrix, instrument read counts/startup/cache 
 ## First implementation slice
 
 The first code slice after this audit is intentionally vertical: canonical errors + versioned local store + feed repository + bounded Firebase cursor page + cached feed hydration + tests. It produces user-visible startup/read improvements without changing production data.
+
+Status: implemented and verified on 2026-09-08. The next slice is the durable outbox/sync foundation.
