@@ -23,6 +23,8 @@ import {
   reportAndRestrictUser,
   runAutoDeleteCleanup,
   subscribeToChatSettings,
+  sendMessage,
+  getChatsWithUserDetails,
   CHAT_STATUS
 } from '@/lib/chatsDb';
 import {

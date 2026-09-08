@@ -4,10 +4,17 @@ const path = require("path");
 let webpackConfig = {
   eslint: {
     configure: {
+      env: {
+        browser: true,
+        es2021: true,
+        node: true,
+        jest: true,
+      },
       extends: ["plugin:react-hooks/recommended"],
       rules: {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
+        "no-undef": "error",
       },
     },
   },

@@ -121,7 +121,7 @@ export const shouldLock = () => {
 export const isBiometricSupported = async () => {
   return (
     window.PublicKeyCredential &&
-    await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+    await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
   );
 };
 

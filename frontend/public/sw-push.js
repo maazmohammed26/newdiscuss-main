@@ -40,7 +40,7 @@ self.addEventListener('message', (event) => {
 // older Discuss builds. New subscriptions use /push/onesignal/ independently.
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (_) {}
 
-const CACHE_VERSION = 'discuss-v6';
+const CACHE_VERSION = 'discuss-v7';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
 const OFFLINE_URL   = '/offline.html';

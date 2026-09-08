@@ -1,12 +1,13 @@
 import { getAuth, signInWithCustomToken, signOut } from 'firebase/auth';
 import { getAuthenticatedIdToken } from './authenticatedRequest';
+import { doesProjectRequireBrowserAuth } from './firebaseRegistry';
 import { secondaryApp } from './firebaseSecondary';
 import { thirdApp } from './firebaseThird';
 import { fourthApp } from './firebaseFourth';
 import { fifthApp } from './firebaseFifth';
 import { devRadarApp } from './firebaseSixth';
 
-const TARGETS = [
+const TARGET_APPS = [
   ['secondary', secondaryApp],
   ['chats', thirdApp],
   ['groups', fourthApp],
@@ -15,19 +16,26 @@ const TARGETS = [
 ];
 
 let activeUid = null;
-let synchronization = null;
+let synchronizationPromise = null;
 
-// Cooldown tracker to prevent uncontrolled 503 retry bursts
+// Global circuit breaker tracker
 const COOLDOWN_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-const projectCooldowns = new Map();
+let globalCooldownUntil = 0;
+let hasLoggedCooldownNotice = false;
 
 export const resetAuxiliaryCooldowns = () => {
-  projectCooldowns.clear();
+  globalCooldownUntil = 0;
+  hasLoggedCooldownNotice = false;
+  synchronizationPromise = null;
+  activeUid = null;
+};
+
+export const isAuxiliaryCircuitBreakerOpen = () => {
+  return Boolean(globalCooldownUntil && Date.now() < globalCooldownUntil);
 };
 
 const requestCustomToken = async (project) => {
-  const cooldownUntil = projectCooldowns.get(project);
-  if (cooldownUntil && Date.now() < cooldownUntil) {
+  if (isAuxiliaryCircuitBreakerOpen()) {
     throw new Error('aux-auth-in-cooldown');
   }
 
@@ -38,40 +46,123 @@ const requestCustomToken = async (project) => {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body: JSON.stringify({ project }),
   });
+
   const result = await response.json().catch(() => ({}));
+
   if (!response.ok || !result.token) {
-    if (response.status === 503 || result.code === 'aux-auth-not-configured' || result.code === 'project-auth-not-configured') {
-      projectCooldowns.set(project, Date.now() + COOLDOWN_DURATION_MS);
+    // If backend is unavailable or unconfigured, engage global circuit breaker immediately
+    if (
+      response.status === 503 ||
+      result.code === 'aux-auth-not-configured' ||
+      result.code === 'project-auth-not-configured' ||
+      result.code === 'AUX_CONFIG_MISSING' ||
+      result.code === 'AUX_CONFIG_INVALID_JSON' ||
+      result.code === 'AUX_SERVICE_ACCOUNT_INVALID'
+    ) {
+      globalCooldownUntil = Date.now() + COOLDOWN_DURATION_MS;
+      if (!hasLoggedCooldownNotice) {
+        hasLoggedCooldownNotice = true;
+        console.warn('[AUTH] Auxiliary Firebase auth backend unavailable. 5-minute circuit breaker engaged.');
+      }
     }
     throw new Error(result.code || `aux-auth-${response.status}`);
   }
-  projectCooldowns.delete(project);
+
   return result.token;
 };
 
+/**
+ * Coordinates auxiliary Firebase authentication across targets.
+ * Ensures:
+ *  1. Database-only targets never initialize browser Firebase Auth (prevents CONFIGURATION_NOT_FOUND).
+ *  2. Multiple concurrent callers share a single in-flight synchronization promise.
+ *  3. A global circuit breaker prevents repeated 503 request storms on startup.
+ */
 export const synchronizeAuxiliaryAuth = async (uid) => {
   if (!uid) return [];
-  if (activeUid === uid && synchronization) return synchronization;
+
+  // Filter only initialized apps that genuinely declare browserAuth: true in capabilities registry
+  const authRequiredTargets = TARGET_APPS.filter(([project, app]) => {
+    return Boolean(app) && doesProjectRequireBrowserAuth(project);
+  });
+
+  // If no auxiliary apps require browser auth (they are database-only), resolve immediately
+  if (authRequiredTargets.length === 0) {
+    return [];
+  }
+
+  // If global circuit breaker is active, skip outbound requests
+  if (isAuxiliaryCircuitBreakerOpen()) {
+    return [];
+  }
+
+  // Deduplicate in-flight requests: share single active synchronization coordinator
+  if (activeUid === uid && synchronizationPromise) {
+    return synchronizationPromise;
+  }
+
   activeUid = uid;
-  synchronization = Promise.allSettled(TARGETS.filter(([, app]) => Boolean(app)).map(async ([project, app]) => {
-    const auth = getAuth(app);
-    if (auth.currentUser?.uid === uid) return { project, reused: true };
-    const token = await requestCustomToken(project);
-    const credential = await signInWithCustomToken(auth, token);
-    if (credential.user.uid !== uid) throw new Error('aux-auth-uid-mismatch');
-    return { project, uid };
-  }));
-  const results = await synchronization;
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length) console.warn(`[AUTH] ${failures.length} auxiliary Firebase authentication target(s) unavailable.`);
-  return results;
+  hasLoggedCooldownNotice = false;
+
+  synchronizationPromise = (async () => {
+    const results = [];
+
+    for (const [project, app] of authRequiredTargets) {
+      if (isAuxiliaryCircuitBreakerOpen()) {
+        results.push({ status: 'rejected', reason: new Error('aux-auth-in-cooldown') });
+        continue;
+      }
+
+      try {
+        const auth = getAuth(app);
+        if (auth?.currentUser?.uid === uid) {
+          results.push({ status: 'fulfilled', value: { project, reused: true } });
+          continue;
+        }
+
+        const token = await requestCustomToken(project);
+        const credential = await signInWithCustomToken(auth, token);
+        if (credential.user.uid !== uid) {
+          throw new Error('aux-auth-uid-mismatch');
+        }
+
+        results.push({ status: 'fulfilled', value: { project, uid } });
+      } catch (err) {
+        results.push({ status: 'rejected', reason: err });
+      }
+    }
+
+    const failures = results.filter((r) => r.status === 'rejected');
+    if (failures.length > 0 && !hasLoggedCooldownNotice) {
+      hasLoggedCooldownNotice = true;
+      console.warn(`[AUTH] ${failures.length} auxiliary Firebase authentication target(s) unavailable.`);
+    }
+
+    return results;
+  })().finally(() => {
+    synchronizationPromise = null;
+  });
+
+  return synchronizationPromise;
 };
 
 export const signOutAuxiliaryAuth = async () => {
   activeUid = null;
-  synchronization = null;
-  await Promise.allSettled(TARGETS.filter(([, app]) => Boolean(app)).map(([, app]) => {
-    const auth = getAuth(app);
-    return auth.currentUser ? signOut(auth) : Promise.resolve();
-  }));
+  synchronizationPromise = null;
+  resetAuxiliaryCooldowns();
+
+  const authRequiredTargets = TARGET_APPS.filter(([project, app]) => {
+    return Boolean(app) && doesProjectRequireBrowserAuth(project);
+  });
+
+  await Promise.allSettled(
+    authRequiredTargets.map(([, app]) => {
+      try {
+        const auth = getAuth(app);
+        return auth.currentUser ? signOut(auth) : Promise.resolve();
+      } catch (_) {
+        return Promise.resolve();
+      }
+    })
+  );
 };
