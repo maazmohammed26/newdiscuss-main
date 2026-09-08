@@ -44,9 +44,9 @@ export default function Header() {
     });
   }, [user?.id]);
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/guidelines'];
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', ...(user ? [] : ['/guidelines'])];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  const isAppRoute = location.pathname === '/feed' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
+  const isAppRoute = location.pathname === '/feed' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
   const isAiChatRoute = location.pathname === '/ai-assistant';
   const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
 

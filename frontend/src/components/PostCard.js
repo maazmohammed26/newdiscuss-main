@@ -12,6 +12,7 @@ import UrlPreviewCard, { extractFirstUrl } from '@/components/UrlPreviewCard';
 import ExternalLinkModal from '@/components/ExternalLinkModal';
 import UserPreviewModal from '@/components/UserPreviewModal';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import GuestAuthModal from '@/components/GuestAuthModal';
 import UserAvatar from '@/components/UserAvatar';
 import {
@@ -371,11 +372,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               <span
                 data-testid={`post-author-${post.id}`}
                 onClick={(e) => { e.stopPropagation(); navigate(`/user/${post.author_id}`); }}
-                className="font-bold text-[13.5px] text-neutral-950 dark:text-white hover:opacity-80 cursor-pointer truncate flex items-center gap-1"
+                className="font-bold text-[13.5px] text-neutral-950 dark:text-white hover:opacity-80 cursor-pointer truncate"
               >
                 {post.author_username}
-                {post.author_verified && <VerifiedBadge size="xs" />}
               </span>
+              {isUserVerified(post) && <VerifiedBadge size="xs" />}
 
               <span className="text-neutral-400 text-xs">•</span>
               <span className="text-neutral-400 dark:text-neutral-500 text-xs shrink-0">

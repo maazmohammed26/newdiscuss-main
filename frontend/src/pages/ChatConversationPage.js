@@ -41,6 +41,7 @@ import {
 } from '@/lib/chatMessageUtils';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import ChatLinkText from '@/components/ChatLinkText';
 import AudioCallLogCard, { LiveAudioCallCard } from '@/components/AudioCallLogCard';
 import { setAudioCallingPreference } from '@/lib/audioCallService';
@@ -1070,7 +1071,7 @@ export default function ChatConversationPage() {
                   <span className="font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white text-sm">
                     {displayName}
                   </span>
-                  {otherUser.verified && <VerifiedBadge size="sm" />}
+                  {isUserVerified(otherUser) && <VerifiedBadge size="sm" />}
                 </div>
                 <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
                   @{otherUser.username}

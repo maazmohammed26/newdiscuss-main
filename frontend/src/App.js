@@ -370,7 +370,7 @@ function OnboardingWrapper({ children }) {
     navigate('/profile?section=notifications');
   };
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', ...(user ? [] : ['/guidelines'])];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
   const isAiChatRoute = location.pathname === '/ai-assistant';

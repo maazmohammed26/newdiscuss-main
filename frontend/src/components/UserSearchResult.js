@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FriendRequestButton from './FriendRequestButton';
 import VerifiedBadge from './VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import { User } from 'lucide-react';
 
 
@@ -37,7 +38,7 @@ export default function UserSearchResult({
             <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm truncate">
               <span>@{user.username}</span>
             </span>
-            {user.verified && <VerifiedBadge size="sm" />}
+            {isUserVerified(user) && <VerifiedBadge size="sm" />}
           </div>
           {user.email && (
             <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs truncate">

@@ -29,6 +29,7 @@ import {
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -559,7 +560,7 @@ export default function ChatPage() {
               <span className={`font-semibold text-sm truncate ${hasUnread ? 'text-neutral-900 dark:text-white dark:text-white' : 'text-neutral-900 dark:text-neutral-50 dark:text-white'}`}>
                 <span>@{otherUser.username}</span>
               </span>
-              {otherUser.verified && <VerifiedBadge size="sm" />}
+              {isUserVerified(otherUser) && <VerifiedBadge size="sm" />}
               {hasAutoDelete && (
                 <span className="bg-[#F59E0B]/20 text-[#F59E0B] text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5" title="Auto-delete enabled (24h)">
                   <Timer className="w-2.5 h-2.5" />
@@ -665,7 +666,7 @@ export default function ChatPage() {
             <span className="font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white text-sm truncate">
               <span>@{friend.username}</span>
             </span>
-            {friend.verified && <VerifiedBadge size="sm" />}
+            {isUserVerified(friend) && <VerifiedBadge size="sm" />}
           </div>
           <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
             <span>Friends since {new Date(friend.since).toLocaleDateString([], { month: 'short', year: 'numeric' })}</span>

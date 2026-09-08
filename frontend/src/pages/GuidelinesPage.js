@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Flag, HeartHandshake, LockKeyhole, MessageCircle, ShieldCheck } from 'lucide-react';
 import PublicPageShell from '@/components/PublicPageShell';
+import InAppGuidelinesPage from '@/pages/InAppGuidelinesPage';
+import { useAuth } from '@/contexts/AuthContext';
 
 const principles = [
   { icon: HeartHandshake, title: 'Build with respect', text: 'Challenge ideas without attacking people. Harassment, hate, intimidation, and impersonation are not welcome.' },
@@ -10,10 +12,26 @@ const principles = [
 ];
 
 export default function GuidelinesPage() {
+  const { user, loading } = useAuth();
+
   useEffect(() => {
     window.scrollTo(0, 0);
     document.title = 'Community Guidelines | Discuss';
   }, []);
+
+  // If user is authenticated, render the dedicated in-app experience
+  if (user) {
+    return <InAppGuidelinesPage />;
+  }
+
+  // If still loading auth state, don't flash public shell prematurely
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <PublicPageShell eyebrow="Community guidelines" title="Make every discussion worth opening." description="These standards keep Discuss safe, focused, and useful for developers at every level." compact>

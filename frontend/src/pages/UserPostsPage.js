@@ -9,6 +9,7 @@ import { getUserProfile } from '@/lib/userProfileDb';
 import Header from '@/components/Header';
 import PostCard from '@/components/PostCard';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import { ArrowLeft, User, FileText, Calendar, Loader2, ExternalLink, ChevronDown, ChevronUp, PlayCircle, Clock, ShieldCheck, Flag } from 'lucide-react';
@@ -203,14 +204,14 @@ export default function UserPostsPage() {
                   {profileData?.fullName && (
                     <h1 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[18px] flex items-center gap-1 no-copy">
                       {profileData.fullName}
-                      {userData.verified && <VerifiedBadge size="sm" />}
+                      {(isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="sm" />}
                     </h1>
                   )}
                   
                   {/* Username */}
                   <div data-testid="user-posts-username" className={`flex items-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[14px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[18px]'}`}>
                     @{userData.username}
-                    {!profileData?.fullName && userData.verified && <VerifiedBadge size="sm" />}
+                    {!profileData?.fullName && (isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="sm" />}
                   </div>
 
                   {userId === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && (

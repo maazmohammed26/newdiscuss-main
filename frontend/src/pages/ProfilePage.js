@@ -55,6 +55,7 @@ import Sidebar from '@/components/Sidebar';
 import PostCard from '@/components/PostCard';
 import ThemeSelector from '@/components/ThemeSelector';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import VerificationRequestModal from '@/components/VerificationRequestModal';
 import UserAdminMessage from '@/components/UserAdminMessage';
 import LinkifiedText from '@/components/LinkifiedText';
@@ -1560,9 +1561,9 @@ export default function ProfilePage() {
             </Popover>
           </div>
 
-          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-neutral-900 dark:text-white dark:text-white flex items-center justify-center gap-2">
+          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-neutral-900 dark:text-white flex items-center justify-center gap-2">
             <span>{user?.username}</span>
-            {user?.verified && <VerifiedBadge size="md" />}
+            {isUserVerified(user) && <VerifiedBadge size="md" />}
           </h1>
           <p data-testid="profile-email" className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[13px] mt-0.5"><span>{user?.email}</span></p>
 
@@ -2851,9 +2852,9 @@ export default function ProfilePage() {
                                     className="w-10 h-10"
                                   />
                                   <div className="text-left min-w-0">
-                                    <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate flex items-center gap-1">
+                                    <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate flex items-center gap-1">
                                       @{suggested.username}
-                                      {suggested.verified && <VerifiedBadge size="xs" />}
+                                      {isUserVerified(suggested) && <VerifiedBadge size="xs" />}
                                     </span>
                                     {suggested.mutualCount > 0 && (
                                       <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
@@ -2899,10 +2900,12 @@ export default function ProfilePage() {
                               className="w-10 h-10"
                             />
                             <div className="text-left min-w-0">
-                              <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate">
-                                @{friend.username}
-                              </span>
-                              {friend.verified && <VerifiedBadge size="xs" />}
+                              <div className="flex items-center gap-1">
+                                <span className="font-semibold text-neutral-900 dark:text-white text-sm truncate">
+                                  @{friend.username}
+                                </span>
+                                {isUserVerified(friend) && <VerifiedBadge size="xs" />}
+                              </div>
                             </div>
                           </button>
                           <Button
@@ -2950,9 +2953,9 @@ export default function ProfilePage() {
                                     </div>
                                   )}
                                   <div className="text-left min-w-0">
-                                    <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate flex items-center gap-1">
+                                    <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate flex items-center gap-1">
                                       <span>@{suggested.username}</span>
-                                      {suggested.verified && <VerifiedBadge size="xs" />}
+                                      {isUserVerified(suggested) && <VerifiedBadge size="xs" />}
                                     </span>
                                   </div>
                                 </button>

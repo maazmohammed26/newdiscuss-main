@@ -62,6 +62,7 @@ import { sendVerificationOTPDirectly } from '@/lib/emailService';
 import { logoutOneSignalUser, syncOneSignalUser } from '@/lib/pushNotificationService';
 import { synchronizeAuxiliaryAuth, signOutAuxiliaryAuth } from '@/lib/auxiliaryAuth';
 import { getMedianBridge, isNativeApp } from '@/platform/platformAdapter';
+import { registerVerifiedUser } from '@/lib/verification';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AUTH_TIMEOUT_MS        = 8_000;   // Max wait for onAuthStateChanged to fire
@@ -541,7 +542,8 @@ export function AuthProvider({ children }) {
       if (snapshot.exists()) {
         sawProfile = true;
         const data = snapshot.val();
-        const newVerified = data.verified || false;
+        const newVerified = Boolean(data.verified);
+        registerVerifiedUser(user.id, newVerified);
 
         if (previousVerified !== newVerified) {
           syncUserVerificationEverywhere(user.id, newVerified).catch(console.error);

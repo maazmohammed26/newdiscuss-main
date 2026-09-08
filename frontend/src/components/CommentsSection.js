@@ -12,6 +12,7 @@ import {
 } from '@/lib/commentsDb';
 import ExpandableText from '@/components/ExpandableText';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import CommentUserInfoModal from '@/components/CommentUserInfoModal';
 import LinkifiedText from '@/components/LinkifiedText';
 import UserAvatar from '@/components/UserAvatar';
@@ -61,7 +62,7 @@ function CommentReply({ reply, currentUser, postId, commentId, postAuthorId, onD
           <span className="font-bold mr-1.5 text-neutral-900 dark:text-white">
             {reply.author_username}
           </span>
-          {reply.author_verified && <VerifiedBadge size="xs" />}
+          {isUserVerified(reply) && <VerifiedBadge size="xs" />}
           {isPostAuthor && (
             <span className="ml-1 text-[10px] font-bold text-[#0095F6] bg-blue-500/10 px-1 py-0.2 rounded">Author</span>
           )}
@@ -187,7 +188,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
             >
               {comment.author_username}
             </span>
-            {comment.author_verified && <VerifiedBadge size="xs" />}
+            {isUserVerified(comment) && <VerifiedBadge size="xs" />}
             {isPostAuthor && (
               <span className="ml-1 text-[10px] font-bold text-[#0095F6] bg-blue-500/10 px-1 py-0.2 rounded">Author</span>
             )}

@@ -6,6 +6,7 @@ import { getUserProfile } from '@/lib/userProfileDb';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import FriendRequestButton from '@/components/FriendRequestButton';
 import ReportModal from '@/components/ReportModal';
 import { hasUserReportedTarget } from '@/lib/reportService';
@@ -153,14 +154,14 @@ export default function UserPreviewModal({ open, onClose, userId, currentUserId,
                 {profileData?.fullName && (
                   <h3 className="font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[16px] flex items-center justify-center gap-1 no-copy">
                     {profileData.fullName}
-                    {userData.verified && <VerifiedBadge size="xs" />}
+                    {(isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="xs" />}
                   </h3>
                 )}
                 
                 {/* Username */}
                 <p data-testid="user-preview-name" className={`flex items-center justify-center gap-1 no-copy ${profileData?.fullName ? 'text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-[13px]' : 'font-bold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-[16px]'}`}>
                   @{userData.username}
-                  {!profileData?.fullName && userData.verified && <VerifiedBadge size="xs" />}
+                  {!profileData?.fullName && (isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="xs" />}
                 </p>
 
                 {/* Achievements Badges */}

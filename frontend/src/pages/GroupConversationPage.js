@@ -22,6 +22,7 @@ import {
 import Header from '@/components/Header';
 import ChatLinkText from '@/components/ChatLinkText';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, Clock, AlertCircle, ChevronDown, Camera } from 'lucide-react';
@@ -724,7 +725,7 @@ export default function GroupConversationPage() {
             {!isOwn && (
               <div className="flex items-center gap-1 mb-1 ml-1">
                 <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white">@{senderDetails?.username || message.senderName || 'User'}</span>
-                {senderDetails?.verified && <VerifiedBadge size="xs" />}
+                {isUserVerified(senderDetails) && <VerifiedBadge size="xs" />}
               </div>
             )}
             <BlinkMessageCard
@@ -743,10 +744,10 @@ export default function GroupConversationPage() {
       <div key={message.id} ref={(el) => (messageRefs.current[message.id] = el)} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 message-item`}>
         <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
           {!isOwn && (
-            <div className="flex items-center gap-1 mb-1 ml-1">
-              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white">@{senderDetails?.username || 'User'}</span>
-              {senderDetails?.verified && <VerifiedBadge size="xs" />}
-            </div>
+              <div className="flex items-center gap-1 mb-1 ml-1">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-50 dark:text-white">@{senderDetails?.username || 'User'}</span>
+                {isUserVerified(senderDetails) && <VerifiedBadge size="xs" />}
+              </div>
           )}
           
           <div className="relative group">

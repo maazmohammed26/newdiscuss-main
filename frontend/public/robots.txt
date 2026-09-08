@@ -8,12 +8,22 @@ Allow: /terms
 Allow: /privacy
 Allow: /careers
 Allow: /contact
+Disallow: /login
+Disallow: /register
+Disallow: /verify-email
+Disallow: /login-bridge
 Disallow: /profile
 Disallow: /settings
 Disallow: /notifications
 Disallow: /chat
 Disallow: /group
 Disallow: /join-requests
+Disallow: /editor
+Disallow: /bookmarks
+Disallow: /pulse
+Disallow: /devradar
+Disallow: /sherlock
+Disallow: /talentgraph
 Disallow: /api/
 
 User-agent: GPTBot
@@ -52,3 +62,4 @@ Disallow: /group
 Disallow: /api/
 
 Sitemap: https://discussit.in/sitemap.xml
+Sitemap: https://www.discussit.in/sitemap.xml

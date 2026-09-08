@@ -6,6 +6,7 @@ import CreatePostModal from '@/components/CreatePostModal';
 import SignalStoriesRow from '@/components/SignalStoriesRow';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { PostCardSkeleton } from '@/components/skeletons';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   WifiOff, 
@@ -172,10 +173,7 @@ export default function FeedPage() {
 
             {/* Posts Feed */}
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] mb-2" />
-                <p className="text-neutral-400 text-sm">Loading feed...</p>
-              </div>
+              <PostCardSkeleton count={3} />
             ) : error && allPosts.length === 0 && !isOffline ? (
               <div className="py-20 text-center">
                 <p className="mb-3 text-sm text-neutral-500">The feed could not sync.</p>

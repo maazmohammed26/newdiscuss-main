@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import UserAvatar from '@/components/UserAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import { isUserVerified } from '@/lib/verification';
 import { useAuth } from '@/contexts/AuthContext';
 import { searchPosts } from '@/lib/db';
 import { searchUsers } from '@/lib/relationshipsDb';
 import { ArrowLeft, FileText, Search, Users, X, Loader2, Hash, ChevronRight, Home } from 'lucide-react';
+import { SearchSkeleton } from '@/components/skeletons';
 
 const tabs = [
   { id: 'all', label: 'Top' },
@@ -119,7 +121,7 @@ export default function SearchPage() {
 
           {normalizedQuery && normalizedQuery.length < 2 && <p className="py-12 text-center text-[13px] text-neutral-500">Enter at least two characters to search.</p>}
 
-          {loading && <div className="flex items-center justify-center gap-2 py-14 text-[13px] font-medium text-neutral-500"><Loader2 className="h-4 w-4 animate-spin text-[#0095F6]" /> Searching Discuss…</div>}
+          {loading && <SearchSkeleton />}
 
           {!loading && normalizedQuery.length >= 2 && resultCount === 0 && (
             <div className="py-16 text-center"><p className="font-semibold text-neutral-900 dark:text-white">No results found</p><p className="mt-1 text-[13px] text-neutral-500">Try a different name, phrase, or hashtag.</p></div>
@@ -132,7 +134,7 @@ export default function SearchPage() {
                 {people.map((person) => (
                   <Link key={person.id} to={`/user/${person.id}`} className="flex items-center gap-3 border-b border-[#EFEFEF] px-4 py-3.5 transition-colors last:border-0 hover:bg-[#FAFAFA] dark:border-[#262626] dark:hover:bg-[#0A0A0A]">
                     <UserAvatar src={person.photo_url} username={person.username} className="h-11 w-11 rounded-full object-cover" />
-                    <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><span className="truncate text-[14px] font-bold text-neutral-900 dark:text-white">{person.username}</span>{person.verified && <VerifiedBadge size="sm" />}</div><p className="truncate text-[12px] text-neutral-500">View developer profile</p></div>
+                    <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><span className="truncate text-[14px] font-bold text-neutral-900 dark:text-white">{person.username}</span>{isUserVerified(person) && <VerifiedBadge size="sm" />}</div><p className="truncate text-[12px] text-neutral-500">View developer profile</p></div>
                     <ChevronRight className="h-4 w-4 text-neutral-400" />
                   </Link>
                 ))}
