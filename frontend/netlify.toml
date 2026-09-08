@@ -91,12 +91,6 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[headers]]
-  for = "/service-worker.js"
-
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
 # ── Cache: manifest — 1 day ───────────────────────────────────
 [[headers]]
   for = "/manifest.json"

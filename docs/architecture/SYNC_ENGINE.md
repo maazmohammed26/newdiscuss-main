@@ -4,7 +4,7 @@ Last updated: 2026-09-08
 
 ## Implemented outbox
 
-The durable outbox lives in the version 6 IndexedDB outbox store. Every operation records:
+The durable outbox lives in the version 7 IndexedDB outbox store. Every operation records:
 
 - operationId
 - authenticated userId

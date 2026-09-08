@@ -1,5 +1,7 @@
 # Discuss Notification Audit
 
+> Phase-0 snapshot. The legacy endpoint described below has since been replaced by the typed architecture in `NOTIFICATIONS.md`.
+
 Audit date: 2026-09-08  
 Status: implementation present; end-to-end production delivery remains unverified
 

@@ -4,7 +4,7 @@ Last updated: 2026-09-08
 
 ## Database
 
-The active structured cache is discuss_cache, now at schema version 6 using the existing idb dependency. The upgrade is additive and never clears the database.
+The active structured cache is discuss_cache, now at schema version 7 using the existing idb dependency. The upgrade is additive and never clears the database.
 
 Retained stores:
 

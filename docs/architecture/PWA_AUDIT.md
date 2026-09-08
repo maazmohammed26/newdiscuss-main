@@ -1,5 +1,7 @@
 # Discuss PWA Audit
 
+> Phase-0 snapshot. The duplicate worker described below has since been removed; see `PWA.md` for the implemented state.
+
 Audit date: 2026-09-08
 
 ## Active setup

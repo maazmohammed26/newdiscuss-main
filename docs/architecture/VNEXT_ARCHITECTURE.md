@@ -2,59 +2,16 @@
 
 Last updated: 2026-09-08
 
-## Implemented foundation
+The implemented path is `React UI -> feature hook/repository -> discuss_cache IndexedDB -> durable outbox/sync -> Firebase/server APIs`. Firebase and Cloudinary remain the source of truth; no existing path, UID, ID or media reference was rewritten.
 
-The migration now has its first production path:
+Feed uses a cached first paint, 20-record cursor pages, a bounded 20-record realtime head and scroll prefetch. New head records are buffered while the user is down-page. Direct and group conversations load cached messages first, listen to a bounded recent window, paginate older records with timestamp/ID cursors, and merge by stable ID.
 
-~~~text
-FeedPage
-   |
-useFeed feature hook
-   |
-FeedRepository
-   |----------------------|
-FirebaseFeedSource      FeedCache
-   |                      |
-Firebase RTDB          discuss_cache v6
-~~~
+Post votes and direct/group sends use the durable outbox. It has stable operation IDs, pending/syncing/failed states, bounded exponential retry, stale-lease recovery, cross-tab locking and online/startup replay. Message operation IDs become Firebase message keys, making remote retries idempotent.
 
-The repository boundary owns coordination between the remote source and local cache. The React page owns only display state and user interaction. Existing post shapes remain compatible with PostCard.
+`discuss_cache` version 7 is the only active IndexedDB database. Retention is bounded for feed pages/posts, messages per thread, and notifications. Schema upgrades are additive.
 
-## Feed behavior
+Notifications use typed authenticated events, transactionally deduplicated in-app records and server-side OneSignal/Telegram/Discord fan-out. Web/PWA and Median share Firebase UID identity but use separate platform adapters and delivery SDK paths.
 
-1. Synchronous legacy fast cache can paint immediately during the compatibility period.
-2. Versioned IndexedDB cache loads and merges persisted feed history.
-3. A 20-item Firebase cursor page refreshes the feed head.
-4. A bounded 20-item realtime query merges new/changed posts.
-5. Scroll proximity (600 px root margin) loads one older page at a time.
-6. Posts arriving while the user is far down the page are buffered behind a “new posts” control.
-7. Loaded pages are deduplicated by stable Firebase post ID and sorted by timestamp.
+PWA navigation is network-first with a cached app shell/offline fallback. `/sw-push.js` owns root scope; the OneSignal worker uses its dedicated scope with a root compatibility import for existing subscriptions.
 
-The old getPosts() and subscribeToPostsRealtime() functions remain available for unmigrated consumers, but Home no longer calls them.
-
-## Compatibility and safety
-
-- Firebase remains the source of truth.
-- No remote node, ID, field, UID, or media reference is changed.
-- The IndexedDB upgrade is additive from version 5 to version 6.
-- All old IndexedDB stores and indexes are retained.
-- Secondary Firebase initialization now skips safely when its configuration is absent, without changing configured production behavior.
-- The first page and realtime head are capped at 20; explicit repository limits are capped at 50.
-
-## Remote query prerequisite
-
-The primary RTDB posts node requires an index on timestamp for server-efficient cursor queries:
-
-~~~json
-{
-  "posts": {
-    ".indexOn": ["timestamp"]
-  }
-}
-~~~
-
-This is a required production rules addition, not a complete replacement ruleset. It must be merged into the current production rules after those rules are exported and reviewed. The repository deliberately does not ship a guessed root rules file.
-
-## Next boundaries
-
-The same pattern will be extended to mutations/outbox, chat history, group history, profiles, relationships, notifications, stories, Pulse, and DevRadar. Compatibility adapters remain until every consumer of a legacy function has moved.
+Tech News and Tech Jobs routes, navigation, pages, admin UI, writers, static content and launch broadcaster are removed. Their historical Firebase nodes are explicitly preserved.

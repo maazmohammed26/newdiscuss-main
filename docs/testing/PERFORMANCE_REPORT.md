@@ -2,28 +2,20 @@
 
 Last updated: 2026-09-08
 
-## Automated baseline
-
-| Check | Result |
+| Automated check | Result |
 |---|---|
-| Pre-migration unit tests | 91/91 passed |
-| Current unit tests | 118/118 passed |
+| Unit tests | 125/125 passed across 18 suites |
 | Production build | Passed |
-| Main bundle after outbox slice | 261.69 kB gzip |
-| Feed page size | 20 posts |
-| Realtime feed-head bound | 20 posts |
-| Maximum repository page size | 50 posts |
-| Cache retention | 300 posts / 20 page descriptors |
-| Scroll prefetch threshold | 600 px |
+| Main bundle | 258.93 kB gzip |
+| Feed initial/realtime batch | 20 posts |
+| Feed repository hard cap | 50 posts/query |
+| Feed cache retention | 300 posts / 20 page descriptors |
+| Message listener | 50 recent records |
+| Message history page | 50, hard cap 100 |
+| Message cache | 500 per conversation/group |
+| Notification listener/local cache | 50 / 200 per recipient |
+| Feed scroll prefetch | 600 px |
 
-The feed slice increased the main bundle by approximately 170 bytes gzip. The durable outbox, cross-tab coordinator, and first mutation handler add approximately 2.84 kB gzip. No new runtime dependency was added.
+Home no longer downloads the complete post/vote/comment trees. It reads IndexedDB first, fetches one cursor page with look-ahead, enriches displayed IDs only and subscribes only to the newest head. Chat/group no longer increase realtime limits toward lifetime history; older data is explicitly paged.
 
-## Structural read improvement
-
-Before the migration, Home fetched complete posts, votes, primary comments, and secondary comments trees and then attached listeners to three complete primary nodes.
-
-Home now fetches one 21-record post query (20 displayed plus one look-ahead), enriches only those displayed post IDs, and listens only to the newest 20 post records. Older pages are fetched on demand.
-
-## Measurements still required
-
-Live Firebase bytes/read counts, cache-hit paint timing, cache-miss paint timing, long-scroll memory, slow-network behavior, and physical PWA/Median startup cannot be measured from unit/build execution. These must be captured against preview with representative production-scale data before the final acceptance report.
+Live Firebase byte counts, cached paint timing, long-scroll memory and physical PWA/Median startup require a deployed environment and were not fabricated in this terminal-only pass.

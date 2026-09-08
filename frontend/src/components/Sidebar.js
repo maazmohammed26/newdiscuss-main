@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Home, MessageCircle, Radar, Briefcase, Newspaper, Bookmark, Code, User, Sparkles, Users } from 'lucide-react';
+import { Plus, Home, MessageCircle, Radar, Bookmark, Code, User, Sparkles, Users } from 'lucide-react';
 import CreatePostModal from '@/components/CreatePostModal';
 import DiscussLogo from '@/components/DiscussLogo';
 
@@ -26,8 +26,6 @@ export default function Sidebar({ onPostCreated, className = "", topClass = "top
     { label: 'Discuss AI', path: '/ai-assistant', icon: Sparkles, isActive: location.pathname === '/ai-assistant', badge: 'AI' },
     { label: 'TalentGraph', path: '/talentgraph', icon: Users, isActive: location.pathname === '/talentgraph' },
     { label: 'DevRadar', path: '/devradar', icon: Radar, isActive: location.pathname === '/devradar' },
-    { label: 'Jobs', path: '/jobs', icon: Briefcase, isActive: location.pathname.startsWith('/jobs') },
-    { label: 'News', path: '/news', icon: Newspaper, isActive: location.pathname.startsWith('/news') },
     { label: 'Bookmarks', path: '/bookmarks', icon: Bookmark, isActive: location.pathname === '/bookmarks' },
     { label: 'Code Tools', path: '/editor', icon: Code, isActive: location.pathname === '/editor' },
     { label: 'Profile', path: '/profile', icon: User, isActive: location.pathname === '/profile' },

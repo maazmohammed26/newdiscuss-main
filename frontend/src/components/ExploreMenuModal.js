@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
-import { Radar, Newspaper, Briefcase, ChevronRight, Code, Bookmark, Search, Users } from 'lucide-react';
+import { Radar, ChevronRight, Code, Bookmark, Search, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
@@ -43,32 +43,6 @@ export default function ExploreMenuModal({ open, onClose, onRequireAuth }) {
       hoverBorder: 'hover:border-rose-500/30 dark:hover:border-rose-500/20',
       hoverBg: 'hover:bg-rose-500/[0.04] dark:hover:bg-rose-500/[0.06]',
       badge: 'MATCHMAKING'
-    },
-    {
-      title: 'Tech News',
-      description: 'Latest updates from the tech community',
-      icon: Newspaper,
-      path: '/news',
-      requiresAuth: false,
-      color: 'text-indigo-500 dark:text-indigo-400',
-      bg: 'bg-indigo-500/10 dark:bg-indigo-500/15',
-      glow: 'group-hover:shadow-[0_0_15px_rgba(99,102,241,0.25)]',
-      hoverBorder: 'hover:border-indigo-500/30 dark:hover:border-indigo-500/20',
-      hoverBg: 'hover:bg-indigo-500/[0.04] dark:hover:bg-indigo-500/[0.06]',
-      badge: 'LIVE_FEED'
-    },
-    {
-      title: 'Careers & Jobs',
-      description: 'Find your next developer role',
-      icon: Briefcase,
-      path: '/jobs',
-      requiresAuth: false,
-      color: 'text-purple-500 dark:text-purple-400',
-      bg: 'bg-purple-500/10 dark:bg-purple-500/15',
-      glow: 'group-hover:shadow-[0_0_15px_rgba(168,85,247,0.25)]',
-      hoverBorder: 'hover:border-purple-500/30 dark:hover:border-purple-500/20',
-      hoverBg: 'hover:bg-purple-500/[0.04] dark:hover:bg-purple-500/[0.06]',
-      badge: 'CAREERS'
     },
     {
       title: 'Code Playground',

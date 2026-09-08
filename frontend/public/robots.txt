@@ -2,8 +2,6 @@ User-agent: *
 Allow: /
 Allow: /about
 Allow: /blogs
-Allow: /news
-Allow: /jobs
 Allow: /download
 Allow: /guidelines
 Allow: /terms

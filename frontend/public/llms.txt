@@ -17,7 +17,7 @@
 - Publish technical discussions, projects, links, images, and videos.
 - Discover developers through DevRadar and TalentGraph.
 - Join or create groups and use private real-time chat.
-- Browse developer-focused technology news and jobs.
+- Save useful posts and use developer-focused collaboration tools.
 
 ## Organization
 

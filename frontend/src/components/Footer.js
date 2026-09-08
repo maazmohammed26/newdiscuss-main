@@ -3,7 +3,7 @@ import DiscussLogo from '@/components/DiscussLogo';
 import { useAuth } from '@/contexts/AuthContext';
 
 const groups = [
-  { title: 'Product', links: [['Explore', '/feed'], ['Tech News', '/news'], ['Tech Jobs', '/jobs']] },
+  { title: 'Product', links: [['Explore', '/feed'], ['Messages', '/chat'], ['DevRadar', '/devradar']] },
   { title: 'Company', links: [['About', '/about'], ['Blogs', '/blogs'], ['Careers', '/careers'], ['Contact', '/contact']] },
   { title: 'Legal', links: [['Guidelines', '/guidelines'], ['Terms', '/terms'], ['Privacy', '/privacy'], ['Support', '/support']] },
 ];
@@ -96,4 +96,3 @@ export default function Footer({ isLandingPage = false }) {
     </footer>
   );
 }
-

@@ -12,13 +12,13 @@ Last updated: 2026-09-08
 
 If the VNext feed path fails before deployment, revert the local-first feed commit. This restores FeedPage imports of subscribeToPostsRealtime, cachePosts, and getFastCachedPosts.
 
-The version 6 IndexedDB upgrade is additive. Rolling the code back to a client that opens version 5 would produce an IndexedDB VersionError, so a deployed rollback must retain localDatabase.js at version 6 (or release a small compatibility patch that opens version 6) even if the feed repository itself is disabled. Never respond by clearing all user cache.
+The version 7 IndexedDB upgrade is additive. Rolling the code back to a client that opens an earlier version would produce an IndexedDB VersionError, so a deployed rollback must retain localDatabase.js at version 7 (or release a compatibility patch that opens version 7) even if a repository is disabled. Never respond by clearing all user cache.
 
 ## Remote safety
 
 The current slice performs reads only against existing feed/vote/comment paths and writes only browser-local cache. It requires no remote data rollback and introduces no production migration.
 
-The outbox slice writes existing votes/{postId}/{uid} values using the same up/down/null model as the legacy toggle. To roll it back, stop new queueing first, allow or inspect pending operations, then restore direct toggle consumers while retaining local database version 6. Do not delete pending outbox rows automatically.
+The outbox writes existing votes/{postId}/{uid} values using the same up/down/null model as the legacy toggle and messages under stable operation IDs. To roll it back, stop new queueing first, allow or inspect pending operations, then restore direct consumers while retaining local database version 7. Do not delete pending outbox rows automatically.
 
 ## Deployment rollback sequence
 
