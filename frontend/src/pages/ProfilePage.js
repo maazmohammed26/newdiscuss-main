@@ -85,7 +85,7 @@ import {
 import { 
   FileText, LogOut, Loader2, ChevronRight,
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
-  Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
+  Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone, Settings,
   Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy, Palette,
   Volume2, VolumeX
 } from 'lucide-react';
@@ -133,8 +133,29 @@ export default function ProfilePage() {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showPosts, setShowPosts] = useState(false);
-  const [showPulses, setShowPulses] = useState(false);
+  // Canonical profile content tab ('posts' | 'pulses' | 'friends')
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabParam = new URLSearchParams(location.search).get('tab');
+    if (['posts', 'pulses', 'friends'].includes(tabParam)) return tabParam;
+    return 'posts';
+  });
+
+  useEffect(() => {
+    const tabParam = new URLSearchParams(location.search).get('tab');
+    if (tabParam && ['posts', 'pulses', 'friends'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set('tab', newTab);
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
+
+  const [showPosts, setShowPosts] = useState(true);
+  const [showPulses, setShowPulses] = useState(true);
   const [filterType, setFilterType] = useState('all');
   const [filterMonth, setFilterMonth] = useState('');
   const [filterYear, setFilterYear] = useState('');
@@ -809,12 +830,14 @@ export default function ProfilePage() {
         const pulses = await getUserPulses(user.id);
         setUserPulses(pulses);
         setShowPulses(true);
+        handleTabChange('pulses');
         return;
       }
 
       const posts = await getPosts();
       setUserPosts(posts.filter((post) => post.author_id === user.id));
       setShowPosts(true);
+      handleTabChange('posts');
     } catch {
       // The creation already succeeded. The existing live data refresh will
       // reconcile the profile if this immediate refresh is unavailable.
@@ -1384,23 +1407,39 @@ export default function ProfilePage() {
                 <ArrowLeft className="w-4 h-4 stroke-[2.2px]" />
                 <span>Back</span>
               </button>
-              <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Profile & Settings</span>
-              <div className="w-10" />
+              <span className="text-sm font-bold text-neutral-900 dark:text-white">Profile</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  title="Share Profile"
+                  aria-label="Share Profile"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => navigate('/settings')}
+                  className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  title="Settings & Privacy"
+                  aria-label="Settings and Privacy"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-        {/* Edge-to-Edge Instagram-style Profile Hero */}
-        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] p-6 text-center relative select-none pb-8">
-          
-          {/* Top Right Icons - Share & Info */}
-          <div className="absolute top-4 right-4 flex items-center gap-1">
-            {adminMessage && (
+        {/* Banner */}
+        <div className="relative w-full h-32 sm:h-36 md:h-44 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-neutral-900 dark:via-neutral-850 dark:to-neutral-900 overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+          {adminMessage && (
+            <div className="absolute top-3 right-3 z-10">
               <Popover open={adminPopoverOpen} onOpenChange={handleAdminPopoverToggle}>
                 <PopoverTrigger asChild>
                   <button
-                    className="relative p-2 rounded-full bg-[#EEF2FF] dark:bg-[#1A1A1A] border border-[#C7D2FE]/70 dark:border-[#262626] text-[#4338CA] dark:text-[#A5B4FC] hover:scale-105 transition-all"
+                    className="relative p-2 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-xs border border-white/20 text-[#4338CA] dark:text-[#A5B4FC] hover:scale-105 transition-all shadow-md cursor-pointer"
                     title="Admin Message"
                     aria-label="Admin Message"
                   >
-                    <Megaphone className="w-[18px] h-[18px]" />
+                    <Megaphone className="w-4 h-4" />
                     {hasUnseenAdminMessage && (
                       <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-black" />
                     )}
@@ -1425,213 +1464,274 @@ export default function ProfilePage() {
                   </div>
                 </PopoverContent>
               </Popover>
-            )}
+            </div>
+          )}
+        </div>
 
-            {/* Share Button */}
-            <button 
-              onClick={() => setShowShareModal(true)}
-              className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
-              title="Share Profile"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
-            
-            {/* Info Icon */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer">
-                  <Info className="w-5 h-5" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-xl shadow-xl" align="end">
-                <div className="space-y-3">
-                  <h4 className="font-bold text-neutral-900 dark:text-white text-sm">Discuss Profile</h4>
-                  <div className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
-                    <ImageIcon className="w-4 h-4 mt-0.5 shrink-0 text-[#0095F6]" />
-                    <p>All avatar photos and media are securely stored and optimized.</p>
-                  </div>
-                  <div className="pt-2 border-t border-[#EFEFEF] dark:border-[#262626]">
-                    <a
-                      href="mailto:support@discussit.in"
-                      className="flex items-center justify-center gap-2 w-full bg-[#0095F6] hover:bg-[#1877F2] text-white text-xs font-bold py-2 px-3 rounded-lg transition-colors"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      Contact Support
-                    </a>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Profile Picture Upload/Replace/Remove */}
-          <div className="relative group mx-auto mb-5 w-24 h-24 overflow-visible">
-            <button 
-              onClick={() => user?.photo_url ? setShowImagePreview(true) : null}
-              className="w-full h-full rounded-full overflow-hidden block discuss:border dark:border-[#262626] shadow-lg discuss:shadow-none"
-            >
-              <UserAvatar
-                src={user?.photo_url}
-                username={user?.username}
-                userId={user?.id}
-                priority
-                className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
-              />
-              {user?.photo_url && (
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  <div className="bg-black/50 rounded-full p-2">
-                    <Search className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-              )}
-            </button>
-            
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="absolute -bottom-1 -right-1 p-1.5 bg-[#0095F6] bg-[#0095F6] text-white rounded-full shadow-lg hover:scale-110 transition-transform border-2 border-white dark:border-[#1E293B] discuss:border-[#121212] z-10">
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1E293B] dark:bg-[#1A1A1A] border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
-                <div className="p-3 border-b border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
-                  <h4 className="font-semibold text-sm">Update Profile Picture</h4>
-                </div>
-                <div className="p-3">
-                  {!pendingProfilePic ? (
-                    <>
-                      <MediaUpload 
-                        type="image" 
-                        folder="profiles" 
-                        onUploadComplete={(result) => setPendingProfilePic(result.url)} 
-                      />
-                      {user?.photo_url && (
-                        <button 
-                          onClick={async () => {
-                            const { updateProfilePicture } = await import('@/lib/db');
-                            await updateProfilePicture(user.id, '');
-                            patchUser({ photo_url: '' });
-                            toast.success('Profile picture removed');
-                          }}
-                          className="w-full mt-3 flex items-center justify-center gap-2 text-[#EF4444] text-xs font-medium py-2 hover:bg-[#EF4444]/10 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Remove Current Picture
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border border-neutral-200 dark:border-neutral-700">
-                        <img src={pendingProfilePic} alt="Preview" className="w-full h-full object-cover" />
-                      </div>
-                      <p className="text-sm font-medium mb-4 dark:text-neutral-200 discuss:text-neutral-200">Save this profile picture?</p>
-                      <div className="flex w-full gap-2">
-                        <Button 
-                          onClick={() => setPendingProfilePic(null)} 
-                          variant="outline" 
-                          className="flex-1 dark:border-neutral-600 dark:text-neutral-300"
-                          disabled={savingProfilePic}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={async () => {
-                            setSavingProfilePic(true);
-                            try {
-                              const { updateProfilePicture } = await import('@/lib/db');
-                              await updateProfilePicture(user.id, pendingProfilePic);
-                              patchUser({ photo_url: pendingProfilePic });
-                              setPendingProfilePic(null);
-                              setSavingProfilePic(false);
-                              toast.success('Profile picture updated!');
-                            } catch (e) {
-                              toast.error('Failed to update picture');
-                              setSavingProfilePic(false);
-                            }
-                          }} 
-                          className="flex-1 bg-[#0095F6] text-white hover:bg-[#1877F2] bg-[#0095F6] hover:bg-[#1877F2]"
-                          disabled={savingProfilePic}
-                        >
-                          {savingProfilePic ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <h1 data-testid="profile-username" className="font-heading text-xl font-bold text-neutral-900 dark:text-white flex items-center justify-center gap-2">
-            <span>{user?.username}</span>
-            {isUserVerified(user) && <VerifiedBadge size="md" />}
-          </h1>
-          <p data-testid="profile-email" className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[13px] mt-0.5"><span>{user?.email}</span></p>
-
-          <div className="inline-flex items-center gap-2 bg-neutral-50 dark:bg-black dark:bg-black discuss:border dark:border-[#262626] px-4 py-2 mt-4 rounded-lg">
-            <FileText className="w-4 h-4 text-[#1D7AFF] text-[#0095F6]" />
-            <span data-testid="profile-post-count" className="text-neutral-900 dark:text-white dark:text-white text-[13px] font-semibold">
-              {loadingPosts ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : <span>{userPosts.length} Total Posts</span>}
-            </span>
-          </div>
-
-          {!loadingPosts && userPosts.length === 0 && (
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5">
-              <span className="font-script text-[23px] leading-none text-neutral-900 dark:text-white">Create your first post</span>
-              <button
-                type="button"
-                onClick={() => openCreateModal('discussion')}
-                className="min-h-8 rounded-full bg-[#0095F6] px-4 text-[11px] font-extrabold text-white transition hover:bg-[#1877F2] active:scale-95"
+        {/* Profile Hero Body */}
+        <div className="px-4 pb-4 border-b border-[#EFEFEF] dark:border-[#262626] bg-white dark:bg-black">
+          {/* Overlapping Avatar & Action Buttons */}
+          <div className="flex items-end justify-between -mt-11 sm:-mt-12 md:-mt-14 mb-3">
+            <div className="relative group">
+              <div 
+                onClick={() => user?.photo_url ? setShowImagePreview(true) : null}
+                className="w-[88px] h-[88px] sm:w-[96px] sm:h-[96px] md:w-[104px] md:h-[104px] rounded-full ring-4 ring-white dark:ring-black bg-white dark:bg-black overflow-hidden shadow-md cursor-pointer"
               >
-                Create
-              </button>
+                <UserAvatar
+                  src={user?.photo_url}
+                  username={user?.username}
+                  userId={user?.id}
+                  priority
+                  className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
+                />
+              </div>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    aria-label="Update profile picture"
+                    className="absolute -bottom-1 -right-1 p-1.5 bg-[#0095F6] text-white rounded-full shadow-md hover:scale-110 transition-transform border-2 border-white dark:border-black cursor-pointer z-10"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-0 bg-white dark:bg-[#1A1A1A] border-[#DBDBDB] dark:border-[#262626]">
+                  <div className="p-3 border-b border-[#DBDBDB] dark:border-[#262626]">
+                    <h4 className="font-semibold text-sm">Update Profile Picture</h4>
+                  </div>
+                  <div className="p-3">
+                    {!pendingProfilePic ? (
+                      <>
+                        <MediaUpload 
+                          type="image" 
+                          folder="profiles" 
+                          onUploadComplete={(result) => setPendingProfilePic(result.url)} 
+                        />
+                        {user?.photo_url && (
+                          <button 
+                            onClick={async () => {
+                              const { updateProfilePicture } = await import('@/lib/db');
+                              await updateProfilePicture(user.id, '');
+                              patchUser({ photo_url: '' });
+                              toast.success('Profile picture removed');
+                            }}
+                            className="w-full mt-3 flex items-center justify-center gap-2 text-[#EF4444] text-xs font-medium py-2 hover:bg-[#EF4444]/10 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove Current Picture
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border border-neutral-200 dark:border-neutral-700">
+                          <img src={pendingProfilePic} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <p className="text-sm font-medium mb-4 dark:text-neutral-200">Save this profile picture?</p>
+                        <div className="flex w-full gap-2">
+                          <Button 
+                            onClick={() => setPendingProfilePic(null)} 
+                            variant="outline" 
+                            className="flex-1 dark:border-neutral-600 dark:text-neutral-300"
+                            disabled={savingProfilePic}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            onClick={async () => {
+                              setSavingProfilePic(true);
+                              try {
+                                const { updateProfilePicture } = await import('@/lib/db');
+                                await updateProfilePicture(user.id, pendingProfilePic);
+                                patchUser({ photo_url: pendingProfilePic });
+                                setPendingProfilePic(null);
+                                setSavingProfilePic(false);
+                                toast.success('Profile picture updated!');
+                              } catch (e) {
+                                toast.error('Failed to update picture');
+                                setSavingProfilePic(false);
+                              }
+                            }} 
+                            className="flex-1 bg-[#0095F6] text-white hover:bg-[#1877F2]"
+                            disabled={savingProfilePic}
+                          >
+                            {savingProfilePic ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Profile Actions */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => navigate('/settings?section=profile')}
+                variant="outline"
+                size="sm"
+                className="rounded-xl px-3.5 py-1.5 text-xs font-bold border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Edit Profile
+              </Button>
+              <Button
+                onClick={() => setShowShareModal(true)}
+                variant="outline"
+                size="sm"
+                className="rounded-xl px-3 py-1.5 text-xs font-bold border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                aria-label="Share profile"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Names & Badges */}
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h1 data-testid="profile-username" className="font-heading text-lg sm:text-xl font-bold text-neutral-900 dark:text-white truncate">
+                {profileData?.fullName || user?.full_name || user?.username}
+              </h1>
+              {isUserVerified(user) && <VerifiedBadge size="md" />}
+            </div>
+            <p data-testid="profile-email" className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm font-medium">
+              @{user?.username}
+            </p>
+          </div>
+
+          {/* Bio */}
+          {(profileData?.bio || user?.bio) && (
+            <div className="mt-2 text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed max-w-xl whitespace-pre-wrap">
+              <LinkifiedText text={profileData?.bio || user?.bio} />
             </div>
           )}
 
-          {receivedRequests.length > 0 && (
-            <button
-              type="button"
-              onClick={openFriendRequests}
-              className="group mt-4 w-full max-w-sm rounded-2xl bg-gradient-to-r from-[#FFF7ED] via-[#FFFBEB] to-[#FFF7ED] px-4 py-3 text-left shadow-[0_8px_24px_rgba(245,158,11,0.10)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(245,158,11,0.16)] active:translate-y-0 dark:from-[#1C1408] dark:via-[#17130B] dark:to-[#1C1408]"
-              aria-label={`Open ${receivedRequests.length} pending friend ${receivedRequests.length === 1 ? 'request' : 'requests'}`}
-            >
-              <span className="flex items-center gap-3">
-                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F59E0B] text-white shadow-sm">
-                  <UserPlus className="h-5 w-5 stroke-[2px]" />
-                  <span className="absolute -right-1 -top-1 flex min-w-[17px] h-[17px] items-center justify-center rounded-full bg-neutral-950 px-1 text-[9px] font-extrabold text-white ring-2 ring-[#FFF7ED] dark:bg-white dark:text-neutral-950 dark:ring-[#1C1408]">
-                    {receivedRequests.length > 99 ? '99+' : receivedRequests.length}
-                  </span>
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="font-script block text-[22px] leading-6 text-neutral-950 dark:text-white">
-                    {receivedRequests.length === 1 ? 'A new friend request is waiting' : `${receivedRequests.length} friend requests are waiting`}
-                  </span>
-                  <span className="mt-0.5 block text-[11px] font-semibold text-[#A16207] dark:text-[#FBBF24]">
-                    Open Friends to review {receivedRequests.length === 1 ? 'it' : 'them'}
-                  </span>
-                </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-[#D97706] transition-transform group-hover:translate-x-0.5 dark:text-[#FBBF24]" />
-              </span>
-            </button>
-          )}
-
-          {!user?.verified && (
-            <Button
-              onClick={() => setShowVerificationModal(true)}
-              variant="outline"
-              className="mt-4 border-[#E63946] text-[#E63946] hover:bg-[#E63946]/10 dark:border-[#E63946] dark:hover:bg-[#E63946]/10 discuss:border-[#EF4444] text-[#0095F6] discuss:hover:bg-[#EF4444]/10"
-            >
-              <ShieldCheck className="w-4 h-4 mr-2" />
-              Request Verification
-            </Button>
-          )}
+          {/* Metadata Row */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+            {shareLocation && locationCoords && (
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#0095F6]" />
+                <span>DevRadar active</span>
+              </div>
+            )}
+            {profileData?.socialLinks?.length > 0 && (
+              <div className="flex items-center gap-1">
+                <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+                <a 
+                  href={profileData.socialLinks[0].url.startsWith('http') ? profileData.socialLinks[0].url : `https://${profileData.socialLinks[0].url}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#0095F6] hover:underline truncate max-w-[180px]"
+                >
+                  {profileData.socialLinks[0].platform}
+                </a>
+              </div>
+            )}
+            {!user?.verified && (
+              <button
+                onClick={() => setShowVerificationModal(true)}
+                className="flex items-center gap-1 text-[#0095F6] hover:underline font-medium cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Request Verification</span>
+              </button>
+            )}
+          </div>
 
           {/* User Admin Message */}
           {user?.admin_message && (
-            <div className="mt-6">
+            <div className="mt-4">
               <UserAdminMessage message={user.admin_message} />
             </div>
           )}
 
+          {/* Clickable Stats Row */}
+          <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-[#202020] flex items-center gap-6">
+            <button
+              onClick={() => handleTabChange('posts')}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <span className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                {userPosts.length}
+              </span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Posts
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('pulses')}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <span className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                {userPulses.length}
+              </span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Pulses
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('friends')}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <span className="font-extrabold text-sm text-neutral-900 dark:text-white">
+                {friends.length}
+              </span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Friends
+              </span>
+              {receivedRequests.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-[#F59E0B] text-white text-[10px] font-extrabold leading-none">
+                  {receivedRequests.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Sticky Tabs Bar */}
+        <div className="sticky top-0 z-20 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-neutral-200 dark:border-[#262626]">
+          <div className="flex items-center justify-around">
+            <button
+              onClick={() => handleTabChange('posts')}
+              className={`py-3 px-4 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'posts'
+                  ? 'border-[#0095F6] text-neutral-950 dark:text-white'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Posts ({userPosts.length})</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('pulses')}
+              className={`py-3 px-4 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'pulses'
+                  ? 'border-[#0095F6] text-neutral-950 dark:text-white'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+              }`}
+            >
+              <PlayCircle className="w-4 h-4" />
+              <span>Pulses ({userPulses.length})</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('friends')}
+              className={`py-3 px-4 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'friends'
+                  ? 'border-[#0095F6] text-neutral-950 dark:text-white'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Friends ({friends.length})</span>
+              {receivedRequests.length > 0 && (
+                <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col">
@@ -1689,1466 +1789,20 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ==================== SETTINGS CATEGORIES STACK ==================== */}
-        <div className="contents select-none">
+          {/* ==================== TAB CONTENT ==================== */}
 
-          {/* Category 1: Profile Details */}
-          <div className="order-1 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-            <button
-              onClick={() => setShowProfileSettings(!showProfileSettings)}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-                <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Profile Details</h3>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage your display name, bio, social links, and theme</p>
-                </div>
-              </div>
-              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showProfileSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-            </button>
-
-            {showProfileSettings && (
-              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
-                {/* Loading indicator for profile data */}
-                {loadingProfile && (
-                  <div className="flex items-center justify-center gap-2 py-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
-                    <span className="text-neutral-500 dark:text-neutral-400 text-xs">Loading profile details...</span>
-                  </div>
-                )}
-
-                {/* Full Name Section */}
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                      Full Name
-                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(optional)</span>
-                    </label>
-                    {!editingFullName && profileData?.fullName && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl shadow-lg">
-                          <DropdownMenuItem onClick={() => { setEditingFullName(true); setFullNameInput(profileData.fullName || ''); }} className="cursor-pointer text-neutral-900 dark:text-white dark:text-white focus:bg-neutral-50 dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
-                            <Pencil className="w-4 h-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setDeleteFullNameConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                  
-                  {editingFullName ? (
-                    <div className="flex gap-2">
-                      <Input 
-                        value={fullNameInput} 
-                        onChange={(e) => setFullNameInput(e.target.value)}
-                        placeholder="Enter your full name"
-                        className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white text-sm rounded-xl"
-                      />
-                      <Button onClick={handleSaveFullName} disabled={savingFullName || !fullNameInput.trim()} size="sm"
-                        className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-xl px-3.5">
-                        {savingFullName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                      </Button>
-                      <Button onClick={() => setEditingFullName(false)} size="sm" variant="outline"
-                        className="border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 rounded-xl px-3.5">
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : profileData?.fullName ? (
-                    <p className="text-neutral-900 dark:text-white dark:text-white text-sm pl-6">{profileData.fullName}</p>
-                  ) : (
-                    <button onClick={() => { setEditingFullName(true); setFullNameInput(''); }}
-                      className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
-                      <Plus className="w-4 h-4" /> Add full name
-                    </button>
-                  )}
-                </div>
-
-                {/* Bio Section */}
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                      Bio
-                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(max {BIO_CHAR_LIMIT} chars)</span>
-                    </label>
-                    {!editingBio && profileData?.bio && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-1.5 rounded-lg hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl shadow-lg">
-                          <DropdownMenuItem onClick={() => { setEditingBio(true); setBioInput(profileData.bio || ''); }} className="cursor-pointer text-neutral-900 dark:text-white dark:text-white focus:bg-neutral-50 dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
-                            <Pencil className="w-4 h-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setDeleteBioConfirm(true)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                  
-                  {editingBio ? (
-                    <div className="space-y-2">
-                      <Textarea 
-                        value={bioInput} 
-                        onChange={(e) => setBioInput(e.target.value.slice(0, BIO_CHAR_LIMIT))}
-                        placeholder="Tell us about yourself..."
-                        rows={3}
-                        className="w-full bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white text-sm resize-none rounded-xl p-3"
-                      />
-                      <div className="flex items-center justify-between">
-                        <span className={`text-xs ${bioInput.length >= BIO_CHAR_LIMIT ? 'text-[#EF4444] font-bold' : 'text-neutral-500 dark:text-neutral-400'}`}>
-                          {bioInput.length}/{BIO_CHAR_LIMIT}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button onClick={handleSaveBio} disabled={savingBio || !bioInput.trim()} size="sm"
-                            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-xl px-4">
-                            {savingBio ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-                          </Button>
-                          <Button onClick={() => setEditingBio(false)} size="sm" variant="outline"
-                            className="border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 rounded-xl px-4">
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : profileData?.bio ? (
-                    <p className="text-neutral-900 dark:text-white dark:text-white text-sm pl-6 whitespace-pre-wrap leading-relaxed">{profileData.bio}</p>
-                  ) : (
-                    <button onClick={() => { setEditingBio(true); setBioInput(''); }}
-                      className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium">
-                      <Plus className="w-4 h-4" /> Add bio
-                    </button>
-                  )}
-                </div>
-
-                {/* Social Links Section */}
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                      <Link2 className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                      Social Links
-                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(max {MAX_SOCIAL_LINKS})</span>
-                    </label>
-                    <span className="text-neutral-500 dark:text-neutral-400 text-xs font-bold bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
-                      {profileData?.socialLinks?.length || 0}/{MAX_SOCIAL_LINKS}
-                    </span>
-                  </div>
-
-                  {/* Existing Links */}
-                  {profileData?.socialLinks?.length > 0 && (
-                    <div className="space-y-2 mb-3 pl-6">
-                      {profileData.socialLinks.map((link, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-white dark:bg-[#1E293B] dark:bg-black p-2 px-3 rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
-                          {editingLinkIndex === index ? (
-                            <>
-                              <Input 
-                                value={editLinkName} 
-                                onChange={(e) => setEditLinkName(e.target.value)}
-                                placeholder="Link name"
-                                className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
-                              />
-                              <Input 
-                                value={editLinkUrl} 
-                                onChange={(e) => setEditLinkUrl(e.target.value)}
-                                placeholder="URL"
-                                className="flex-1 h-8 text-xs bg-transparent border-0 p-0"
-                              />
-                              <Button onClick={() => handleEditLink(index)} disabled={savingLink} size="sm" className="h-7 px-2.5 bg-[#0095F6] bg-[#0095F6] rounded-lg">
-                                {savingLink ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                              </Button>
-                              <Button onClick={() => setEditingLinkIndex(null)} size="sm" variant="ghost" className="h-7 px-2.5 rounded-lg">
-                                <X className="w-3.5 h-3.5" />
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <a href={link.url} target="_blank" rel="noopener noreferrer"
-                                className="flex-1 text-[#0095F6] discuss:text-[#60A5FA] hover:underline text-sm font-semibold flex items-center gap-1.5 truncate">
-                                {link.name}
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="p-1 rounded hover:bg-neutral-50 dark:hover:bg-[#0F172A] dark:hover:bg-[#1A1A1A] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-32 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] rounded-xl">
-                                  <DropdownMenuItem onClick={() => { setEditingLinkIndex(index); setEditLinkName(link.name); setEditLinkUrl(link.url); }} className="cursor-pointer text-neutral-900 dark:text-white dark:text-white focus:bg-neutral-50 dark:focus:bg-[#0F172A] discuss:focus:bg-[#262626] rounded-lg">
-                                    <Pencil className="w-4 h-4 mr-2" /> Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setDeleteLinkConfirm(index)} className="cursor-pointer text-[#EF4444] focus:bg-[#EF4444]/10 focus:text-[#EF4444] rounded-lg">
-                                    <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Add New Link */}
-                  <div className="pl-6">
-                    {addingLink ? (
-                      <div className="space-y-2 bg-white dark:bg-[#1E293B] dark:bg-black p-3 rounded-xl border border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626]">
-                        <Input 
-                          value={newLinkName} 
-                          onChange={(e) => setNewLinkName(e.target.value)}
-                          placeholder="Link name (e.g., LinkedIn, GitHub)"
-                          className="w-full text-xs bg-transparent rounded-lg"
-                        />
-                        <Input 
-                          value={newLinkUrl} 
-                          onChange={(e) => setNewLinkUrl(e.target.value)}
-                          placeholder="URL (e.g., https://github.com/username)"
-                          className="w-full text-xs bg-transparent rounded-lg"
-                        />
-                        <div className="flex gap-2 justify-end">
-                          <Button onClick={handleAddLink} disabled={savingLink || !newLinkName.trim() || !newLinkUrl.trim()} size="sm"
-                            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white rounded-lg px-3">
-                            {savingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add Link'}
-                          </Button>
-                          <Button onClick={() => { setAddingLink(false); setNewLinkName(''); setNewLinkUrl(''); }} size="sm" variant="outline"
-                            className="border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-500 rounded-lg px-3">
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : !maxLinksReached ? (
-                      <button onClick={() => setAddingLink(true)}
-                        className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 font-medium">
-                        <Plus className="w-4 h-4" /> <span>Add social link</span>
-                      </button>
-                    ) : (
-                      <p className="text-neutral-500 dark:text-neutral-400 text-xs font-bold"><span>Maximum links reached</span></p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Skills Section */}
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                      Skills
-                      <span className="text-neutral-500 dark:text-neutral-400 text-xs font-normal">(max 6 skills)</span>
-                    </label>
-                    {!editingSkills && skills.length > 0 && (
-                      <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput(skills); }}
-                        className="p-1.5 rounded hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] discuss:hover:bg-[#1a1a1a] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 transition-colors cursor-pointer">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {editingSkills ? (
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {PREDEFINED_SKILLS.map(s => {
-                          const isSel = selectedSkillsInput.includes(s);
-                          return (
-                            <button key={s} type="button" onClick={() => {
-                              if (isSel) {
-                                setSelectedSkillsInput(prev => prev.filter(x => x !== s));
-                              } else {
-                                if (selectedSkillsInput.length >= 6) {
-                                  toast.error('Maximum of 6 skills allowed');
-                                  return;
-                                }
-                                setSelectedSkillsInput(prev => [...prev, s]);
-                              }
-                            }}
-                            className={`px-2 py-1 rounded text-xs font-medium border cursor-pointer ${isSel ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900' : 'bg-transparent text-neutral-600 border-neutral-200 dark:text-neutral-400 dark:border-neutral-800'}`}>
-                              {s}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="flex gap-2">
-                        <Input 
-                          value={customSkillInput} 
-                          onChange={(e) => setCustomSkillInput(e.target.value)}
-                          placeholder="Custom skill"
-                          className="flex-1 bg-white dark:bg-[#1E293B] dark:bg-black border-[#DBDBDB] dark:border-[#262626] dark:border-[#262626] text-neutral-900 dark:text-white dark:text-white text-sm h-8"
-                          maxLength={20}
-                        />
-                        <Button onClick={handleAddCustomSkillInProfile} size="sm" variant="outline" className="h-8 text-xs border-[#DBDBDB] cursor-pointer">Add</Button>
-                      </div>
-                      
-                      {selectedSkillsInput.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {selectedSkillsInput.map(s => (
-                            <span key={s} className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs">
-                              {s}
-                              <button type="button" onClick={() => setSelectedSkillsInput(prev => prev.filter(x => x !== s))} className="text-red-500 font-bold ml-1 cursor-pointer">&times;</button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 justify-end pt-2">
-                        <Button onClick={handleSaveSkills} disabled={savingSkills} size="sm" className="bg-[#0095F6] bg-[#0095F6] text-white cursor-pointer">
-                          Save
-                        </Button>
-                        <Button onClick={() => setEditingSkills(false)} size="sm" variant="outline" className="border-[#DBDBDB] cursor-pointer">
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : skills.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 pl-6">
-                      {skills.map(s => (
-                        <span key={s} className="bg-white dark:bg-[#1E293B] dark:bg-black text-neutral-800 dark:text-neutral-200 px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 dark:border-[#262626] text-xs font-semibold">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <button onClick={() => { setEditingSkills(true); setSelectedSkillsInput([]); }}
-                      className="text-[#0095F6] text-[#0095F6] hover:underline text-sm flex items-center gap-1.5 pl-6 font-medium cursor-pointer">
-                      <Plus className="w-4 h-4" /> <span>Add skills</span>
-                    </button>
-                  )}
-
-                  {/* AI Skill Discovery Sub-widget */}
-                  {!editingSkills && (
-                    <div className="mt-4 pt-3 border-t border-neutral-200/50 dark:border-neutral-800/50 pl-6">
-                      {suggestedSkills.length > 0 ? (
-                        <div className="space-y-2 bg-blue-50/30 dark:bg-blue-950/10 p-2.5 rounded-lg border border-blue-200/40 dark:border-blue-900/40">
-                          <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
-                            AI noticed you work with:
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {suggestedSkills.map(s => (
-                              <button key={s} onClick={() => handleAddSuggestedSkill(s)}
-                                className="bg-white dark:bg-neutral-850 hover:bg-neutral-100 text-[#0095F6] dark:text-[#60A5FA] px-2 py-0.5 rounded text-xs border border-blue-200 dark:border-blue-900 font-semibold transition-colors cursor-pointer">
-                                + {s}
-                              </button>
-                            ))}
-                          </div>
-                          <button onClick={() => setSuggestedSkills([])} className="text-[10px] text-neutral-400 hover:text-neutral-600 block mt-1 cursor-pointer">Dismiss suggestions</button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={handleDiscoverSkills}
-                          disabled={discoveringSkills}
-                          className="text-xs text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          {discoveringSkills ? (
-                            <>
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                              <span>Discovering skills...</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShieldCheck className="w-3.5 h-3.5 text-[#0095F6] text-[#0095F6]" />
-                              <span>Scan profile for technical skills (AI)</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Display Theme Selector */}
-                <div id="profile-theme-settings" className="scroll-mt-24 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                      <Palette className="w-4 h-4 text-[#0095F6] stroke-[1.8px]" />
-                      Application Theme
-                    </span>
-                  </div>
-                  <div className="pl-6">
-                    <ThemeSelector />
-                  </div>
-                </div>
-
-                {/* Online Status Visibility Section */}
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex flex-col">
-                      <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-semibold flex items-center gap-2">
-                        {onlineVisibility ? <Eye className="w-4 h-4 text-emerald-500" /> : <EyeOff className="w-4 h-4 text-[#EF4444]" />}
-                        Online Status Visibility
-                      </span>
-                      <span className="text-xs text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-1 pr-4">
-                        {onlineVisibility ? 'Your online status is visible to everyone.' : 'Your online status is completely hidden.'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleToggleOnlineVisibility(!onlineVisibility)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${onlineVisibility ? 'bg-emerald-500' : 'bg-neutral-200 dark:bg-neutral-700'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${onlineVisibility ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Category 2: App Security */}
-          <div className="order-7 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-            <button
-              onClick={() => setShowSecuritySettings(!showSecuritySettings)}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-                <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">App Security</h3>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Configure PIN lock, biometric parameters, and lockout limits</p>
-                </div>
-              </div>
-              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showSecuritySettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-            </button>
-
-            {showSecuritySettings && (
-              <div className="space-y-4 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-bold">App Lock Protection</span>
-                    <button
-                      onClick={() => setShowSecurityInfo(prev => !prev)}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${showSecurityInfo ? 'bg-[#0095F6] text-white shadow' : 'bg-[#0095F6]/10 text-[#0095F6] hover:bg-[#0095F6]/20'}`}
-                      aria-label="Security info"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  {remoteSettings?.pin && (
-                    <button
-                      onClick={lockNow}
-                      className="flex items-center gap-1.5 text-[11px] font-bold text-[#0095F6] text-[#0095F6] px-3 py-1.5 rounded-xl bg-[#0095F6]/10 bg-[#0095F6]/10 hover:bg-[#0095F6]/20 discuss:hover:bg-[#EF4444]/20 transition-all shadow-sm active:scale-95"
-                      title="Lock the app now"
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Lock Now</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Info Dropdown */}
-                {showSecurityInfo && (
-                  <div className="p-4 bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl border border-blue-500/15 animate-in slide-in-from-top-2 duration-300">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-blue-500" />
-                        <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Security Rules</p>
-                      </div>
-                      <button 
-                        onClick={() => setShowSecurityInfo(false)}
-                        className="text-[10px] font-bold text-blue-500 hover:underline"
-                      >
-                        Close
-                      </button>
-                    </div>
-                    <div className="text-[11px] text-blue-600 dark:text-blue-300 space-y-2 pl-6">
-                      <p><span>• App auto-locks after </span><strong>5 minutes</strong><span> of inactivity</span></p>
-                      <p><span>• Your PIN is </span><strong>synced across all devices</strong></p>
-                      <p><span>• Biometrics (Face/Fingerprint) are </span><strong>device-specific</strong></p>
-                      <p><span>• </span><strong>5 wrong attempts</strong><span> will trigger a 5-minute lockout</span></p>
-                      <p><span>• Disabling the lock will remove your PIN from </span><strong>all devices</strong></p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-neutral-50 dark:bg-black dark:bg-[#1A1A1A] discuss:border dark:border-[#262626] rounded-xl p-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${localSettings?.enabled ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-neutral-500'}`}>
-                        <Smartphone className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white">PIN Lock Status</p>
-                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">
-                          <span>{localSettings?.enabled
-                            ? (localSettings?.type === 'biometric' ? 'Active - Biometric + PIN' : 'Active - PIN only')
-                            : 'Protect app access with a secure PIN'}</span>
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleToggleSecurity}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.enabled ? 'bg-[#0095F6] bg-[#0095F6]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                  </div>
-
-                  {localSettings?.enabled && (
-                    <div className="space-y-3 pl-2 animate-in slide-in-from-top-2 duration-300">
-                      {biometricAvailable && (
-                        <div className="flex items-center justify-between border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] rounded-xl p-4 bg-[#F8FAFC] dark:bg-slate-950/20">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2.5 rounded-xl ${localSettings?.type === 'biometric' ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' : 'bg-[#6275AF]/10 text-neutral-500'}`}>
-                              <BiometricIcon className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white">FaceID / Fingerprint</p>
-                              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">
-                                <span>{localSettings?.type === 'biometric' ? 'Active - PIN as backup fallback' : 'Tap to register biometric scanner'}</span>
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={handleBiometricToggle}
-                            disabled={testingBiometric}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${localSettings?.type === 'biometric' ? 'bg-[#0095F6] bg-[#0095F6]' : 'bg-neutral-200 dark:bg-neutral-700'}`}
-                          >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${localSettings?.type === 'biometric' ? 'translate-x-6' : 'translate-x-1'}`} />
-                          </button>
-                        </div>
-                      )}
-                      <Button onClick={() => setShowChangePinModal(true)} variant="outline" size="sm" className="w-full text-xs text-neutral-500 flex items-center justify-center gap-2 rounded-xl py-4 hover:bg-neutral-50 border-neutral-200 dark:border-white/5">
-                        <Key className="w-4 h-4" />
-                        <span>Change Security PIN Code</span>
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Category 3: DevRadar Telemetry */}
-          <div className="order-8 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-            <button
-              onClick={() => setShowLocationSettings(!showLocationSettings)}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-                <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">DevRadar Telemetry</h3>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Manage live geolocated node broadcasts and pin calibration</p>
-                </div>
-              </div>
-              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showLocationSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-            </button>
-
-            {showLocationSettings && (
-              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                    <span className="text-neutral-900 dark:text-white dark:text-white text-sm font-bold">DevRadar Telemetry Network</span>
-                  </div>
-                  
-                  {/* Dynamic Status Live Pulse Indicator */}
-                  {shareLocation ? (
-                    <div className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">
-                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_#10B981]" />
-                      <span>Location sharing on</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-500 border border-neutral-500/25 rounded-full">
-                      <span className="w-1.5 h-1.5 bg-neutral-400 dark:bg-neutral-600 rounded-full" />
-                      <span>Location sharing off</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 transition-colors dark:border-[#262626] dark:bg-[#111111] sm:p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <div className={`p-2.5 rounded-xl transition-all duration-300 ${
-                        shareLocation 
-                          ? 'bg-[#0095F6]/10 text-[#0095F6] bg-[#0095F6]/10 text-[#0095F6]' 
-                          : 'bg-neutral-500/10 text-neutral-400 dark:text-neutral-500'
-                      }`}>
-                        <MapPin className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-extrabold tracking-tight text-neutral-900 dark:text-white dark:text-white">
-                          Nearby discovery
-                        </p>
-                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5 leading-relaxed max-w-[220px]">
-                          {updatingLocation ? (
-                            <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin text-[#0095F6]" /> Updating location…</span>
-                          ) : shareLocation ? (
-                            <span>Your approximate position is visible in DevRadar.</span>
-                          ) : (
-                            <span>Turn this on to appear to nearby developers.</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleToggleLocationSharing}
-                      disabled={updatingLocation}
-                      className={`relative inline-flex h-6 w-11 items-center transition-all duration-300 focus:outline-none rounded-full ${
-                        shareLocation 
-                          ? false
-                            ? 'bg-[#FF007F]'
-                            : 'bg-[#EF4444]'
-                          : 'bg-neutral-200 dark:bg-neutral-700'
-                      }`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform bg-white transition-transform rounded-full ${shareLocation ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-2.5 border-t border-neutral-200 pt-4 dark:border-[#262626]">
-                    <Button
-                      onClick={() => {
-                        setLocationUpdateError('');
-                        setLocationUpdateStatus('idle');
-                        setShowLocationUpdateModal(true);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[.99] transition-all rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
-                    >
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span>Update current location</span>
-                    </Button>
-
-                    {shareLocation && locationCoords && (
-                      <div className="flex flex-col gap-2.5">
-                        <div className="flex flex-col gap-1 rounded-xl bg-white px-3 py-2.5 text-xs dark:bg-black sm:flex-row sm:items-center sm:justify-between">
-                          <span className="font-bold text-neutral-500 dark:text-neutral-400">Current coordinates</span>
-                          <span className="break-all font-mono font-bold text-[#0095F6] sm:text-right">
-                            {locationCoords.latitude.toFixed(6)}° N, {locationCoords.longitude.toFixed(6)}° E
-                          </span>
-                        </div>
-                        <Button
-                          onClick={handleOpenAdjustModal}
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-xs font-bold flex items-center justify-center gap-1.5 active:scale-[.99] transition-all mt-1 rounded-xl py-3 border-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10"
-                        >
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span>Adjust map pin</span>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Category 4: Notifications & Integrations */}
-          <div id="profile-notification-settings" className="order-6 scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-            <button
-              onClick={() => setShowNotificationSettings(!showNotificationSettings)}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-                <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white dark:text-white">Notifications & Integrations</h3>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mt-0.5">Toggle push alerts, configure Telegram bot, and Discord sync</p>
-                </div>
-              </div>
-              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showNotificationSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-            </button>
-
-            {showNotificationSettings && (
-              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
-                {/* Standard Notification Switch */}
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <NotificationToggle />
-                </div>
-
-                {/* ==================== TELEGRAM NOTIFICATIONS ==================== */}
-                <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#229ED9]/10 flex items-center justify-center rounded-xl">
-                        <Send className="w-5 h-5 text-[#229ED9]" />
-                      </div>
-                      <div>
-                        <h3 className="text-[14px] font-bold text-neutral-900 dark:text-white dark:text-white">Telegram Alerts</h3>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${telegramConnected ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`}></span>
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                            {telegramConnected ? <span>Active & Verified</span> : <span>Disconnected</span>}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setShowTelegramInstructions(v => !v)}
-                      className={`p-2 rounded-lg transition-all ${showTelegramInstructions ? 'bg-[#229ED9] text-white shadow-lg shadow-[#229ED9]/20' : 'bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20'}`}
-                    >
-                      <Info className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Instructions panel */}
-                  {showTelegramInstructions && (
-                    <div className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center gap-2 text-[#229ED9]">
-                        <MessageSquare className="w-4 h-4" />
-                        <p className="text-xs font-bold">Bot Connectivity Guide</p>
-                      </div>
-                      
-                      <p className="text-[11px] text-[#475569] dark:text-neutral-400 leading-relaxed">
-                        <span>Connect the Discuss Telegram bot to receive the alerts you enable.</span>
-                      </p>
-
-                      <div className="grid grid-cols-1 gap-2.5">
-                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-neutral-900 dark:text-white mb-1">1. AUTHENTICATE WITH BOT</p>
-                          <p className="text-[10px] text-neutral-500 mb-2">Send <span className="font-semibold text-[#229ED9]">/start</span> to retrieve your secure Chat ID.</p>
-                          <a href="https://t.me/DiscussNotifications_bot" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 bg-[#229ED9] hover:bg-[#1c80b0] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm">
-                            <span>Launch Telegram Bot</span> <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        </div>
-
-                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-amber-500 mb-1">ALTERNATIVE: GET ID INSTANTLY</p>
-                          <p className="text-[10px] text-neutral-500">Open <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-bold hover:underline">@userinfobot</a> on Telegram and send a message. It returns your numeric ID immediately!</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Telegram inputs */}
-                  {loadingTelegram ? (
-                    <div className="flex items-center justify-center py-4 bg-white dark:bg-[#1E293B] rounded-xl border border-dashed border-[#CBD5E1]">
-                      <Loader2 className="w-5 h-5 animate-spin text-[#229ED9]" />
-                    </div>
-                  ) : telegramConnected ? (
-                    <div className="space-y-3">
-                      <div className="bg-white dark:bg-[#1E293B] border border-neutral-200 dark:border-white/5 rounded-xl p-3.5 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center">
-                            <Check className="w-4 h-4 text-green-500" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Active Link</p>
-                          <p className="break-all text-[12px] font-mono font-bold text-[#475569] dark:text-neutral-400">{telegramChatIdInput}</p>
-                          </div>
-                        </div>
-                        <button onClick={handleDisconnectTelegram} disabled={savingTelegram} className="text-neutral-500 hover:text-[#EF4444] p-2 transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Privacy Card */}
-                      <div className="bg-white dark:bg-[#1E293B] border border-neutral-200 dark:border-white/5 rounded-xl p-3.5 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${telegramPrivacy ? 'bg-[#6275AF]/10 text-neutral-500' : 'bg-[#229ED9]/10 text-[#229ED9]'}`}>
-                              {telegramPrivacy ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </div>
-                            <span className="text-xs font-bold text-neutral-900 dark:text-white">Message Previews</span>
-                          </div>
-                          <button
-                            onClick={handleToggleTelegramPrivacy}
-                            disabled={savingTelegram}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${telegramPrivacy ? 'bg-neutral-200 dark:bg-neutral-700' : 'bg-green-500'}`}
-                          >
-                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${telegramPrivacy ? 'translate-x-0.5' : 'translate-x-4.5'}`} />
-                          </button>
-                        </div>
-                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                          {telegramPrivacy 
-                            ? <span>Incognito Mode: Only notifies you of the message source. Full content is only visible inside the Discuss app.</span> 
-                            : <span>Real-time Delivery: Pushes complete message text and image previews directly to your Telegram chat.</span>}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                       <div className="flex flex-col gap-2 rounded-xl border border-[#DBDBDB] bg-white p-1 transition-all focus-within:border-[#229ED9] dark:border-[#262626] dark:bg-black sm:flex-row">
-                        <Input
-                          value={telegramChatIdInput}
-                          onChange={e => {
-                            const v = e.target.value;
-                            if (v === '' || /^-?\d+$/.test(v)) setTelegramChatIdInput(v);
-                          }}
-                          placeholder="Telegram Chat ID (e.g. 872125...)"
-                           className="min-w-0 flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
-                        />
-                        <Button
-                          onClick={handleSaveTelegram}
-                          disabled={savingTelegram || !telegramChatIdInput.trim()}
-                           className="h-9 shrink-0 rounded-lg bg-[#229ED9] px-4 font-bold text-white transition-all hover:bg-[#1c80b0]"
-                        >
-                          {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Connect</span>}
-                        </Button>
-                      </div>
-                      <p className="text-center text-[10px] text-neutral-500 font-semibold italic">
-                         <span>Message previews follow the privacy option above.</span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* ==================== DISCORD NOTIFICATIONS ==================== */}
-                <div className="space-y-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#5865F2]/10 flex items-center justify-center rounded-xl">
-                        <svg className="w-5 h-5 text-[#5865F2]" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.054-.108.001-.23-.106-.271a12.978 12.978 0 0 1-1.883-.894.083.083 0 0 1-.006-.139c.156-.117.311-.235.459-.356a.075.075 0 0 1 .079-.011c3.923 1.793 8.18 1.793 12.061 0a.075.075 0 0 1 .079.011c.148.121.303.239.459.356a.083.083 0 0 1-.006.139 13.06 13.06 0 0 1-1.883.894.083.083 0 0 0-.106.271c.352.699.764 1.365 1.226 1.994.053.072.03.1.084.028a19.839 19.839 0 0 0 6.002-3.03.085.085 0 0 0 .032-.057c.492-5.156-.844-9.626-3.59-13.66a.065.065 0 0 0-.032-.027zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.947 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-[14px] font-bold text-neutral-900 dark:text-white dark:text-white">Discord Alerts</h3>
-                          <span className="bg-neutral-200 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md">Coming Soon</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Disconnected</span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setShowDiscordInstructions(v => !v)}
-                      className={`p-2 rounded-lg transition-all ${showDiscordInstructions ? 'bg-[#5865F2] text-white shadow-lg shadow-[#5865F2]/20' : 'bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/20'}`}
-                    >
-                      <Info className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Instructions panel */}
-                  {showDiscordInstructions && (
-                    <div className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626]/60 dark:border-[#262626] rounded-xl p-4 shadow-sm space-y-3 animate-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center gap-2 text-[#5865F2]">
-                        <ShieldCheck className="w-4 h-4" />
-                        <p className="text-xs font-bold">Privacy & Security Protocol</p>
-                      </div>
-                      
-                      <p className="text-[11px] text-[#475569] dark:text-neutral-400 leading-relaxed">
-                        Discord direct alerts require a shared server connection before the bot can deliver a message:
-                      </p>
-
-                      <div className="grid grid-cols-1 gap-2.5">
-                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-neutral-900 dark:text-white mb-1">1. JOIN OFFICIAL SERVER <span className="text-red-500 font-bold">(REQUIRED)</span></p>
-                          <p className="text-[10px] text-neutral-500 mb-2">A shared server connection is mandatory for the bot to verify your identity.</p>
-                          <a href="https://discord.gg/FNhRA5EK" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 bg-[#5865F2] hover:bg-[#4752c4] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm">
-                            <span>Join Discuss Server</span> <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        </div>
-
-                        <div className="bg-neutral-50 dark:bg-slate-950/20 p-2.5 rounded-lg border border-neutral-100 dark:border-white/5">
-                          <p className="text-[10px] font-bold text-neutral-900 dark:text-white mb-1">2. CONFIGURE USER ID</p>
-                          <p className="text-[10px] text-neutral-500">Enable Developer Mode in Discord settings, right-click your profile, and select <span className="font-semibold text-[#5865F2]">Copy User ID</span>.</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Discord input */}
-                  <div className="opacity-50 pointer-events-none select-none">
-                    <div className="space-y-3">
-                      <div className="flex flex-col gap-2 rounded-xl border border-[#DBDBDB] bg-white p-1 dark:border-[#262626] dark:bg-black sm:flex-row">
-                        <Input
-                          disabled
-                          placeholder="Discord User ID (e.g. 123456789...)"
-                          className="min-w-0 flex-1 bg-transparent border-none focus-visible:ring-0 text-xs font-mono h-9"
-                        />
-                        <Button
-                          disabled
-                          className="h-9 shrink-0 rounded-lg bg-[#5865F2] px-4 font-bold text-white"
-                        >
-                          <span>Connect</span>
-                        </Button>
-                      </div>
-                      <p className="text-center text-[10px] text-neutral-500 font-semibold italic">
-                         <span>Note: Discord notifications are currently under development.</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Category: Interaction Sounds */}
-          <div id="profile-sound-settings" className="order-6 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-            <button
-              onClick={() => setShowSoundSettings(!showSoundSettings)}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                  {soundsEnabled ? (
-                    <Volume2 className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px]" />
-                  ) : (
-                    <VolumeX className="w-5 h-5 text-neutral-400 stroke-[1.8px]" />
-                  )}
-                </div>
-                <div className="text-left">
-                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white">Interaction Sounds</h3>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    {soundsEnabled ? 'Tactile confirmations enabled' : 'Sounds disabled'}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showSoundSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-            </button>
-
-            {showSoundSettings && (
-              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
-                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">In-App Audio Confirmation</p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        Soft, subtle feedback when sending messages, publishing posts, and commenting.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={soundsEnabled}
-                      onClick={() => {
-                        toggleSounds();
-                        toast.success(soundsEnabled ? 'Interaction sounds disabled' : 'Interaction sounds enabled');
-                      }}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0095F6]/40 ${
-                        soundsEnabled ? 'bg-[#0095F6]' : 'bg-neutral-300 dark:bg-neutral-700'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${
-                          soundsEnabled ? 'translate-x-5' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-
-
-        {/* ==================== FRIENDS SECTION ==================== */}
-        <div id="profile-friend-requests" className="order-4 scroll-mt-24 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-          <button
-            onClick={() => setShowFriends(!showFriends)}
-            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative shrink-0">
-                <Users className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px]" />
-                {receivedRequests.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#F59E0B] text-white text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full px-1">
-                    <span>{receivedRequests.length}</span>
-                  </span>
-                )}
-              </div>
-              <div className="text-left">
-                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white">Friends</h2>
-                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
-                  <span>{friends.length} friend{friends.length !== 1 ? 's' : ''}</span>
-                  {receivedRequests.length > 0 && <span> • {receivedRequests.length} pending</span>}
-                </p>
-              </div>
-            </div>
-            <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showFriends ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-          </button>
-
-          {showFriends && (
-            <div className="flex flex-col gap-4 border-t border-[#EFEFEF] bg-[#FAFAFA] px-4 py-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] dark:bg-[#080808]">
-              {/* Received Friend Requests */}
-              {receivedRequests.length > 0 && (
-                <div className="order-2 rounded-2xl bg-[#F59E0B]/10 p-4 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.18)]">
-                  <h3 className="text-sm font-semibold text-[#92400E] dark:text-[#FCD34D] discuss:text-[#FCD34D] mb-3 flex items-center gap-2">
-                    <UserPlus className="w-4 h-4" />
-                    Friend Requests ({receivedRequests.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {receivedRequests.map((request) => {
-                      const reqUser = requestUserDetails[request.fromUserId];
-                      
-                      return (
-                        <div key={request.fromUserId} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-[#111111]">
-                          <button
-                            onClick={() => navigate(`/user/${request.fromUserId}`)}
-                            className="flex items-center gap-3 flex-1 min-w-0"
-                          >
-                            <UserAvatar
-                              src={reqUser?.photo_url}
-                              username={reqUser?.username || 'User'}
-                              className="w-10 h-10"
-                            />
-                            <div className="text-left min-w-0">
-                              <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate">
-                                <span>@{reqUser?.username || 'Unknown'}</span>
-                              </span>
-                              <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
-                                <span>{new Date(request.createdAt).toLocaleDateString()}</span>
-                              </span>
-                            </div>
-                          </button>
-                          <div className="flex gap-2 shrink-0 ml-2">
-                            <Button
-                              onClick={() => handleAcceptRequest(request.fromUserId)}
-                              disabled={processingRequest === request.fromUserId}
-                              size="sm"
-                              className="bg-[#10B981] hover:bg-[#059669] text-white h-8 px-3"
-                            >
-                              {processingRequest === request.fromUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                            </Button>
-                            <Button
-                              onClick={() => handleDeclineRequest(request.fromUserId)}
-                              disabled={processingRequest === request.fromUserId}
-                              variant="outline"
-                              size="sm"
-                              className="border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 h-8 px-3"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Sent Requests */}
-              {sentRequests.length > 0 && (
-                <div className="order-1 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                  <h3 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>Sent Requests ({sentRequests.length})</span>
-                  </h3>
-                  <div className="space-y-2">
-                    {sentRequests.map((request) => {
-                      const reqUser = requestUserDetails[request.toUserId];
-                      
-                      return (
-                        <div key={request.toUserId} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
-                          <button
-                            onClick={() => navigate(`/user/${request.toUserId}`)}
-                            className="flex items-center gap-3 flex-1 min-w-0"
-                          >
-                            <UserAvatar
-                              src={reqUser?.photo_url}
-                              username={reqUser?.username || 'User'}
-                              className="w-10 h-10"
-                            />
-                            <div className="text-left min-w-0">
-                              <span className="font-semibold text-neutral-900 dark:text-white dark:text-white text-sm block truncate">
-                                <span>@{reqUser?.username || 'Unknown'}</span>
-                              </span>
-                              <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
-                            </div>
-                          </button>
-                          <Button
-                            onClick={() => handleCancelRequest(request.toUserId)}
-                            disabled={processingRequest === request.toUserId}
-                            variant="outline"
-                            size="sm"
-                            className="border-[#6275AF] text-neutral-500 hover:bg-[#6275AF]/10 h-8 px-3 shrink-0 ml-2"
-                          >
-                            {processingRequest === request.toUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cancel'}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Find Friends Search */}
-              <div className="order-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-                  <Search className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                  <span>Find Friends</span>
-                </h3>
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400" />
-                  <Input
-                    value={friendSearchQuery}
-                    onChange={(e) => setFriendSearchQuery(e.target.value)}
-                    placeholder="Search users by username..."
-                    className="h-11 rounded-xl border-neutral-200 bg-neutral-50 pl-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-[#0095F6]/20 dark:border-[#262626] dark:bg-black dark:text-white"
-                  />
-                  {friendSearchQuery && (
-                    <button
-                      onClick={() => setFriendSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                
-                {searchingFriends ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
-                  </div>
-                ) : friendSearchResults.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
-                    {friendSearchResults.map((searchUser) => (
-                      <UserSearchResult
-                        key={searchUser.id}
-                        user={searchUser}
-                        currentUserId={user?.id}
-                        onClose={() => setFriendSearchQuery('')}
-                      />
-                    ))}
-                  </div>
-                ) : friendSearchQuery && !searchingFriends ? (
-                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm text-center py-4">
-                    <span>No users found</span>
-                  </p>
-                ) : null}
-              </div>
-
-              {/* Friends List */}
-              {loadingFriends ? (
-                <div className="order-4 flex flex-col items-center justify-center rounded-2xl bg-white py-8 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#0095F6] text-[#0095F6] mb-2" />
-                  <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm"><span>Loading friends list...</span></p>
-                </div>
-              ) : friends.length > 0 ? (
-                <div className="order-4 space-y-4">
-                  {/* Suggested Friends Section */}
-                  {suggestedFriends.length > 0 && (
-                    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-                        <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                        <span>Suggested Friends</span>
-                      </h3>
-                      {loadingSuggestions ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
-                          <span className="ml-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm"><span>Finding suggestions...</span></span>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
-                          {suggestedFriends.map((suggested) => {
-                            
-                            return (
-                              <div key={suggested.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
-                                <button
-                                  onClick={() => navigate(`/user/${suggested.id}`)}
-                                  className="flex items-center gap-3 flex-1 min-w-0"
-                                >
-                                  <UserAvatar
-                                    src={suggested?.photo_url}
-                                    username={suggested?.username || 'User'}
-                                    className="w-10 h-10"
-                                  />
-                                  <div className="text-left min-w-0">
-                                    <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate flex items-center gap-1">
-                                      @{suggested.username}
-                                      {isUserVerified(suggested) && <VerifiedBadge size="xs" />}
-                                    </span>
-                                    {suggested.mutualCount > 0 && (
-                                      <span className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
-                                        {suggested.mutualCount} mutual friend{suggested.mutualCount !== 1 ? 's' : ''}
-                                      </span>
-                                    )}
-                                  </div>
-                                </button>
-                                <Button
-                                  onClick={() => navigate(`/user/${suggested.id}`)}
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 px-3 shrink-0 ml-2 border-[#0095F6] discuss:border-[#EF4444] text-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10"
-                                >
-                                  <UserPlus className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Your Friends */}
-                  <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#10B981]" />
-                    Your Friends ({friends.length})
-                  </h3>
-                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
-                    {friends.map((friend) => {
-                      
-                      return (
-                        <div key={friend.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
-                          <button
-                            onClick={() => navigate(`/user/${friend.id}`)}
-                            className="flex items-center gap-3 flex-1 min-w-0"
-                          >
-                            <UserAvatar
-                              src={friend?.photo_url}
-                              username={friend?.username || 'User'}
-                              className="w-10 h-10"
-                            />
-                            <div className="text-left min-w-0">
-                              <div className="flex items-center gap-1">
-                                <span className="font-semibold text-neutral-900 dark:text-white text-sm truncate">
-                                  @{friend.username}
-                                </span>
-                                {isUserVerified(friend) && <VerifiedBadge size="xs" />}
-                              </div>
-                            </div>
-                          </button>
-                          <Button
-                            onClick={() => navigate(`/chat/${friend.id}`)}
-                            size="sm"
-                            className="bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white h-8 px-3 shrink-0 ml-2"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="order-4 space-y-4">
-                  {/* Suggested Friends for users without friends */}
-                  {suggestedFriends.length > 0 && (
-                    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                      <h3 className="text-sm font-semibold text-neutral-900 dark:text-white dark:text-white mb-3 flex items-center gap-2">
-                        <UserPlus className="w-4 h-4 text-[#0095F6] text-[#0095F6]" />
-                        Suggested Friends
-                      </h3>
-                      {loadingSuggestions ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#0095F6] text-[#0095F6]" />
-                          <span className="ml-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Finding people...</span>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
-                          {suggestedFriends.map((suggested) => {
-                            
-                            return (
-                              <div key={suggested.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
-                                <button
-                                  onClick={() => navigate(`/user/${suggested.id}`)}
-                                  className="flex items-center gap-3 flex-1 min-w-0"
-                                >
-                                  {suggested.photo_url ? (
-                                    <UserAvatar src={suggested.photo_url} username={suggested.username} className="w-10 h-10 rounded-full object-cover" />
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] discuss:from-[#EF4444] discuss:to-[#F59E0B] flex items-center justify-center">
-                                      <span className="text-white text-sm font-bold">{initials}</span>
-                                    </div>
-                                  )}
-                                  <div className="text-left min-w-0">
-                                    <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate flex items-center gap-1">
-                                      <span>@{suggested.username}</span>
-                                      {isUserVerified(suggested) && <VerifiedBadge size="xs" />}
-                                    </span>
-                                  </div>
-                                </button>
-                                <Button
-                                  onClick={() => navigate(`/user/${suggested.id}`)}
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 px-3 shrink-0 ml-2 border-[#0095F6] discuss:border-[#EF4444] text-[#0095F6] text-[#0095F6] hover:bg-[#0095F6]/10 discuss:hover:bg-[#EF4444]/10"
-                                >
-                                  <UserPlus className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="rounded-2xl bg-white px-5 py-7 text-center shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">Your Friends (0)</p>
-                    <h3 className="font-script mt-3 text-[28px] leading-8 text-neutral-950 dark:text-white">Your circle starts here</h3>
-                    <p className="mx-auto mt-2 max-w-xs text-[12px] leading-5 text-neutral-500 dark:text-neutral-400">Find someone new or choose a suggestion above and send your first request.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {/* ==================== END FRIENDS SECTION ==================== */}
-
-        {/* ==================== AI INSIGHTS SECTION ==================== */}
-        <div className="order-9 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-          <button
-            onClick={() => setShowAiInsights(!showAiInsights)}
-            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-              <div className="text-left">
-                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white">AI TalentGraph Insights</h2>
-                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs">
-                  {aiInsights ? 'Analysis complete' : 'No insights generated yet'}
-                </p>
-              </div>
-            </div>
-            <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showAiInsights ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
-          </button>
-
-          {showAiInsights && (
-            <div className="px-4 py-4 space-y-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
-              <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                <div className="text-left">
-                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Profile Insights</h3>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-generated understanding of your profile and posts</p>
-                </div>
-                <Button
-                  onClick={handleAnalyzeProfile}
-                  disabled={analyzingProfile}
-                  size="sm"
-                  className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-xs py-1.5 px-3 rounded-md border border-neutral-200 dark:border-neutral-800 cursor-pointer"
-                >
-                  {analyzingProfile ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    'Regenerate'
-                  )}
-                </Button>
-              </div>
-
-              {aiInsights ? (
-                <div className="space-y-4 text-sm text-left">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                      <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Main Skills</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {(aiInsights.mainSkills || []).map(s => (
-                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                      <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Secondary Skills</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {(aiInsights.secondarySkills || []).map(s => (
-                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Areas of Interest</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {(aiInsights.areasOfInterest || []).map(s => (
-                        <span key={s} className="bg-white dark:bg-neutral-850 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded text-xs border border-rose-200 dark:border-rose-900">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Project Categories</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {(aiInsights.projectCategories || []).map(c => (
-                        <span key={c} className="bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-xs border border-neutral-200 dark:border-neutral-700">
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Collaboration Preferences</h4>
-                    <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-medium">
-                      {aiInsights.collaborationPreferences}
-                    </p>
-                  </div>
-
-                  <div className="p-3 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                    <h4 className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Growth Opportunities</h4>
-                    <ul className="list-disc list-inside space-y-1 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
-                      {(aiInsights.growthOpportunities || []).map((o, idx) => (
-                        <li key={idx} className="leading-relaxed">{o}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 text-right font-medium">
-                    Last analyzed: {aiInsights.updatedAt ? new Date(aiInsights.updatedAt).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 font-medium">Analyze your profile bio and posts to extract key technical domains, roles, and growth areas.</p>
-                  <Button
-                    onClick={handleAnalyzeProfile}
-                    disabled={analyzingProfile}
-                    className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold text-xs py-2 px-4 rounded-md border border-neutral-200 cursor-pointer"
-                  >
-                    {analyzingProfile ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      'Analyze Profile'
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        
-
-        {/* Your Posts Section */}
-        <div className="order-2 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-          <button
-            data-testid="your-posts-toggle"
-            onClick={() => setShowPosts(!showPosts)}
-            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-              <div className="text-left">
-                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white"><span>Your Posts</span></h2>
-                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPosts.length} post{userPosts.length !== 1 ? 's' : ''}</span></p>
-              </div>
-            </div>
-            <ChevronRight className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ${showPosts ? "rotate-90 text-neutral-900 dark:text-white" : ""}`} />
-          </button>
-
-          {showPosts && (
-            <div className="px-4 py-4 space-y-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+        {/* --- 1. POSTS TAB --- */}
+        {activeTab === 'posts' && (
+          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] text-left">
+            <div className="px-4 py-4 space-y-4">
               {/* Filter bar */}
-              <div data-testid="post-filter-bar" className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#1E293B] border border-[#DBDBDB] dark:border-[#262626] rounded-xl px-3 py-2.5">
+              <div data-testid="post-filter-bar" className="flex flex-wrap items-center gap-2 bg-neutral-50 dark:bg-[#111111] border border-[#DBDBDB] dark:border-[#262626] rounded-xl px-3 py-2.5">
                 <Filter className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                 <select
                   data-testid="filter-type-select"
                   value={filterType}
                   onChange={(e) => { setFilterType(e.target.value); setFilterMonth(''); setFilterYear(''); }}
-                  className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                  className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                 >
                   <option value="all"><span>All Posts</span></option>
                   <option value="this_month"><span>This Month</span></option>
@@ -3162,7 +1816,7 @@ export default function ProfilePage() {
                       data-testid="filter-month-select"
                       value={filterMonth}
                       onChange={(e) => setFilterMonth(e.target.value)}
-                      className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                      className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                     >
                       <option value="">Month</option>
                       {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
@@ -3171,7 +1825,7 @@ export default function ProfilePage() {
                       data-testid="filter-month-year-select"
                       value={filterYear}
                       onChange={(e) => setFilterYear(e.target.value)}
-                      className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                      className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                     >
                       <option value="">Year</option>
                       {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -3184,17 +1838,11 @@ export default function ProfilePage() {
                     data-testid="filter-year-select"
                     value={filterYear}
                     onChange={(e) => setFilterYear(e.target.value)}
-                    className="bg-neutral-50 dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
+                    className="bg-white dark:bg-black border border-[#DBDBDB] dark:border-[#262626] text-neutral-900 dark:text-white rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-[#0095F6]"
                   >
                     <option value="">Year</option>
                     {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
-                )}
-
-                {filterType !== 'all' && (
-                  <span className="text-neutral-500 dark:text-neutral-400 text-[11px] ml-auto">
-                    <span>{filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''}</span>
-                  </span>
                 )}
               </div>
 
@@ -3241,35 +1889,72 @@ export default function ProfilePage() {
                   />
                 ))
               )}
-            </div>
-          )}
-        </div>
 
-        {/* Your Pulses Section */}
-        <div className="order-3 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
-          <button
-            data-testid="your-pulses-toggle"
-            onClick={() => setShowPulses(!showPulses)}
-            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <PlayCircle className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px] shrink-0" />
-              <div className="text-left">
-                <h2 className="text-[15px] font-bold text-neutral-900 dark:text-white dark:text-white"><span>Your Pulses</span></h2>
-                <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-xs"><span>{userPulses.length} video{userPulses.length !== 1 ? 's' : ''}</span></p>
+              {/* AI TalentGraph Insights collapsible card */}
+              <div className="mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                <button
+                  onClick={() => setShowAiInsights(!showAiInsights)}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-neutral-50 dark:bg-[#111111] hover:bg-neutral-100 dark:hover:bg-[#161616] transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-[#0095F6]" />
+                    <span className="text-xs font-bold text-neutral-900 dark:text-white">AI Profile Insights</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-neutral-400 transition-transform ${showAiInsights ? 'rotate-90' : ''}`} />
+                </button>
+
+                {showAiInsights && (
+                  <div className="mt-3 p-4 rounded-xl bg-neutral-50 dark:bg-[#111111] space-y-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">AI-generated understanding of your profile</p>
+                      <Button
+                        onClick={handleAnalyzeProfile}
+                        disabled={analyzingProfile}
+                        size="sm"
+                        className="h-7 text-xs bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                      >
+                        {analyzingProfile ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : 'Analyze'}
+                      </Button>
+                    </div>
+                    {aiInsights ? (
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <span className="font-bold text-neutral-600 dark:text-neutral-400 uppercase text-[10px]">Main Skills:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(aiInsights.mainSkills || []).map(s => (
+                              <span key={s} className="bg-white dark:bg-neutral-800 px-2 py-0.5 rounded text-[11px] border border-neutral-200 dark:border-neutral-700">
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {aiInsights.collaborationPreferences && (
+                          <div>
+                            <span className="font-bold text-neutral-600 dark:text-neutral-400 uppercase text-[10px]">Collaboration:</span>
+                            <p className="text-neutral-700 dark:text-neutral-300 mt-0.5">{aiInsights.collaborationPreferences}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Click Analyze to generate talent insights from your posts and bio.</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            <ChevronRight className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ${showPulses ? "rotate-90 text-neutral-900 dark:text-white" : ""}`} />
-          </button>
+          </div>
+        )}
 
-          {showPulses && (
-            <div className="px-4 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4 border-t border-[#EFEFEF] dark:border-[#262626] text-left animate-in slide-in-from-top-2 duration-300">
+        {/* --- 2. PULSES TAB --- */}
+        {activeTab === 'pulses' && (
+          <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] text-left">
+            <div className="px-4 py-4">
               {loadingPosts ? (
-                <div className="col-span-full flex items-center justify-center py-10">
+                <div className="flex items-center justify-center py-10">
                   <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
                 </div>
               ) : userPulses.length === 0 ? (
-                <div className="col-span-full overflow-hidden rounded-[24px] bg-neutral-50 px-5 pb-6 pt-3 text-center dark:bg-[#101010]">
+                <div className="overflow-hidden rounded-[24px] bg-neutral-50 px-5 pb-6 pt-3 text-center dark:bg-[#101010]">
                   <img
                     src={emptyPulseIllustration}
                     alt="Creator recording a first technical Pulse video"
@@ -3288,88 +1973,246 @@ export default function ProfilePage() {
                   </button>
                 </div>
               ) : (
-                userPulses.map(pulse => (
-                  <div key={pulse.id} className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all" onClick={() => navigate('/pulse')}>
-                    <video src={pulse.videoUrl} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <PlayCircle className="w-10 h-10 text-white" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {userPulses.map(pulse => (
+                    <div
+                      key={pulse.id}
+                      className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-all bg-black"
+                      onClick={() => navigate('/pulse')}
+                    >
+                      <video src={pulse.videoUrl} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <PlayCircle className="w-10 h-10 text-white" />
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
+                        {pulse.caption || 'Pulse Video'}
+                      </div>
                     </div>
-                    <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-semibold truncate drop-shadow-md">
-                      {pulse.caption || 'Pulse Video'}
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* ==================== HELP, LEGAL & SESSION ==================== */}
-        <div className="order-10 w-full bg-white dark:bg-black divide-y divide-[#EFEFEF] dark:divide-[#262626] border-y border-[#EFEFEF] dark:border-[#262626]">
-          {[
-            {
-              label: 'Terms & Conditions',
-              description: 'Rules and standards for using Discuss',
-              icon: FileText,
-              action: () => navigate('/terms'),
-            },
-            {
-              label: 'Privacy Policy',
-              description: 'How Discuss handles and protects your information',
-              icon: Shield,
-              action: () => navigate('/privacy'),
-            },
-            {
-              label: 'Support',
-              description: 'Get help at support@discussit.in',
-              icon: Mail,
-              action: () => navigate('/support'),
-            },
-          ].map(({ label, description, icon: RowIcon, action }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={action}
-              className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors"
-            >
-              <span className="flex min-w-0 items-center gap-3">
-                <RowIcon className="h-5 w-5 shrink-0 stroke-[1.8px] text-neutral-900 dark:text-white" />
-                <span className="min-w-0">
-                  <span className="block text-[15px] font-extrabold text-neutral-900 dark:text-white">{label}</span>
-                  <span className="mt-0.5 block text-[11px] text-neutral-500 dark:text-neutral-400">{description}</span>
-                </span>
-              </span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400" />
-            </button>
-          ))}
+        {/* --- 3. FRIENDS TAB --- */}
+        {activeTab === 'friends' && (
+          <div id="profile-friend-requests" className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] text-left">
+            <div className="flex flex-col gap-4 bg-[#FAFAFA] px-4 py-4 dark:bg-[#080808]">
+              {/* Received Friend Requests */}
+              {receivedRequests.length > 0 && (
+                <div className="rounded-2xl bg-[#F59E0B]/10 p-4 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.18)]">
+                  <h3 className="text-sm font-semibold text-[#92400E] dark:text-[#FCD34D] mb-3 flex items-center gap-2">
+                    <UserPlus className="w-4 h-4" />
+                    Friend Requests ({receivedRequests.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {receivedRequests.map((request) => {
+                      const reqUser = requestUserDetails[request.fromUserId];
+                      return (
+                        <div key={request.fromUserId} className="flex items-center justify-between rounded-xl bg-white p-3 shadow-sm dark:bg-[#111111]">
+                          <button
+                            onClick={() => navigate(`/user/${request.fromUserId}`)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            <UserAvatar
+                              src={reqUser?.photo_url}
+                              username={reqUser?.username || 'User'}
+                              className="w-10 h-10"
+                            />
+                            <div className="text-left min-w-0">
+                              <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate">
+                                @{reqUser?.username || 'Unknown'}
+                              </span>
+                              <span className="text-neutral-500 dark:text-neutral-400 text-xs">
+                                {new Date(request.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </button>
+                          <div className="flex gap-2 shrink-0 ml-2">
+                            <Button
+                              onClick={() => handleAcceptRequest(request.fromUserId)}
+                              disabled={processingRequest === request.fromUserId}
+                              size="sm"
+                              className="bg-[#10B981] hover:bg-[#059669] text-white h-8 px-3"
+                            >
+                              {processingRequest === request.fromUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                            </Button>
+                            <Button
+                              onClick={() => handleDeclineRequest(request.fromUserId)}
+                              disabled={processingRequest === request.fromUserId}
+                              variant="outline"
+                              size="sm"
+                              className="border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444]/10 h-8 px-3"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
+              {/* Sent Requests */}
+              {sentRequests.length > 0 && (
+                <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
+                  <h3 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>Sent Requests ({sentRequests.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {sentRequests.map((request) => {
+                      const reqUser = requestUserDetails[request.toUserId];
+                      return (
+                        <div key={request.toUserId} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
+                          <button
+                            onClick={() => navigate(`/user/${request.toUserId}`)}
+                            className="flex items-center gap-3 flex-1 min-w-0"
+                          >
+                            <UserAvatar
+                              src={reqUser?.photo_url}
+                              username={reqUser?.username || 'User'}
+                              className="w-10 h-10"
+                            />
+                            <div className="text-left min-w-0">
+                              <span className="font-semibold text-neutral-900 dark:text-white text-sm block truncate">
+                                @{reqUser?.username || 'Unknown'}
+                              </span>
+                              <span className="text-[#F59E0B] text-xs"><span>Pending</span></span>
+                            </div>
+                          </button>
+                          <Button
+                            onClick={() => handleCancelRequest(request.toUserId)}
+                            disabled={processingRequest === request.toUserId}
+                            variant="outline"
+                            size="sm"
+                            className="border-[#6275AF] text-neutral-500 hover:bg-[#6275AF]/10 h-8 px-3 shrink-0 ml-2"
+                          >
+                            {processingRequest === request.toUserId ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cancel'}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Find Friends Search */}
+              <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
+                  <Search className="w-4 h-4 text-[#0095F6]" />
+                  <span>Find Friends</span>
+                </h3>
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+                  <Input
+                    value={friendSearchQuery}
+                    onChange={(e) => setFriendSearchQuery(e.target.value)}
+                    placeholder="Search users by username..."
+                    className="h-11 rounded-xl border-neutral-200 bg-neutral-50 pl-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-[#0095F6]/20 dark:border-[#262626] dark:bg-black dark:text-white"
+                  />
+                  {friendSearchQuery && (
+                    <button
+                      onClick={() => setFriendSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {searchingFriends ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
+                  </div>
+                ) : friendSearchResults.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                    {friendSearchResults.map((searchUser) => (
+                      <UserSearchResult
+                        key={searchUser.id}
+                        user={searchUser}
+                        currentUserId={user?.id}
+                        onClose={() => setFriendSearchQuery('')}
+                      />
+                    ))}
+                  </div>
+                ) : friendSearchQuery && !searchingFriends ? (
+                  <p className="text-neutral-500 dark:text-neutral-400 text-sm text-center py-4">
+                    <span>No users found</span>
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Your Friends */}
+              <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-neutral-200/70 dark:bg-[#111111] dark:ring-[#262626]">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[#10B981]" />
+                  Your Friends ({friends.length})
+                </h3>
+
+                {friends.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                    {friends.map((friend) => (
+                      <div key={friend.id} className="flex items-center justify-between rounded-xl bg-neutral-50 p-3 dark:bg-black">
+                        <button
+                          onClick={() => navigate(`/user/${friend.id}`)}
+                          className="flex items-center gap-3 flex-1 min-w-0"
+                        >
+                          <UserAvatar
+                            src={friend?.photo_url}
+                            username={friend?.username || 'User'}
+                            className="w-10 h-10"
+                          />
+                          <div className="text-left min-w-0">
+                            <div className="flex items-center gap-1">
+                              <span className="font-semibold text-neutral-900 dark:text-white text-sm truncate">
+                                @{friend.username}
+                              </span>
+                              {isUserVerified(friend) && <VerifiedBadge size="xs" />}
+                            </div>
+                          </div>
+                        </button>
+                        <Button
+                          onClick={() => navigate(`/chat/${friend.id}`)}
+                          size="sm"
+                          className="bg-[#0095F6] hover:bg-[#1877F2] text-white h-8 px-3 shrink-0 ml-2"
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-neutral-50 p-6 text-center dark:bg-black">
+                    <Users className="mx-auto h-8 w-8 text-neutral-400 mb-2" />
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">You haven't added any friends yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings shortcut card */}
+        <div className="w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] p-4 text-center">
           <button
-            type="button"
-            data-testid="profile-logout-btn"
-            onClick={() => setShowLogoutConfirm(true)}
-            disabled={loggingOut}
-            className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors disabled:opacity-60"
+            onClick={() => navigate('/settings')}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
           >
-            <span className="flex min-w-0 items-center gap-3">
-              {loggingOut
-                ? <Loader2 className="h-5 w-5 shrink-0 animate-spin text-neutral-900 dark:text-white" />
-                : <LogOut className="h-5 w-5 shrink-0 stroke-[1.8px] text-neutral-900 dark:text-white" />}
-              <span className="min-w-0">
-                <span className="block text-[15px] font-extrabold text-neutral-900 dark:text-white">Log out</span>
-                <span className="mt-0.5 block text-[11px] text-neutral-500 dark:text-neutral-400">Sign out of this account on this device</span>
-              </span>
-            </span>
-            <ChevronRight className="h-5 w-5 shrink-0 text-neutral-400" />
+            <Settings className="w-4 h-4" />
+            <span>Settings & Privacy</span>
           </button>
         </div>
-        </div>
+      </div>
 
-        {/* Brand Footer in Cursive Discuss font */}
-        <div className="flex flex-col items-center justify-center mt-10 mb-28 select-none text-center">
-          <span className="text-xs text-neutral-400 font-medium tracking-wide">from</span>
-          <span className="font-script text-2xl text-neutral-900 dark:text-white leading-none mt-1">Discuss</span>
-          <span className="font-script text-lg text-neutral-500 dark:text-neutral-400 leading-none mt-0.5">Bengaluru</span>
-        </div>
+      {/* Brand Footer in Cursive Discuss font */}
+      <div className="flex flex-col items-center justify-center mt-10 mb-28 select-none text-center">
+        <span className="text-xs text-neutral-400 font-medium tracking-wide">from</span>
+        <span className="font-script text-2xl text-neutral-900 dark:text-white leading-none mt-1">Discuss</span>
+        <span className="font-script text-lg text-neutral-500 dark:text-neutral-400 leading-none mt-0.5">Bengaluru</span>
+      </div>
           </div>
         </div>
       </div>

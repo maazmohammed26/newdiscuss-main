@@ -1,6 +1,7 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
+import ResilientMedia from './ResilientMedia';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
@@ -22,11 +23,13 @@ const MediaCarousel = ({ media, onMediaClick }) => {
         {media.map((item, index) => (
           <SwiperSlide key={index} onClick={() => onMediaClick?.(item, index)}>
             <div className="media-slide">
-              {item.type === 'video' || item.url.includes('video') ? (
-                <video src={item.url} controls={false} muted loop playsInline />
-              ) : (
-                <img src={item.url} alt={`Post media ${index}`} loading="lazy" />
-              )}
+              <ResilientMedia
+                src={item.url}
+                alt={`Post media ${index + 1}`}
+                isVideo={item.type === 'video' || (typeof item.url === 'string' && item.url.includes('video'))}
+                className="w-full h-full object-cover"
+                aspectRatioClassName="aspect-square"
+              />
             </div>
           </SwiperSlide>
         ))}

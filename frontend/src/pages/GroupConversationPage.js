@@ -22,6 +22,7 @@ import {
 import Header from '@/components/Header';
 import ChatLinkText from '@/components/ChatLinkText';
 import VerifiedBadge from '@/components/VerifiedBadge';
+import FullscreenMedia from '@/components/FullscreenMedia';
 import { isUserVerified } from '@/lib/verification';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

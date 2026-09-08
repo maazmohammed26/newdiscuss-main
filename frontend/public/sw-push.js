@@ -36,11 +36,9 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Keep OneSignal's root-scope listeners available for users subscribed by
-// older Discuss builds. New subscriptions use /push/onesignal/ independently.
-try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (_) {}
-
-const CACHE_VERSION = 'discuss-v7';
+// OneSignal worker is separated into its dedicated /OneSignalSDKWorker.js file.
+// PWA service worker manages app shell caching, offline fallbacks, and sync notifications.
+const CACHE_VERSION = 'discuss-v8';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
 const OFFLINE_URL   = '/offline.html';

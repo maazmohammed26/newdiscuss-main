@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import UserAvatar from '@/components/UserAvatar';
+import AccountPanel from '@/components/AccountPanel';
 import { Home, Clapperboard, Send, Search } from 'lucide-react';
 
 function FloatingNavbar() {
@@ -25,6 +26,13 @@ function FloatingNavbar() {
     return () => clearInterval(interval);
   }, []);
 
+  const [showAccountPanel, setShowAccountPanel] = useState(false);
+
+  // Close panel on route navigation
+  useEffect(() => {
+    setShowAccountPanel(false);
+  }, [location.pathname]);
+
   const currentPath = location.pathname;
   const pathParts = currentPath.split('/').filter(Boolean);
   
@@ -45,47 +53,69 @@ function FloatingNavbar() {
   ];
 
   return (
-    <nav
-      aria-label="Mobile Navigation"
-      className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-[#E5E5E5] dark:border-[#262626] transition-colors duration-200 select-none pb-[env(safe-area-inset-bottom,0px)]"
-    >
-      <div className="h-[49px] max-w-lg mx-auto px-4 flex items-center justify-around">
-        {navItems.map((item) => {
-          const isActive = item.active;
-          const Icon = item.icon;
+    <>
+      <nav
+        aria-label="Mobile Navigation"
+        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-[#E5E5E5] dark:border-[#262626] transition-colors duration-200 select-none pb-[env(safe-area-inset-bottom,0px)]"
+      >
+        <div className="h-[49px] max-w-lg mx-auto px-4 flex items-center justify-around">
+          {navItems.map((item) => {
+            const isActive = item.active;
+            const Icon = item.icon;
 
-          if (item.key === 'profile') {
-            return (
-              <Link
-                key={item.key}
-                to={item.to}
-                aria-label={item.label}
-                className="relative flex items-center justify-center p-1.5 focus:outline-none"
-              >
-                <div className={`w-[26px] h-[26px] rounded-full p-[1px] transition-transform duration-100 active:scale-90 ${
-                  isActive ? 'ring-2 ring-neutral-900 dark:ring-white' : ''
-                }`}>
-                  <div className="w-full h-full rounded-full overflow-hidden">
-                    <UserAvatar
-                      src={user?.photo_url}
-                      username={user?.username || 'You'}
-                      userId={user?.id}
-                      priority
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                {pendingFriendRequests > 0 && (
-                  <span
-                    aria-label={`${pendingFriendRequests} pending requests`}
-                    className="absolute -top-0.5 right-0 min-w-[15px] h-[15px] px-1 rounded-full bg-[#F59E0B] text-white text-[9px] font-bold leading-none flex items-center justify-center shadow-xs"
+            if (item.key === 'profile') {
+              if (!user) {
+                return (
+                  <Link
+                    key={item.key}
+                    to="/login"
+                    aria-label="Log In"
+                    className="relative flex items-center justify-center p-1.5 focus:outline-none"
                   >
-                    {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
-                  </span>
-                )}
-              </Link>
-            );
-          }
+                    <div className="w-[26px] h-[26px] rounded-full p-[1px]">
+                      <div className="w-full h-full rounded-full overflow-hidden">
+                        <UserAvatar username="?" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setShowAccountPanel((prev) => !prev)}
+                  aria-label="Account Panel"
+                  aria-expanded={showAccountPanel}
+                  className="relative flex items-center justify-center p-1.5 focus:outline-none cursor-pointer"
+                >
+                  <div className={`w-[26px] h-[26px] rounded-full p-[1px] transition-transform duration-150 active:scale-90 ${
+                    showAccountPanel 
+                      ? 'ring-2 ring-[#0095F6] scale-105' 
+                      : (isActive ? 'ring-2 ring-neutral-900 dark:ring-white' : '')
+                  }`}>
+                    <div className="w-full h-full rounded-full overflow-hidden">
+                      <UserAvatar
+                        src={user?.photo_url}
+                        username={user?.username || 'You'}
+                        userId={user?.id}
+                        priority
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  {pendingFriendRequests > 0 && (
+                    <span
+                      aria-label={`${pendingFriendRequests} pending requests`}
+                      className="absolute -top-0.5 right-0 min-w-[15px] h-[15px] px-1 rounded-full bg-[#F59E0B] text-white text-[9px] font-bold leading-none flex items-center justify-center shadow-xs"
+                    >
+                      {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
+                    </span>
+                  )}
+                </button>
+              );
+            }
 
           return (
             <Link
@@ -111,6 +141,8 @@ function FloatingNavbar() {
         })}
       </div>
     </nav>
+    <AccountPanel open={showAccountPanel} onClose={() => setShowAccountPanel(false)} position="bottom" />
+  </>
   );
 }
 

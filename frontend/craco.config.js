@@ -10,11 +10,13 @@ let webpackConfig = {
         node: true,
         jest: true,
       },
+      plugins: ["react"],
       extends: ["plugin:react-hooks/recommended"],
       rules: {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
         "no-undef": "error",
+        "react/jsx-no-undef": "error",
       },
     },
   },

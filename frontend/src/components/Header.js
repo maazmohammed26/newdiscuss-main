@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DiscussLogo from '@/components/DiscussLogo';
 import UserAvatar from '@/components/UserAvatar';
+import AccountPanel from '@/components/AccountPanel';
 import CreatePostModal from '@/components/CreatePostModal';
 import GuestAuthModal from '@/components/GuestAuthModal';
 import { 
@@ -26,6 +27,7 @@ export default function Header() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAccountPanel, setShowAccountPanel] = useState(false);
 
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -126,8 +128,14 @@ export default function Header() {
             </button>
 
             {user ? (
-              <Link to="/profile" className="relative flex items-center gap-2" aria-label={pendingFriendRequests > 0 ? `Profile, ${pendingFriendRequests} pending friend ${pendingFriendRequests === 1 ? 'request' : 'requests'}` : 'Profile'}>
-                <div className="w-8 h-8 rounded-full p-[1.5px] ig-story-gradient">
+              <button
+                type="button"
+                onClick={() => setShowAccountPanel((prev) => !prev)}
+                className="relative flex items-center gap-2 cursor-pointer focus:outline-none"
+                aria-label={pendingFriendRequests > 0 ? `Account menu, ${pendingFriendRequests} pending friend requests` : 'Account menu'}
+                aria-expanded={showAccountPanel}
+              >
+                <div className={`w-8 h-8 rounded-full p-[1.5px] transition-transform ${showAccountPanel ? 'ring-2 ring-[#0095F6] scale-105' : 'ig-story-gradient'}`}>
                   <div className="w-full h-full rounded-full bg-white dark:bg-black p-[1px] overflow-hidden">
                     <UserAvatar src={user.photo_url} username={user.username || 'You'} userId={user.id} priority className="w-full h-full object-cover rounded-full" />
                   </div>
@@ -137,7 +145,7 @@ export default function Header() {
                     {pendingFriendRequests > 99 ? '99+' : pendingFriendRequests}
                   </span>
                 )}
-              </Link>
+              </button>
             ) : (
               <Link to="/login" className="px-4 py-1.5 bg-[#0095F6] text-white text-xs font-bold rounded-lg hover:bg-[#1877F2]">
                 Log In
@@ -237,6 +245,8 @@ export default function Header() {
 
       <CreatePostModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
       <GuestAuthModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      {/* Account Panel */}
+      <AccountPanel open={showAccountPanel} onClose={() => setShowAccountPanel(false)} position="top" />
     </>
   );
 }

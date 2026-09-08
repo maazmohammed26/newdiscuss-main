@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MoreVertical, X, Maximize2, Minimize2, Loader2, Flag, Heart, MessageSquare, Share2 } from 'lucide-react';
+import { MoreVertical, X, Maximize2, Minimize2, Loader2, Flag, Heart, MessageSquare, Share2, Volume2, VolumeX, VideoOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getOptimizedVideoUrl } from '@/lib/imagekit';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,7 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   // Follow State
   const [followStatus, setFollowStatus] = useState(RELATIONSHIP_STATUS.NONE);
@@ -219,8 +220,17 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
         onPlaying={() => setIsVideoLoading(false)}
         onCanPlay={() => setIsVideoLoading(false)}
         onLoadStart={() => setIsVideoLoading(true)}
-        onLoadedData={() => setIsVideoLoading(false)}
+        onLoadedData={() => { setIsVideoLoading(false); setVideoFailed(false); }}
+        onError={() => { setIsVideoLoading(false); setVideoFailed(true); }}
       />
+      
+      {videoFailed && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white z-[6] p-6 text-center">
+          <VideoOff className="w-10 h-10 mb-2 opacity-70 text-neutral-400" />
+          <span className="text-sm font-semibold">Pulse media unavailable</span>
+          <span className="text-xs text-neutral-400 mt-1">This video could not be loaded.</span>
+        </div>
+      )}
       
       {isVideoLoading && (
         <div className="absolute inset-0 flex items-center justify-center z-[5] pointer-events-none bg-black/10">
@@ -303,8 +313,14 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
             <div className="public-badge mt-2 z-10">This Pulse video is public</div>
           </div>
 
-          <div className="mute-control z-10" onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}>
-            {muted ? <IoVolumeMute size={24} /> : <IoVolumeHigh size={24} />}
+          <div 
+            className="mute-control z-10" 
+            onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}
+            role="button"
+            tabIndex={0}
+            aria-label={muted ? 'Unmute Pulse video' : 'Mute Pulse video'}
+          >
+            {muted ? <VolumeX size={24} /> : <Volume2 size={24} />}
           </div>
         </>
       )}
