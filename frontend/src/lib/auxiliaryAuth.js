@@ -1,6 +1,6 @@
 import { getAuth, signInWithCustomToken, signOut } from 'firebase/auth';
 import { getAuthenticatedIdToken } from './authenticatedRequest';
-import { doesProjectRequireBrowserAuth } from './firebaseRegistry';
+import { doesProjectRequireCustomTokenAuth } from './firebaseRegistry';
 import { secondaryApp } from './firebaseSecondary';
 import { thirdApp } from './firebaseThird';
 import { fourthApp } from './firebaseFourth';
@@ -74,16 +74,16 @@ const requestCustomToken = async (project) => {
 /**
  * Coordinates auxiliary Firebase authentication across targets.
  * Ensures:
- *  1. Database-only targets never initialize browser Firebase Auth (prevents CONFIGURATION_NOT_FOUND).
+ *  1. Only targets requiring custom-token authentication for RTDB security rules are processed.
  *  2. Multiple concurrent callers share a single in-flight synchronization promise.
  *  3. A global circuit breaker prevents repeated 503 request storms on startup.
  */
 export const synchronizeAuxiliaryAuth = async (uid) => {
   if (!uid) return [];
 
-  // Filter only initialized apps that genuinely declare browserAuth: true in capabilities registry
+  // Filter initialized apps that require custom-token authentication
   const authRequiredTargets = TARGET_APPS.filter(([project, app]) => {
-    return Boolean(app) && doesProjectRequireBrowserAuth(project);
+    return Boolean(app) && doesProjectRequireCustomTokenAuth(project);
   });
 
   // If no auxiliary apps require browser auth (they are database-only), resolve immediately
@@ -152,7 +152,7 @@ export const signOutAuxiliaryAuth = async () => {
   resetAuxiliaryCooldowns();
 
   const authRequiredTargets = TARGET_APPS.filter(([project, app]) => {
-    return Boolean(app) && doesProjectRequireBrowserAuth(project);
+    return Boolean(app) && doesProjectRequireCustomTokenAuth(project);
   });
 
   await Promise.allSettled(

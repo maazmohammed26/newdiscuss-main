@@ -1,12 +1,12 @@
 /**
  * firebaseRegistry.js — Centralized Firebase Project Capabilities Map
  *
- * Explicitly declares which capabilities each Firebase project supports.
- * CRITICAL RELIABILITY RULE:
- *   If an auxiliary Firebase project is database-only, browserAuth MUST be false.
- *   Calling getAuth(auxApp) on projects where Firebase Authentication is unconfigured
- *   causes the Firebase Auth iframe to ping Google Identity Toolkit (getProjectConfig)
- *   and emit 400 CONFIGURATION_NOT_FOUND errors into the developer console.
+ * Defines explicit capabilities per project instance:
+ *  - database: true if Realtime Database is used
+ *  - interactiveOAuth: true ONLY for primary project where users sign in via Google OAuth popups/redirects
+ *  - customTokenAuth: true for auxiliary projects whose RTDB security rules require auth != null
+ *                     via the /api/aux-auth-token minting bridge
+ *  - storage: true if Firebase Storage bucket is used
  */
 
 export const FIREBASE_PROJECT_CAPABILITIES = {
@@ -15,7 +15,8 @@ export const FIREBASE_PROJECT_CAPABILITIES = {
     appName: '[DEFAULT]',
     description: 'Primary platform identity, core feeds, notifications, and media storage',
     database: true,
-    browserAuth: true,
+    interactiveOAuth: true,
+    customTokenAuth: false,
     storage: true,
     projectIdEnv: 'REACT_APP_FIREBASE_PROJECT_ID',
     databaseUrlEnv: 'REACT_APP_FIREBASE_DATABASE_URL',
@@ -25,7 +26,8 @@ export const FIREBASE_PROJECT_CAPABILITIES = {
     appName: 'secondary',
     description: 'Secondary RTDB: Comments and Extended Profiles',
     database: true,
-    browserAuth: false,
+    interactiveOAuth: false,
+    customTokenAuth: true,
     storage: false,
     projectIdEnv: 'REACT_APP_FIREBASE_SECONDARY_PROJECT_ID',
     databaseUrlEnv: 'REACT_APP_FIREBASE_SECONDARY_DATABASE_URL',
@@ -35,7 +37,8 @@ export const FIREBASE_PROJECT_CAPABILITIES = {
     appName: 'chatDb',
     description: 'Third RTDB: Direct 1-to-1 messages and user chats',
     database: true,
-    browserAuth: false,
+    interactiveOAuth: false,
+    customTokenAuth: true,
     storage: false,
     projectIdEnv: 'REACT_APP_FIREBASE_THIRD_PROJECT_ID',
     databaseUrlEnv: 'REACT_APP_FIREBASE_THIRD_DATABASE_URL',
@@ -45,7 +48,8 @@ export const FIREBASE_PROJECT_CAPABILITIES = {
     appName: 'discuss-fourth-groups',
     description: 'Fourth RTDB: Group chat rooms and memberships',
     database: true,
-    browserAuth: false,
+    interactiveOAuth: false,
+    customTokenAuth: true,
     storage: false,
     projectIdEnv: 'REACT_APP_FIREBASE_FOURTH_PROJECT_ID',
     databaseUrlEnv: 'REACT_APP_FIREBASE_FOURTH_DATABASE_URL',
@@ -55,7 +59,8 @@ export const FIREBASE_PROJECT_CAPABILITIES = {
     appName: 'signalDb',
     description: 'Fifth RTDB: Signal 24-hour stories and views',
     database: true,
-    browserAuth: false,
+    interactiveOAuth: false,
+    customTokenAuth: true,
     storage: false,
     projectIdEnv: 'REACT_APP_FIREBASE_FIFTH_PROJECT_ID',
     databaseUrlEnv: 'REACT_APP_FIREBASE_FIFTH_DATABASE_URL',
@@ -65,7 +70,8 @@ export const FIREBASE_PROJECT_CAPABILITIES = {
     appName: 'sixthApp',
     description: 'Sixth RTDB: DevRadar technical news & telemetry',
     database: true,
-    browserAuth: false,
+    interactiveOAuth: false,
+    customTokenAuth: true,
     storage: false,
     projectIdEnv: 'REACT_APP_FIREBASE_SIXTH_PROJECT_ID',
     databaseUrlEnv: 'REACT_APP_FIREBASE_SIXTH_DATABASE_URL',
@@ -82,11 +88,21 @@ export const getProjectCapabilities = (alias) => {
 };
 
 /**
- * Returns true if the project explicitly requires browser Firebase Auth.
+ * Returns true if the project supports interactive browser OAuth (Google popup / redirect).
  * @param {string} alias
  * @returns {boolean}
  */
-export const doesProjectRequireBrowserAuth = (alias) => {
+export const doesProjectSupportInteractiveOAuth = (alias) => {
   const caps = getProjectCapabilities(alias);
-  return Boolean(caps && caps.browserAuth);
+  return Boolean(caps && caps.interactiveOAuth);
+};
+
+/**
+ * Returns true if the project requires custom token authentication for RTDB security rules.
+ * @param {string} alias
+ * @returns {boolean}
+ */
+export const doesProjectRequireCustomTokenAuth = (alias) => {
+  const caps = getProjectCapabilities(alias);
+  return Boolean(caps && caps.customTokenAuth);
 };

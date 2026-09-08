@@ -26,8 +26,8 @@ describe('auxiliaryAuth Coordinator & Circuit Breaker', () => {
     getAuth.mockImplementation((app) => ({ app, currentUser: null }));
   });
 
-  test('skips auth initialization and network requests for database-only projects', async () => {
-    // By default, firebaseRegistry sets browserAuth: false for all auxiliary targets
+  test('skips auth initialization and network requests when customTokenAuth is false', async () => {
+    jest.spyOn(firebaseRegistry, 'doesProjectRequireCustomTokenAuth').mockReturnValue(false);
     const fetchSpy = jest.fn();
     global.fetch = fetchSpy;
 
@@ -38,9 +38,8 @@ describe('auxiliaryAuth Coordinator & Circuit Breaker', () => {
     expect(getAuth).not.toHaveBeenCalled();
   });
 
-  test('when a target requires browser auth, custom tokens preserve primary UID', async () => {
-    // Mock registry to require auth for 'secondary'
-    jest.spyOn(firebaseRegistry, 'doesProjectRequireBrowserAuth').mockImplementation((alias) => {
+  test('when targets require custom token auth, custom tokens preserve primary UID', async () => {
+    jest.spyOn(firebaseRegistry, 'doesProjectRequireCustomTokenAuth').mockImplementation((alias) => {
       return alias === 'secondary';
     });
 
@@ -64,7 +63,7 @@ describe('auxiliaryAuth Coordinator & Circuit Breaker', () => {
   });
 
   test('deduplicates simultaneous concurrent calls into a single in-flight promise', async () => {
-    jest.spyOn(firebaseRegistry, 'doesProjectRequireBrowserAuth').mockReturnValue(true);
+    jest.spyOn(firebaseRegistry, 'doesProjectRequireCustomTokenAuth').mockReturnValue(true);
     getAuthenticatedIdToken.mockResolvedValue('primary-token');
 
     let fetchCount = 0;
@@ -89,7 +88,7 @@ describe('auxiliaryAuth Coordinator & Circuit Breaker', () => {
   });
 
   test('engages global circuit breaker on 503 and blocks subsequent requests during cooldown', async () => {
-    jest.spyOn(firebaseRegistry, 'doesProjectRequireBrowserAuth').mockReturnValue(true);
+    jest.spyOn(firebaseRegistry, 'doesProjectRequireCustomTokenAuth').mockReturnValue(true);
     getAuthenticatedIdToken.mockResolvedValue('primary-token');
 
     global.fetch = jest.fn().mockResolvedValue({
