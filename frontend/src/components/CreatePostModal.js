@@ -427,7 +427,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
             {/* Subtle helper note showing detected valid tags if any */}
             {validTags.length > 0 && !hasExceededLimit && (
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[11px] text-neutral-400 dark:text-neutral-500">Indexed tags:</span>
+                <span className="text-[11px] text-neutral-400 dark:text-neutral-500">Tags ({validTags.length}/5):</span>
                 {validTags.map((tag) => (
                   <span
                     key={tag}

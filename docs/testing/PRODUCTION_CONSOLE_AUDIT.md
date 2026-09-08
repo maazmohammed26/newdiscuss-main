@@ -2,43 +2,33 @@
 
 ## 1. Executive Summary
 
-This document details the runtime reliability, asset resilience, and console cleanliness patch applied across Discuss VNext.
+This document details the runtime reliability, asset resilience, console cleanliness, and database indexing status across Discuss VNext.
 
 ---
 
-## 2. Firebase Realtime Database Index Patch
+## 2. Firebase Realtime Database Index Status
 
-### Query Pattern Analysis
-Discuss VNext queries multiple RTDB nodes with `orderByChild` and `equalTo`. Without explicit `.indexOn` rules in Firebase security rules, the Firebase SDK logs `[FIREBASE WARNING] Using an unspecified index. Consider adding ".indexOn": "..."` to the developer console.
+> [!WARNING]
+> **STATUS: REQUIRES LIVE FIREBASE RULE DEPLOYMENT**
+> 
+> Updating local repository files or documentation does NOT resolve live console warnings in production.
+> The console index warnings are logged directly by the Firebase Web SDK when querying live databases that lack matching `.indexOn` directives. They will continue until deployed directly to the Firebase Console by a project administrator.
+>
+> Full specification and per-database JSON configurations are maintained in `FIREBASE_RULES_AND_INDEXES.md`.
 
-### Recommended RTDB Rules Patch
-Apply the following indexing rules to Firebase Realtime Database:
-
-```json
-{
-  "rules": {
-    "posts": {
-      ".indexOn": ["timestamp", "author_id", "type"]
-    },
-    "pulses": {
-      ".indexOn": ["createdAt", "userId"]
-    },
-    "notifications": {
-      "$userId": {
-        ".indexOn": ["createdAt", "read"]
-      }
-    },
-    "chats": {
-      ".indexOn": ["updatedAt"]
-    },
-    "relationships": {
-      "$userId": {
-        ".indexOn": ["status", "updatedAt"]
-      }
-    }
-  }
-}
-```
+### Production Queries Requiring Live Indexes:
+1. **Stories Index (`signalDb` / Fifth Firebase)**:
+   - Query: `orderByChild('expiresAt')`
+   - Location: `/stories`
+   - Required Rule: `.indexOn: ["expiresAt"]`
+2. **Notifications Index (Primary Firebase)**:
+   - Query: `orderByChild('createdAt')`
+   - Location: `/notifications/$uid`
+   - Required Rule: `.indexOn: ["createdAt"]`
+3. **Posts Index (Primary Firebase)**:
+   - Query: `orderByChild('timestamp')`, `orderByChild('author_id')`
+   - Location: `/posts`
+   - Required Rule: `.indexOn: ["timestamp", "author_id", "type"]`
 
 ---
 
@@ -70,21 +60,20 @@ In offline/PWA standalone configurations, network calls requesting `/logo.png` r
 
 ---
 
-## 5. Auxiliary Auth 503 Exponential Cooldown Backoff
+## 5. Auxiliary Auth 503 Cooldown & Circuit Breaker
 
-### Issue
-When secondary auxiliary auth backend services were temporarily unconfigured or rate-limited (HTTP 503 Service Unavailable), client-side auth state checks polled continuously, producing repeated console error stacks.
-
-### Resolution
-Updated `frontend/src/lib/auxiliaryAuth.js`:
-1. **5-minute Cooldown**: On receiving HTTP 503, sets a 5-minute cooldown timer during which secondary auth checks return cached unauthenticated state immediately.
-2. **In-flight Deduplication**: Multiple simultaneous auth checks share the same in-flight promise rather than firing redundant network requests.
-3. **Graceful Fallback**: The core Discuss platform continues running uninterrupted on primary Firebase authentication.
+### Architecture & Behavior
+When secondary auxiliary auth backend services are unconfigured, undergoing maintenance, or rate-limited (HTTP 503 Service Unavailable):
+1. **5-minute Cooldown Circuit Breaker**: On receiving HTTP 503, sets a deterministic 5-minute cooldown timer during which secondary auth checks return cached unauthenticated state immediately without firing outbound requests.
+2. **In-Flight Request Deduplication**: Multiple simultaneous auth checks share the same in-flight promise rather than firing redundant network requests.
+3. **Clarification on Wording**: This is a simple, robust fixed cooldown circuit-breaker pattern, not exponential backoff (retry intervals are fixed at 5 minutes to avoid polling jitter).
+4. **Graceful Fallback**: The core Discuss platform continues running uninterrupted on primary Firebase authentication.
 
 ---
 
 ## 6. Verification Status
 
 - Build: **Passed (0 errors)**
-- Test Suites: **25 passed, 25 total**
-- Runtime Console: **Zero unhandled exceptions or missing reference errors**
+- Test Suites: **25 passed, 25 total (160 tests passed)**
+- Runtime Console: **Zero unhandled runtime exceptions or missing reference errors**
+- Live Firebase Rules: **Awaiting live Firebase Console deployment as documented in `FIREBASE_RULES_AND_INDEXES.md`**

@@ -12,8 +12,15 @@ Discuss features a zero-friction, native inline hashtag system designed for deve
 - **Prefix Boundary**: Must start at the beginning of a line or follow whitespace/non-word characters. Symbols like `C#` or `#` in currency are safely ignored.
 - **Normalization**: All extracted tags are converted to lowercase.
 - **Deduplication**: Case-insensitive (e.g., `#React`, `#REACT`, and `#react` resolve to `['react']`).
-- **Index Ceiling**: Maximum **5 unique tags** are saved into the post payload for indexing (`post.hashtags`).
-- **6th Tag Handling**: If more than 5 unique tags appear in the text, only the first 5 are indexed; a calm inline notice advises the author without blocking or throwing alert dialogs.
+- **Strict Ceiling**: Maximum **5 unique hashtags** per Discussion/Project post.
+- **6th Tag Handling**:
+  - All ordinary surrounding text is preserved.
+  - The 6th token is not accepted as a valid hashtag.
+  - An inline message is displayed: `"You can add up to 5 hashtags per post."`
+  - No browser alerts or popups are used.
+  - No emojis are used.
+  - Duplicate or case variants of an existing hashtag do not count towards the limit.
+  - Post submission is blocked until the count is reduced to 5 or fewer unique hashtags.
 
 ---
 

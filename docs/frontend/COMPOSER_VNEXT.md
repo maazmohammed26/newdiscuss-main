@@ -30,8 +30,8 @@ This was caused by an unimported icon from `react-icons/io5` in the legacy compo
 The separate hashtag input field (`[Add hashtags...]`) has been permanently removed in favor of natural inline hashtag writing:
 - Users write `#react`, `#tailwindcss`, `#discuss` directly inside their post content or caption.
 - Inline regex `(?:^|[^\w#])#([a-zA-Z0-9_]{1,50})(?=[^\w#]|$)` detects hashtags in real-time as users type.
-- Hashtags are normalized to lowercase, deduplicated case-insensitively, and limited to a maximum of 5 indexed tags per post.
-- If a user types 6 or more unique tags, a calm, inline feedback notice informs them: `"Maximum 5 hashtags will be indexed for search discovery."` without triggering jarring modal popups.
+- Hashtags are normalized to lowercase, deduplicated case-insensitively, and limited to a strict maximum of 5 unique tags per post.
+- If a user attempts to create a 6th unique tag: surrounding text is preserved, the 6th token is not accepted as a valid hashtag, publishing is disabled, and an inline message displays: `"You can add up to 5 hashtags per post."` without browser alerts or emojis.
 
 ### Real-time Cursor Autocomplete
 - When the cursor touches an active `#` token, `HashtagAutocomplete` anchors right next to the cursor or below the textarea.

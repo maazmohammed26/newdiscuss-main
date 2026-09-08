@@ -58,6 +58,7 @@ export const extractInlineHashtags = (text) => {
       validTags: [],
       allTags: [],
       hasExceededLimit: false,
+      message: null,
     };
   }
 
@@ -76,12 +77,14 @@ export const extractInlineHashtags = (text) => {
   }
 
   const hasExceededLimit = matches.length > MAX_HASHTAGS_PER_POST;
+  // Strict rule: 6th and subsequent tokens are not accepted as valid hashtags
   const validTags = matches.slice(0, MAX_HASHTAGS_PER_POST);
 
   return {
     validTags,
     allTags: matches,
     hasExceededLimit,
+    message: hasExceededLimit ? 'You can add up to 5 hashtags per post.' : null,
   };
 };
 

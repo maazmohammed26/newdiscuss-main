@@ -2,8 +2,8 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const NEW_LOGO_PATH = path.resolve('C:/Users/maazm/.gemini/antigravity-ide/brain/255935c8-e27c-4fe8-ae63-f3b5cad417e6/.user_uploaded/media_1787831413089.png');
-const OLD_LOGO_PATH = path.resolve('C:/Users/maazm/.gemini/antigravity-ide/brain/255935c8-e27c-4fe8-ae63-f3b5cad417e6/.user_uploaded/media_1787830317095.png');
+const NEW_LOGO_PATH = process.env.NEW_LOGO_SOURCE || path.resolve(__dirname, '../public/logo-new.png');
+const OLD_LOGO_PATH = process.env.OLD_LOGO_SOURCE || path.resolve(__dirname, '../public/logo-old.png');
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
 
 async function main() {

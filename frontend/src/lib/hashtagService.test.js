@@ -24,13 +24,24 @@ describe('hashtagService', () => {
       expect(result.allTags).toEqual(['react']);
     });
 
-    it('caps validTags to MAX_HASHTAGS_PER_POST (5) and flags hasExceededLimit', () => {
+    it('caps validTags to MAX_HASHTAGS_PER_POST (5), rejects 6th token, and provides exact inline error message', () => {
       const text = 'Check out #one #two #three #four #five #six #seven';
       const result = extractInlineHashtags(text);
       expect(result.validTags).toHaveLength(5);
       expect(result.validTags).toEqual(['one', 'two', 'three', 'four', 'five']);
+      expect(result.validTags).not.toContain('six');
+      expect(result.validTags).not.toContain('seven');
       expect(result.allTags).toHaveLength(7);
       expect(result.hasExceededLimit).toBe(true);
+      expect(result.message).toBe('You can add up to 5 hashtags per post.');
+    });
+
+    it('duplicate/case variants of an existing hashtag do not count again towards the 5-tag limit', () => {
+      const text = '#one #two #three #four #five #ONE #Five #three';
+      const result = extractInlineHashtags(text);
+      expect(result.validTags).toHaveLength(5);
+      expect(result.hasExceededLimit).toBe(false);
+      expect(result.message).toBeNull();
     });
 
     it('returns empty structures when no hashtags exist', () => {
@@ -38,16 +49,19 @@ describe('hashtagService', () => {
         validTags: [],
         allTags: [],
         hasExceededLimit: false,
+        message: null,
       });
       expect(extractInlineHashtags('')).toEqual({
         validTags: [],
         allTags: [],
         hasExceededLimit: false,
+        message: null,
       });
       expect(extractInlineHashtags(null)).toEqual({
         validTags: [],
         allTags: [],
         hasExceededLimit: false,
+        message: null,
       });
     });
 
