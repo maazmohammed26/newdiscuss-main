@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { compressImage, getLocalPreview, revokeLocalPreview } from '@/lib/mediaUtils';
 import { uploadImage } from '@/lib/cloudinary';
 import { uploadVideo } from '@/lib/imagekit';
-import { IoClose, IoImage, IoVideocam, IoCloudUpload } from 'react-icons/io5';
+import { Image as ImageIcon, Video } from 'lucide-react';
 import './MediaUpload.css';
 
 const MediaUpload = forwardRef(function MediaUpload({
@@ -107,7 +107,7 @@ const MediaUpload = forwardRef(function MediaUpload({
         
         {(!uploading && (multiple || previews.length === 0)) && (
           <button type="button" className="add-media-slot" onClick={() => !disabled && fileInputRef.current?.click()} disabled={disabled}>
-            {type === 'image' ? <IoImage size={32} /> : <IoVideocam size={32} />}
+            {type === 'image' ? <ImageIcon size={32} /> : <Video size={32} />}
             <span>{disabled ? (disabledMessage || `${type} unavailable`) : `Add ${type}`}</span>
           </button>
         )}

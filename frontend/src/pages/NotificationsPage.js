@@ -80,7 +80,7 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-neutral-950 dark:bg-black dark:text-white selection:bg-[#0095F6]/20">
       <Header />
-      <main className="mx-auto w-full max-w-2xl px-4 py-6 sm:py-8">
+      <main className="mx-auto w-full max-w-2xl px-4 pt-6 pb-[calc(var(--bottom-nav-height,49px)+env(safe-area-inset-bottom,0px)+2rem)] sm:pt-8 sm:pb-8 lg:pb-8">
         {/* Header bar */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

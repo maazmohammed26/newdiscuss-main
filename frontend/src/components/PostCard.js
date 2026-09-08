@@ -345,6 +345,14 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
   const isProject = post.type === 'project';
   const hashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
 
+  const handleTagClick = useCallback((tag) => {
+    if (onTagClick) {
+      onTagClick(tag);
+    } else {
+      navigate(`/search?q=${encodeURIComponent('#' + tag)}`);
+    }
+  }, [navigate, onTagClick]);
+
   return (
     <>
       {/* Edge-to-Edge Instagram Post (No card borders/shadows/rounded boxes) */}
@@ -606,7 +614,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
               {post.author_username}
             </span>
             <ExpandableText text={translatedContent || post.content} maxLines={3}>
-              <span className="whitespace-pre-wrap"><LinkifiedText text={translatedContent || post.content} /></span>
+              <span className="whitespace-pre-wrap"><LinkifiedText text={translatedContent || post.content} onTagClick={handleTagClick} /></span>
             </ExpandableText>
           </div>
 
@@ -629,7 +637,7 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                 <button
                   key={tag}
                   data-testid={`post-hashtag-${tag}`}
-                  onClick={(e) => { e.stopPropagation(); onTagClick?.(tag); }}
+                  onClick={(e) => { e.stopPropagation(); handleTagClick(tag); }}
                   className="text-xs font-semibold text-[#0095F6] hover:underline"
                 >
                   #{tag}

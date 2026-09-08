@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 
 export const LOCAL_DATABASE_NAME = 'discuss_cache';
-export const LOCAL_DATABASE_VERSION = 7;
+export const LOCAL_DATABASE_VERSION = 8;
 
 let databasePromise;
 
@@ -93,6 +93,11 @@ export const getLocalDatabase = () => {
         ]);
         ensureStore(db, transaction, 'sync_state', { keyPath: 'key' }, [
           ['updatedAt', 'updatedAt'],
+        ]);
+        ensureStore(db, transaction, 'hashtags', { keyPath: 'tag' }, [
+          ['normalizedTag', 'normalizedTag'],
+          ['usageCount', 'usageCount'],
+          ['lastUsedAt', 'lastUsedAt'],
         ]);
       },
       blocked() {

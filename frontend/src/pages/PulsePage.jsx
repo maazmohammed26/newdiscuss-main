@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { subscribeToPulseFeed, togglePulseLike, checkIfLiked } from '@/lib/pulseDb';
 import PulseFeed from '@/components/PulseFeed';
-import { IoArrowBack, IoAdd } from 'react-icons/io5';
+import { ArrowLeft, Plus } from 'lucide-react';
 import LoadingScreen from '@/components/LoadingScreen';
 
 const PulsePage = () => {
@@ -37,11 +37,11 @@ const PulsePage = () => {
     <div className="pulse-page">
       <div className="pulse-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          <IoArrowBack size={24} />
+          <ArrowLeft size={24} />
         </button>
         <span className="pulse-title" onClick={handleRefresh}>Pulse</span>
         <button className="add-pulse-btn" onClick={() => navigate('/feed', { state: { openPulseUpload: true } })}>
-          <IoAdd size={28} />
+          <Plus size={28} />
         </button>
       </div>
 

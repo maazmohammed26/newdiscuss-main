@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IoHeart, IoHeartOutline, IoChatbubbleOutline, IoShareSocialOutline, IoVolumeHigh, IoVolumeMute } from 'react-icons/io5';
-import { MoreVertical, X, Maximize2, Minimize2, Loader2, Flag } from 'lucide-react';
+import { MoreVertical, X, Maximize2, Minimize2, Loader2, Flag, Heart, MessageSquare, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getOptimizedVideoUrl } from '@/lib/imagekit';
 import { useAuth } from '@/contexts/AuthContext';
@@ -239,15 +238,15 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
         <>
           <div className="pulse-actions">
             <div className="action-item" onClick={handleLike}>
-              {liked ? <IoHeart className="liked" size={28} /> : <IoHeartOutline size={28} />}
+              {liked ? <Heart className="liked fill-current text-red-500" size={28} /> : <Heart size={28} />}
               <span>{likesCount}</span>
             </div>
             <div className="action-item">
-              <IoChatbubbleOutline size={28} />
+              <MessageSquare size={28} />
               <span>Soon</span>
             </div>
             <div className="action-item">
-              <IoShareSocialOutline size={28} />
+              <Share2 size={28} />
               <span>Soon</span>
             </div>
             <Popover>

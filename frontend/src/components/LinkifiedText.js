@@ -1,14 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ExternalLink, AlertTriangle } from 'lucide-react';
 
-// URL and Email regex patterns
+// URL, Email, and Hashtag regex patterns
 const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
-const COMBINED_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+const COMBINED_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})|((?:^|\s)#[a-zA-Z0-9_]{1,50})/gi;
 
 /**
  * Truncate a URL to show abbreviated version
@@ -66,12 +67,24 @@ export const parseTextWithLinks = (text) => {
     
     const matchedText = match[0];
     const isEmail = matchedText.includes('@') && !matchedText.startsWith('http') && !matchedText.startsWith('www.');
+    const isHashtag = matchedText.includes('#') && !matchedText.startsWith('http') && !matchedText.startsWith('www.');
 
     if (isEmail) {
       parts.push({
         type: 'email',
         content: matchedText,
         href: `mailto:${matchedText}`
+      });
+    } else if (isHashtag) {
+      const leadSpace = matchedText.match(/^\s+/)?.[0] || '';
+      const tagWithHash = matchedText.slice(leadSpace.length);
+      if (leadSpace) {
+        parts.push({ type: 'text', content: leadSpace });
+      }
+      parts.push({
+        type: 'hashtag',
+        content: tagWithHash,
+        tag: tagWithHash.slice(1).toLowerCase(),
       });
     } else {
       // It's a URL
@@ -97,10 +110,10 @@ export const parseTextWithLinks = (text) => {
 };
 
 /**
- * Component to render text with clickable links and external redirect warning
- * URLs are displayed as abbreviated versions in posts, full URL shown in warning dialog
+ * Component to render text with clickable links, external redirect warning, and clickable hashtags
  */
-export default function LinkifiedText({ text, className = '' }) {
+export default function LinkifiedText({ text, className = '', onTagClick }) {
+  const navigate = useNavigate();
   const [pendingUrl, setPendingUrl] = useState(null);
   const [fullUrlForDialog, setFullUrlForDialog] = useState('');
   
@@ -125,6 +138,25 @@ export default function LinkifiedText({ text, className = '' }) {
     <>
       <span className={className}>
         {parts.map((part, index) => {
+          if (part.type === 'hashtag') {
+            return (
+              <span
+                key={index}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (onTagClick) {
+                    onTagClick(part.tag);
+                  } else {
+                    navigate(`/search?q=${encodeURIComponent('#' + part.tag)}`);
+                  }
+                }}
+                className="text-[#0095F6] hover:underline font-semibold cursor-pointer select-none"
+              >
+                {part.content}
+              </span>
+            );
+          }
           if (part.type === 'link') {
             return (
               <a

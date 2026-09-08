@@ -17,7 +17,20 @@ const TARGETS = [
 let activeUid = null;
 let synchronization = null;
 
+// Cooldown tracker to prevent uncontrolled 503 retry bursts
+const COOLDOWN_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const projectCooldowns = new Map();
+
+export const resetAuxiliaryCooldowns = () => {
+  projectCooldowns.clear();
+};
+
 const requestCustomToken = async (project) => {
+  const cooldownUntil = projectCooldowns.get(project);
+  if (cooldownUntil && Date.now() < cooldownUntil) {
+    throw new Error('aux-auth-in-cooldown');
+  }
+
   const idToken = await getAuthenticatedIdToken();
   const response = await fetch('/api/aux-auth-token', {
     method: 'POST',
@@ -26,7 +39,13 @@ const requestCustomToken = async (project) => {
     body: JSON.stringify({ project }),
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok || !result.token) throw new Error(result.code || `aux-auth-${response.status}`);
+  if (!response.ok || !result.token) {
+    if (response.status === 503 || result.code === 'aux-auth-not-configured' || result.code === 'project-auth-not-configured') {
+      projectCooldowns.set(project, Date.now() + COOLDOWN_DURATION_MS);
+    }
+    throw new Error(result.code || `aux-auth-${response.status}`);
+  }
+  projectCooldowns.delete(project);
   return result.token;
 };
 

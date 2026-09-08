@@ -34,9 +34,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
-import FullscreenMedia from '@/components/FullscreenMedia';
-import { IoImage, IoVideocam, IoLocationSharp } from 'react-icons/io5';
-import { Check, MapPin } from 'lucide-react';
+import { Check, MapPin, Image as ImageIcon } from 'lucide-react';
 import LocationMessage from '@/components/LocationMessage';
 import { promptNativeLocationServices } from '@/platform/platformAdapter';
 import {
@@ -1103,7 +1101,7 @@ export default function GroupConversationPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" sideOffset={8} className="w-56 rounded-xl p-1.5">
                   <DropdownMenuItem onSelect={() => normalCameraRef.current?.open()} className="gap-3 rounded-lg py-2.5 cursor-pointer">
-                    <IoImage size={19} className="text-[#0095F6]" />
+                    <ImageIcon size={19} className="text-[#0095F6]" />
                     <div>
                       <p className="font-semibold">Normal photo</p>
                       <p className="text-xs text-neutral-500">Keep it in the group</p>
@@ -1123,7 +1121,7 @@ export default function GroupConversationPage() {
                 onClick={() => setShowMediaUpload(!showMediaUpload)}
                 className={`p-2 rounded-lg transition-colors ${showMediaUpload ? 'bg-[#0095F6] text-white' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500'}`}
               >
-                <IoImage size={22} />
+                <ImageIcon size={22} />
               </button>
               <button
                 type="button"
@@ -1132,7 +1130,7 @@ export default function GroupConversationPage() {
                 className={`p-2 rounded-lg transition-colors ${sending ? 'opacity-50' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500'}`}
                 title="Send Location"
               >
-                <IoLocationSharp size={22} />
+                <MapPin size={22} />
               </button>
               <textarea
                 ref={inputRef}

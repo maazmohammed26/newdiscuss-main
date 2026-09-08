@@ -9,7 +9,6 @@ import {
   LockKeyhole, 
   AlertOctagon, 
   Flag, 
-  Sparkles,
   CheckCircle2
 } from 'lucide-react';
 
@@ -98,7 +97,7 @@ export default function InAppGuidelinesPage() {
     <div className="min-h-screen bg-neutral-50 text-neutral-950 dark:bg-black dark:text-white transition-colors">
       <Header />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-10">
+      <main className="mx-auto w-full max-w-3xl px-4 pt-6 pb-[calc(var(--bottom-nav-height,49px)+env(safe-area-inset-bottom,0px)+2rem)] sm:pt-10 sm:pb-12 lg:pb-12">
         {/* Back navigation button */}
         <button
           onClick={handleBack}
@@ -165,7 +164,7 @@ export default function InAppGuidelinesPage() {
 
         {/* Enforcement callout */}
         <section className="mt-6 flex items-start gap-4 rounded-3xl bg-neutral-900 p-6 text-white dark:bg-neutral-900/90 dark:border dark:border-neutral-800">
-          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#0095F6]" />
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#0095F6]" />
           <div>
             <h2 className="text-sm font-bold">Safe & Respectful Participation</h2>
             <p className="mt-1.5 text-xs leading-relaxed text-neutral-300">

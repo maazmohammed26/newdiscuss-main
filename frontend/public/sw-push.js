@@ -18,6 +18,24 @@
  *   • HTML is NEVER cached (always fetched fresh = no stale auth state)
  */
 
+const APP_ICON      = '/favicon-new.png';
+
+// ─── Synchronous Message Handler (Registered on initial evaluation) ───────────
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data?.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data;
+    self.registration?.showNotification?.(title, {
+      icon: APP_ICON,
+      badge: APP_ICON,
+      vibrate: [200, 100, 200],
+      ...options,
+    });
+  }
+});
+
 // Keep OneSignal's root-scope listeners available for users subscribed by
 // older Discuss builds. New subscriptions use /push/onesignal/ independently.
 try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (_) {}
@@ -26,7 +44,6 @@ const CACHE_VERSION = 'discuss-v6';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
 const OFFLINE_URL   = '/offline.html';
-const APP_ICON      = '/favicon-new.png';
 const APP_SHELL_KEY = '/__discuss_app_shell__';
 
 // Pre-cache these on install — critical offline fallbacks only
@@ -61,22 +78,6 @@ self.addEventListener('activate', (event) => {
     )
   );
   self.clients.claim();
-});
-
-// ─── Message handler ──────────────────────────────────────────────────────────
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  if (event.data?.type === 'SHOW_NOTIFICATION') {
-    const { title, options } = event.data;
-    self.registration.showNotification(title, {
-      icon: APP_ICON,
-      badge: APP_ICON,
-      vibrate: [200, 100, 200],
-      ...options,
-    });
-  }
 });
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────

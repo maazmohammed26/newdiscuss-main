@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { IoClose, IoChevronBack, IoChevronForward, IoDownload } from 'react-icons/io5';
+import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import './FullscreenMedia.css';
 
 const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
@@ -38,10 +38,10 @@ const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
         </span>
         <div className="header-actions">
           <button className="icon-btn" onClick={handleDownload} title="Download">
-            <IoDownload size={24} />
+            <Download size={24} />
           </button>
           <button className="icon-btn" onClick={onClose} title="Close">
-            <IoClose size={32} />
+            <X size={32} />
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@ const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
       <div className="fullscreen-content" onClick={(e) => e.stopPropagation()}>
         {Array.isArray(media) && currentIndex > 0 && (
           <button className="nav-btn prev" onClick={handlePrev}>
-            <IoChevronBack size={40} />
+            <ChevronLeft size={40} />
           </button>
         )}
 
@@ -63,7 +63,7 @@ const FullscreenMedia = ({ media, initialIndex = 0, onClose }) => {
 
         {Array.isArray(media) && currentIndex < media.length - 1 && (
           <button className="nav-btn next" onClick={handleNext}>
-            <IoChevronForward size={40} />
+            <ChevronRight size={40} />
           </button>
         )}
       </div>

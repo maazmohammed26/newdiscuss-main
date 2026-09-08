@@ -36,6 +36,10 @@
     --ig-secondary-text: #737373;
     --ig-card-bg: #FFFFFF;
     --ig-app-bg: #FFFFFF;
+
+    /* Mobile bottom navigation spacing tokens */
+    --bottom-nav-height: 49px;
+    --mobile-content-bottom-padding: calc(49px + env(safe-area-inset-bottom, 0px) + 2rem);
   }
 
   .dark {
