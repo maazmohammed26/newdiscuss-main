@@ -32,3 +32,18 @@ export const normalizeDeepLink = (value) => {
     return '/';
   }
 };
+
+
+
+export const getProfileShareUrl = (userOrId) => {
+  if (!userOrId) return '';
+  const userId = typeof userOrId === 'string'
+    ? userOrId
+    : (userOrId.id || userOrId.userId || userOrId.uid || userOrId._id);
+  if (!userId) return '';
+  const origin = typeof window !== 'undefined' && window.location?.origin
+    ? window.location.origin
+    : 'https://discussit.in';
+  return `${origin}/user/${encodeURIComponent(userId)}`;
+};
+

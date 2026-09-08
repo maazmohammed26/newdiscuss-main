@@ -6,13 +6,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import UserAvatar from '@/components/UserAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import { isUserVerified } from '@/lib/verification';
-import { getUserProfile } from '@/lib/userProfileDb';
+import { getUserProfile, getCachedUserProfile } from '@/lib/userProfileDb';
 import { getFriendsWithDetails } from '@/lib/relationshipsDb';
 
 export default function AccountPanel({ open, onClose, anchorRef, position = 'auto' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] = useState(() => (typeof getCachedUserProfile === 'function' ? getCachedUserProfile(user?.id) : null));
+
   const [friendsCount, setFriendsCount] = useState(0);
   const panelRef = useRef(null);
 

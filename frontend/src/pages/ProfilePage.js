@@ -26,10 +26,13 @@ import {
   editSocialLink,
   deleteSocialLink,
   BIO_CHAR_LIMIT,
-  MAX_SOCIAL_LINKS
+  MAX_SOCIAL_LINKS,
+  getCachedUserProfile
 } from '@/lib/userProfileDb';
 import { resolveBanner } from '@/lib/bannerPresets';
 import ProfileSocialLinks from '@/components/ProfileSocialLinks';
+import ProfileHeroSkeleton from '@/components/ProfileHeroSkeleton';
+
 import {
   saveUserLocation,
   deleteUserLocation,
@@ -216,9 +219,9 @@ export default function ProfilePage() {
   const [loadingDiscord, setLoadingDiscord] = useState(true);
   const [showDiscordInstructions, setShowDiscordInstructions] = useState(false);
 
-  // Profile data from secondary Firebase
-  const [profileData, setProfileData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  // Profile data from secondary Firebase (hydrated immediately from cache if available)
+  const [profileData, setProfileData] = useState(() => getCachedUserProfile(user?.id) || null);
+  const [loadingProfile, setLoadingProfile] = useState(() => !getCachedUserProfile(user?.id));
   const [adminMessage, setAdminMessage] = useState(null);
   const [hasUnseenAdminMessage, setHasUnseenAdminMessage] = useState(false);
   const [adminPopoverOpen, setAdminPopoverOpen] = useState(false);
@@ -862,21 +865,34 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  // Fetch profile data from secondary Firebase
+  // Fetch profile data from secondary Firebase (revalidate silently)
   useEffect(() => {
     if (user?.id) {
-      setLoadingProfile(true);
+      const cached = getCachedUserProfile(user.id);
+      if (cached) {
+        setProfileData(cached);
+        if (cached.isOnlineVisible !== undefined) {
+          setOnlineVisibility(cached.isOnlineVisible);
+        }
+        setLoadingProfile(false);
+      } else {
+        setLoadingProfile(true);
+      }
+
       getUserProfile(user.id)
         .then(data => {
-          setProfileData(data);
-          if (data && data.isOnlineVisible !== undefined) {
-            setOnlineVisibility(data.isOnlineVisible);
+          if (data) {
+            setProfileData(data);
+            if (data.isOnlineVisible !== undefined) {
+              setOnlineVisibility(data.isOnlineVisible);
+            }
           }
           setLoadingProfile(false);
         })
         .catch(() => setLoadingProfile(false));
     }
   }, [user?.id]);
+
 
   // Load existing Telegram Chat ID and Privacy
   useEffect(() => {
@@ -1433,8 +1449,15 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
-        {/* Banner */}
-        <div className={`relative w-full h-32 sm:h-36 md:h-44 overflow-hidden ${resolvedBanner.type === 'gradient' ? resolvedBanner.className : 'bg-neutral-100 dark:bg-neutral-900'}`}>
+
+            {loadingProfile && !profileData ? (
+              <ProfileHeroSkeleton />
+            ) : (
+              <>
+                {/* Banner */}
+                <div className={`relative w-full h-32 sm:h-36 md:h-44 overflow-hidden ${resolvedBanner.type === 'gradient' ? resolvedBanner.className : 'bg-neutral-100 dark:bg-neutral-900'}`}>
+
+
           {resolvedBanner.type === 'image' && (
             <img src={resolvedBanner.url} alt="Profile banner" className="w-full h-full object-cover" />
           )}
@@ -1613,8 +1636,11 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+      </>
+    )}
 
         {/* Sticky Tabs Bar */}
+
         <div className="sticky top-0 z-20 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-neutral-200 dark:border-[#262626]">
           <div className="flex items-center justify-around">
             <button
@@ -2214,8 +2240,15 @@ export default function ProfilePage() {
       <ProfileShareModal 
         open={showShareModal}
         onClose={() => setShowShareModal(false)}
+        user={{
+          ...user,
+          fullName: profileData?.fullName || user?.full_name,
+          username: user?.username
+        }}
         username={user?.username}
+        isOwnProfile={true}
       />
+
 
       
       {/* PIN Modals */}

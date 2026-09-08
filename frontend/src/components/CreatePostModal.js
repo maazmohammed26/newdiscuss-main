@@ -290,79 +290,55 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
             </div>
           )}
 
-          {/* Type Selector */}
-          <div className="grid grid-cols-3 gap-1 p-1 bg-[#F3F3F3] dark:bg-[#121212] rounded-xl">
+          {/* Type Selector - Flat, clean, monochrome */}
+          <div className="grid grid-cols-3 gap-1 p-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl">
             <button
               type="button"
               data-testid="create-post-type-discussion"
               onClick={() => { setPostType('discussion'); setShowSuggestions(false); }}
-              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg transition-all ${
                 postType === 'discussion'
-                  ? 'bg-white dark:bg-[#262626] shadow-sm'
-                  : 'hover:bg-white/50 dark:hover:bg-[#1A1A1A]'
+                  ? 'bg-white dark:bg-black text-neutral-950 dark:text-white shadow-xs font-bold'
+                  : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 font-medium'
               }`}
             >
-              <MessageSquare
-                className={`w-5 h-5 ${postType === 'discussion' ? 'text-[#0095F6]' : 'text-[#6275AF] dark:text-[#94A3B8]'}`}
-              />
-              <span
-                className={`text-[11px] sm:text-[13px] font-semibold ${
-                  postType === 'discussion' ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'
-                }`}
-              >
-                Discussion
-              </span>
+              <MessageSquare className="w-4 h-4 stroke-[2px]" />
+              <span className="text-[12px] sm:text-[13px]">Discussion</span>
             </button>
 
             <button
               type="button"
               data-testid="create-post-type-project"
               onClick={() => { setPostType('project'); setShowSuggestions(false); }}
-              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg transition-all ${
                 postType === 'project'
-                  ? 'bg-white dark:bg-[#262626] shadow-sm'
-                  : 'hover:bg-white/50 dark:hover:bg-[#1A1A1A]'
+                  ? 'bg-white dark:bg-black text-neutral-950 dark:text-white shadow-xs font-bold'
+                  : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 font-medium'
               }`}
             >
-              <FolderGit2
-                className={`w-5 h-5 ${postType === 'project' ? 'text-[#3B82F6]' : 'text-[#64748B] dark:text-[#94A3B8]'}`}
-              />
-              <span
-                className={`text-[11px] sm:text-[13px] font-semibold ${
-                  postType === 'project' ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'
-                }`}
-              >
-                Project
-              </span>
+              <FolderGit2 className="w-4 h-4 stroke-[2px]" />
+              <span className="text-[12px] sm:text-[13px]">Project</span>
             </button>
 
             <button
               type="button"
               data-testid="create-post-type-pulse"
               onClick={() => { setPostType('pulse'); setShowSuggestions(false); }}
-              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg transition-all ${
                 postType === 'pulse'
-                  ? 'bg-white dark:bg-[#262626] shadow-sm'
-                  : 'hover:bg-white/50 dark:hover:bg-[#1A1A1A]'
+                  ? 'bg-white dark:bg-black text-neutral-950 dark:text-white shadow-xs font-bold'
+                  : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 font-medium'
               }`}
             >
-              <PlayCircle
-                className={`w-5 h-5 ${postType === 'pulse' ? 'text-[#EF4444]' : 'text-[#EF4444] opacity-60'}`}
-              />
-              <span
-                className={`text-[11px] sm:text-[13px] font-semibold ${
-                  postType === 'pulse' ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'
-                }`}
-              >
-                Pulse
-              </span>
+              <PlayCircle className="w-4 h-4 stroke-[2px]" />
+              <span className="text-[12px] sm:text-[13px]">Pulse</span>
             </button>
           </div>
 
           {/* Project Title (Only for Project posts) */}
           {postType === 'project' && (
-            <div>
-              <Label className="text-[#0F172A] dark:text-[#F1F5F9] text-[13px] md:text-[15px] font-medium">
+            <div className="space-y-1.5">
+              <Label className="text-neutral-800 dark:text-neutral-200 text-xs font-semibold">
                 Project Title
               </Label>
               <Input
@@ -370,10 +346,11 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Your project name"
-                className="mt-1.5 h-11 bg-[#FAFAFA] dark:bg-[#0A0A0A] border-[#DBDBDB] dark:border-[#262626] dark:text-white focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 rounded-xl"
+                className="h-10 bg-neutral-50 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 dark:text-white focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 rounded-xl text-sm"
               />
             </div>
           )}
+
 
           {/* Main Content / Description / Caption */}
           <div className="space-y-1.5 relative">
@@ -403,7 +380,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 onKeyUp={(e) => checkHashtagAutocomplete(content, e.target.selectionStart)}
                 placeholder={placeholderText}
                 rows={postType === 'discussion' ? 5 : 3}
-                className="mt-1.5 bg-[#FAFAFA] dark:bg-[#0A0A0A] border-[#DBDBDB] dark:border-[#262626] dark:text-white focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 rounded-2xl resize-none p-4 text-[14px] leading-relaxed w-full"
+                className="mt-1.5 bg-neutral-50 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 dark:text-white focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 rounded-xl resize-none p-3.5 text-sm leading-relaxed w-full placeholder:text-neutral-400"
               />
 
               {/* Hashtag Autocomplete dropdown */}
@@ -431,7 +408,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 {validTags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center text-[11px] font-semibold text-[#0095F6] dark:text-[#38BDF8]"
+                    className="inline-flex items-center text-[11px] font-semibold text-neutral-800 dark:text-neutral-200"
                   >
                     #{tag}
                   </span>
@@ -439,6 +416,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
               </div>
             )}
           </div>
+
 
           {/* Code Support (Discussion only) */}
           {postType === 'discussion' && (
@@ -550,11 +528,11 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
             />
 
             {media.length > 0 && (
-              <div className={`mt-3 flex flex-wrap gap-2 p-2 bg-[#F1F5F9] dark:bg-[#121212] rounded-lg ${postType === 'pulse' ? 'justify-center' : ''}`}>
+              <div className={`mt-2.5 flex flex-wrap gap-2 p-2 bg-neutral-100 dark:bg-neutral-900 rounded-xl ${postType === 'pulse' ? 'justify-center' : ''}`}>
                 {media.map((m, idx) => (
                   <div
                     key={idx}
-                    className={`relative rounded-md overflow-hidden group border border-neutral-200 dark:border-neutral-700 ${
+                    className={`relative rounded-lg overflow-hidden group border border-neutral-200 dark:border-neutral-800 ${
                       postType === 'pulse' ? 'w-full max-w-[200px] aspect-[9/16]' : 'w-16 h-16'
                     }`}
                   >
@@ -568,7 +546,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                       onClick={() => setMedia((prev) => prev.filter((_, i) => i !== idx))}
                       className={`absolute ${
                         postType === 'pulse' ? 'top-2 right-2 p-1' : 'top-1 right-1 p-0.5'
-                      } bg-black/50 hover:bg-red-500 text-white rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all z-10`}
+                      } bg-black/60 hover:bg-red-500 text-white rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all z-10`}
                     >
                       <X size={postType === 'pulse' ? 16 : 12} />
                     </button>
@@ -580,9 +558,9 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
 
           {/* Project Links (Project only) */}
           {postType === 'project' && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-[#0F172A] dark:text-[#F1F5F9] text-[13px] md:text-[15px] font-medium">
+            <div className="space-y-3.5">
+              <div className="space-y-1.5">
+                <Label className="text-neutral-800 dark:text-neutral-200 text-xs font-semibold">
                   GitHub Link
                 </Label>
                 <Input
@@ -590,11 +568,11 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                   value={githubLink}
                   onChange={(e) => setGithubLink(e.target.value)}
                   placeholder="https://github.com/..."
-                  className="mt-1.5 bg-[#FAFAFA] dark:bg-[#0A0A0A] border-[#DBDBDB] dark:border-[#262626] dark:text-white focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 rounded-xl"
+                  className="h-10 bg-neutral-50 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 dark:text-white focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 rounded-xl text-sm"
                 />
               </div>
-              <div>
-                <Label className="text-[#0F172A] dark:text-[#F1F5F9] text-[13px] md:text-[15px] font-medium">
+              <div className="space-y-1.5">
+                <Label className="text-neutral-800 dark:text-neutral-200 text-xs font-semibold">
                   Live Preview Link
                 </Label>
                 <Input
@@ -602,7 +580,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                   value={previewLink}
                   onChange={(e) => setPreviewLink(e.target.value)}
                   placeholder="https://your-app.com"
-                  className="mt-1.5 bg-[#FAFAFA] dark:bg-[#0A0A0A] border-[#DBDBDB] dark:border-[#262626] dark:text-white focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 rounded-xl"
+                  className="h-10 bg-neutral-50 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 dark:text-white focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 rounded-xl text-sm"
                 />
               </div>
             </div>
@@ -613,7 +591,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
             type="submit"
             data-testid="create-post-submit"
             disabled={isPublishDisabled}
-            className="w-full h-11 bg-[#0095F6] text-white hover:bg-[#1877F2] rounded-xl font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-11 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200 rounded-xl font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? (
               <>
@@ -627,6 +605,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
               publishButtonText
             )}
           </Button>
+
         </form>
       </DialogContent>
     </Dialog>

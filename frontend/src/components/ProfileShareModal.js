@@ -8,26 +8,58 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { 
-  Copy, Check, Share2, MessageCircle, Send, Instagram, 
-  Twitter, Facebook, Linkedin, Mail, Link2
+  Copy, Check, Share2, MessageCircle, Send, Mail, Link2
 } from 'lucide-react';
+import { getProfileShareUrl } from '@/platform/deepLinks';
 
 /**
- * ProfileShareModal - Share profile with various options
- * - Copy username only
- * - Copy full message
- * - Share to social platforms
+ * ProfileShareModal - Unified, monochrome, premium share modal
+ * Used for both own profile and other-user profile.
+ * Ensures zero undefined text, uniform monochrome icons, and clean loading skeleton.
  */
-export default function ProfileShareModal({ open, onClose, username }) {
+export default function ProfileShareModal({ open, onClose, user = null, username = '', isOwnProfile = false }) {
+  const [copiedLink, setCopiedLink] = useState(false);
   const [copiedUsername, setCopiedUsername] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
 
-  const shareMessage = `I'm using Discuss. My username is ${username}. Search for me and send a request to connect.`;
-  const profileUrl = `https://discussit.in/user/${username}`;
+  // Resolve target user attributes safely
+  const resolvedUserId = user?.id || user?.userId || user?.uid || (typeof user === 'string' ? user : null);
+  const resolvedUsername = (username || user?.username || '').trim();
+  const resolvedDisplayName = (user?.fullName || user?.full_name || user?.displayName || resolvedUsername || '').trim();
+
+  // Target resolution state
+  const isTargetResolved = Boolean(resolvedUserId || resolvedUsername);
+
+  // Canonical share URL using router helper (never /user/username)
+  const profileUrl = resolvedUserId ? getProfileShareUrl(resolvedUserId) : '';
+
+  // Contextual share copy
+  const shareMessage = isOwnProfile
+    ? (resolvedUsername 
+        ? `Connect with me on Discuss! @${resolvedUsername} — ${profileUrl}`
+        : `Connect with me on Discuss! ${profileUrl}`)
+    : (resolvedDisplayName && resolvedUsername && resolvedDisplayName !== resolvedUsername
+        ? `Check out ${resolvedDisplayName} (@${resolvedUsername}) on Discuss: ${profileUrl}`
+        : resolvedUsername
+        ? `Check out @${resolvedUsername} on Discuss: ${profileUrl}`
+        : `Check out this developer on Discuss: ${profileUrl}`);
+
+  const handleCopyLink = async () => {
+    if (!profileUrl) return;
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      setCopiedLink(true);
+      toast.success('Link copied to clipboard!');
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy link');
+    }
+  };
 
   const handleCopyUsername = async () => {
+    if (!resolvedUsername) return;
     try {
-      await navigator.clipboard.writeText(username);
+      await navigator.clipboard.writeText(resolvedUsername);
       setCopiedUsername(true);
       toast.success('Username copied!');
       setTimeout(() => setCopiedUsername(false), 2000);
@@ -37,10 +69,11 @@ export default function ProfileShareModal({ open, onClose, username }) {
   };
 
   const handleCopyMessage = async () => {
+    if (!shareMessage) return;
     try {
       await navigator.clipboard.writeText(shareMessage);
       setCopiedMessage(true);
-      toast.success('Message copied!');
+      toast.success('Share message copied!');
       setTimeout(() => setCopiedMessage(false), 2000);
     } catch (err) {
       toast.error('Failed to copy');
@@ -48,6 +81,7 @@ export default function ProfileShareModal({ open, onClose, username }) {
   };
 
   const handleShare = async (platform) => {
+    if (!isTargetResolved) return;
     const encodedMessage = encodeURIComponent(shareMessage);
     const encodedUrl = encodeURIComponent(profileUrl);
 
@@ -55,23 +89,14 @@ export default function ProfileShareModal({ open, onClose, username }) {
       whatsapp: `https://wa.me/?text=${encodedMessage}`,
       telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedMessage}`,
       twitter: `https://twitter.com/intent/tweet?text=${encodedMessage}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?quote=${encodedMessage}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      email: `mailto:?subject=Connect with me on Discuss&body=${encodedMessage}`,
+      email: `mailto:?subject=${encodeURIComponent(isOwnProfile ? 'Connect with me on Discuss' : `Discuss: ${resolvedDisplayName}`)}&body=${encodedMessage}`,
     };
 
-    if (platform === 'instagram') {
-      // Instagram doesn't support direct sharing, copy message instead
-      handleCopyMessage();
-      toast.info('Message copied! You can paste it on Instagram.');
-      return;
-    }
-
-    // Try native share on mobile
-    if (platform === 'native' && navigator.share) {
+    // Native share on mobile
+    if (platform === 'native' && typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: 'Connect with me on Discuss',
+          title: isOwnProfile ? 'Connect with me on Discuss' : `Discuss: ${resolvedDisplayName}`,
           text: shareMessage,
           url: profileUrl,
         });
@@ -91,92 +116,145 @@ export default function ProfileShareModal({ open, onClose, username }) {
   };
 
   const shareOptions = [
-    { id: 'whatsapp', name: 'WhatsApp', icon: MessageCircle, color: '#25D366' },
-    { id: 'telegram', name: 'Telegram', icon: Send, color: '#0088cc' },
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
-    { id: 'twitter', name: 'X (Twitter)', icon: Twitter, color: '#1DA1F2' },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
-    { id: 'email', name: 'Email', icon: Mail, color: '#EA4335' },
+    { id: 'whatsapp', name: 'WhatsApp', icon: MessageCircle },
+    { id: 'telegram', name: 'Telegram', icon: Send },
+    { id: 'twitter', name: 'X', icon: Share2 },
+    { id: 'email', name: 'Email', icon: Mail },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md dark:bg-[#1E293B] dark:border-[#334155] dark:bg-[#1A1A1A] dark:border-[#262626]">
+      <DialogContent 
+        className="sm:max-w-md bg-white dark:bg-[#121212] border-neutral-200 dark:border-[#262626] rounded-2xl p-5 shadow-2xl"
+        data-testid="profile-share-modal"
+      >
         <DialogHeader>
-          <DialogTitle className="dark:text-[#F1F5F9] dark:text-white flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-[#0095F6] text-[#0095F6]" />
-            Share Your Profile
+          <DialogTitle className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+            <Share2 className="w-4 h-4 text-neutral-900 dark:text-white stroke-[2.2px]" />
+            <span>{isOwnProfile ? 'Share Your Profile' : 'Share Profile'}</span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
-          {/* Username Copy */}
-          <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black rounded-lg p-3 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs mb-2">Your username</p>
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-[#0F172A] dark:text-[#F1F5F9] dark:text-white">@{username}</span>
+        {!isTargetResolved ? (
+          /* Loading Skeleton if user data has not yet resolved */
+          <div className="space-y-3 mt-2 animate-pulse" data-testid="share-skeleton">
+            <div className="p-3.5 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800 space-y-2">
+              <div className="h-3 w-20 bg-neutral-200 dark:bg-neutral-800 rounded" />
+              <div className="h-4 w-36 bg-neutral-200 dark:bg-neutral-800 rounded" />
+            </div>
+            <div className="p-3.5 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800 space-y-2">
+              <div className="h-3 w-24 bg-neutral-200 dark:bg-neutral-800 rounded" />
+              <div className="h-4 w-full bg-neutral-200 dark:bg-neutral-800 rounded" />
+            </div>
+            <div className="grid grid-cols-4 gap-2 pt-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800" />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3.5 mt-2">
+            {/* Direct Profile Link Copy */}
+            {profileUrl && (
+              <div className="bg-neutral-50 dark:bg-black rounded-xl p-3 border border-neutral-200 dark:border-[#262626]">
+                <p className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
+                  Profile Link
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-neutral-700 dark:text-neutral-300 font-mono truncate select-all">
+                    {profileUrl}
+                  </span>
+                  <Button
+                    onClick={handleCopyLink}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 rounded-lg border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white shrink-0 font-medium text-xs cursor-pointer"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5 text-neutral-900 dark:text-white mr-1.5" /> : <Link2 className="w-3.5 h-3.5 mr-1.5" />}
+                    <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Username Copy (if available) */}
+            {resolvedUsername && (
+              <div className="bg-neutral-50 dark:bg-black rounded-xl p-3 border border-neutral-200 dark:border-[#262626]">
+                <p className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
+                  Username
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+                    @{resolvedUsername}
+                  </span>
+                  <Button
+                    onClick={handleCopyUsername}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 rounded-lg border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white shrink-0 font-medium text-xs cursor-pointer"
+                  >
+                    {copiedUsername ? <Check className="w-3.5 h-3.5 text-neutral-900 dark:text-white mr-1.5" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                    <span>{copiedUsername ? 'Copied' : 'Copy'}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Share Message */}
+            <div className="bg-neutral-50 dark:bg-black rounded-xl p-3 border border-neutral-200 dark:border-[#262626]">
+              <p className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1.5">
+                Share message
+              </p>
+              <p className="text-neutral-800 dark:text-neutral-200 text-xs leading-relaxed mb-2.5 break-words">
+                "{shareMessage}"
+              </p>
               <Button
-                onClick={handleCopyUsername}
+                onClick={handleCopyMessage}
                 size="sm"
-                variant="outline"
-                className="h-8 px-3 dark:border-[#334155] dark:border-[#262626] dark:text-[#F1F5F9] dark:text-white"
+                className="w-full h-8.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-950 font-semibold text-xs transition-colors cursor-pointer"
               >
-                {copiedUsername ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                <span className="ml-1.5 text-xs">{copiedUsername ? 'Copied' : 'Copy'}</span>
+                {copiedMessage ? <Check className="w-3.5 h-3.5 mr-1.5" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                <span>{copiedMessage ? 'Message Copied!' : 'Copy Share Message'}</span>
               </Button>
             </div>
-          </div>
 
-          {/* Full Message Copy */}
-          <div className="bg-[#F5F5F7] dark:bg-[#0F172A] dark:bg-black rounded-lg p-3 border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626]">
-            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs mb-2">Share message</p>
-            <p className="text-[#0F172A] dark:text-[#F1F5F9] dark:text-white text-sm mb-3">
-              "{shareMessage}"
-            </p>
-            <Button
-              onClick={handleCopyMessage}
-              size="sm"
-              className="w-full bg-[#0095F6] bg-[#0095F6] hover:bg-[#1877F2] hover:bg-[#1877F2] text-white"
-            >
-              {copiedMessage ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
-              <span className="ml-1.5">{copiedMessage ? 'Copied!' : 'Copy Message'}</span>
-            </Button>
-          </div>
+            {/* Native Share button on supported devices */}
+            {typeof navigator !== 'undefined' && navigator.share && (
+              <Button
+                onClick={() => handleShare('native')}
+                variant="outline"
+                className="w-full h-10 rounded-xl border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold text-xs cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5 mr-2" />
+                <span>Share via device options…</span>
+              </Button>
+            )}
 
-          {/* Native Share (Mobile) */}
-          {typeof navigator !== 'undefined' && navigator.share && (
-            <Button
-              onClick={() => handleShare('native')}
-              className="w-full bg-gradient-to-r from-[#2563EB] to-[#7C3AED] discuss:from-[#EF4444] discuss:to-[#F59E0B] text-white h-11"
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              Share via...
-            </Button>
-          )}
-
-          {/* Share Options Grid */}
-          <div>
-            <p className="text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 text-xs mb-3">Or share via</p>
-            <div className="grid grid-cols-4 gap-2">
-              {shareOptions.map((option) => {
-                const IconComponent = option.icon;
-                return (
-                  <button
-                    key={option.id}
-                    onClick={() => handleShare(option.id)}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-white dark:bg-[#1E293B] dark:bg-black hover:bg-[#F5F5F7] dark:hover:bg-[#334155] dark:hover:bg-[#1A1A1A] border border-[#E2E8F0] dark:border-[#334155] dark:border-[#262626] transition-all hover:scale-105"
-                  >
-                    <IconComponent className="w-5 h-5" style={{ color: option.color }} />
-                    <span className="text-[10px] text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 truncate w-full text-center">
-                      {option.name}
-                    </span>
-                  </button>
-                );
-              })}
+            {/* Neutral Monochrome Share Options */}
+            <div className="pt-1">
+              <p className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">
+                Quick Share
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {shareOptions.map((option) => {
+                  const IconComponent = option.icon;
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => handleShare(option.id)}
+                      className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl bg-neutral-50 dark:bg-black hover:bg-neutral-100 dark:hover:bg-neutral-900 border border-neutral-200 dark:border-[#262626] transition-colors cursor-pointer group"
+                    >
+                      <IconComponent className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white transition-colors" />
+                      <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white truncate w-full text-center">
+                        {option.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -5,7 +5,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUser, getPostsByUser } from '@/lib/db';
 import { getUserPulses } from '@/lib/pulseDb';
-import { getUserProfile } from '@/lib/userProfileDb';
+import { getUserProfile, getCachedUserProfile } from '@/lib/userProfileDb';
 import { resolveBanner } from '@/lib/bannerPresets';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -16,7 +16,9 @@ import FriendRequestButton from '@/components/FriendRequestButton';
 import ImagePreviewModal from '@/components/ImagePreviewModal';
 import ProfileSocialLinks from '@/components/ProfileSocialLinks';
 import ProfileShareModal from '@/components/ProfileShareModal';
+import ProfileHeroSkeleton from '@/components/ProfileHeroSkeleton';
 import LinkifiedText from '@/components/LinkifiedText';
+
 import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2 } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
@@ -30,11 +32,12 @@ export default function UserPostsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [userData, setUserData] = useState(null);
-  const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] = useState(() => getCachedUserProfile(userId) || null);
   const [posts, setPosts] = useState([]);
   const [userPulses, setUserPulses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(() => !getCachedUserProfile(userId));
+
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [presenceData, setPresenceData] = useState({ isOnline: false, lastSeen: 0 });
@@ -94,8 +97,14 @@ export default function UserPostsPage() {
 
   useEffect(() => {
     if (userId) {
+      const cached = getCachedUserProfile(userId);
+      if (cached) {
+        setProfileData(cached);
+        setLoadingProfile(false);
+      } else {
+        setLoadingProfile(true);
+      }
       setLoading(true);
-      setLoadingProfile(true);
 
       // Fetch primary user data, posts, and pulses
       Promise.all([getUser(userId), getPostsByUser(userId), getUserPulses(userId)])
@@ -107,13 +116,16 @@ export default function UserPostsPage() {
         .catch(() => {})
         .finally(() => setLoading(false));
 
-      // Fetch profile data from secondary Firebase
+      // Fetch profile data from secondary Firebase (silent revalidation)
       getUserProfile(userId)
-        .then(data => setProfileData(data))
+        .then(data => {
+          if (data) setProfileData(data);
+        })
         .catch(() => {})
         .finally(() => setLoadingProfile(false));
     }
   }, [userId]);
+
 
   const handlePostDeleted = (postId) => setPosts(prev => prev.filter(p => p.id !== postId));
   const handlePostUpdated = (updatedPost) => setPosts(prev => prev.map(p => p.id === updatedPost.id ? { ...p, ...updatedPost } : p));
@@ -182,14 +194,6 @@ export default function UserPostsPage() {
                 {profileData?.fullName || userData?.full_name || userData?.username || 'Profile'}
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowShareModal(true)}
-                  className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                  title="Share Profile"
-                  aria-label="Share Profile"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
                 {currentUser && currentUser.id !== userId && (
                   <button
                     onClick={handleReportClick}
@@ -203,14 +207,13 @@ export default function UserPostsPage() {
               </div>
             </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-32">
-                <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-              </div>
+            {loading && !userData ? (
+              <ProfileHeroSkeleton />
             ) : !userData ? (
               <div className="text-center py-20 px-4">
                 <p className="text-sm font-medium text-neutral-500">This account has been deleted or does not exist.</p>
               </div>
+
             ) : (
               <>
                 {/* Banner */}
@@ -420,8 +423,16 @@ export default function UserPostsPage() {
       <ProfileShareModal
         open={showShareModal}
         onClose={() => setShowShareModal(false)}
-        user={{ ...userData, full_name: profileData?.fullName || userData?.full_name }}
+        user={{
+          ...userData,
+          id: userId,
+          fullName: profileData?.fullName || userData?.full_name,
+          username: userData?.username
+        }}
+        username={userData?.username}
+        isOwnProfile={currentUser?.id === userId}
       />
+
 
       {/* Report Modal */}
       <ReportModal

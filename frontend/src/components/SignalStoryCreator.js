@@ -104,23 +104,24 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="z-10 flex shrink-0 items-center justify-between border-b border-[#EFEFEF] bg-white/95 px-5 pb-4 pt-5 backdrop-blur-xl dark:border-[#262626] dark:bg-black/95">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center ig-story-gradient shadow-sm">
-              <Zap className="w-3.5 h-3.5 text-white fill-white" />
+        <div className="z-10 flex shrink-0 items-center justify-between border-b border-neutral-100 dark:border-neutral-800 bg-white/95 px-5 pb-3.5 pt-4 backdrop-blur-xl dark:bg-black/95">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white">
+              <Zap className="w-4 h-4 stroke-[2.2px]" />
             </div>
             <div>
-              <span className="font-bold text-[15px] text-neutral-900 dark:text-white block leading-tight">New Signal</span>
-              <span className="text-[10px] text-neutral-400">Share one focused update</span>
+              <span className="font-bold text-[14px] sm:text-[15px] text-neutral-900 dark:text-white block leading-tight">New Signal</span>
+              <span className="text-[11px] text-neutral-400 dark:text-neutral-500">Share a focused 24h update</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:bg-[#1A1A1A] transition-all"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
+
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
         {/* Author row */}
@@ -154,8 +155,8 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             onChange={(e) => !hasMedia && setText(e.target.value)}
             disabled={hasMedia}
             placeholder="What's your signal? Share a thought, link, or update…"
-            rows={6}
-            className="w-full resize-none rounded-2xl border border-[#DBDBDB] dark:border-[#262626] bg-[#FAFAFA] dark:bg-[#0A0A0A] p-4 text-[15px] leading-relaxed text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-[#0095F6] focus:ring-2 focus:ring-[#0095F6]/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            rows={5}
+            className="w-full resize-none rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-3.5 text-sm leading-relaxed text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           />
         </div>
 
@@ -163,7 +164,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         {mediaList.length > 0 && (
           <div className="px-5 pb-3">
             {mediaList.map((item, index) => (
-              <div key={index} className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900">
+              <div key={index} className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900">
                 {item.type === 'video' ? (
                   <video src={item.url} className="w-full h-full object-cover" />
                 ) : (
@@ -171,7 +172,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
                 )}
                 <button
                   onClick={() => removeMedia(index)}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-colors"
+                  className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -217,7 +218,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
                   ? 'text-red-500'
                   : remaining <= 50
                   ? 'text-amber-500'
-                  : 'text-neutral-400 dark:text-neutral-500 dark:text-neutral-400'
+                  : 'text-neutral-400 dark:text-neutral-500'
               }`}
             >
               {remaining}
@@ -228,16 +229,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
           <button
             onClick={handleSubmit}
             disabled={!canPost}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed"
-            style={{
-              background: (isReady || submitting)
-                ? 'linear-gradient(135deg, #a855f7, #ec4899)'
-                : '#d4d4d8',
-              boxShadow: (isReady || submitting)
-                ? '0 4px 14px rgba(168,85,247,0.4)'
-                : 'none',
-              opacity: submitting ? 0.82 : 1,
-            }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             {submitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -246,6 +238,7 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             )}
             <span>{submitting ? 'Posting…' : 'Post Signal'}</span>
           </button>
+
         </div>
       </div>
     </div>

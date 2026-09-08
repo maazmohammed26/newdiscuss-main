@@ -17,29 +17,104 @@ export const BIO_CHAR_LIMIT = 250;
 // Max social links allowed
 export const MAX_SOCIAL_LINKS = 5;
 
+// In-memory profile cache for instantaneous synchronous hydration & flicker elimination
+const profileCache = new Map();
+const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get synchronously cached profile data if available
+ * @param {string} userId - Firebase Auth UID
+ * @returns {Object|null}
+ */
+export const getCachedUserProfile = (userId) => {
+  if (!userId) return null;
+  const entry = profileCache.get(String(userId));
+  if (!entry) return null;
+  return entry.data ? { ...entry.data } : null;
+};
+
+/**
+ * Check if the cached profile data is valid and fresh
+ * @param {string} userId
+ * @param {number} maxAgeMs
+ * @returns {boolean}
+ */
+export const isProfileCacheValid = (userId, maxAgeMs = DEFAULT_CACHE_TTL_MS) => {
+  if (!userId) return false;
+  const entry = profileCache.get(String(userId));
+  if (!entry || !entry.timestamp) return false;
+  return (Date.now() - entry.timestamp) < maxAgeMs;
+};
+
+/**
+ * Set or update cached profile data
+ * @param {string} userId
+ * @param {Object} profileData
+ * @param {Object} [options]
+ * @returns {Object|null}
+ */
+export const setCachedUserProfile = (userId, profileData, options = {}) => {
+  if (!userId) return null;
+  const key = String(userId);
+  const existing = profileCache.get(key)?.data || {};
+  const merged = { ...existing, ...profileData, id: userId };
+  profileCache.set(key, {
+    data: merged,
+    timestamp: Date.now(),
+    updatedAt: merged.updatedAt || new Date().toISOString(),
+    isOptimistic: Boolean(options.isOptimistic),
+  });
+  return { ...merged };
+};
+
+/**
+ * Clear cached user profile(s)
+ * @param {string} [userId] - If omitted, clears entire cache
+ */
+export const clearCachedUserProfile = (userId) => {
+  if (userId) {
+    profileCache.delete(String(userId));
+  } else {
+    profileCache.clear();
+  }
+};
+
 /**
  * Get user profile from Realtime Database
  * @param {string} userId - Firebase Auth UID
  * @returns {Promise<Object|null>} User profile data or null
  */
 export const getUserProfile = async (userId) => {
+  if (!userId) return null;
   try {
     const profileRef = ref(secondaryDatabase, `userProfiles/${userId}`);
     const snapshot = await get(profileRef);
     
     if (snapshot.exists()) {
       const val = snapshot.val();
-      return {
+      const resolved = {
         id: userId,
         ...val,
         bannerThemeId: val.bannerThemeId || null,
-        socialLinks: val.socialLinks || []
+        socialLinks: val.socialLinks || [],
+        updatedAt: val.updatedAt || new Date().toISOString()
       };
+
+      // Check if existing cache was an optimistic update newer than remote
+      const existingEntry = profileCache.get(String(userId));
+      if (existingEntry?.isOptimistic && (Date.now() - existingEntry.timestamp < 10000)) {
+        const merged = { ...resolved, ...existingEntry.data };
+        setCachedUserProfile(userId, merged);
+        return merged;
+      }
+
+      setCachedUserProfile(userId, resolved);
+      return resolved;
     }
     return null;
   } catch (error) {
     console.warn('Error getting user profile (secondary DB may not be configured):', error.message);
-    return null;
+    return getCachedUserProfile(userId);
   }
 };
 
@@ -50,14 +125,19 @@ export const getUserProfile = async (userId) => {
  * @returns {Promise<Object>} Updated profile data
  */
 export const saveUserProfile = async (userId, profileData) => {
+  if (!userId) throw new Error('User ID is required');
+  const prevCached = getCachedUserProfile(userId);
+  const dataToSave = {
+    ...profileData,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Optimistically update cache immediately before remote acknowledgement
+  setCachedUserProfile(userId, dataToSave, { isOptimistic: true });
+
   try {
     const profileRef = ref(secondaryDatabase, `userProfiles/${userId}`);
     const snapshot = await get(profileRef);
-    
-    const dataToSave = {
-      ...profileData,
-      updatedAt: new Date().toISOString()
-    };
     
     if (snapshot.exists()) {
       await update(profileRef, dataToSave);
@@ -68,12 +148,21 @@ export const saveUserProfile = async (userId, profileData) => {
       });
     }
     
-    return { id: userId, ...profileData };
+    const finalResult = { id: userId, ...dataToSave };
+    setCachedUserProfile(userId, finalResult);
+    return finalResult;
   } catch (error) {
+    // Rollback optimistic state on failure
+    if (prevCached) {
+      setCachedUserProfile(userId, prevCached);
+    } else {
+      clearCachedUserProfile(userId);
+    }
     console.error('Error saving user profile:', error);
     throw error;
   }
 };
+
 
 /**
  * Update full name

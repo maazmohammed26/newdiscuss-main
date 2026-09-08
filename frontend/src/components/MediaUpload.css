@@ -2,26 +2,28 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  background: #fafafa;
-  border: 1px solid #efefef;
-  border-radius: 14px;
-  transition: background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+  gap: 10px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  transition: opacity 180ms ease;
 }
 
 .media-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .media-preview-item {
   position: relative;
-  aspect-ratio: 1;
-  border-radius: 8px;
+  width: 84px;
+  height: 84px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--border-color, #dee2e6);
+  border: 1px solid #e5e5e5;
+  background: #f5f5f5;
 }
 
 .media-preview-item img,
@@ -35,59 +37,90 @@
   position: absolute;
   top: 4px;
   right: 4px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   color: white;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background 150ms ease;
 }
 
+.remove-media-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+/* Universal compact upload trigger */
+.add-media-trigger,
 .add-media-slot {
-  aspect-ratio: 1;
-  border: 1px dashed #c7c7c7;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: #0095f6;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #f5f5f5;
+  color: #171717;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 180ms ease;
+  user-select: none;
 }
 
+.add-media-trigger:hover:not(:disabled),
 .add-media-slot:hover:not(:disabled) {
-  background: rgba(0, 149, 246, 0.06);
-  border-color: #0095f6;
+  background: #ebebeb;
+  border-color: #d4d4d4;
 }
 
+.add-media-trigger span,
 .add-media-slot span {
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .media-upload-disabled {
-  opacity: 0.62;
+  opacity: 0.6;
 }
 
+.add-media-trigger:disabled,
 .add-media-slot:disabled {
   cursor: not-allowed;
-  color: #8e8e8e;
+  color: #a3a3a3;
+  background: #fafafa;
+  border-color: #f0f0f0;
 }
 
-.dark .media-upload-container {
-  background: #0a0a0a;
+.dark .media-preview-item {
   border-color: #262626;
+  background: #171717;
 }
 
+.dark .add-media-trigger,
 .dark .add-media-slot {
-  border-color: #363636;
+  background: #171717;
+  border-color: #262626;
+  color: #f5f5f5;
+}
+
+.dark .add-media-trigger:hover:not(:disabled),
+.dark .add-media-slot:hover:not(:disabled) {
+  background: #242424;
+  border-color: #383838;
+}
+
+.dark .add-media-trigger:disabled,
+.dark .add-media-slot:disabled {
+  color: #525252;
   background: #121212;
+  border-color: #1f1f1f;
 }
 
 .upload-now-btn {
@@ -95,37 +128,51 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px;
-  background: var(--primary-color, #339af0);
+  padding: 10px 16px;
+  background: #171717;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: bold;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 180ms ease;
+}
+
+.dark .upload-now-btn {
+  background: white;
+  color: #171717;
 }
 
 .upload-now-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .upload-progress-bar {
   height: 4px;
-  background: #e9ecef;
+  background: #e5e5e5;
   border-radius: 2px;
   overflow: hidden;
 }
 
+.dark .upload-progress-bar {
+  background: #262626;
+}
+
 .progress-fill {
   height: 100%;
-  background: #40c057;
+  background: #171717;
   transition: width 0.3s ease;
 }
 
+.dark .progress-fill {
+  background: white;
+}
+
 .pulse-disclaimer {
-  font-size: 12px;
-  color: #868e96;
-  text-align: center;
-  font-style: italic;
+  font-size: 11px;
+  color: #737373;
+  text-align: left;
+  font-weight: 500;
 }

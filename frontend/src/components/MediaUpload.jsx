@@ -106,11 +106,18 @@ const MediaUpload = forwardRef(function MediaUpload({
         ))}
         
         {(!uploading && (multiple || previews.length === 0)) && (
-          <button type="button" className="add-media-slot" onClick={() => !disabled && fileInputRef.current?.click()} disabled={disabled}>
-            {type === 'image' ? <ImageIcon size={32} /> : <Video size={32} />}
-            <span>{disabled ? (disabledMessage || `${type} unavailable`) : `Add ${type}`}</span>
+          <button 
+            type="button" 
+            className="add-media-trigger add-media-slot" 
+            onClick={() => !disabled && fileInputRef.current?.click()} 
+            disabled={disabled}
+            aria-label={disabled ? (disabledMessage || `${type} unavailable`) : (type === 'image' ? 'Add media' : 'Add video')}
+          >
+            {type === 'image' ? <ImageIcon className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+            <span>{disabled ? (disabledMessage || `${type} unavailable`) : (type === 'image' ? 'Add media' : 'Add video')}</span>
           </button>
         )}
+
       </div>
 
       <input

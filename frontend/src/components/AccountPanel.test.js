@@ -20,7 +20,9 @@ jest.mock('@/contexts/AuthContext', () => ({
 
 jest.mock('@/lib/userProfileDb', () => ({
   getUserProfile: jest.fn(() => Promise.resolve({ fullName: 'Mohammed Maaz A.' })),
+  getCachedUserProfile: jest.fn(() => null),
 }));
+
 
 jest.mock('@/lib/relationshipsDb', () => ({
   getFriendsWithDetails: jest.fn(() => Promise.resolve([{ id: 'friend-1' }, { id: 'friend-2' }])),
