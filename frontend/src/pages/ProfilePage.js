@@ -85,9 +85,11 @@ import {
   FileText, LogOut, Loader2, ChevronRight,
   Calendar, Filter, ShieldCheck, ShieldAlert, User, Pencil, Trash2, Plus, Link2, X, Check, ExternalLink, Key,
   Info, Mail, Image as ImageIcon, Users, UserPlus, Search, Clock, MessageCircle, Share2, Bell, ArrowLeft, MoreHorizontal, PlayCircle, Lock, Megaphone,
-  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy, Palette
+  Eye, EyeOff, MessageSquare, Shield, Smartphone, Fingerprint as BiometricIcon, SendHorizontal as Send, MapPin, Trophy, Palette,
+  Volume2, VolumeX
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useInteractionFeedback } from '@/hooks/useInteractionFeedback';
 import NotificationToggle from '@/components/NotificationToggle';
 import { notifyFriendRequest, isNotificationsEnabled } from '@/lib/pushNotificationService';
 import {
@@ -149,10 +151,12 @@ export default function ProfilePage() {
   const [pendingVisibilityValue, setPendingVisibilityValue] = useState(true);
 
   // Collapsible settings categories toggles
+  const { soundsEnabled, toggleSounds } = useInteractionFeedback();
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
   const [showLocationSettings, setShowLocationSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showSoundSettings, setShowSoundSettings] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
 
   useEffect(() => {
@@ -2574,6 +2578,63 @@ export default function ProfilePage() {
             )}
           </div>
 
+          {/* Category: Interaction Sounds */}
+          <div id="profile-sound-settings" className="order-6 w-full bg-white dark:bg-black border-b border-[#EFEFEF] dark:border-[#262626] overflow-hidden transition-all duration-200">
+            <button
+              onClick={() => setShowSoundSettings(!showSoundSettings)}
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                  {soundsEnabled ? (
+                    <Volume2 className="w-5 h-5 text-neutral-900 dark:text-white stroke-[1.8px]" />
+                  ) : (
+                    <VolumeX className="w-5 h-5 text-neutral-400 stroke-[1.8px]" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <h3 className="font-extrabold text-[15px] text-neutral-900 dark:text-white">Interaction Sounds</h3>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    {soundsEnabled ? 'Tactile confirmations enabled' : 'Sounds disabled'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className={`w-5 h-5 shrink-0 text-neutral-400 transition-transform duration-200 ${showSoundSettings ? 'rotate-90 text-neutral-900 dark:text-white' : ''}`} />
+            </button>
+
+            {showSoundSettings && (
+              <div className="space-y-3 border-t border-[#EFEFEF] px-4 pb-5 pt-4 text-left animate-in slide-in-from-top-2 duration-300 dark:border-[#262626] sm:px-6">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#111111]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">In-App Audio Confirmation</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                        Soft, subtle feedback when sending messages, publishing posts, and commenting.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={soundsEnabled}
+                      onClick={() => {
+                        toggleSounds();
+                        toast.success(soundsEnabled ? 'Interaction sounds disabled' : 'Interaction sounds enabled');
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0095F6]/40 ${
+                        soundsEnabled ? 'bg-[#0095F6]' : 'bg-neutral-300 dark:bg-neutral-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${
+                          soundsEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
 

@@ -44,6 +44,7 @@ import {
   retryMessage,
   subscribeToMessageSync,
 } from '@/features/messages/messageRepository';
+import { playMessageSendSound } from '@/lib/interactionFeedback';
 
 const mergeChronological = (current, incoming) => {
   const byId = new Map(current.map((message) => [message.id, message]));
@@ -491,6 +492,7 @@ export default function GroupConversationPage() {
     const currentReplyTo = replyTo;
 
     // 1. Instantly reset inputs/state for instant feel (0ms lag)
+    playMessageSendSound();
     setMessageText('');
     setReplyTo(null);
     setPendingMedia([]);
@@ -546,6 +548,7 @@ export default function GroupConversationPage() {
             location: { latitude, longitude },
           });
           setOptimisticMessages((current) => [...current, optimistic]);
+          playMessageSendSound();
           toast.success(navigator.onLine === false ? 'Location queued' : 'Location sending');
           scrollToBottom();
         } catch (error) {

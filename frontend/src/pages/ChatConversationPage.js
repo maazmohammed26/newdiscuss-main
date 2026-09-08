@@ -75,6 +75,7 @@ import {
   retryMessage,
   subscribeToMessageSync,
 } from '@/features/messages/messageRepository';
+import { playMessageSendSound } from '@/lib/interactionFeedback';
 
 const reconcileMessages = (current, incoming) => {
   if (!Array.isArray(incoming)) return current;
@@ -621,6 +622,7 @@ export default function ChatConversationPage() {
             location: { latitude, longitude },
           });
           setOptimisticMessages((current) => [...current, optimistic]);
+          playMessageSendSound();
           toast.success(navigator.onLine === false ? 'Location queued' : 'Location sending');
           if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -654,6 +656,7 @@ export default function ChatConversationPage() {
     const messageText = newMessage.trim();
     
     // 1. Instantly reset inputs/state for instant feel (0ms lag)
+    playMessageSendSound();
     setNewMessage('');
     setShowMediaUpload(false);
     setPendingMedia([]);

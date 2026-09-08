@@ -7,11 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MessageSquare, FolderGit2, Loader2, Hash, X, PlayCircle, Camera, Image as ImageIcon, Check, AlertCircle } from 'lucide-react';
-import { IoVideocam } from 'react-icons/io5';
 import { toast } from 'sonner';
 import MediaUpload from '@/components/MediaUpload';
 import { createPulse } from '@/lib/pulseDb';
 import UserAvatar from '@/components/UserAvatar';
+import { playPublishSound } from '@/lib/interactionFeedback';
 
 export default function CreatePostModal({ open, onClose, onCreated, initialType = 'discussion' }) {
   const { user } = useAuth();
@@ -94,6 +94,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
         onCreated(newPost);
       }
       reset();
+      playPublishSound();
       toast.success('Post created!');
     } catch (err) { 
       setError(err.message || 'Failed to create post'); 

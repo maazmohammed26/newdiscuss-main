@@ -2,7 +2,7 @@
 
 A modern real-time discussion platform for developers. Built with React and Firebase (no backend server needed!).
 
-## 🎨 New: Discuss Theme!
+## New: Discuss Theme!
 
 Experience our brand new **retro terminal-style theme** featuring:
 - Classic green-on-black color scheme
@@ -79,9 +79,9 @@ yarn start
 - **Hashtags** - Tag posts and search by hashtags
 - **Offline Support** - IndexedDB caching for offline access
 - **Mobile Optimized** - Zoom disabled for better mobile UX
-- **🆕 Multiple Themes** - Choose from Light, Dark, or retro Discuss theme
-- **🆕 Modal Editing** - Edit posts and projects in a clean modal interface
-- **🆕 Enhanced SEO** - Complete meta tags, structured data, and sitemap for better search visibility
+- **Multiple Themes** - Choose from Light, Dark, or retro Discuss theme
+- **Modal Editing** - Edit posts and projects in a clean modal interface
+- **Enhanced SEO** - Complete meta tags, structured data, and sitemap for better search visibility
 
 ## Tech Stack
 

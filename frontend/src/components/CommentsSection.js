@@ -25,6 +25,7 @@ import {
 import { Send, Trash2, Loader2, MessageCircle, ChevronDown, ChevronUp, MoreHorizontal, Reply } from 'lucide-react';
 import { toast } from 'sonner';
 import { emitNotificationEvent } from '@/lib/notificationService';
+import { playCommentSound } from '@/lib/interactionFeedback';
 
 const COMMENT_CHAR_LIMIT = 500;
 
@@ -136,6 +137,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
       setReplyText('');
       setShowReplyInput(false);
       if (!showReplies) setShowReplies(true);
+      playCommentSound();
       
       if (comment.author_id && currentUser?.id !== comment.author_id) {
         emitNotificationEvent({
@@ -316,6 +318,7 @@ export default function CommentsSection({ postId, postAuthorId, currentUser, onB
       });
       const postedText = commentText.trim();
       setCommentText('');
+      playCommentSound();
       if (postAuthorId && currentUser?.id !== postAuthorId) {
         emitNotificationEvent({
           type: 'comment',
