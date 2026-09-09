@@ -212,13 +212,26 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
       }
     }
 
-    // Pre-publish safety advisory (strict 1200ms UX budget; never delays posting indefinitely)
+    // Pre-publish safety advisory (strict 1200ms UX budget with AbortController cancellation)
     if (postType !== 'pulse' && !safetyWarning) {
+      const abortController = new AbortController();
+      let timer = null;
       try {
-        const safetyPromise = evaluatePostSafety(content.trim(), showCode ? code.trim() : '');
-        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1200));
+        const timeoutPromise = new Promise((resolve) => {
+          timer = setTimeout(() => {
+            abortController.abort();
+            resolve(null);
+          }, 1200);
+        });
+
+        const safetyPromise = evaluatePostSafety(content.trim(), showCode ? code.trim() : '', {
+          signal: abortController.signal,
+          timeoutMs: 1200,
+        });
+
         const safety = await Promise.race([safetyPromise, timeoutPromise]);
-        if (safety && safety.status === 'high_risk') {
+
+        if (safety && safety.status === 'high_risk' && !abortController.signal.aborted) {
           setSafetyWarning({
             summary: safety.summary || 'This post may contain content that conflicts with Discuss community guidelines. You can review it before publishing.',
             categories: safety.categories || [],
@@ -226,7 +239,9 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
           return;
         }
       } catch (_) {
-        // AI check errors never block publishing
+        // AI check errors or aborts never block publishing
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     }
 

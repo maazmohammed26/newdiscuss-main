@@ -94,7 +94,13 @@ export function localRuleSafetyCheck(text = '', code = '') {
  * Analyze post content for safety
  */
 export async function evaluatePostSafety(text = '', code = '', options = {}) {
-  const { forceRefresh = false, existingSafetyInfo = null, postId = null } = options;
+  const {
+    forceRefresh = false,
+    existingSafetyInfo = null,
+    postId = null,
+    signal = null,
+    timeoutMs = null,
+  } = options;
   const contentHash = generateContentHash(`${text} ${code}`);
 
   // 1. Check existing cached safety on post if valid and matching hash
@@ -115,8 +121,21 @@ export async function evaluatePostSafety(text = '', code = '', options = {}) {
       {
         dedupeKey: postId ? `safety-post-${postId}-${contentHash}` : `safety-${contentHash}`,
         requiresAuth: !postId, // Pre-publish checks require authenticated user
+        signal,
+        timeoutMs,
       }
     );
+
+    if (result && result.aborted) {
+      // Aborted by UX timeout: immediately return without blocking publish
+      return {
+        unavailable: true,
+        aborted: true,
+        status: 'safe',
+        categories: [],
+        summary: 'Review skipped due to timeout budget.',
+      };
+    }
 
     if (result && !result.unavailable && result.status) {
       const formatted = {

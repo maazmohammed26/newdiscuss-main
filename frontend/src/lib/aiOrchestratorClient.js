@@ -18,7 +18,7 @@ const pendingRequests = new Map();
  * Perform a centralized Discuss Intelligence request
  */
 export async function executeAiAction(action, payload = {}, options = {}) {
-  const { requiresAuth = false, dedupeKey = null } = options;
+  const { requiresAuth = false, dedupeKey = null, signal = null, timeoutMs = null } = options;
 
   // Check if identical request is in flight
   if (dedupeKey && pendingRequests.has(dedupeKey)) {
@@ -26,6 +26,23 @@ export async function executeAiAction(action, payload = {}, options = {}) {
   }
 
   const promise = (async () => {
+    const controller = new AbortController();
+    let timeoutTimer = null;
+
+    if (timeoutMs && Number.isFinite(timeoutMs) && timeoutMs > 0) {
+      timeoutTimer = setTimeout(() => {
+        controller.abort(new DOMException('Request timeout', 'TimeoutError'));
+      }, timeoutMs);
+    }
+
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort(signal.reason);
+      } else {
+        signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true });
+      }
+    }
+
     try {
       const headers = { 'Content-Type': 'application/json' };
 
@@ -48,6 +65,7 @@ export async function executeAiAction(action, payload = {}, options = {}) {
         method: 'POST',
         headers,
         body: JSON.stringify({ action, payload }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -64,12 +82,17 @@ export async function executeAiAction(action, payload = {}, options = {}) {
 
       return result.data;
     } catch (err) {
-      console.warn(`[Discuss Intelligence] Action '${action}' network error:`, err.message);
+      const isAborted = controller.signal.aborted || err.name === 'AbortError' || err.name === 'TimeoutError';
+      if (!isAborted) {
+        console.warn(`[Discuss Intelligence] Action '${action}' network error:`, err.message);
+      }
       return {
         unavailable: true,
-        message: 'Discuss Intelligence is temporarily unavailable.',
+        aborted: isAborted,
+        message: isAborted ? 'Request cancelled' : 'Discuss Intelligence is temporarily unavailable.',
       };
     } finally {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
       if (dedupeKey) {
         pendingRequests.delete(dedupeKey);
       }

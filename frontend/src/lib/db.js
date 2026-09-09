@@ -248,6 +248,14 @@ export const checkEmailAvailable = async (email) => {
 };
 
 export const updateUser = async (userId, updates) => {
+  if (updates && typeof updates === 'object') {
+    delete updates.aiSafetyInfo;
+    delete updates.profileIntelligence;
+    if (updates.talentGraph && typeof updates.talentGraph === 'object') {
+      delete updates.talentGraph.profileIntelligence;
+      delete updates.talentGraph.aiInsights;
+    }
+  }
   const userRef = ref(database, `users/${userId}`);
   await update(userRef, updates);
   // Invalidate cache so next read picks up new data
@@ -508,17 +516,32 @@ export const updatePost = async (postId, updates, userId) => {
   delete updates.confidence;
   delete updates.analysisVersion;
   delete updates.contentHash;
+  delete updates.lastScoredContentHash;
+  delete updates.status;
+  delete updates.summary;
 
   const finalUpdates = {
     ...updates,
     hashtags: [...new Set([...existingTags, ...contentTags, ...titleTags])]
   };
 
+  // Strip client-forged fields from final payload
+  delete finalUpdates.aiSafety;
+  delete finalUpdates.categories;
+  delete finalUpdates.confidence;
+  delete finalUpdates.analysisVersion;
+  delete finalUpdates.contentHash;
+  delete finalUpdates.status;
+  delete finalUpdates.summary;
+
   // If post content was modified, invalidate safety metadata on the server
   if (updates.title !== undefined || updates.content !== undefined || updates.code !== undefined) {
     finalUpdates.aiSafetyInfo = null;
     finalUpdates.aiScoreOutdated = true;
     finalUpdates.lastScoredContentHash = null;
+  } else {
+    delete finalUpdates.aiSafetyInfo;
+    delete finalUpdates.lastScoredContentHash;
   }
   
   await update(postRef, finalUpdates);

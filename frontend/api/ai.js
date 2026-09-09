@@ -506,6 +506,14 @@ module.exports = async function handler(req, res) {
           });
         }
 
+        // Unauthenticated users may read existing stored reviews, but cannot trigger fresh AI inference
+        if (!authUser) {
+          return res.status(401).json({
+            success: false,
+            error: 'Sign in to request a fresh Content Review.',
+          });
+        }
+
         if (!text.trim() && !code.trim()) {
           const emptySafe = {
             status: 'safe',
@@ -595,10 +603,30 @@ ${code ? `Associated Code Snippet:\n"""${code}"""` : ''}`;
           contentHash: canonicalHash,
         };
 
-        // Write directly to primary database under posts/{postId}/aiSafetyInfo using backend admin
+        // Write directly to primary database under posts/{postId}/aiSafetyInfo using backend admin with race protection
         if (postId && primaryDb) {
           try {
-            await primaryDb().ref(`posts/${postId}`).update({
+            const postRef = primaryDb().ref(`posts/${postId}`);
+            const recheckSnap = await postRef.once('value');
+            if (!recheckSnap.exists()) {
+              return res.status(404).json({ success: false, error: 'Post no longer exists' });
+            }
+            const currentPost = recheckSnap.val();
+            const currentText = `${currentPost.title || ''} ${currentPost.content || ''}`.trim();
+            const currentCode = String(currentPost.code || '');
+            const currentHash = generateContentHash(`${currentText} ${currentCode}`);
+
+            // Race protection: discard stale result if post content changed while inference was running
+            if (currentHash !== canonicalHash) {
+              console.warn(`[AI Orchestrator] Race condition detected on post ${postId}: post was edited during review. Discarding stale result.`);
+              return res.status(409).json({
+                success: false,
+                stale: true,
+                error: 'Post was modified during review. Stale safety analysis discarded.',
+              });
+            }
+
+            await postRef.update({
               aiSafetyInfo: verifiedResult,
               lastScoredContentHash: canonicalHash,
               aiScoreOutdated: false,
