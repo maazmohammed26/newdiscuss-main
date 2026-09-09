@@ -197,6 +197,7 @@
                     if (isPublic || !session) {
                         html.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
                         html.style.backgroundColor = '#fafafa';
+                        if (document.body) document.body.style.backgroundColor = '#fafafa';
                         html.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
                         html.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
                         return;
@@ -208,11 +209,13 @@
                     if (isDark) {
                         html.classList.add('dark');
                         html.style.backgroundColor = '#000000';
+                        if (document.body) document.body.style.backgroundColor = '#000000';
                         html.style.setProperty('--splash-bg', 'oklch(0.13 0.01 265)');
                         html.style.setProperty('--splash-script', 'oklch(0.96 0.005 250)');
                     } else {
                         html.classList.remove('dark', 'discuss', 'discuss-light', 'discuss-black', 'discuss-retro');
                         html.style.backgroundColor = '#fafafa';
+                        if (document.body) document.body.style.backgroundColor = '#fafafa';
                         html.style.setProperty('--splash-bg', 'oklch(0.995 0.002 95)');
                         html.style.setProperty('--splash-script', 'oklch(0.18 0.01 265)');
                     }

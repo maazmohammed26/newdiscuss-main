@@ -7,11 +7,24 @@ export const PLATFORM = Object.freeze({
 
 const hasWindow = () => typeof window !== 'undefined';
 
-export const isNativeApp = () => hasWindow() && Boolean(
-  window.median
-  || window.gonative
-  || /median|gonative/i.test(window.navigator?.userAgent || '')
-);
+export const isMedianApp = () => {
+  if (!hasWindow()) return false;
+  const ua = (window.navigator?.userAgent || '').toLowerCase();
+  return Boolean(
+    ua.includes('median')
+    || ua.includes('gonative')
+    || window.median
+    || window.gonative
+  );
+};
+
+export const isNativeApp = () => {
+  if (!hasWindow()) return false;
+  return Boolean(
+    isMedianApp()
+    || (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform())
+  );
+};
 
 export const getPlatform = () => {
   if (isNativeApp()) {
@@ -29,6 +42,32 @@ export const getPlatform = () => {
 export const getMedianBridge = () => {
   if (!isNativeApp()) return null;
   return window.median || window.gonative || null;
+};
+
+export const hideNativeSplash = () => {
+  if (!isNativeApp() && !isMedianApp()) return false;
+  const tryHide = () => {
+    const bridge = getMedianBridge();
+    try {
+      if (bridge?.screen?.splash?.hide) {
+        bridge.screen.splash.hide();
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  };
+
+  if (tryHide()) return true;
+
+  if (hasWindow()) {
+    const timer = window.setInterval(() => {
+      if (tryHide()) {
+        window.clearInterval(timer);
+      }
+    }, 100);
+    window.setTimeout(() => window.clearInterval(timer), 3000);
+  }
+  return false;
 };
 
 export const getNativeOneSignalBridge = async ({ timeoutMs = 8000 } = {}) => {
@@ -68,8 +107,10 @@ export const navigateNative = (relativeUrl) => {
 export default {
   getPlatform,
   isNativeApp,
+  isMedianApp,
   getMedianBridge,
   getNativeOneSignalBridge,
   promptNativeLocationServices,
   navigateNative,
+  hideNativeSplash,
 };

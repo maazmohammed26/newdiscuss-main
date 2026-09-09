@@ -4,6 +4,7 @@
 import {
   getNativeOneSignalBridge,
   isNativeApp,
+  isMedianApp,
   getPlatform,
   PLATFORM,
 } from '@/platform/platformAdapter';
@@ -19,8 +20,6 @@ const SENT_NOTIFICATIONS_KEY = 'discuss_sent_notifications';
 const ONESIGNAL_APP_ID = '280791b6-7711-4b32-8897-449efe155f2b';
 let oneSignalWebReady = null;
 let activeNativeOneSignalUid = null;
-
-const isMedianApp = isNativeApp;
 
 const persistOneSignalInfo = async (uid, info = {}) => {
   if (!uid || !info || typeof info !== 'object') return;

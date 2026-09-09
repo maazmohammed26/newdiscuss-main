@@ -13,6 +13,7 @@ import LoadingScreen from '@/components/LoadingScreen';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
 import OfflineBanner from '@/components/OfflineBanner';
 import DiscussSplash from '@/components/DiscussSplash';
+import { isMedianApp, hideNativeSplash } from '@/platform/platformAdapter';
 import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialogProvider';
 import '@/App.css';
 import { initializeSyncHandlers } from '@/data/sync/registerSyncHandlers';
@@ -231,6 +232,9 @@ function AppRoutes() {
 // ── App ───────────────────────────────────────────────────────────────────────
 function App() {
   useEffect(() => {
+    if (isMedianApp()) {
+      hideNativeSplash();
+    }
     // Warm the most frequently visited route chunks after first paint. This
     // keeps navigation instant without making the initial bundle heavy.
     const warmRoutes = () => Promise.allSettled([
@@ -252,8 +256,8 @@ function App() {
 
   return (
     <AppErrorBoundary>
-      {/* PWA / Web visual splash screen */}
-      <DiscussSplash />
+      {/* PWA / Web visual splash screen — omitted in Median app to prevent duplicate splash */}
+      {!isMedianApp() && <DiscussSplash />}
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>

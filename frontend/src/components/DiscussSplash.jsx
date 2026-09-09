@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { VECTOR_GLYPHS, WORDMARK_VIEWBOX } from './DiscussGlyphs';
+import { isMedianApp, isNativeApp, hideNativeSplash } from '@/platform/platformAdapter';
 import './DiscussSplash.css';
 
 /**
@@ -8,7 +9,8 @@ import './DiscussSplash.css';
  * Vector-perfect rendering using exact closed bezier paths from Caveat Bold & Space Grotesk.
  * Eliminates all font rasterization artifacts, scaling distortion, and stroke clipping on mobile/PWA.
  *
- * Exclusively for PWA/Web. Android native Capacitor wrapper bypasses this.
+ * Exclusively for PWA/Web. Native wrappers (Median Android/iOS, Capacitor) bypass this because
+ * they provide their own native launch splash screen while the WebView loads.
  * Theme is strictly synced with user's saved choice (localStorage discuss_theme)
  * with graceful fallback to system preference.
  */
@@ -23,6 +25,7 @@ export const SPLASH_TOTAL_MS =
 
 const isNativePlatform = () => {
   if (typeof window === 'undefined') return false;
+  if (isMedianApp() || isNativeApp()) return true;
   try {
     if (
       window.Capacitor &&
@@ -57,13 +60,18 @@ const getEffectiveTheme = () => {
 };
 
 export default function DiscussSplash({ onFinish, runKey = 0 }) {
-  const [shouldRender, setShouldRender] = useState(() => !isNativePlatform());
+  const isBypassed = isNativePlatform();
+  const [shouldRender, setShouldRender] = useState(() => !isBypassed);
   const [leaving, setLeaving] = useState(false);
   const [theme] = useState(getEffectiveTheme);
 
   useEffect(() => {
-    if (isNativePlatform()) {
+    if (isBypassed) {
       setShouldRender(false);
+      hideNativeSplash();
+      if (typeof onFinish === 'function') {
+        onFinish();
+      }
       return;
     }
 
@@ -81,9 +89,9 @@ export default function DiscussSplash({ onFinish, runKey = 0 }) {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
     };
-  }, [runKey, onFinish]);
+  }, [runKey, onFinish, isBypassed]);
 
-  if (!shouldRender) return null;
+  if (isBypassed || !shouldRender) return null;
 
   return (
     <div
