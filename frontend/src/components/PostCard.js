@@ -15,6 +15,7 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import { isUserVerified } from '@/lib/verification';
 import GuestAuthModal from '@/components/GuestAuthModal';
 import UserAvatar from '@/components/UserAvatar';
+import PostSafetyModal from '@/components/PostSafetyModal';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator
@@ -438,8 +439,8 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
                   onClick={(e) => { e.stopPropagation(); setShowSafetyExplanation(true); }}
                   className="cursor-pointer text-xs font-semibold px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-[#1A1A1A]"
                 >
-                  <ShieldCheck className="w-4 h-4 mr-2 text-[#0095F6]" />
-                  <span>AI Safety Score</span>
+                  <ShieldCheck className="w-4 h-4 mr-2 text-neutral-500 dark:text-neutral-400" />
+                  <span>Content Review</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -760,24 +761,11 @@ export default function PostCard({ post, currentUser, onDeleted, onUpdated, onVo
         />
       )}
 
-      <Dialog open={showSafetyExplanation} onOpenChange={setShowSafetyExplanation}>
-        <DialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-neutral-900 dark:text-white text-base">
-              <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
-              <span>Discuss AI Content Review</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <div className="p-3.5 rounded-xl border bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-              <div className="font-bold text-xs mb-1">Status: Verified Safe</div>
-              <p className="text-xs leading-relaxed">
-                {post.aiSafetyInfo?.reasoning || 'This content meets Discuss community and safety guidelines.'}
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PostSafetyModal
+        open={showSafetyExplanation}
+        onClose={() => setShowSafetyExplanation(false)}
+        post={post}
+      />
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent className="bg-white dark:bg-[#121212] border border-[#DBDBDB] dark:border-[#262626] rounded-2xl p-6">

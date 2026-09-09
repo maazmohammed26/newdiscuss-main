@@ -49,8 +49,7 @@ export default function Header() {
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', ...(user ? [] : ['/guidelines'])];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
-  const isAiChatRoute = location.pathname === '/ai-assistant';
-  const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
+  const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
 
   const handlePlusClick = () => {
     if (!user) {
@@ -182,33 +181,33 @@ export default function Header() {
                 </div>
 
                 <div className="space-y-1 text-sm font-medium">
-                  <button onClick={() => { navigate('/search'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Search className="w-5 h-5 text-neutral-900 dark:text-white" />
+                  <button onClick={() => { navigate('/search'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <Search className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span>Search Discuss</span>
                   </button>
-                  <button onClick={() => { navigate('/chat'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Send className="w-5 h-5 text-[#0095F6]" />
+                  <button onClick={() => { navigate('/chat'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <Send className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span>Direct Messages</span>
                   </button>
-                  <button onClick={() => { navigate('/notifications'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Bell className="w-5 h-5 text-[#ED4956]" />
+                  <button onClick={() => { navigate('/notifications'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <Bell className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span className="flex-1 text-left">Notifications</span>
                     {unreadNotifications > 0 && <span className="rounded-full bg-[#ED4956] px-2 py-0.5 text-[10px] font-bold text-white">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
                   </button>
-                  <button onClick={() => { navigate('/devradar'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Radar className="w-5 h-5 text-indigo-500" />
+                  <button onClick={() => { navigate('/devradar'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <Radar className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span>DevRadar</span>
                   </button>
-                  <button onClick={() => { navigate('/talentgraph'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Users className="w-5 h-5 text-amber-500" />
+                  <button onClick={() => { navigate('/talentgraph'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <Users className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span>TalentGraph</span>
                   </button>
-                  <button onClick={() => { navigate('/bookmarks'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <Bookmark className="w-5 h-5 text-pink-500" />
+                  <button onClick={() => { navigate('/bookmarks'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <Bookmark className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span>Saved Posts</span>
                   </button>
-                  <button onClick={() => { navigate('/guidelines'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                    <ShieldCheck className="w-5 h-5 text-[#0095F6]" />
+                  <button onClick={() => { navigate('/guidelines'); setShowDrawer(false); }} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-200 transition-colors">
+                    <ShieldCheck className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                     <span>Community Guidelines</span>
                   </button>
                 </div>

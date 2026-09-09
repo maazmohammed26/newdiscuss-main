@@ -61,6 +61,21 @@ export const saveAIInsights = async (userId, insights) => {
 };
 
 /**
+ * Save Profile Intelligence
+ */
+export const saveProfileIntelligence = async (userId, intelligence) => {
+  try {
+    const userRef = ref(database, `users/${userId}/talentGraph`);
+    await update(userRef, {
+      profileIntelligence: intelligence,
+      intelligenceUpdatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error saving profile intelligence:', error);
+  }
+};
+
+/**
  * Save AI Developer Matches
  */
 export const saveAIMatches = async (userId, matches, generatingUntil) => {

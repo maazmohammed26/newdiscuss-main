@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
@@ -6,438 +6,253 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import VerifiedBadge from '@/components/VerifiedBadge';
-import { getAllUsers } from '@/lib/db';
+import { getAllUsers, getPosts } from '@/lib/db';
 import { getOrCreateChat, sendMessage } from '@/lib/chatsDb';
-import { 
-  getUserTalentGraph, 
-  saveAIMatches, 
-  saveOpportunityFeed, 
-  logAIAction, 
-  getAIActions,
+import {
+  getUserTalentGraph,
+  saveAIMatches,
+  saveOpportunityFeed,
   saveTeamRecommendations,
   saveHiringRecommendations,
-  updateGeneratingState
+  saveProfileIntelligence,
 } from '@/lib/talentGraphDb';
-import { 
-  matchCollaborators, 
-  generateOpportunityFeed, 
-  buildTeam, 
-  hireDevelopers, 
-  chatAssistant,
-  getEmptyMatchesMessage
-} from '@/lib/ai';
-import { 
-  Users, Briefcase, UserPlus, MessageSquare, Terminal, Eye,
-  ArrowLeft, Search, Loader2, Send, ChevronRight, UserCheck, RefreshCw, Layers
+import { getEnhancedDeveloperMatches } from '@/lib/talentGraphMatching';
+import { getProfileIntelligence } from '@/lib/profileIntelligence';
+import { generateOpportunityFeed, buildTeam, hireDevelopers, getEmptyMatchesMessage } from '@/lib/ai';
+import {
+  ArrowLeft,
+  Loader2,
+  RefreshCw,
+  Eye,
+  MessageSquare,
+  AlertCircle,
+  TrendingUp,
+  ShieldCheck,
+  Lightbulb,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
-
-const formatTime = (sec) => {
-  if (isNaN(sec) || sec <= 0) return '0:00';
-  const mins = Math.floor(sec / 60);
-  const secs = sec % 60;
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
 
 export default function TalentGraphPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
+  // Exactly 3 user-facing tabs: 'matches' | 'opportunities' | 'team'
   const [activeTab, setActiveTab] = useState('matches');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [otherUsers, setOtherUsers] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
 
-  // 1. Matches Generation States
+  // Profile Intelligence
+  const [intelligence, setIntelligence] = useState(null);
+  const [loadingIntelligence, setLoadingIntelligence] = useState(false);
+
+  // 1. Matches State
   const [matches, setMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
-  const [matchesGeneratingUntil, setMatchesGeneratingUntil] = useState(null);
+  const [matchesError, setMatchesError] = useState(false);
+  const [emptyMatchesMessage, setEmptyMatchesMessage] = useState('Add skills to your profile to find relevant collaborator matches.');
 
-  // 2. Opportunity Feed States
+  // 2. Opportunities State (with internal Hiring filter/mode)
   const [opportunities, setOpportunities] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(false);
-  const [opportunitiesGeneratingUntil, setOpportunitiesGeneratingUntil] = useState(null);
+  const [oppFilter, setOppFilter] = useState('all'); // 'all' | 'ideas' | 'hiring'
 
-  // 3. Team Builder States
+  // Hiring within Opportunities
+  const [hiringReq, setHiringReq] = useState('');
+  const [hiringRecommendations, setHiringRecommendations] = useState([]);
+  const [loadingHiring, setLoadingHiring] = useState(false);
+
+  // 3. Team Builder State
   const [projectName, setProjectName] = useState('');
   const [projectDesc, setProjectDesc] = useState('');
   const [teamRecommendations, setTeamRecommendations] = useState([]);
   const [buildingTeam, setBuildingTeam] = useState(false);
-  const [teamGeneratingUntil, setTeamGeneratingUntil] = useState(null);
 
-  // 4. Hiring Assistant States
-  const [hiringReq, setHiringReq] = useState('');
-  const [hiringRecommendations, setHiringRecommendations] = useState([]);
-  const [loadingHiring, setLoadingHiring] = useState(false);
-  const [hiringGeneratingUntil, setHiringGeneratingUntil] = useState(null);
-
-  // 5. Time Remaining countdown states
-  const [timeRemaining, setTimeRemaining] = useState({
-    matches: 0,
-    opportunities: 0,
-    team: 0,
-    hiring: 0
-  });
-
-  // 6. Chat States
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    {
-      sender: 'assistant',
-      text: 'Hello. I am your Discuss AI network assistant. Ask me to find developers, suggest teammates, or discover opportunities across our network.',
-      matchedUsers: []
-    }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef(null);
-
-  // 7. Action Log States
-  const [actionLogs, setActionLogs] = useState([]);
-  const [loadingLogs, setLoadingLogs] = useState(false);
-
-  // Empty matches advice states
-  const [emptyMatchesMessage, setEmptyMatchesMessage] = useState('Select your skills and refresh to find matches.');
-  const [loadingEmptyMessage, setLoadingEmptyMessage] = useState(false);
-
-  const triggerLogAIAction = async (type, desc) => {
-    await logAIAction(user.id, type, desc);
-    try {
-      const logs = await getAIActions(user.id);
-      setActionLogs(logs);
-    } catch {}
-  };
-
-  // Helper to load latest talent graph data (clears loading if time is up)
-  const loadLatestTalentGraphData = useCallback(async () => {
-    if (!user?.id) return;
-    try {
-      const tg = await getUserTalentGraph(user.id);
-      if (tg) {
-        const now = Date.now();
-        const matchesUntil = tg.matchesGeneratingUntil || null;
-        const oppsUntil = tg.opportunitiesGeneratingUntil || null;
-        const teamUntil = tg.teamGeneratingUntil || null;
-        const hiringUntil = tg.hiringGeneratingUntil || null;
-
-        setMatchesGeneratingUntil(matchesUntil);
-        setOpportunitiesGeneratingUntil(oppsUntil);
-        setTeamGeneratingUntil(teamUntil);
-        setHiringGeneratingUntil(hiringUntil);
-
-        if (!matchesUntil || new Date(matchesUntil).getTime() <= now) {
-          setMatches(tg.cachedMatches || []);
-          setLoadingMatches(false);
-        } else {
-          setLoadingMatches(true);
-        }
-
-        if (!oppsUntil || new Date(oppsUntil).getTime() <= now) {
-          setOpportunities(tg.cachedOpportunities || []);
-          setLoadingFeed(false);
-        } else {
-          setLoadingFeed(true);
-        }
-
-        if (!teamUntil || new Date(teamUntil).getTime() <= now) {
-          setTeamRecommendations(tg.cachedTeam || []);
-          setBuildingTeam(false);
-        } else {
-          setBuildingTeam(true);
-        }
-
-        if (!hiringUntil || new Date(hiringUntil).getTime() <= now) {
-          setHiringRecommendations(tg.cachedHiring || []);
-          setLoadingHiring(false);
-        } else {
-          setLoadingHiring(true);
-        }
-
-        setProjectName(tg.teamProjectName || '');
-        setProjectDesc(tg.teamProjectDesc || '');
-        setHiringReq(tg.hiringReq || '');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }, [user?.id]);
-
-  // Load Users and Current TalentGraph Data
+  // Initial Data Load
   useEffect(() => {
     if (!user?.id) return;
-    
-    // Lock model to poolside in localStorage
-    localStorage.setItem('discuss_ai_model', 'poolside');
 
-    const loadInitialData = async () => {
+    let isMounted = true;
+    const loadData = async () => {
       setLoading(true);
       try {
-        const users = await getAllUsers();
-        const filtered = users.filter(u => u.id !== user.id);
+        const [users, posts, tg] = await Promise.all([
+          getAllUsers(),
+          getPosts(30).catch(() => []),
+          getUserTalentGraph(user.id),
+        ]);
+
+        if (!isMounted) return;
+
+        const filtered = users.filter((u) => u.id !== user.id);
+        const self = users.find((u) => u.id === user.id) || { id: user.id, username: user.username };
         setOtherUsers(filtered);
-        
-        const selfProfile = users.find(u => u.id === user.id);
-        setUserProfile(selfProfile);
+        setUserProfile(self);
 
-        // Load Cached Data and Generating states
-        const tg = await getUserTalentGraph(user.id);
+        // Populate cached items
         if (tg) {
-          const now = Date.now();
-          const matchesUntil = tg.matchesGeneratingUntil || null;
-          const oppsUntil = tg.opportunitiesGeneratingUntil || null;
-          const teamUntil = tg.teamGeneratingUntil || null;
-          const hiringUntil = tg.hiringGeneratingUntil || null;
-
-          setMatchesGeneratingUntil(matchesUntil);
-          setOpportunitiesGeneratingUntil(oppsUntil);
-          setTeamGeneratingUntil(teamUntil);
-          setHiringGeneratingUntil(hiringUntil);
-
-          if (!matchesUntil || new Date(matchesUntil).getTime() <= now) {
-            setMatches(tg.cachedMatches || []);
-            setLoadingMatches(false);
-          } else {
-            setLoadingMatches(true);
+          if (Array.isArray(tg.cachedMatches) && tg.cachedMatches.length > 0) {
+            setMatches(tg.cachedMatches);
           }
-
-          if (!oppsUntil || new Date(oppsUntil).getTime() <= now) {
-            setOpportunities(tg.cachedOpportunities || []);
-            setLoadingFeed(false);
-          } else {
-            setLoadingFeed(true);
+          if (Array.isArray(tg.cachedOpportunities) && tg.cachedOpportunities.length > 0) {
+            setOpportunities(tg.cachedOpportunities);
           }
-
-          if (!teamUntil || new Date(teamUntil).getTime() <= now) {
-            setTeamRecommendations(tg.cachedTeam || []);
-            setBuildingTeam(false);
-          } else {
-            setBuildingTeam(true);
+          if (Array.isArray(tg.cachedTeam) && tg.cachedTeam.length > 0) {
+            setTeamRecommendations(tg.cachedTeam);
+            setProjectName(tg.teamProjectName || '');
+            setProjectDesc(tg.teamProjectDesc || '');
           }
-
-          if (!hiringUntil || new Date(hiringUntil).getTime() <= now) {
-            setHiringRecommendations(tg.cachedHiring || []);
-            setLoadingHiring(false);
-          } else {
-            setLoadingHiring(true);
+          if (Array.isArray(tg.cachedHiring) && tg.cachedHiring.length > 0) {
+            setHiringRecommendations(tg.cachedHiring);
+            setHiringReq(tg.hiringReq || '');
           }
-
-          setProjectName(tg.teamProjectName || '');
-          setProjectDesc(tg.teamProjectDesc || '');
-          setHiringReq(tg.hiringReq || '');
+          if (tg.profileIntelligence) {
+            setIntelligence(tg.profileIntelligence);
+          }
         }
 
-        // Fetch logs
-        const logs = await getAIActions(user.id);
-        setActionLogs(logs);
+        // Progressive Profile Intelligence Load
+        if (!tg?.profileIntelligence) {
+          setLoadingIntelligence(true);
+          const userPosts = posts.filter((p) => p.author_id === user.id);
+          getProfileIntelligence(self, userPosts)
+            .then((intel) => {
+              if (isMounted && intel) {
+                setIntelligence(intel);
+                saveProfileIntelligence(user.id, intel);
+              }
+            })
+            .catch(() => {})
+            .finally(() => {
+              if (isMounted) setLoadingIntelligence(false);
+            });
+        }
+
+        // Progressive Matches Load
+        if (!tg?.cachedMatches || tg.cachedMatches.length === 0) {
+          setLoadingMatches(true);
+          getEnhancedDeveloperMatches(self, filtered)
+            .then((res) => {
+              if (isMounted) {
+                setMatches(res);
+                if (res.length > 0) saveAIMatches(user.id, res);
+              }
+            })
+            .catch(() => {
+              if (isMounted) setMatchesError(true);
+            })
+            .finally(() => {
+              if (isMounted) setLoadingMatches(false);
+            });
+        }
       } catch (err) {
-        console.error('Failed to load users:', err);
+        console.error('Failed to load TalentGraph data:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    
-    loadInitialData();
-  }, [user?.id]);
 
-  // Countdown timer tick effect
-  useEffect(() => {
-    let active = true;
-    const interval = setInterval(() => {
-      if (!active) return;
-      const now = Date.now();
-      const remaining = { matches: 0, opportunities: 0, team: 0, hiring: 0 };
-      let hasFinished = false;
-
-      if (matchesGeneratingUntil) {
-        const diff = Math.max(0, Math.round((new Date(matchesGeneratingUntil).getTime() - now) / 1000));
-        remaining.matches = diff;
-        if (diff === 0) hasFinished = true;
-      }
-      if (opportunitiesGeneratingUntil) {
-        const diff = Math.max(0, Math.round((new Date(opportunitiesGeneratingUntil).getTime() - now) / 1000));
-        remaining.opportunities = diff;
-        if (diff === 0) hasFinished = true;
-      }
-      if (teamGeneratingUntil) {
-        const diff = Math.max(0, Math.round((new Date(teamGeneratingUntil).getTime() - now) / 1000));
-        remaining.team = diff;
-        if (diff === 0) hasFinished = true;
-      }
-      if (hiringGeneratingUntil) {
-        const diff = Math.max(0, Math.round((new Date(hiringGeneratingUntil).getTime() - now) / 1000));
-        remaining.hiring = diff;
-        if (diff === 0) hasFinished = true;
-      }
-
-      setTimeRemaining(remaining);
-
-      if (hasFinished) {
-        loadLatestTalentGraphData();
-      }
-    }, 1000);
-
+    loadData();
     return () => {
-      active = false;
-      clearInterval(interval);
+      isMounted = false;
     };
-  }, [matchesGeneratingUntil, opportunitiesGeneratingUntil, teamGeneratingUntil, hiringGeneratingUntil, loadLatestTalentGraphData]);
+  }, [user?.id, user?.username]);
 
+  // Empty match guidance
   useEffect(() => {
     if (matches.length === 0 && userProfile && !loadingMatches) {
-      setLoadingEmptyMessage(true);
-      const skills = userProfile.talentGraph?.skills || [];
+      const skills = userProfile.talentGraph?.skills || userProfile.skills || [];
       const bio = userProfile.talentGraph?.bio || userProfile.bio || '';
-      getEmptyMatchesMessage(skills, bio)
-        .then(msg => {
-          if (msg) setEmptyMatchesMessage(msg);
-        })
-        .catch(() => {})
-        .finally(() => setLoadingEmptyMessage(false));
+      getEmptyMatchesMessage(skills, bio).then((msg) => {
+        if (msg) setEmptyMatchesMessage(msg);
+      });
     }
   }, [matches, userProfile, loadingMatches]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, chatLoading]);
-
-  const loadLogs = useCallback(async () => {
-    if (!user?.id) return;
-    setLoadingLogs(true);
-    try {
-      const logs = await getAIActions(user.id);
-      setActionLogs(logs);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingLogs(false);
-    }
-  }, [user?.id]);
-
-  // Load Action Logs when log tab is opened
-  useEffect(() => {
-    if (activeTab === 'logs' && user?.id) {
-      loadLogs();
-    }
-  }, [activeTab, user?.id, loadLogs]);
-
-  // 1. Matches Generation
+  // Refresh Collaborator Matches
   const handleRefreshMatches = async () => {
     if (!userProfile) return;
     setLoadingMatches(true);
+    setMatchesError(false);
     try {
-      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes (120 seconds) simulated compilation
-      setMatchesGeneratingUntil(completionTime);
-      await updateGeneratingState(user.id, 'matchesGeneratingUntil', completionTime);
-      await triggerLogAIAction('matchmaking', `Initiated Mars AI collaborator matching query...`);
-      
-      const result = await matchCollaborators(userProfile, otherUsers, actionLogs);
-      
-      if (result && result.length > 0) {
-        await saveAIMatches(user.id, result, completionTime);
-        await triggerLogAIAction('matchmaking', `Refreshed collaborator matches. Found ${result.length} matches.`);
-        toast.info('Mars AI is compiling matches. Check back in 2 minutes!');
+      const res = await getEnhancedDeveloperMatches(userProfile, otherUsers);
+      setMatches(res);
+      await saveAIMatches(user.id, res);
+      if (res.length > 0) {
+        toast.success(`Found ${res.length} compatible collaborator matches`);
       } else {
-        await updateGeneratingState(user.id, 'matchesGeneratingUntil', null);
-        setMatchesGeneratingUntil(null);
-        setLoadingMatches(false);
-        toast.info('No matches found. Try updating your profile or skills.');
+        toast.info('No new matches found. Try updating your profile skills.');
       }
     } catch (err) {
-      toast.error('AI service is busy. Try again later.');
-      await updateGeneratingState(user.id, 'matchesGeneratingUntil', null);
-      setMatchesGeneratingUntil(null);
+      setMatchesError(true);
+      toast.error('Collaborator matching is temporarily unavailable.');
+    } finally {
       setLoadingMatches(false);
     }
   };
 
-  // 2. Opportunities Generation
+  // Refresh Opportunity Feed
   const handleRefreshOpportunities = async () => {
     if (!userProfile) return;
     setLoadingFeed(true);
     try {
-      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes simulated compilation
-      setOpportunitiesGeneratingUntil(completionTime);
-      await updateGeneratingState(user.id, 'opportunitiesGeneratingUntil', completionTime);
-      await triggerLogAIAction('opportunity_feed', `Initiated Mars AI project opportunity feed query...`);
-
-      const skills = userProfile?.talentGraph?.skills || [];
+      const skills = userProfile?.talentGraph?.skills || userProfile?.skills || [];
       const bio = userProfile?.talentGraph?.bio || userProfile?.bio || '';
       const result = await generateOpportunityFeed(skills, bio);
-      
       if (result && result.length > 0) {
-        await saveOpportunityFeed(user.id, result, completionTime);
-        await triggerLogAIAction('opportunity_feed', `Generated opportunity feed containing ${result.length} suggestions.`);
-        toast.info('Mars AI is compiling opportunities. Check back in 2 minutes!');
-      } else {
-        await updateGeneratingState(user.id, 'opportunitiesGeneratingUntil', null);
-        setOpportunitiesGeneratingUntil(null);
-        setLoadingFeed(false);
-        toast.info('No opportunities generated.');
+        setOpportunities(result);
+        await saveOpportunityFeed(user.id, result);
+        toast.success('Opportunity feed updated');
       }
     } catch (err) {
-      toast.error('AI service is busy. Try again later.');
-      await updateGeneratingState(user.id, 'opportunitiesGeneratingUntil', null);
-      setOpportunitiesGeneratingUntil(null);
+      toast.error('Opportunity feed is temporarily unavailable.');
+    } finally {
       setLoadingFeed(false);
     }
   };
 
-  // 3. Team Builder Submit
+  // Submit Team Builder
   const handleBuildTeam = async (e) => {
     e.preventDefault();
     if (!projectDesc.trim()) return;
     setBuildingTeam(true);
     try {
-      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes simulated compilation
-      setTeamGeneratingUntil(completionTime);
-      await updateGeneratingState(user.id, 'teamGeneratingUntil', completionTime);
-      await triggerLogAIAction('team_builder', `Initiated Mars AI team builder query for project: ${projectName || 'Untitled'}`);
-
-      const result = await buildTeam(projectDesc, otherUsers, actionLogs);
-      
-      await saveTeamRecommendations(user.id, projectName, projectDesc, result || [], completionTime);
-      await triggerLogAIAction('team_builder', `Requested recommendations for project: ${projectName || 'Untitled'}`);
-      toast.info('Mars AI is building your team structures. Check back in 2 minutes!');
+      const result = await buildTeam(projectDesc, otherUsers);
+      setTeamRecommendations(result || []);
+      await saveTeamRecommendations(user.id, projectName, projectDesc, result || []);
+      toast.success('Team recommendations generated');
     } catch (err) {
-      toast.error('AI service is busy. Try again later.');
-      await updateGeneratingState(user.id, 'teamGeneratingUntil', null);
-      setTeamGeneratingUntil(null);
+      toast.error('Team builder is temporarily unavailable.');
+    } finally {
       setBuildingTeam(false);
     }
   };
 
+  // Send Collaboration Invitation
   const handleSendInvite = async (targetUserId, targetUsername, role) => {
     try {
       const chat = await getOrCreateChat(user.id, targetUserId);
-      const text = `Hello. I am building a project called "${projectName || 'Untitled'}": ${projectDesc}. Based on your profile, AI recommended you as a collaborator for the role of: ${role}. Let me know if you would like to collaborate!`;
+      const text = `Hello. I am building a project called "${projectName || 'Untitled'}": ${projectDesc}. Based on your profile, Discuss TalentGraph recommended you for the role of: ${role}. Let me know if you would like to collaborate!`;
       await sendMessage(chat.chatId, user.id, text);
-      await triggerLogAIAction('invite_sent', `Sent collaboration invitation to @${targetUsername} for ${projectName || 'Untitled'}`);
       toast.success(`Invitation sent to @${targetUsername} in DMs`);
     } catch (err) {
       toast.error('Failed to send invitation');
     }
   };
 
-  // 4. Hiring Assistant Submit
+  // Submit Developer Hiring Search (inside Opportunities -> Hiring filter)
   const handleHiringSearch = async (e) => {
     e.preventDefault();
     if (!hiringReq.trim()) return;
     setLoadingHiring(true);
     try {
-      const completionTime = new Date(Date.now() + 120000).toISOString(); // 2 minutes simulated compilation
-      setHiringGeneratingUntil(completionTime);
-      await updateGeneratingState(user.id, 'hiringGeneratingUntil', completionTime);
-      await triggerLogAIAction('hiring_assistant', `Initiated Mars AI developer search matching: ${hiringReq.slice(0, 40)}`);
-
       const result = await hireDevelopers(hiringReq, otherUsers);
-      
-      await saveHiringRecommendations(user.id, hiringReq, result || [], completionTime);
-      await triggerLogAIAction('hiring_assistant', `Queried developers matching: ${hiringReq.slice(0, 40)}`);
-      toast.info('Mars AI is analyzing candidates. Check back in 2 minutes!');
+      setHiringRecommendations(result || []);
+      await saveHiringRecommendations(user.id, hiringReq, result || []);
+      toast.success('Found matching candidates');
     } catch (err) {
-      toast.error('AI service is busy. Try again later.');
-      await updateGeneratingState(user.id, 'hiringGeneratingUntil', null);
-      setHiringGeneratingUntil(null);
+      toast.error('Developer search is temporarily unavailable.');
+    } finally {
       setLoadingHiring(false);
     }
   };
@@ -445,264 +260,271 @@ export default function TalentGraphPage() {
   const handleContactDeveloper = async (targetUserId, targetUsername) => {
     try {
       const chat = await getOrCreateChat(user.id, targetUserId);
-      const text = `Hello. I noticed your profile on Discuss. I have a potential project/hiring opportunity that aligns with your skills: "${hiringReq}". Let me know if you are open to discussing this further!`;
+      const text = `Hello. I noticed your profile on Discuss. I have a project/role opportunity aligning with your skills: "${hiringReq}". Let me know if you are open to discussing this further!`;
       await sendMessage(chat.chatId, user.id, text);
-      await triggerLogAIAction('hiring_contact', `Contacted developer @${targetUsername} regarding: ${hiringReq.slice(0, 30)}...`);
       toast.success(`Message sent to @${targetUsername} in DMs`);
     } catch (err) {
-      toast.error('Failed to contact developer');
+      toast.error('Failed to message developer');
     }
   };
 
-  // 5. Discuss AI Chat Send
-  const handleChatSend = async (e) => {
-    e.preventDefault();
-    if (!chatInput.trim() || chatLoading) return;
-    
-    const userMsg = chatInput.trim();
-    setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
-    setChatInput('');
-    setChatLoading(true);
-
-    try {
-      const result = await chatAssistant(userMsg, userProfile, otherUsers, actionLogs);
-      if (result) {
-        setChatMessages(prev => [...prev, {
-          sender: 'assistant',
-          text: result.text,
-          matchedUsers: result.matchedUsers || []
-        }]);
-        await triggerLogAIAction('chat_query', `Queried AI assistant: ${userMsg.slice(0, 30)}...`);
-      }
-    } catch (err) {
-      setChatMessages(prev => [...prev, {
-        sender: 'assistant',
-        text: 'The AI assistant is busy or unavailable. Please try again.',
-        matchedUsers: []
-      }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
-  const handleChatSuggestion = (text) => {
-    setChatInput(text);
-  };
-
-  // Helper: Find user details by userId
-  const findUser = (uid) => {
-    return otherUsers.find(u => u.id === uid) || null;
-  };
+  const findUser = (uid) => otherUsers.find((u) => u.id === uid) || null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white">
+    <div className="min-h-screen bg-white dark:bg-black text-neutral-950 dark:text-white select-none">
       <Header />
-      
-      <div className="mx-auto max-w-[935px] px-4 py-6 pb-32 md:py-8">
-        
+
+      <main className="mx-auto max-w-[935px] px-4 py-6 pb-32 md:py-8 space-y-6">
         {/* Navigation back */}
         <button
           onClick={() => navigate('/feed')}
-          className="flex items-center gap-2 text-[#6275AF] dark:text-[#94A3B8] dark:text-neutral-400 hover:text-[#0F172A] dark:hover:text-white dark:hover:text-white text-[13px] font-medium mb-4 transition-colors"
+          className="flex items-center gap-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white text-xs font-medium transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Feed
         </button>
 
-        {/* Dashboard Title */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white dark:text-white">
-              TalentGraph
-            </h1>
-            <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-              Discover opportunities, collaborators, founders, and build developer teams.
-            </p>
-          </div>
-          
-          {/* Rebranded Model Status UI */}
-          <div className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-semibold text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400 select-none">
-            <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></span>
-            Discuss Mars AI model Active
-          </div>
+        {/* Header Title (Flat) */}
+        <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+            TalentGraph
+          </h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+            Developer compatibility, project fit, and collaboration intelligence across Discuss.
+          </p>
         </div>
 
-        {/* Tab Selection */}
-        <div className="mb-6 grid grid-cols-3 gap-1 overflow-hidden border-b border-neutral-200 pb-2 dark:border-neutral-800 md:grid-cols-6">
+        {/* ── PROFILE INTELLIGENCE (FLAT ROW) ───────────────────────── */}
+        {loadingIntelligence ? (
+          <div className="py-4 border-b border-neutral-200 dark:border-neutral-800 animate-pulse space-y-2">
+            <div className="h-4 w-40 bg-neutral-200 dark:bg-neutral-800 rounded" />
+            <div className="h-10 bg-neutral-100 dark:bg-neutral-900 rounded" />
+          </div>
+        ) : intelligence ? (
+          <div className="border-b border-neutral-200 dark:border-neutral-800 pb-5 space-y-3 text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                Profile Intelligence
+              </span>
+              <button
+                onClick={() => navigate('/profile')}
+                className="text-xs font-semibold text-[#0095F6] hover:underline"
+              >
+                Edit Profile
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              {/* Strong Signals */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1 font-bold text-neutral-900 dark:text-white">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Strong Signals</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {intelligence.strongSignals?.length > 0 ? (
+                    intelligence.strongSignals.map((s) => (
+                      <span
+                        key={s}
+                        className="px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800"
+                      >
+                        {s}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-neutral-400 text-[11px]">Declare skills on profile</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Growing Signals */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1 font-bold text-neutral-900 dark:text-white">
+                  <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Growing Signals</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {intelligence.growingSignals?.length > 0 ? (
+                    intelligence.growingSignals.map((s) => (
+                      <span
+                        key={s}
+                        className="px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800"
+                      >
+                        {s}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-neutral-400 text-[11px]">Keep publishing to surface trends</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Discoverability */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1 font-bold text-neutral-900 dark:text-white">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Discoverability Tip</span>
+                </div>
+                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                  {intelligence.discoverabilityTips?.[0] || 'Publish code projects to increase teammate matches.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── FLAT TAB BAR (Matches | Opportunities | Team Builder) ─── */}
+        <div className="flex border-b border-neutral-200 dark:border-neutral-800 gap-6">
           <button
             onClick={() => setActiveTab('matches')}
-            className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
               activeTab === 'matches'
-                ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                : 'bg-transparent text-neutral-600 border-transparent hover:border-neutral-200 dark:text-neutral-400 dark:hover:border-neutral-700'
+                ? 'border-neutral-950 text-neutral-950 dark:border-white dark:text-white'
+                : 'border-transparent text-neutral-500 hover:text-neutral-950 dark:hover:text-white'
             }`}
           >
             Matches
           </button>
           <button
             onClick={() => setActiveTab('opportunities')}
-            className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
               activeTab === 'opportunities'
-                ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                : 'bg-transparent text-neutral-600 border-transparent hover:border-neutral-200 dark:text-neutral-400 dark:hover:border-neutral-700'
+                ? 'border-neutral-950 text-neutral-950 dark:border-white dark:text-white'
+                : 'border-transparent text-neutral-500 hover:text-neutral-950 dark:hover:text-white'
             }`}
           >
             Opportunities
           </button>
           <button
             onClick={() => setActiveTab('team')}
-            className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors ${
               activeTab === 'team'
-                ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                : 'bg-transparent text-neutral-600 border-transparent hover:border-neutral-200 dark:text-neutral-400 dark:hover:border-neutral-700'
+                ? 'border-neutral-950 text-neutral-950 dark:border-white dark:text-white'
+                : 'border-transparent text-neutral-500 hover:text-neutral-950 dark:hover:text-white'
             }`}
           >
             Team Builder
           </button>
-          <button
-            onClick={() => setActiveTab('hiring')}
-            className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
-              activeTab === 'hiring'
-                ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                : 'bg-transparent text-neutral-600 border-transparent hover:border-neutral-200 dark:text-neutral-400 dark:hover:border-neutral-700'
-            }`}
-          >
-            Hiring
-          </button>
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
-              activeTab === 'chat'
-                ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                : 'bg-transparent text-neutral-600 border-transparent hover:border-neutral-200 dark:text-neutral-400 dark:hover:border-neutral-700'
-            }`}
-          >
-            AI Assistant
-          </button>
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`py-2 px-1 text-center rounded text-xs font-semibold border transition-all ${
-              activeTab === 'logs'
-                ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                : 'bg-transparent text-neutral-600 border-transparent hover:border-neutral-200 dark:text-neutral-400 dark:hover:border-neutral-700'
-            }`}
-          >
-            Activity Logs
-          </button>
         </div>
 
-        {/* ==================== TAB CONTENT ==================== */}
-
-        {/* 1. MATCHES TAB */}
+        {/* ── 1. MATCHES TAB (FLAT ROW-BY-ROW DESIGN) ─────────────── */}
         {activeTab === 'matches' && (
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="text-left">
-                <h2 className="text-base font-bold text-neutral-900 dark:text-white">AI Collaborator Matches</h2>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Recommended partners based on complementary skills and profile activity.</p>
-              </div>
+          <div className="space-y-4 text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-neutral-500">
+                Sorted by skill overlap, complementary strengths, and collaboration fit.
+              </span>
               <Button
                 onClick={handleRefreshMatches}
                 disabled={loadingMatches}
                 size="sm"
-                className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold py-2 px-4 rounded border border-neutral-300 dark:border-neutral-700"
+                variant="outline"
+                className="text-xs h-8 px-3 rounded-lg border-neutral-300 dark:border-neutral-700"
               >
                 {loadingMatches ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                    Finding Matches...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Finding…
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                    Refresh Matches
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
                   </>
                 )}
               </Button>
             </div>
 
-            {loadingMatches && timeRemaining.matches > 0 ? (
-              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
-                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
-                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-t-[#8B5CF6] border-r-[#8B5CF6] animate-spin"></div>
-                  <div className="text-xl font-extrabold text-[#8B5CF6]">{formatTime(timeRemaining.matches)}</div>
+            {/* Partial Failure Notice */}
+            {matchesError && (
+              <div className="py-3 px-4 rounded-lg border border-amber-500/20 bg-amber-500/10 flex items-center justify-between text-xs text-amber-800 dark:text-amber-200">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Developer matching is temporarily unavailable.</span>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Compiling Matches</h3>
-                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
-                    Analyzing complementary skillsets, Jaccard similarities, and platform logs to construct optimal collaborator recommendations.
-                  </p>
-                  <p className="text-[11px] text-[#8B5CF6] font-semibold bg-[#8B5CF6]/10 py-1.5 px-3 rounded-full inline-block">
-                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
-                  </p>
-                </div>
+                <button
+                  onClick={handleRefreshMatches}
+                  className="font-semibold underline hover:no-underline"
+                >
+                  Retry
+                </button>
               </div>
-            ) : loadingMatches ? (
-              <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
+            )}
+
+            {loadingMatches ? (
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="py-4 space-y-2 animate-pulse">
+                    <div className="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded" />
+                    <div className="h-3 w-80 bg-neutral-100 dark:bg-neutral-900 rounded" />
+                  </div>
+                ))}
               </div>
             ) : matches.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6">
-                <Users className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">Collaborator Recommendations</h3>
-                
-                {loadingEmptyMessage ? (
-                  <div className="flex items-center justify-center gap-1.5 py-4">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-600" />
-                    <span className="text-xs text-neutral-500">Generating network advice...</span>
-                  </div>
-                ) : (
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-md mx-auto mb-4 leading-relaxed font-medium">
-                    {emptyMatchesMessage}
-                  </p>
-                )}
-                
-                <Button onClick={() => navigate('/profile')} variant="outline" className="border-neutral-200 text-xs rounded-md">
-                  Update Skills
+              <div className="py-12 text-center text-xs text-neutral-500 space-y-3">
+                <p>{emptyMatchesMessage}</p>
+                <Button
+                  onClick={() => navigate('/profile')}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs rounded-lg"
+                >
+                  Update Profile Skills
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
                 {matches.map((match) => {
                   const details = findUser(match.userId);
-                  const skillsList = details?.talentGraph?.skills || details?.skills || [];
+                  const skillsList = details?.talentGraph?.skills || details?.skills || match.sharedSkills || [];
                   const initials = match.username?.slice(0, 2).toUpperCase() || 'DV';
+
+                  const tierStyles = {
+                    'Strong match': 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+                    'Good match': 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20',
+                    'Possible match': 'text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800',
+                  };
+
                   return (
-                    <div
-                      key={match.userId}
-                      className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4 text-left"
-                    >
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <div className="flex gap-3">
+                    <div key={match.userId} className="py-4 space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
                           {details?.photo_url ? (
                             <img
                               src={details.photo_url}
                               alt={match.username}
-                              className="w-12 h-12 rounded-full object-cover border border-neutral-250/20"
+                              className="w-10 h-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-800"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-neutral-900 dark:bg-white flex items-center justify-center text-white dark:text-neutral-900 font-bold">
+                            <div className="w-10 h-10 rounded-full bg-neutral-900 dark:bg-white flex items-center justify-center text-white dark:text-neutral-900 font-bold text-xs">
                               {initials}
                             </div>
                           )}
                           <div>
-                            <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                              @{match.username}
-                              {details?.verified && <VerifiedBadge size="sm" />}
-                            </h3>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 max-w-md line-clamp-1">
-                              {details?.talentGraph?.bio || details?.bio || 'Open profile to view full info about user.'}
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-neutral-900 dark:text-white flex items-center gap-1">
+                                @{match.username}
+                                {details?.verified && <VerifiedBadge size="sm" />}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                  tierStyles[match.matchTier] || tierStyles['Possible match']
+                                }`}
+                              >
+                                {match.matchTier || 'Good match'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-neutral-500 line-clamp-1 mt-0.5">
+                              {details?.talentGraph?.bio || details?.bio || 'Developer on Discuss'}
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-2 w-full sm:w-auto">
+
+                        <div className="flex items-center gap-2">
                           <Button
                             onClick={() => navigate(`/user/${match.userId}`)}
                             variant="outline"
-                            className="text-xs font-semibold rounded border border-neutral-200 dark:border-neutral-700 flex-1 sm:flex-initial"
+                            size="sm"
+                            className="text-xs h-8 px-3 rounded-lg border-neutral-200 dark:border-neutral-800"
                           >
-                            <Eye className="w-3.5 h-3.5 mr-1" />
-                            Profile
+                            <Eye className="w-3.5 h-3.5 mr-1" /> Profile
                           </Button>
                           <Button
                             onClick={async () => {
@@ -713,26 +535,43 @@ export default function TalentGraphPage() {
                                 toast.error('Failed to open chat');
                               }
                             }}
-                            className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold rounded px-4 flex-1 sm:flex-initial"
+                            size="sm"
+                            className="text-xs h-8 px-3 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-lg font-semibold"
                           >
-                            <MessageSquare className="w-3.5 h-3.5 mr-1" />
-                            Message
+                            <MessageSquare className="w-3.5 h-3.5 mr-1" /> Message
                           </Button>
                         </div>
                       </div>
 
-                      {/* Reason Outlined Box */}
-                      <div className="p-3 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                        <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Match Reason</h4>
-                        <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-medium">
-                          {match.reason}
-                        </p>
+                      {/* Evidence Lines (Flat) */}
+                      <div className="text-xs space-y-1 text-neutral-700 dark:text-neutral-300">
+                        {match.complementaryStrengths && (
+                          <div>
+                            <span className="font-bold text-neutral-900 dark:text-white">Complementary strength: </span>
+                            {match.complementaryStrengths}
+                          </div>
+                        )}
+                        {match.potentialCollaboration && (
+                          <div>
+                            <span className="font-bold text-neutral-900 dark:text-white">Possible collaboration: </span>
+                            {match.potentialCollaboration}
+                          </div>
+                        )}
+                        {match.matchReason && !match.complementaryStrengths && (
+                          <div className="text-neutral-600 dark:text-neutral-400">
+                            {match.matchReason}
+                          </div>
+                        )}
                       </div>
 
+                      {/* Skills Chips */}
                       {skillsList.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {skillsList.map(s => (
-                            <span key={s} className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px] border border-neutral-200 dark:border-neutral-700">
+                        <div className="flex flex-wrap gap-1">
+                          {skillsList.slice(0, 6).map((s) => (
+                            <span
+                              key={s}
+                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-100 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800"
+                            >
                               {s}
                             </span>
                           ))}
@@ -746,599 +585,263 @@ export default function TalentGraphPage() {
           </div>
         )}
 
-        {/* 2. OPPORTUNITY FEED TAB */}
+        {/* ── 2. OPPORTUNITIES TAB (WITH EMBEDDED HIRING FILTER) ──── */}
         {activeTab === 'opportunities' && (
-          <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h2 className="text-base font-bold text-neutral-900 dark:text-white">AI Project Opportunity Feed</h2>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">Startup ideas, collaboration openings, and open-source projects selected for you.</p>
+          <div className="space-y-5 text-left">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Filter Pills */}
+              <div className="flex gap-1.5 p-1 bg-neutral-100 dark:bg-neutral-900 rounded-lg text-xs font-semibold w-fit">
+                <button
+                  onClick={() => setOppFilter('all')}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    oppFilter === 'all'
+                      ? 'bg-white dark:bg-black text-neutral-900 dark:text-white shadow-xs'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                  }`}
+                >
+                  All Opportunities
+                </button>
+                <button
+                  onClick={() => setOppFilter('ideas')}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    oppFilter === 'ideas'
+                      ? 'bg-white dark:bg-black text-neutral-900 dark:text-white shadow-xs'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                  }`}
+                >
+                  Project Ideas
+                </button>
+                <button
+                  onClick={() => setOppFilter('hiring')}
+                  className={`px-3 py-1 rounded-md transition-colors ${
+                    oppFilter === 'hiring'
+                      ? 'bg-white dark:bg-black text-neutral-900 dark:text-white shadow-xs'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                  }`}
+                >
+                  Hiring & Candidates
+                </button>
               </div>
-              <Button
-                onClick={handleRefreshOpportunities}
-                disabled={loadingFeed}
-                size="sm"
-                className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold py-2 px-4 rounded border border-neutral-300 dark:border-neutral-700"
-              >
-                {loadingFeed ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                    Refresh Feed
-                  </>
-                )}
-              </Button>
+
+              {oppFilter !== 'hiring' && (
+                <Button
+                  onClick={handleRefreshOpportunities}
+                  disabled={loadingFeed}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-8 px-3 rounded-lg border-neutral-300 dark:border-neutral-700 self-start sm:self-auto"
+                >
+                  {loadingFeed ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Updating…
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
-            {loadingFeed && timeRemaining.opportunities > 0 ? (
-              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
-                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
-                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-t-[#3B82F6] border-r-[#3B82F6] animate-spin"></div>
-                  <div className="text-xl font-extrabold text-[#3B82F6]">{formatTime(timeRemaining.opportunities)}</div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Generating Opportunities</h3>
-                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
-                    Scanning current business ideas, open source codebases, and startup scopes matching your developer profile.
-                  </p>
-                  <p className="text-[11px] text-[#3B82F6] font-semibold bg-[#3B82F6]/10 py-1.5 px-3 rounded-full inline-block">
-                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
-                  </p>
-                </div>
+            {/* Opportunities List (when not in Hiring sub-view) */}
+            {oppFilter !== 'hiring' && (
+              <>
+                {loadingFeed ? (
+                  <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="py-4 space-y-2 animate-pulse">
+                        <div className="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded" />
+                        <div className="h-3 w-72 bg-neutral-100 dark:bg-neutral-900 rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : opportunities.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-neutral-500 space-y-3">
+                    <p>No personalized opportunities compiled yet.</p>
+                    <Button
+                      onClick={handleRefreshOpportunities}
+                      size="sm"
+                      className="text-xs bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-lg"
+                    >
+                      Generate Opportunities
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                    {opportunities
+                      .filter((opp) => (oppFilter === 'ideas' ? opp.category !== 'Hiring' : true))
+                      .map((opp) => (
+                        <div key={opp.id || opp.title} className="py-4 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="font-bold text-sm text-neutral-900 dark:text-white">{opp.title}</h3>
+                            {opp.category && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800">
+                                {opp.category}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                            {opp.description}
+                          </p>
+                          {opp.potentialImpact && (
+                            <div className="text-[11px] text-neutral-500 italic">
+                              Potential value: {opp.potentialImpact}
+                            </div>
+                          )}
+                          {opp.skillsNeeded?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {opp.skillsNeeded.map((s) => (
+                                <span
+                                  key={s}
+                                  className="px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-800"
+                                >
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Hiring Mode (merged inside Opportunities) */}
+            {oppFilter === 'hiring' && (
+              <div className="space-y-5 pt-2">
+                <form onSubmit={handleHiringSearch} className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                      Technical Requirement or Role Description
+                    </label>
+                    <Textarea
+                      value={hiringReq}
+                      onChange={(e) => setHiringReq(e.target.value)}
+                      placeholder="e.g. Engineer experienced with distributed systems, real-time sync, and React..."
+                      rows={3}
+                      className="mt-1 rounded-lg text-xs bg-neutral-50 dark:bg-neutral-900/40 border-neutral-200 dark:border-neutral-800"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={loadingHiring || !hiringReq.trim()}
+                      size="sm"
+                      className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold rounded-lg"
+                    >
+                      {loadingHiring ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Searching…
+                        </>
+                      ) : (
+                        'Find Candidates'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+
+                {hiringRecommendations.length > 0 && (
+                  <div className="divide-y divide-neutral-200 dark:divide-neutral-800 pt-3">
+                    {hiringRecommendations.map((cand) => (
+                      <div key={cand.userId} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-neutral-900 dark:text-white">@{cand.username}</span>
+                            {cand.fitTier && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                                {cand.fitTier}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{cand.reason}</p>
+                        </div>
+                        <Button
+                          onClick={() => handleContactDeveloper(cand.userId, cand.username)}
+                          size="sm"
+                          className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold rounded-lg self-start sm:self-auto"
+                        >
+                          Contact
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : loadingFeed ? (
-              <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
+            )}
+          </div>
+        )}
+
+        {/* ── 3. TEAM BUILDER TAB (FLAT) ───────────────────────────── */}
+        {activeTab === 'team' && (
+          <div className="space-y-5 text-left">
+            <form onSubmit={handleBuildTeam} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Project Name</label>
+                <Input
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  placeholder="e.g. Distributed Cache Workbench"
+                  className="mt-1 h-9 rounded-lg text-xs bg-neutral-50 dark:bg-neutral-900/40 border-neutral-200 dark:border-neutral-800"
+                />
               </div>
-            ) : opportunities.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl">
-                <Briefcase className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">Feed Empty</h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto mb-4">
-                  Generate side project suggestions and business ideas matching your skills.
-                </p>
-                <Button onClick={handleRefreshOpportunities} className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs rounded-md">
-                  Generate Feed
+              <div>
+                <label className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Project Scope & Stack</label>
+                <Textarea
+                  value={projectDesc}
+                  onChange={(e) => setProjectDesc(e.target.value)}
+                  placeholder="Describe your architecture, required roles, and tech stack..."
+                  rows={3}
+                  className="mt-1 rounded-lg text-xs bg-neutral-50 dark:bg-neutral-900/40 border-neutral-200 dark:border-neutral-800"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={buildingTeam || !projectDesc.trim()}
+                  size="sm"
+                  className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold rounded-lg"
+                >
+                  {buildingTeam ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Assembling Team…
+                    </>
+                  ) : (
+                    'Find Teammates'
+                  )}
                 </Button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {opportunities.map((opp, idx) => (
-                  <div
-                    key={opp.id || idx}
-                    className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <span className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-250 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px] font-bold">
-                          {opp.category}
+            </form>
+
+            {teamRecommendations.length > 0 && (
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-800 pt-3">
+                {teamRecommendations.map((rec) => (
+                  <div key={rec.userId} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-neutral-900 dark:text-white">@{rec.username}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400">
+                          {rec.role}
                         </span>
                       </div>
-                      <h3 className="text-sm font-bold text-neutral-900 dark:text-white">{opp.title}</h3>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed font-medium">
-                        {opp.description}
-                      </p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{rec.reason}</p>
                     </div>
-
-                    <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
-                      <div className="p-2 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded">
-                        <h4 className="text-[9px] font-bold text-neutral-400 uppercase mb-0.5">Business Potential</h4>
-                        <p className="text-[11px] text-neutral-750 dark:text-neutral-300 font-medium">{opp.businessPotential}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1">
-                        {(opp.skillsNeeded || []).map(s => (
-                          <span key={s} className="bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 rounded text-[9px] font-medium">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    <Button
+                      onClick={() => handleSendInvite(rec.userId, rec.username, rec.role)}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs rounded-lg border-neutral-300 dark:border-neutral-700 self-start sm:self-auto"
+                    >
+                      Send Invitation
+                    </Button>
                   </div>
                 ))}
               </div>
             )}
           </div>
         )}
-
-        {/* 3. TEAM BUILDER TAB */}
-        {activeTab === 'team' && (
-          <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">AI Team Builder</h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Describe a side project, hackathon project, or startup idea. AI will scan the user list and find ideal collaborators.
-              </p>
-
-              <form onSubmit={handleBuildTeam} className="space-y-3">
-                <div>
-                  <label className="text-xs text-neutral-600 dark:text-neutral-400 font-bold uppercase tracking-wider block mb-1">Project Name</label>
-                  <Input
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    placeholder="Enter project name..."
-                    className="bg-transparent border border-neutral-200 dark:border-neutral-800 text-sm h-9"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-neutral-600 dark:text-neutral-400 font-bold uppercase tracking-wider block mb-1">Project Description & Skills Needed</label>
-                  <Textarea
-                    value={projectDesc}
-                    onChange={(e) => setProjectDesc(e.target.value)}
-                    placeholder="What are you building? e.g. I need a Flutter developer and Firebase expert to build a cross-platform chat client..."
-                    rows={4}
-                    className="bg-transparent border border-neutral-200 dark:border-neutral-800 text-sm resize-none"
-                    required
-                  />
-                </div>
-                <div className="flex justify-end pt-2">
-                  <Button
-                    type="submit"
-                    disabled={buildingTeam || !projectDesc.trim()}
-                    className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold py-2 px-4 rounded shadow"
-                  >
-                    {buildingTeam ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                        Finding Contributors...
-                      </>
-                    ) : (
-                      'Find Contributors'
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-
-            {buildingTeam && timeRemaining.team > 0 ? (
-              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
-                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
-                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
-                  <div className="text-xl font-extrabold text-emerald-500">{formatTime(timeRemaining.team)}</div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Building Your Team</h3>
-                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
-                    Evaluating candidates for proposed roles, checking matching profiles, and computing structural alignments.
-                  </p>
-                  <p className="text-[11px] text-emerald-500 font-semibold bg-emerald-500/10 py-1.5 px-3 rounded-full inline-block">
-                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
-                  </p>
-                </div>
-              </div>
-            ) : buildingTeam ? (
-              <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
-              </div>
-            ) : !buildingTeam && teamRecommendations.length > 0 ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Suggested Teammates</h3>
-                <div className="space-y-3">
-                  {teamRecommendations.map((rec) => {
-                    const details = findUser(rec.userId);
-                    const skillsList = details?.talentGraph?.skills || details?.skills || [];
-                    const initials = rec.username?.slice(0, 2).toUpperCase() || 'DV';
-                    
-                    return (
-                      <div
-                        key={rec.userId}
-                        className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col sm:flex-row justify-between gap-4 items-start"
-                      >
-                        <div className="space-y-3 flex-1">
-                          <div className="flex gap-3 items-center">
-                            {details?.photo_url ? (
-                              <img
-                                src={details.photo_url}
-                                alt={rec.username}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-neutral-900 dark:bg-white flex items-center justify-center text-white dark:text-neutral-900 font-bold">
-                                {initials}
-                              </div>
-                            )}
-                            <div>
-                              <h4 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                                @{rec.username}
-                                {details?.verified && <VerifiedBadge size="sm" />}
-                              </h4>
-                              <span className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-250 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px] font-bold mt-1 inline-block">
-                                Proposed Role: {rec.role}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="p-3 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                            <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
-                              {rec.reason}
-                            </p>
-                          </div>
-
-                          {skillsList.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {skillsList.map(s => (
-                                <span key={s} className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px]">
-                                  {s}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 w-full sm:w-auto shrink-0 pt-1">
-                          <Button
-                            onClick={() => navigate(`/user/${rec.userId}`)}
-                            variant="outline"
-                            className="text-xs font-semibold rounded border border-neutral-200 dark:border-neutral-700 w-full sm:w-32"
-                          >
-                            Profile
-                          </Button>
-                          <Button
-                            onClick={() => handleSendInvite(rec.userId, rec.username, rec.role)}
-                            className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold rounded w-full sm:w-32"
-                          >
-                            <UserPlus className="w-3.5 h-3.5 mr-1" />
-                            Invite
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {/* 4. HIRING ASSISTANT TAB */}
-        {activeTab === 'hiring' && (
-          <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">AI Founder & Hiring Assistant</h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-                Describe a developer opening, startup role, or business problem you need solved. AI will find developers matching your stack.
-              </p>
-
-              <form onSubmit={handleHiringSearch} className="space-y-3">
-                <div>
-                  <label className="text-xs text-neutral-600 dark:text-neutral-400 font-bold uppercase tracking-wider block mb-1">Requirement / Problem Statement</label>
-                  <Textarea
-                    value={hiringReq}
-                    onChange={(e) => setHiringReq(e.target.value)}
-                    placeholder="e.g. Looking for a freelance React native developer to build a prototype. Need someone who understands state management and mobile notifications..."
-                    rows={4}
-                    className="bg-transparent border border-neutral-200 dark:border-neutral-800 text-sm resize-none"
-                    required
-                  />
-                </div>
-                <div className="flex justify-end pt-2">
-                  <Button
-                    type="submit"
-                    disabled={loadingHiring || !hiringReq.trim()}
-                    className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold py-2 px-4 rounded shadow"
-                  >
-                    {loadingHiring ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                        Analyzing Talent...
-                      </>
-                    ) : (
-                      'Analyze Talent'
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-
-            {loadingHiring && timeRemaining.hiring > 0 ? (
-              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 text-center space-y-6 max-w-lg mx-auto my-8 shadow-md">
-                <div className="relative flex items-center justify-center w-24 h-24 mx-auto">
-                  <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-neutral-800"></div>
-                  <div className="absolute inset-0 rounded-full border-4 border-t-amber-500 border-r-amber-500 animate-spin"></div>
-                  <div className="text-xl font-extrabold text-amber-500">{formatTime(timeRemaining.hiring)}</div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">Discuss Mars AI is Querying Candidates</h3>
-                  <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
-                    Filtering skills, screening bios, and scoring applicant matches against your requirement specs.
-                  </p>
-                  <p className="text-[11px] text-amber-500 font-semibold bg-amber-500/10 py-1.5 px-3 rounded-full inline-block">
-                    ⏳ You can navigate away or check other tabs. Results will be ready soon!
-                  </p>
-                </div>
-              </div>
-            ) : loadingHiring ? (
-              <div className="py-12 flex flex-col items-center justify-center space-y-5">
-                <div className="relative flex items-center justify-center w-20 h-20">
-                  <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-[#8B5CF6] animate-spin"></div>
-                  <div className="absolute inset-2 rounded-full border-l-2 border-r-2 border-blue-500 animate-[spin_1.5s_linear_infinite_reverse]"></div>
-                  <Search className="w-8 h-8 text-neutral-400 dark:text-neutral-500 animate-pulse" />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-bold text-neutral-900 dark:text-white">AI is scanning the TalentGraph...</p>
-                  <p className="text-xs text-neutral-500 max-w-xs mx-auto">Matching your skills, analyzing activity logs, and finding the perfect developer fit.</p>
-                </div>
-              </div>
-            ) : !loadingHiring && hiringRecommendations.length > 0 ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Identified Developer Candidates</h3>
-                <div className="space-y-3">
-                  {hiringRecommendations.map((rec) => {
-                    const details = findUser(rec.userId);
-                    const skillsList = details?.talentGraph?.skills || details?.skills || [];
-                    const initials = rec.username?.slice(0, 2).toUpperCase() || 'DV';
-                    
-                    return (
-                      <div
-                        key={rec.userId}
-                        className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex flex-col sm:flex-row justify-between gap-4 items-start"
-                      >
-                        <div className="space-y-3 flex-1">
-                          <div className="flex gap-3 items-center">
-                            {details?.photo_url ? (
-                              <img
-                                src={details.photo_url}
-                                alt={rec.username}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-neutral-900 dark:bg-white flex items-center justify-center text-white dark:text-neutral-900 font-bold">
-                                {initials}
-                              </div>
-                            )}
-                            <div>
-                              <h4 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                                @{rec.username}
-                                {details?.verified && <VerifiedBadge size="sm" />}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-250 dark:border-neutral-700 text-neutral-850 dark:text-neutral-250 px-2 py-0.5 rounded text-[10px] font-bold">
-                                  Fit Score: {rec.fitScore}%
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-3 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                            <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
-                              {rec.reason}
-                            </p>
-                          </div>
-
-                          {skillsList.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {skillsList.map(s => (
-                                <span key={s} className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[10px]">
-                                  {s}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-2 w-full sm:w-auto shrink-0 pt-1">
-                          <Button
-                            onClick={() => navigate(`/user/${rec.userId}`)}
-                            variant="outline"
-                            className="text-xs font-semibold rounded border border-neutral-200 dark:border-neutral-700 w-full sm:w-32"
-                          >
-                            Profile
-                          </Button>
-                          <Button
-                            onClick={() => handleContactDeveloper(rec.userId, rec.username)}
-                            className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-semibold rounded w-full sm:w-32"
-                          >
-                            Contact
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {/* 5. AI CHAT ASSISTANT TAB */}
-        {activeTab === 'chat' && (
-          <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl flex flex-col h-[550px] overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex items-center justify-between text-left">
-              <div>
-                <h2 className="text-sm font-bold text-neutral-900 dark:text-white">Discuss AI Network Chat</h2>
-                <p className="text-[11px] text-neutral-500">Query developers, projects, and matches in real time.</p>
-              </div>
-            </div>
-
-            {/* Chat message history container */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-left scrollbar-thin">
-              {chatMessages.map((msg, idx) => {
-                const isUser = msg.sender === 'user';
-                return (
-                  <div key={idx} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} space-y-1.5`}>
-                    <div className={`max-w-[85%] rounded-lg p-3 text-xs leading-relaxed border overflow-x-auto ${
-                      isUser
-                        ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                        : 'bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200'
-                    }`}>
-                      {isUser ? (
-                        <p className="whitespace-pre-wrap font-medium">{msg.text}</p>
-                      ) : (
-                        <div className="markdown-content font-medium space-y-2 [&_p]:mb-2 [&_pre]:bg-neutral-800 dark:[&_pre]:bg-neutral-950 [&_pre]:text-neutral-100 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:font-mono [&_code]:bg-neutral-200/50 dark:[&_code]:bg-neutral-800/50 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-2 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_a]:text-blue-500 [&_a]:underline">
-                          <ReactMarkdown>{msg.text}</ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* If AI matched developers, render them as outlined cards below the message bubbles */}
-                    {!isUser && msg.matchedUsers && msg.matchedUsers.length > 0 && (
-                      <div className="w-full max-w-[85%] grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 pl-2">
-                        {msg.matchedUsers.map(uid => {
-                          const detail = findUser(uid);
-                          if (!detail) return null;
-                          const initials = detail.username?.slice(0, 2).toUpperCase() || 'DV';
-                          const skillsList = detail.talentGraph?.skills || detail.skills || [];
-                          
-                          return (
-                            <div key={uid} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 p-3 rounded-lg flex flex-col justify-between space-y-2">
-                              <div className="flex items-center gap-2">
-                                {detail.photo_url ? (
-                                  <img src={detail.photo_url} alt={detail.username} className="w-7 h-7 rounded-full object-cover" />
-                                ) : (
-                                  <div className="w-7 h-7 rounded-full bg-neutral-950 text-white flex items-center justify-center text-[10px] font-bold">
-                                    {initials}
-                                  </div>
-                                )}
-                                <div className="text-left min-w-0">
-                                  <h4 className="text-[11px] font-bold truncate">@{detail.username}</h4>
-                                  {skillsList.length > 0 && (
-                                    <p className="text-[9px] text-neutral-400 truncate">{skillsList.slice(0, 2).join(', ')}</p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex gap-1.5 pt-1">
-                                <Button
-                                  onClick={() => navigate(`/user/${uid}`)}
-                                  variant="outline"
-                                  className="h-6 px-2 text-[9px] rounded flex-1 border border-neutral-200 dark:border-neutral-700"
-                                >
-                                  View
-                                </Button>
-                                <Button
-                                  onClick={async () => {
-                                    try {
-                                      await getOrCreateChat(user.id, uid);
-                                      navigate(`/chat/${uid}`);
-                                    } catch {
-                                      toast.error('Failed to open chat');
-                                    }
-                                  }}
-                                  className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 h-6 px-2 text-[9px] rounded flex-1"
-                                >
-                                  Chat
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              
-              {chatLoading && (
-                <div className="flex items-start">
-                  <div className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 flex items-center gap-2 text-xs text-neutral-500">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    AI Assistant is thinking...
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Quick Actions Container */}
-            <div className="px-4 py-2 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap gap-1.5 justify-start">
-              <button
-                onClick={() => handleChatSuggestion('Find React developers')}
-                className="bg-transparent border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 text-neutral-600 dark:text-neutral-400 px-2 py-1 rounded text-[10px] font-semibold transition-all"
-              >
-                Find React developers
-              </button>
-              <button
-                onClick={() => handleChatSuggestion('Find AI engineers')}
-                className="bg-transparent border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 text-neutral-600 dark:text-neutral-400 px-2 py-1 rounded text-[10px] font-semibold transition-all"
-              >
-                Find AI engineers
-              </button>
-              <button
-                onClick={() => handleChatSuggestion('Who can help with cybersecurity?')}
-                className="bg-transparent border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 text-neutral-600 dark:text-neutral-400 px-2 py-1 rounded text-[10px] font-semibold transition-all"
-              >
-                Who knows cybersecurity?
-              </button>
-              <button
-                onClick={() => handleChatSuggestion('Suggest developers for my MVP')}
-                className="bg-transparent border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 text-neutral-600 dark:text-neutral-400 px-2 py-1 rounded text-[10px] font-semibold transition-all"
-              >
-                Suggest developers for my MVP
-              </button>
-            </div>
-
-            {/* Chat Form */}
-            <form onSubmit={handleChatSend} className="p-3 border-t border-neutral-200 dark:border-neutral-700 dark:border-[#262626] flex gap-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask Discuss AI network assistant..."
-                className="flex-1 bg-transparent border border-neutral-200 dark:border-neutral-800 focus:border-neutral-400 dark:focus:border-neutral-600 text-xs h-9"
-                required
-              />
-              <Button
-                type="submit"
-                disabled={chatLoading || !chatInput.trim()}
-                className="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 h-9 w-9 p-0 flex items-center justify-center rounded"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </Button>
-            </form>
-          </div>
-        )}
-
-        {/* 6. TRANSPARENCY LOGS TAB */}
-        {activeTab === 'logs' && (
-          <div className="space-y-4 text-left">
-            <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5">
-              <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-1">AI Actions & Transparency Log</h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                A listing of actions performed by AI on your behalf, explaining how your profile is processed.
-              </p>
-            </div>
-
-            {loadingLogs ? (
-              <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
-              </div>
-            ) : actionLogs.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl">
-                <Terminal className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-1">No Activity Logs</h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
-                  When you refresh matches, build teams, or interact with the AI assistant, records will appear here.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
-                <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {actionLogs.map((log) => (
-                    <div key={log.id} className="p-4 flex flex-col sm:flex-row justify-between gap-3 text-xs">
-                      <div>
-                        <span className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-250 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
-                          {log.type}
-                        </span>
-                        <p className="text-neutral-700 dark:text-neutral-300 font-semibold mt-1.5 leading-relaxed">
-                          {log.description}
-                        </p>
-                      </div>
-                      <span className="text-[10px] text-neutral-400 shrink-0 self-end sm:self-start">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      </main>
     </div>
   );
 }

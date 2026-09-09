@@ -43,7 +43,6 @@ const PulsePage             = lazy(() => import('@/pages/PulsePage'));
 const DevRadarPage          = lazy(() => import('@/pages/DevRadarPage'));
 const EditorPage            = lazy(() => import('@/pages/EditorPage'));
 const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
-const AiChatPage            = lazy(() => import('@/pages/AiChatPage'));
 const DiscussSherlockPage   = lazy(() => import('@/pages/DiscussSherlockPage'));
 const TalentGraphPage       = lazy(() => import('@/pages/TalentGraphPage'));
 import SkillsOnboardingModal from '@/components/SkillsOnboardingModal';
@@ -236,7 +235,7 @@ function AppRoutes() {
         <Route path="/devradar"                element={<ProtectedRoute><DevRadarPage /></ProtectedRoute>} />
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
-        <Route path="/ai-assistant"            element={<ProtectedRoute><AiChatPage /></ProtectedRoute>} />
+        <Route path="/ai-assistant"            element={<Navigate to="/talentgraph" replace />} />
         <Route path="/talentgraph"             element={<ProtectedRoute><TalentGraphPage /></ProtectedRoute>} />
         <Route path="/sherlock"                element={<ProtectedRoute><DiscussSherlockPage /></ProtectedRoute>} />
 
@@ -415,8 +414,7 @@ function OnboardingWrapper({ children }) {
   const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', ...(user ? [] : ['/guidelines'])];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
-  const isAiChatRoute = location.pathname === '/ai-assistant';
-  const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute && !isAiChatRoute;
+  const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute;
 
   return (
     <>

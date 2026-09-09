@@ -15,8 +15,10 @@ import {
   Video,
   Image as ImageIcon,
   AlertCircle,
+  AlertOctagon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { evaluatePostSafety } from '@/lib/safetyService';
 import MediaUpload from '@/components/MediaUpload';
 import { createPulse } from '@/lib/pulseDb';
 import UserAvatar from '@/components/UserAvatar';
@@ -52,6 +54,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
   const [showCode, setShowCode] = useState(false);
   const [code, setCode] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
+  const [safetyWarning, setSafetyWarning] = useState(null);
 
   // Hashtag autocomplete state
   const [activeToken, setActiveToken] = useState(null);
@@ -74,6 +77,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
     setActiveToken(null);
     setSuggestions([]);
     setShowSuggestions(false);
+    setSafetyWarning(null);
   };
 
   // Inline hashtags analysis
@@ -139,29 +143,9 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (postType === 'project' && !title.trim()) {
-      return setError('Project title is required');
-    }
-    if (postType === 'pulse' && media.length === 0) {
-      return setError('A video is required for Pulse');
-    }
-    if (postType !== 'pulse') {
-      if (content.trim().length < 2) {
-        return setError('Content must be at least 2 characters.');
-      }
-      if (content.length > 600) {
-        return setError('Content cannot exceed 600 characters.');
-      }
-      if (hasExceededLimit) {
-        return setError('You can add up to 5 hashtags per post.');
-      }
-    }
-
+  const doPublish = async () => {
     setLoading(true);
+    setSafetyWarning(null);
     try {
       if (postType === 'pulse') {
         const pulseId = await createPulse(
@@ -204,6 +188,49 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (postType === 'project' && !title.trim()) {
+      return setError('Project title is required');
+    }
+    if (postType === 'pulse' && media.length === 0) {
+      return setError('A video is required for Pulse');
+    }
+    if (postType !== 'pulse') {
+      if (content.trim().length < 2) {
+        return setError('Content must be at least 2 characters.');
+      }
+      if (content.length > 600) {
+        return setError('Content cannot exceed 600 characters.');
+      }
+      if (hasExceededLimit) {
+        return setError('You can add up to 5 hashtags per post.');
+      }
+    }
+
+    // Pre-publish safety advisory (strict 1200ms UX budget; never delays posting indefinitely)
+    if (postType !== 'pulse' && !safetyWarning) {
+      try {
+        const safetyPromise = evaluatePostSafety(content.trim(), showCode ? code.trim() : '');
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1200));
+        const safety = await Promise.race([safetyPromise, timeoutPromise]);
+        if (safety && safety.status === 'high_risk') {
+          setSafetyWarning({
+            summary: safety.summary || 'This post may contain content that conflicts with Discuss community guidelines. You can review it before publishing.',
+            categories: safety.categories || [],
+          });
+          return;
+        }
+      } catch (_) {
+        // AI check errors never block publishing
+      }
+    }
+
+    await doPublish();
   };
 
   const placeholderText =
@@ -573,6 +600,38 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                   placeholder="https://your-app.com"
                   className="h-10 bg-neutral-50 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 dark:text-white focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 rounded-xl text-sm"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Pre-Publish Safety Notice (Non-blocking) */}
+          {safetyWarning && (
+            <div className="p-3.5 rounded-xl border border-rose-500/20 bg-rose-500/10 text-neutral-800 dark:text-neutral-200 space-y-2">
+              <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs">
+                <AlertOctagon className="w-4 h-4 shrink-0" />
+                <span>Community Guidelines Notice</span>
+              </div>
+              <p className="text-xs leading-relaxed text-rose-700 dark:text-rose-300">
+                {safetyWarning.summary || 'This post may contain content that conflicts with Discuss community guidelines. You can review it before publishing.'}
+              </p>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSafetyWarning(null)}
+                  className="text-xs h-8 px-3 rounded-lg border-neutral-300 dark:border-neutral-700"
+                >
+                  Edit post
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={doPublish}
+                  className="text-xs h-8 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold"
+                >
+                  Post anyway
+                </Button>
               </div>
             </div>
           )}

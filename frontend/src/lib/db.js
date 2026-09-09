@@ -501,24 +501,24 @@ export const updatePost = async (postId, updates, userId) => {
   const titleTags = extractHashtags(updates.title || post.title);
   const existingTags = updates.hashtags !== undefined ? updates.hashtags : (post.hashtags || []);
   
+  // Disallow client from supplying custom aiSafetyInfo or forging safety fields
+  delete updates.aiSafetyInfo;
+  delete updates.aiSafety;
+  delete updates.categories;
+  delete updates.confidence;
+  delete updates.analysisVersion;
+  delete updates.contentHash;
+
   const finalUpdates = {
     ...updates,
     hashtags: [...new Set([...existingTags, ...contentTags, ...titleTags])]
   };
 
-  // AI Scoring Hash Check
-  // If the post has been scored before, and we are editing the text, check if the hash changed
-  if (post.aiScored && !finalUpdates.aiSafetyInfo) {
-    const textToCheck = (finalUpdates.title !== undefined ? finalUpdates.title : post.title || '') + ' ' + 
-                        (finalUpdates.content !== undefined ? finalUpdates.content : post.content || '');
-    
-    // Import dynamically to avoid circular dependencies if any, though it should be fine at top level
-    const { generateContentHash } = require('./scoringLogic');
-    const newHash = generateContentHash(textToCheck);
-
-    if (newHash !== post.lastScoredContentHash) {
-      finalUpdates.aiScoreOutdated = true;
-    }
+  // If post content was modified, invalidate safety metadata on the server
+  if (updates.title !== undefined || updates.content !== undefined || updates.code !== undefined) {
+    finalUpdates.aiSafetyInfo = null;
+    finalUpdates.aiScoreOutdated = true;
+    finalUpdates.lastScoredContentHash = null;
   }
   
   await update(postRef, finalUpdates);
