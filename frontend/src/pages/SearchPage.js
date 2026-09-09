@@ -153,6 +153,7 @@ export default function SearchPage() {
                       <div key={person.id} className="flex items-center justify-between py-3.5">
                         <Link to={`/user/${person.id}`} className="flex items-center gap-3 flex-1 min-w-0 group">
                           <UserAvatar
+                            userId={person.id}
                             src={person.photo_url}
                             username={person.username}
                             className="w-10 h-10 rounded-full shrink-0"
@@ -212,7 +213,7 @@ export default function SearchPage() {
               <div className="overflow-hidden rounded-2xl border border-[#EFEFEF] dark:border-[#262626]">
                 {people.map((person) => (
                   <Link key={person.id} to={`/user/${person.id}`} className="flex items-center gap-3 border-b border-[#EFEFEF] px-4 py-3.5 transition-colors last:border-0 hover:bg-[#FAFAFA] dark:border-[#262626] dark:hover:bg-[#0A0A0A]">
-                    <UserAvatar src={person.photo_url} username={person.username} className="h-11 w-11 rounded-full object-cover" />
+                    <UserAvatar userId={person.id} src={person.photo_url} username={person.username} className="h-11 w-11 rounded-full object-cover" />
                     <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><span className="truncate text-[14px] font-bold text-neutral-900 dark:text-white">{person.username}</span>{isUserVerified(person) && <VerifiedBadge size="sm" />}</div><p className="truncate text-[12px] text-neutral-500">View developer profile</p></div>
                     <ChevronRight className="h-4 w-4 text-neutral-400" />
                   </Link>

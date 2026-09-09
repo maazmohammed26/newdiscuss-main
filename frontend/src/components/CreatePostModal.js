@@ -380,7 +380,7 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
                 onKeyUp={(e) => checkHashtagAutocomplete(content, e.target.selectionStart)}
                 placeholder={placeholderText}
                 rows={postType === 'discussion' ? 5 : 3}
-                className="mt-1.5 bg-neutral-50 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-800 dark:text-white focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 rounded-xl resize-none p-3.5 text-sm leading-relaxed w-full placeholder:text-neutral-400"
+                className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none focus-visible:ring-0 shadow-none px-0 py-1.5 text-[15px] sm:text-base leading-relaxed text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 resize-none"
               />
 
               {/* Hashtag Autocomplete dropdown */}
@@ -485,27 +485,18 @@ export default function CreatePostModal({ open, onClose, onCreated, initialType 
           )}
 
           {/* Media Upload Section */}
-          <div className="space-y-2">
-            <Label className="text-[#0F172A] dark:text-[#F1F5F9] text-[13px] md:text-[15px] font-medium flex items-center gap-2">
+          <div className="space-y-2 border-t border-neutral-100 dark:border-neutral-800/80 pt-3">
+            <Label className="text-neutral-800 dark:text-neutral-200 text-xs font-semibold flex items-center gap-2">
               {postType === 'pulse' ? (
                 <>
-                  <Video className="w-4 h-4 text-[#EF4444]" /> <span>Video Upload</span>
+                  <Video className="w-4 h-4 text-neutral-700 dark:text-neutral-300" /> <span>Video Upload</span>
                 </>
               ) : (
                 <>
-                  <ImageIcon className="w-4 h-4 text-[#0095F6]" /> <span>Media</span>
+                  <ImageIcon className="w-4 h-4 text-neutral-700 dark:text-neutral-300" /> <span>Media</span>
                 </>
               )}
             </Label>
-
-            {postType !== 'pulse' && (
-              <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50/80 p-2.5 dark:border-neutral-800 dark:bg-neutral-900/40 select-none">
-                <AlertCircle className="w-4 h-4 text-neutral-400 shrink-0" />
-                <p className="text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400 font-medium">
-                  Uploaded media is public and visible to anyone viewing this post.
-                </p>
-              </div>
-            )}
 
             <MediaUpload
               type={postType === 'pulse' ? 'video' : 'image'}

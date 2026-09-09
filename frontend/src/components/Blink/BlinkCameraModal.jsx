@@ -820,6 +820,7 @@ export default function BlinkCameraModal({
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <UserAvatar
+                                userId={friend.id}
                                 src={friend.photo_url}
                                 username={friend.username}
                                 className="w-10 h-10 shrink-0"

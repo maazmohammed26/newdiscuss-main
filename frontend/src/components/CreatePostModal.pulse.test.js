@@ -82,4 +82,25 @@ describe('CreatePostModal - Pulse Tab & Icon Standardization', () => {
     // Separate hashtag input box must NOT exist
     expect(html).not.toContain('placeholder="Add hashtags');
   });
+
+  it('renders flat open canvas textarea without heavy bordered card container', () => {
+    const html = renderToStaticMarkup(
+      <CreatePostModal
+        open={true}
+        onClose={jest.fn()}
+        onCreated={jest.fn()}
+        initialType="discussion"
+      />
+    );
+
+    // Open writing canvas: transparent background, border-0, shadow-none
+    expect(html).toContain('bg-transparent');
+    expect(html).toContain('border-0');
+    expect(html).toContain('shadow-none');
+    expect(html).toContain('600');
+    expect(html).toContain('Add Code Support');
+
+    // Does not have old bordered card styling
+    expect(html).not.toContain('rounded-xl resize-none p-3.5 text-sm leading-relaxed w-full placeholder:text-neutral-400 mt-1.5 bg-neutral-50');
+  });
 });

@@ -1966,6 +1966,7 @@ export default function ProfilePage() {
                             className="flex items-center gap-3 flex-1 min-w-0"
                           >
                             <UserAvatar
+                              userId={request.fromUserId}
                               src={reqUser?.photo_url}
                               username={reqUser?.username || 'User'}
                               className="w-10 h-10 rounded-full"
@@ -2023,6 +2024,7 @@ export default function ProfilePage() {
                           className="flex items-center gap-3 flex-1 min-w-0"
                         >
                           <UserAvatar
+                            userId={friend.id}
                             src={friend?.photo_url}
                             username={friend?.username || 'User'}
                             className="w-10 h-10 rounded-full"
@@ -2080,6 +2082,7 @@ export default function ProfilePage() {
                               className="flex items-center gap-3 flex-1 min-w-0"
                             >
                               <UserAvatar
+                                userId={request.toUserId}
                                 src={reqUser?.photo_url}
                                 username={reqUser?.username || 'User'}
                                 className="w-9 h-9 rounded-full"

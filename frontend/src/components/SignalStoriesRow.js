@@ -28,6 +28,7 @@ function StoryAvatar({ group, hasUnseen, isSelf, onClick, onAddClick }) {
           <div className="w-full h-full rounded-full p-[2px] bg-white dark:bg-black overflow-hidden flex items-center justify-center">
             {group.authorPhotoUrl ? (
               <UserAvatar 
+                userId={group.authorId}
                 src={group.authorPhotoUrl} 
                 username={group.authorUsername} 
                 className="w-full h-full object-cover rounded-full" 

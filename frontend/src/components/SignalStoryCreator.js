@@ -144,10 +144,10 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
         </div>
 
         {/* Text input */}
-        <div className="px-5 pb-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="px-5 pb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-neutral-700 dark:text-neutral-300"><Type className="w-3.5 h-3.5" /> Text Signal</span>
-            {hasMedia && <span className="text-[10px] font-semibold text-neutral-400">Disabled while an image is attached</span>}
+            {hasMedia && <span className="text-[11px] font-medium text-neutral-400">Disabled while an image is attached</span>}
           </div>
           <textarea
             ref={textareaRef}
@@ -155,8 +155,8 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
             onChange={(e) => !hasMedia && setText(e.target.value)}
             disabled={hasMedia}
             placeholder="What's your signal? Share a thought, link, or update…"
-            rows={5}
-            className="w-full resize-none rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-3.5 text-sm leading-relaxed text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-neutral-400 focus:ring-1 focus:ring-neutral-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            rows={4}
+            className="w-full resize-none border-0 bg-transparent p-0 text-[15px] sm:text-base leading-relaxed text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none focus:ring-0 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -181,11 +181,14 @@ export default function SignalStoryCreator({ onClose, onCreated }) {
           </div>
         )}
 
+        {/* Subtle Divider */}
+        <div className="border-t border-neutral-100 dark:border-neutral-800/80 mx-5 my-2" />
+
         {/* Media Upload */}
-        <div className="px-5 pb-5">
+        <div className="px-5 pb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-neutral-700 dark:text-neutral-300"><ImageIcon className="w-3.5 h-3.5" /> Image Signal</span>
-            {hasText && <span className="text-[10px] font-semibold text-neutral-400">Clear text to attach an image</span>}
+            {hasText && <span className="text-[11px] font-medium text-neutral-400">Clear text to attach an image</span>}
           </div>
           <MediaUpload 
             type="image" 

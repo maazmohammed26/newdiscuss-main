@@ -118,7 +118,7 @@ function IncomingCall({ invite, onAccept, onDecline, busy }) {
     <div className="fixed inset-0 z-[180] flex items-center justify-center bg-white px-6 text-neutral-950 dark:bg-black dark:text-white">
       <div className="w-full max-w-sm text-center">
         <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Incoming Discuss audio call</p>
-        <UserAvatar src={invite.caller?.photoUrl} username={invite.caller?.username} priority className="mx-auto mt-9 h-32 w-32 shadow-xl" />
+        <UserAvatar userId={invite.caller?.id || invite.callerId || invite.caller?.userId} src={invite.caller?.photoUrl} username={invite.caller?.username} priority className="mx-auto mt-9 h-32 w-32 shadow-xl" />
         <h2 className="mt-6 truncate text-3xl font-semibold tracking-[-0.04em]">{invite.caller?.username || 'Discuss user'}</h2>
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">is calling you</p>
         <div className="mt-16 flex items-center justify-center gap-16">
@@ -140,7 +140,7 @@ function ParticipantTile({ participant, active, currentUserId, onCancelInvite, c
   const muted = participant.state === 'joined' && participant.muted;
   return (
     <div className={`relative flex min-h-0 flex-col items-center justify-center overflow-hidden rounded-[24px] border bg-neutral-100 px-3 py-5 transition-all dark:bg-[#171717] ${active ? 'border-transparent shadow-[0_0_0_2px_#22C55E,0_0_28px_rgba(0,149,246,0.30),0_0_42px_rgba(237,73,86,0.18)]' : 'border-neutral-200 dark:border-neutral-800'}`}>
-      <UserAvatar src={participant.photoUrl} username={participant.username} priority className="h-20 w-20 sm:h-24 sm:w-24" />
+      <UserAvatar userId={participant.id} src={participant.photoUrl} username={participant.username} priority className="h-20 w-20 sm:h-24 sm:w-24" />
       <p className="mt-4 max-w-full truncate text-sm font-semibold">{participant.id === currentUserId ? 'You' : participant.username}</p>
       <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{participant.state === 'invited' ? 'Invited' : participant.state === 'left' ? 'Left call' : 'In call'}</p>
       {participant.state === 'invited' && participant.invitedBy === currentUserId && (
@@ -165,7 +165,7 @@ function ParticipantPicker({ friends, participants, onInvite, onClose, inviting 
         <div className="mt-5 space-y-2">
           {available.length ? available.map((friend) => (
             <button key={friend.id} disabled={inviting} onClick={() => onInvite(friend.id)} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-neutral-100 disabled:opacity-50 dark:hover:bg-neutral-900">
-              <UserAvatar src={friend.photo_url} username={friend.username} className="h-11 w-11" />
+              <UserAvatar userId={friend.id} src={friend.photo_url} username={friend.username} className="h-11 w-11" />
               <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{friend.username}</p><p className="mt-0.5 text-xs text-neutral-500">Friend</p></div>
               <span className="text-xs font-semibold text-[#0095F6]">Invite</span>
             </button>
@@ -515,7 +515,7 @@ export function AudioCallProvider({ children }) {
       )}
       {session && minimized && (
         <button onClick={() => setMinimized(false)} className="fixed bottom-24 right-4 z-[165] flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full bg-neutral-950 py-2 pl-2 pr-4 text-white shadow-2xl dark:bg-white dark:text-black" aria-label="Return to audio call">
-          <UserAvatar src={Object.values(session.call?.participants || {}).find((person) => person.id !== user?.id)?.photoUrl} username={Object.values(session.call?.participants || {}).find((person) => person.id !== user?.id)?.username} className="h-9 w-9" />
+          <UserAvatar userId={Object.values(session.call?.participants || {}).find((person) => person.id !== user?.id)?.id} src={Object.values(session.call?.participants || {}).find((person) => person.id !== user?.id)?.photoUrl} username={Object.values(session.call?.participants || {}).find((person) => person.id !== user?.id)?.username} className="h-9 w-9" />
           <span className="min-w-0 text-left"><span className="block truncate text-xs font-semibold">Audio call</span><span className="block text-[10px] opacity-70">{session.call?.startedAt ? formatCallDuration(elapsed) : 'Calling'}</span></span>
           <Phone className="h-4 w-4 text-[#22C55E]" />
         </button>

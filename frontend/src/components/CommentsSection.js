@@ -52,6 +52,7 @@ function CommentReply({ reply, currentUser, postId, commentId, postAuthorId, onD
     <div className="flex items-start gap-2.5 ml-8 mt-2.5 text-xs">
       <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 mt-0.5">
         <UserAvatar 
+          userId={reply.author_id}
           src={reply.author_photo_url || null} 
           username={reply.author_username || 'User'} 
           className="w-full h-full object-cover" 
@@ -174,6 +175,7 @@ function CommentItem({ comment, postAuthorId, currentUser, postId, onDelete, onU
           className="w-7 h-7 rounded-full overflow-hidden shrink-0 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
         >
           <UserAvatar 
+            userId={comment.author_id}
             src={comment.author_photo_url || null} 
             username={comment.author_username || 'User'} 
             className="w-full h-full object-cover" 

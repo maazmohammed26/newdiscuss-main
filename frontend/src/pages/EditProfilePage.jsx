@@ -127,15 +127,29 @@ export default function EditProfilePage() {
   // Handler: Save Avatar Picture
   const handleConfirmAvatar = async () => {
     if (!user?.id || !pendingAvatar) return;
+    const prevPhoto = user.photo_url || null;
     setSavingAvatar(true);
+
+    // Optimistic instantaneous sync across all components
+    try {
+      const { broadcastAvatarUpdate } = await import('@/components/UserAvatar');
+      broadcastAvatarUpdate(user.id, pendingAvatar);
+    } catch (_) {}
+    patchUser({ photo_url: pendingAvatar });
+    setShowAvatarPicker(false);
+
     try {
       const { updateProfilePicture } = await import('@/lib/db');
       await updateProfilePicture(user.id, pendingAvatar);
-      patchUser({ photo_url: pendingAvatar });
       setPendingAvatar(null);
-      setShowAvatarPicker(false);
       toast.success('Profile picture updated');
     } catch (err) {
+      // Rollback to previous picture on error
+      try {
+        const { broadcastAvatarUpdate } = await import('@/components/UserAvatar');
+        broadcastAvatarUpdate(user.id, prevPhoto);
+      } catch (_) {}
+      patchUser({ photo_url: prevPhoto });
       toast.error('Failed to update picture');
     } finally {
       setSavingAvatar(false);
@@ -145,14 +159,28 @@ export default function EditProfilePage() {
   // Handler: Remove Avatar Picture
   const handleRemoveAvatar = async () => {
     if (!user?.id) return;
+    const prevPhoto = user.photo_url || null;
     setSavingAvatar(true);
+
+    // Optimistic instantaneous sync across all components
+    try {
+      const { broadcastAvatarUpdate } = await import('@/components/UserAvatar');
+      broadcastAvatarUpdate(user.id, null);
+    } catch (_) {}
+    patchUser({ photo_url: null });
+    setShowAvatarPicker(false);
+
     try {
       const { updateProfilePicture } = await import('@/lib/db');
       await updateProfilePicture(user.id, null);
-      patchUser({ photo_url: null });
-      setShowAvatarPicker(false);
       toast.success('Profile picture removed');
     } catch (err) {
+      // Rollback on error
+      try {
+        const { broadcastAvatarUpdate } = await import('@/components/UserAvatar');
+        broadcastAvatarUpdate(user.id, prevPhoto);
+      } catch (_) {}
+      patchUser({ photo_url: prevPhoto });
       toast.error('Failed to remove picture');
     } finally {
       setSavingAvatar(false);

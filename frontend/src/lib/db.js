@@ -131,9 +131,11 @@ export const updateProfilePicture = async (userId, photoUrl) => {
   await update(userRef, { photo_url: photoUrl });
   // Invalidate cache
   invalidateUserCache(userId);
-  
-  // Sync verification and photo across posts/comments if needed
-  // (Assuming photo_url sync might be needed similar to verification)
+
+  try {
+    const { broadcastAvatarUpdate } = await import('@/components/UserAvatar');
+    broadcastAvatarUpdate(userId, photoUrl);
+  } catch (_) {}
 };
 
 export const updateOnlineVisibility = async (userId, isOnlineVisible) => {

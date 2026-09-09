@@ -499,7 +499,7 @@ function SignalStoryViewer({
           <div className="flex items-center gap-2.5">
             {/* Author avatar */}
             {currentGroup.authorPhotoUrl ? (
-              <UserAvatar src={currentGroup.authorPhotoUrl} username={currentGroup.authorUsername} className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-400/60" />
+              <UserAvatar userId={currentGroup.authorId} src={currentGroup.authorPhotoUrl} username={currentGroup.authorUsername} className="w-9 h-9 rounded-full object-cover ring-2 ring-purple-400/60" />
             ) : (
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold ring-2 ring-purple-400/60"

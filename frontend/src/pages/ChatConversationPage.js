@@ -1061,6 +1061,7 @@ export default function ChatConversationPage() {
               className="flex items-center gap-3"
             >
               <UserAvatar
+                userId={otherUserId}
                 src={otherUser.photo_url}
                 username={otherUser.username}
                 priority
@@ -1243,6 +1244,7 @@ export default function ChatConversationPage() {
                     >
                       {!isOwn && (
                         <UserAvatar
+                          userId={otherUserId}
                           src={otherUser?.photo_url}
                           username={otherUser?.username}
                           className="w-6 h-6 shrink-0 mb-1"
@@ -1297,6 +1299,7 @@ export default function ChatConversationPage() {
 
                     {!isOwn && showAvatar && (
                       <UserAvatar
+                        userId={otherUserId}
                         src={otherUser.photo_url}
                         username={otherUser.username}
                         className="w-6 h-6 shrink-0"
@@ -1917,7 +1920,7 @@ export default function ChatConversationPage() {
                          {filteredChats.map(c => (
                            <div key={c.chatId} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                              <div className="flex items-center gap-2.5 min-w-0">
-                               <UserAvatar src={c.otherUserDetails?.photo_url} username={c.otherUserDetails?.username} className="w-8 h-8" />
+                               <UserAvatar userId={c.otherUserId || c.otherUserDetails?.id} src={c.otherUserDetails?.photo_url} username={c.otherUserDetails?.username} className="w-8 h-8" />
                                <div className="min-w-0">
                                  <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                    {c.otherUserDetails?.fullName || c.otherUserDetails?.username}
@@ -1948,7 +1951,7 @@ export default function ChatConversationPage() {
                          {filteredUsers.map(u => (
                            <div key={u.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 dark:hover:bg-[#1A1A1A]/50">
                              <div className="flex items-center gap-2.5 min-w-0">
-                               <UserAvatar src={u.photo_url} username={u.username} className="w-8 h-8" />
+                               <UserAvatar userId={u.id} src={u.photo_url} username={u.username} className="w-8 h-8" />
                                <div className="min-w-0">
                                  <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 dark:text-white truncate">
                                    {u.username}

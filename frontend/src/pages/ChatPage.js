@@ -543,6 +543,7 @@ export default function ChatPage() {
       >
         <div className="relative shrink-0">
           <UserAvatar
+            userId={otherUser.id || otherUser.userId}
             src={otherUser.photo_url}
             username={otherUser.username}
             className="w-12 h-12"
@@ -656,6 +657,7 @@ export default function ChatPage() {
         className="w-full flex items-center gap-3 px-4 py-3.5 bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950 transition-colors"
       >
         <UserAvatar
+          userId={friend.id}
           src={friend.photo_url}
           username={friend.username}
           className="w-12 h-12 shrink-0"

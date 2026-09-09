@@ -135,6 +135,7 @@ export default function BlinkViewer({
       >
         <div className="flex items-center gap-3">
           <UserAvatar
+            userId={sender?.id || message.senderId}
             src={sender?.photo_url}
             username={sender?.username || message.senderName || 'Discuss User'}
             className="w-9 h-9 ring-1 ring-white/20"

@@ -756,7 +756,7 @@ export default function DevRadarPage() {
           <div className="flex gap-4 items-start pr-6 mt-1">
             <div className="relative shrink-0">
               <UserAvatar
-                userId={activeUser?.userId}
+                userId={activeUser?.userId || activeUser?.id}
                 src={activeUser?.photo_url}
                 username={activeUser?.username || 'Dev'}
                 className={`w-14 h-14 border shrink-0 ${
