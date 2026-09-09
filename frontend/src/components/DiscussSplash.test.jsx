@@ -73,7 +73,7 @@ describe('DiscussSplash', () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
-  it('does NOT render splash when window.median bridge exists', () => {
+  it('does NOT render splash when window.median bridge exists and leaves splash hiding to App shell', () => {
     window.median = { screen: { splash: { hide: jest.fn() } } };
     Object.defineProperty(window.navigator, 'userAgent', {
       configurable: true,
@@ -85,7 +85,7 @@ describe('DiscussSplash', () => {
     });
 
     expect(container.innerHTML).toBe('');
-    expect(window.median.screen.splash.hide).toHaveBeenCalled();
+    expect(window.median.screen.splash.hide).not.toHaveBeenCalled();
   });
 
   it('renders splash in normal browser', () => {

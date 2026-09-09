@@ -44,13 +44,25 @@ export const getMedianBridge = () => {
   return window.median || window.gonative || null;
 };
 
+let nativeSplashDismissed = false;
+
+/**
+ * Dismisses the Median native launch/splash screen once the React app shell is ready.
+ * Intentionally idempotent — safe to call multiple times, dismissal executes at most once.
+ *
+ * @returns {boolean} true if dismissal bridge was triggered or already dismissed
+ */
 export const hideNativeSplash = () => {
   if (!isNativeApp() && !isMedianApp()) return false;
+  if (nativeSplashDismissed) return true;
+
   const tryHide = () => {
+    if (nativeSplashDismissed) return true;
     const bridge = getMedianBridge();
     try {
       if (bridge?.screen?.splash?.hide) {
         bridge.screen.splash.hide();
+        nativeSplashDismissed = true;
         return true;
       }
     } catch (_) {}
@@ -68,6 +80,10 @@ export const hideNativeSplash = () => {
     window.setTimeout(() => window.clearInterval(timer), 3000);
   }
   return false;
+};
+
+export const _resetNativeSplashDismissed = () => {
+  nativeSplashDismissed = false;
 };
 
 export const getNativeOneSignalBridge = async ({ timeoutMs = 8000 } = {}) => {

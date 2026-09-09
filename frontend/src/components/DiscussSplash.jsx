@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { VECTOR_GLYPHS, WORDMARK_VIEWBOX } from './DiscussGlyphs';
-import { isMedianApp, isNativeApp, hideNativeSplash } from '@/platform/platformAdapter';
+import { isMedianApp, isNativeApp } from '@/platform/platformAdapter';
 import './DiscussSplash.css';
 
 /**
@@ -68,7 +68,6 @@ export default function DiscussSplash({ onFinish, runKey = 0 }) {
   useEffect(() => {
     if (isBypassed) {
       setShouldRender(false);
-      hideNativeSplash();
       if (typeof onFinish === 'function') {
         onFinish();
       }

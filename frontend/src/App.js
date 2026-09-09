@@ -67,6 +67,24 @@ const PUBLIC_ROUTES = new Set([
 const isPublicPath = (pathname) => PUBLIC_ROUTES.has(pathname);
 
 function RouteFallback() {
+  useEffect(() => {
+    return () => {
+      // When RouteFallback unmounts, the real route component has mounted.
+      // Double-rAF ensures the browser has painted the real UI frame before native splash dismisses.
+      if (isMedianApp()) {
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              hideNativeSplash();
+            });
+          });
+        } else {
+          hideNativeSplash();
+        }
+      }
+    };
+  }, []);
+
   return (
     <div className="fixed inset-x-0 top-0 z-[120] h-[2px] overflow-hidden bg-transparent" role="progressbar" aria-label="Opening page">
       <div className="h-full w-1/3 animate-[route-progress_900ms_ease-in-out_infinite] bg-gradient-to-r from-[#ED4956] via-[#8B5CF6] to-[#0095F6]" />
@@ -232,9 +250,24 @@ function AppRoutes() {
 // ── App ───────────────────────────────────────────────────────────────────────
 function App() {
   useEffect(() => {
+    // Dismiss Median native splash screen once the React app shell has completed
+    // initial layout and paint (for scenarios where initial route was already available/cached).
+    let dismissTimer = null;
     if (isMedianApp()) {
-      hideNativeSplash();
+      const scheduleDismiss = () => {
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              hideNativeSplash();
+            });
+          });
+        } else {
+          hideNativeSplash();
+        }
+      };
+      dismissTimer = window.setTimeout(scheduleDismiss, 350);
     }
+
     // Warm the most frequently visited route chunks after first paint. This
     // keeps navigation instant without making the initial bundle heavy.
     const warmRoutes = () => Promise.allSettled([
@@ -249,6 +282,7 @@ function App() {
       ? window.requestIdleCallback(warmRoutes, { timeout: 1800 })
       : window.setTimeout(warmRoutes, 700);
     return () => {
+      if (dismissTimer) window.clearTimeout(dismissTimer);
       if (window.cancelIdleCallback && typeof idleId === 'number') window.cancelIdleCallback(idleId);
       else window.clearTimeout(idleId);
     };

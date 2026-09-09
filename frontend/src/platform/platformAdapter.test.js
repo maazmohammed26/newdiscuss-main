@@ -4,6 +4,7 @@ import {
   isNativeApp,
   isMedianApp,
   hideNativeSplash,
+  _resetNativeSplashDismissed,
   PLATFORM,
 } from './platformAdapter';
 
@@ -15,6 +16,7 @@ describe('platformAdapter', () => {
   const originalUserAgent = window.navigator.userAgent;
 
   afterEach(() => {
+    _resetNativeSplashDismissed();
     if (originalMedian === undefined) delete window.median;
     else window.median = originalMedian;
     if (originalGonative === undefined) delete window.gonative;
@@ -74,12 +76,17 @@ describe('platformAdapter', () => {
     expect(getMedianBridge()).toBe(window.median);
   });
 
-  it('invokes bridge.screen.splash.hide when available in hideNativeSplash', () => {
+  it('invokes bridge.screen.splash.hide when available in hideNativeSplash and is idempotent', () => {
     const hideMock = jest.fn();
     window.median = { screen: { splash: { hide: hideMock } } };
     Object.defineProperty(window.navigator, 'userAgent', { configurable: true, value: 'median' });
-    const result = hideNativeSplash();
-    expect(result).toBe(true);
+    const result1 = hideNativeSplash();
+    expect(result1).toBe(true);
+    expect(hideMock).toHaveBeenCalledTimes(1);
+
+    // Second call must NOT invoke the bridge again (idempotent)
+    const result2 = hideNativeSplash();
+    expect(result2).toBe(true);
     expect(hideMock).toHaveBeenCalledTimes(1);
   });
 
