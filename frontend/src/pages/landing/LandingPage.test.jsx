@@ -72,8 +72,6 @@ describe('Discuss Public LandingPage (Production Hand-Drawn / Drawable UI)', () 
     expect(html).toContain('/&gt;');
 
     // 2. Region 1: Header
-    expect(html).toContain('Explore');
-    expect(html).toContain('Log in');
     expect(html).toContain('Join Discuss');
 
     // 3. Region 2: Hero Section

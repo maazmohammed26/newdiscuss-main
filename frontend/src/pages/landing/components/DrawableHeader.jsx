@@ -21,19 +21,7 @@ export default function DrawableHeader() {
         </Link>
 
         {/* Navigation Actions */}
-        <nav className="flex items-center gap-2 sm:gap-4" aria-label="Main Navigation">
-          <Link
-            to="/feed"
-            className="drawable-nav-link text-sm font-semibold text-neutral-600 hover:text-neutral-950 px-3 py-1.5 transition-colors hidden sm:inline-block"
-          >
-            Explore
-          </Link>
-          <Link
-            to="/login"
-            className="drawable-nav-link text-sm font-semibold text-neutral-600 hover:text-neutral-950 px-3 py-1.5 transition-colors"
-          >
-            Log in
-          </Link>
+        <nav className="flex items-center" aria-label="Main Navigation">
           <DrawableButton to="/register" variant="red-outline" size="sm">
             <span>Join Discuss</span>
           </DrawableButton>
