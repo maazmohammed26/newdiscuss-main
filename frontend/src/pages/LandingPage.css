@@ -1,56 +1,301 @@
-html { scroll-behavior: smooth; }
-.lp-page {
+/* ==========================================================================
+   DISCUSS FULL HAND-DRAWN / DRAWABLE LANDING PAGE
+   Strictly scoped under .drawable-landing & .discuss-landing.
+   Pure White Background (#FFFFFF) + Discuss Red (#EF4444) + Discuss Blue (#0095F6).
+   Zero texture, zero grid, zero noise - pure white canvas with drawn UI surfaces.
+   ========================================================================== */
+
+.drawable-landing,
+.discuss-landing {
+  --dw-bg: #FFFFFF;
+  --dw-card-bg: #FFFFFF;
+  --dw-ink: #0A0A0A;
+  --dw-ink-muted: #4B5563;
+  --dw-border: #1F2937;
+
+  /* Brand Accents */
+  --dw-red: #EF4444;
+  --dw-red-hover: #DC2626;
+  --dw-red-soft: rgba(239, 68, 68, 0.08);
+  --dw-blue: #0095F6;
+  --dw-blue-hover: #1877F2;
+  --dw-blue-soft: rgba(0, 149, 246, 0.08);
+
+  background-color: #FFFFFF !important;
+  color: var(--dw-ink) !important;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Plus Jakarta Sans", sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
   overflow-x: hidden;
-  background-color: #ffffff !important;
-  color: #0a0a0a !important;
-  color-scheme: light;
 }
-.lp-page header {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  border-bottom-color: rgba(229, 231, 235, 0.8) !important;
-}
-.lp-page header a[aria-label="Discuss home"] .font-script {
-  color: #171717 !important;
-}
-.lp-page footer .font-script {
-  color: #171717 !important;
-}
-.lp-grid { background-image: linear-gradient(rgba(15,23,42,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,.035) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(to bottom, black, transparent 88%); }
-.lp-gradient-text { background: linear-gradient(110deg, #ef4444 5%, #0095f6 82%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-/* Handwritten annotation styling */
-.lp-handwritten {
+/* Handwritten Typography Class (Used ONLY for short annotations, notes, arrows) */
+.drawable-landing .drawable-handwritten,
+.discuss-landing .drawable-handwritten {
   font-family: 'Caveat', 'Grand Hotel', cursive, sans-serif;
-  font-size: 1.28rem;
-  line-height: 1.25;
+  font-weight: 600;
+  font-size: 1.35rem;
+  line-height: 1.2;
   letter-spacing: 0.02em;
-  color: #1e293b;
 }
 
-/* Brand update arrow animation */
-.lp-arrow-sketch {
-  stroke-dasharray: 120;
-  stroke-dashoffset: 120;
-  animation: lpDrawArrow 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards infinite alternate;
+/* ── 1. Drawable Button System ────────────────────────────────────────────── */
+.drawable-landing .drawable-btn,
+.discuss-landing .drawable-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  outline: none;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+  user-select: none;
 }
 
-@keyframes lpDrawArrow {
-  0% {
-    stroke-dashoffset: 120;
-    opacity: 0.4;
-  }
-  50% {
+.drawable-landing .drawable-btn:hover,
+.discuss-landing .drawable-btn:hover {
+  transform: translateY(-1px);
+}
+
+.drawable-landing .drawable-btn:active,
+.discuss-landing .drawable-btn:active {
+  transform: translateY(1px);
+}
+
+.drawable-landing .drawable-btn:focus-visible,
+.discuss-landing .drawable-btn:focus-visible {
+  outline: 2px dashed var(--dw-blue);
+  outline-offset: 4px;
+}
+
+/* Red Marker Fill Button */
+.drawable-landing .drawable-btn-red-marker,
+.discuss-landing .drawable-btn-red-marker {
+  color: #FFFFFF !important;
+}
+
+.drawable-landing .drawable-btn-red-marker .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-red-marker .drawable-btn-path-outer {
+  fill: var(--dw-red);
+  stroke: var(--dw-red-hover);
+  stroke-width: 2.2;
+}
+
+.drawable-landing .drawable-btn-red-marker .drawable-btn-path-inner,
+.discuss-landing .drawable-btn-red-marker .drawable-btn-path-inner {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.2;
+}
+
+.drawable-landing .drawable-btn-red-marker:hover .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-red-marker:hover .drawable-btn-path-outer {
+  fill: var(--dw-red-hover);
+}
+
+/* Red Outline Button */
+.drawable-landing .drawable-btn-red-outline,
+.discuss-landing .drawable-btn-red-outline {
+  color: var(--dw-red) !important;
+}
+
+.drawable-landing .drawable-btn-red-outline .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-red-outline .drawable-btn-path-outer {
+  fill: #FFFFFF;
+  stroke: var(--dw-red);
+  stroke-width: 2.2;
+}
+
+.drawable-landing .drawable-btn-red-outline:hover,
+.discuss-landing .drawable-btn-red-outline:hover {
+  color: var(--dw-red-hover) !important;
+}
+
+.drawable-landing .drawable-btn-red-outline:hover .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-red-outline:hover .drawable-btn-path-outer {
+  stroke: var(--dw-red-hover);
+  stroke-width: 2.5;
+}
+
+/* Blue Outline Button */
+.drawable-landing .drawable-btn-blue-outline,
+.discuss-landing .drawable-btn-blue-outline {
+  color: var(--dw-blue) !important;
+}
+
+.drawable-landing .drawable-btn-blue-outline .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-blue-outline .drawable-btn-path-outer {
+  fill: #FFFFFF;
+  stroke: var(--dw-blue);
+  stroke-width: 2.2;
+}
+
+.drawable-landing .drawable-btn-blue-outline:hover,
+.discuss-landing .drawable-btn-blue-outline:hover {
+  color: var(--dw-blue-hover) !important;
+}
+
+.drawable-landing .drawable-btn-blue-outline:hover .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-blue-outline:hover .drawable-btn-path-outer {
+  stroke: var(--dw-blue-hover);
+  stroke-width: 2.5;
+}
+
+/* Charcoal Outline Button */
+.drawable-landing .drawable-btn-charcoal-outline,
+.discuss-landing .drawable-btn-charcoal-outline {
+  color: var(--dw-ink) !important;
+}
+
+.drawable-landing .drawable-btn-charcoal-outline .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-charcoal-outline .drawable-btn-path-outer {
+  fill: #FFFFFF;
+  stroke: #1F2937;
+  stroke-width: 2.2;
+}
+
+.drawable-landing .drawable-btn-charcoal-outline .drawable-btn-path-inner,
+.discuss-landing .drawable-btn-charcoal-outline .drawable-btn-path-inner {
+  fill: none;
+  stroke: #E5E7EB;
+  stroke-width: 1.2;
+}
+
+.drawable-landing .drawable-btn-charcoal-outline:hover .drawable-btn-path-outer,
+.discuss-landing .drawable-btn-charcoal-outline:hover .drawable-btn-path-outer {
+  stroke: #111827;
+}
+
+.drawable-landing .drawable-btn-charcoal-outline:hover,
+.discuss-landing .drawable-btn-charcoal-outline:hover {
+  color: #000000 !important;
+}
+
+/* Ghost Button */
+.drawable-landing .drawable-btn-ghost,
+.discuss-landing .drawable-btn-ghost {
+  color: var(--dw-ink-muted) !important;
+}
+
+.drawable-landing .drawable-btn-ghost:hover,
+.discuss-landing .drawable-btn-ghost:hover {
+  color: var(--dw-ink) !important;
+}
+
+/* ── 2. Drawable Frame System ─────────────────────────────────────────────── */
+.drawable-landing .drawable-frame,
+.discuss-landing .drawable-frame {
+  position: relative;
+  background-color: #FFFFFF;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.drawable-landing .drawable-frame-hover:hover,
+.discuss-landing .drawable-frame-hover:hover {
+  transform: translateY(-2px);
+}
+
+.drawable-landing .drawable-frame-highlight,
+.discuss-landing .drawable-frame-highlight {
+  box-shadow: 0 10px 30px -10px rgba(0, 149, 246, 0.12);
+}
+
+/* ── 3. Animated Vector Draw Strokes ──────────────────────────────────────── */
+.drawable-landing .drawable-draw-path,
+.discuss-landing .drawable-draw-path {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: drawStroke 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.drawable-landing .drawable-draw-line,
+.discuss-landing .drawable-draw-line {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawLine 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes drawStroke {
+  to {
     stroke-dashoffset: 0;
-    opacity: 1;
   }
-  100% {
+}
+
+@keyframes drawLine {
+  to {
     stroke-dashoffset: 0;
-    opacity: 1;
   }
 }
 
-@media (prefers-reduced-motion: reduce) { 
-  html { scroll-behavior: auto; } 
-  .lp-arrow-sketch { stroke-dashoffset: 0; animation: none; }
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .drawable-landing .drawable-draw-path,
+  .drawable-landing .drawable-draw-line,
+  .discuss-landing .drawable-draw-path,
+  .discuss-landing .drawable-draw-line {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+
+  .drawable-landing .drawable-btn,
+  .discuss-landing .drawable-btn {
+    transition: none !important;
+  }
+
+  .drawable-landing .drawable-frame,
+  .discuss-landing .drawable-frame {
+    transition: none !important;
+  }
 }
 
+/* ── 4. Nav Underline Interactions ────────────────────────────────────────── */
+.drawable-landing .drawable-nav-link,
+.discuss-landing .drawable-nav-link {
+  position: relative;
+  display: inline-block;
+  color: var(--dw-ink);
+  font-weight: 600;
+  text-decoration: none;
+  padding-bottom: 2px;
+  transition: color 0.15s ease;
+}
+
+.drawable-landing .drawable-nav-link:hover,
+.discuss-landing .drawable-nav-link:hover {
+  color: var(--dw-red);
+}
+
+.drawable-landing .drawable-nav-link::after,
+.discuss-landing .drawable-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: var(--dw-red);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1px;
+}
+
+.drawable-landing .drawable-nav-link:hover::after,
+.discuss-landing .drawable-nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ── 5. Responsive Mobile Optimizations ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .drawable-landing .drawable-handwritten,
+  .discuss-landing .drawable-handwritten {
+    font-size: 1.15rem;
+  }
+}

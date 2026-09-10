@@ -86,6 +86,15 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
+  // ── Bypass SW on localhost/dev and for webpack hot-updates ─────────────
+  if (
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1' ||
+    url.pathname.includes('hot-update')
+  ) {
+    return; // Let browser and dev server handle directly — no SW interception
+  }
+
   // ── 1. Firebase & external API calls — Network-only (never cache) ────────
   const isFirebaseUrl =
     url.hostname.includes('firebaseio.com')       ||
@@ -106,7 +115,8 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           const contentType = response.headers.get('content-type') || '';
           if (response.ok && contentType.includes('text/html')) {
-            caches.open(STATIC_CACHE).then((cache) => cache.put(APP_SHELL_KEY, response.clone()));
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(APP_SHELL_KEY, clone));
           }
           return response;
         })
