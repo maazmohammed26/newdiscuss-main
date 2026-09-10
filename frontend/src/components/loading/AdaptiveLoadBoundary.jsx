@@ -26,6 +26,7 @@ export default function AdaptiveLoadBoundary({
   loaderMinVisible = 220,
   loaderPosition = 'header', // 'header' | 'top' | 'bottom' | 'inline' | 'none'
   focusVariant = 'standard', // 'standard' | 'hero' | 'media'
+  revealKey = null,
   triggerKey = null,
   children,
   className = '',
@@ -79,7 +80,7 @@ export default function AdaptiveLoadBoundary({
       <FocusReveal
         ready={hasData}
         variant={focusVariant}
-        triggerKey={triggerKey}
+        revealKey={revealKey ?? triggerKey}
       >
         {children}
       </FocusReveal>

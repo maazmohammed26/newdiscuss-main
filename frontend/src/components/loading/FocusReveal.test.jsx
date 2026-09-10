@@ -61,10 +61,10 @@ describe('FocusReveal', () => {
     expect(revealEl.style.willChange).toBe('auto');
   });
 
-  test('does not re-trigger animation on silent revalidation when triggerKey is unchanged', async () => {
+  test('does not re-trigger animation on silent revalidation when revealKey is unchanged', async () => {
     await act(async () => {
       root.render(
-        <FocusReveal ready={true} triggerKey="post-1">
+        <FocusReveal ready={true} revealKey="post-1">
           <div>Content 1</div>
         </FocusReveal>
       );
@@ -77,10 +77,10 @@ describe('FocusReveal', () => {
     const revealEl = container.querySelector('[data-testid="focus-reveal"]');
     expect(revealEl.getAttribute('data-focus-state')).toBe('settled');
 
-    // Rerender with same triggerKey (silent background cache revalidation)
+    // Rerender with same revealKey (silent background cache revalidation / parent rerenders)
     await act(async () => {
       root.render(
-        <FocusReveal ready={true} triggerKey="post-1">
+        <FocusReveal ready={true} revealKey="post-1">
           <div>Content 1 - background updated</div>
         </FocusReveal>
       );
@@ -90,10 +90,10 @@ describe('FocusReveal', () => {
     expect(revealEl.getAttribute('data-focus-state')).toBe('settled');
   });
 
-  test('re-triggers focus animation when triggerKey materially changes', async () => {
+  test('re-triggers focus animation when revealKey materially changes (e.g. deliberate retry)', async () => {
     await act(async () => {
       root.render(
-        <FocusReveal ready={true} triggerKey="result-1">
+        <FocusReveal ready={true} revealKey="req_1_hash">
           <div>Result 1</div>
         </FocusReveal>
       );
@@ -106,15 +106,44 @@ describe('FocusReveal', () => {
     const revealEl = container.querySelector('[data-testid="focus-reveal"]');
     expect(revealEl.getAttribute('data-focus-state')).toBe('settled');
 
-    // Material change
+    // Deliberate retry / new request
     await act(async () => {
       root.render(
-        <FocusReveal ready={true} triggerKey="result-2">
+        <FocusReveal ready={true} revealKey="req_2_hash">
           <div>Result 2</div>
         </FocusReveal>
       );
     });
 
     expect(revealEl.getAttribute('data-focus-state')).toBe('animating');
+  });
+
+  test('reduced motion bypasses blur and settles immediately', async () => {
+    // Mock matchMedia for prefers-reduced-motion
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: query.includes('prefers-reduced-motion: reduce'),
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+
+    await act(async () => {
+      root.render(
+        <FocusReveal ready={true} variant="standard">
+          <div>Accessible Content</div>
+        </FocusReveal>
+      );
+    });
+
+    const revealEl = container.querySelector('[data-testid="focus-reveal"]');
+    expect(revealEl.getAttribute('data-focus-state')).toBe('settled');
+    expect(revealEl.style.filter).toBe('none');
+
+    window.matchMedia = originalMatchMedia;
   });
 });

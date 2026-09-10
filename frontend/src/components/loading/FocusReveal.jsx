@@ -5,16 +5,17 @@ import React, { useState, useEffect, useRef } from 'react';
  * 
  * Discuss signature focus reveal motion primitive.
  * Animates newly resolved, canonical content smoothly from a gentle blur into crisp focus:
- * - STANDARD: blur 4px -> 0, opacity 0.92 -> 1, ~200ms
- * - HERO: blur 6px -> 0, opacity 0.88 -> 1, scale 1.006 -> 1, ~260ms
- * - MEDIA: blur 8px -> 0, opacity 0.88 -> 1, scale 1.01 -> 1, ~300ms
+ * - STANDARD (Text, search, Content Review, chat): blur 4px -> 0, opacity 0.92 -> 1, scale 0.995 -> 1, ~220ms
+ * - HERO (Profile banners, major page headers): blur 6px -> 0, opacity 0.90 -> 1, scale 0.99 -> 1, ~280ms
+ * - MEDIA (Pulse video, fullscreen media, images): blur 8px -> 0, opacity 0.88 -> 1, ~300ms
  * 
  * Strict Production Rules:
  * 1. Blur is NOT loading. It is only applied to correct, resolved content coming into clarity.
  * 2. Full GPU cleanup: `will-change: filter, opacity, transform` is applied only during animation,
- *    and completely removed upon completion (filter: none, transform: none) to prevent mobile/Median memory leaks.
- * 3. Does not re-animate on silent background cache revalidation unless content materially changes.
+ *    and completely removed upon completion (filter: none, transform: none, will-change: auto) to prevent mobile/Median memory leaks.
+ * 3. Does not re-animate on silent background cache revalidation or normal parent re-renders.
  * 4. Honors `prefers-reduced-motion: reduce` by rendering immediately sharp with zero blur or transform.
+ * 5. Uses a stable `revealKey` (or `triggerKey`) identity. Only a new meaningful revealKey restarts animation.
  */
 export default function FocusReveal({
   children,
@@ -22,14 +23,16 @@ export default function FocusReveal({
   variant = 'standard', // 'standard' | 'hero' | 'media'
   as: Component = 'div',
   className = '',
-  triggerKey = null, // Optional key to re-trigger reveal only on meaningful content change
+  revealKey = null, // Primary stable reveal identity key (contentHash + version / requestId)
+  triggerKey = null, // Backward-compatible alias for revealKey
   onComplete,
   style = {},
   ...props
 }) {
   const [animState, setAnimState] = useState('idle'); // 'idle' | 'animating' | 'settled'
   const wasReadyRef = useRef(false);
-  const lastKeyRef = useRef(triggerKey);
+  const activeKey = revealKey !== null && revealKey !== undefined ? revealKey : triggerKey;
+  const lastKeyRef = useRef(activeKey);
   const cleanupTimerRef = useRef(null);
 
   // Check prefers-reduced-motion
@@ -41,19 +44,19 @@ export default function FocusReveal({
     standard: {
       blurStart: 4,
       opacityStart: 0.92,
-      scaleStart: 1.0,
-      duration: 200,
+      scaleStart: 0.995,
+      duration: 220,
     },
     hero: {
       blurStart: 6,
-      opacityStart: 0.88,
-      scaleStart: 1.006,
-      duration: 260,
+      opacityStart: 0.90,
+      scaleStart: 0.99,
+      duration: 280,
     },
     media: {
       blurStart: 8,
       opacityStart: 0.88,
-      scaleStart: 1.01,
+      scaleStart: 1.0,
       duration: 300,
     },
   };
@@ -67,10 +70,10 @@ export default function FocusReveal({
     }
 
     const becameReady = ready && !wasReadyRef.current;
-    const keyChanged = triggerKey !== null && triggerKey !== undefined && triggerKey !== lastKeyRef.current;
+    const keyChanged = activeKey !== null && activeKey !== undefined && activeKey !== lastKeyRef.current;
 
     wasReadyRef.current = ready;
-    lastKeyRef.current = triggerKey;
+    lastKeyRef.current = activeKey;
 
     if (ready && (becameReady || keyChanged)) {
       if (cleanupTimerRef.current) {
@@ -85,7 +88,7 @@ export default function FocusReveal({
         if (onComplete) onComplete();
       }, config.duration + 40);
     }
-  }, [ready, triggerKey, prefersReducedMotion, config.duration, onComplete]);
+  }, [ready, activeKey, prefersReducedMotion, config.duration, onComplete]);
 
   useEffect(() => {
     return () => {
@@ -120,7 +123,7 @@ export default function FocusReveal({
           0% {
             filter: blur(4px);
             opacity: 0.92;
-            transform: scale(1.0);
+            transform: scale(0.995);
           }
           100% {
             filter: blur(0px);
@@ -131,8 +134,8 @@ export default function FocusReveal({
         @keyframes discuss-focus-reveal-hero {
           0% {
             filter: blur(6px);
-            opacity: 0.88;
-            transform: scale(1.006);
+            opacity: 0.90;
+            transform: scale(0.99);
           }
           100% {
             filter: blur(0px);
@@ -144,7 +147,7 @@ export default function FocusReveal({
           0% {
             filter: blur(8px);
             opacity: 0.88;
-            transform: scale(1.01);
+            transform: scale(1.0);
           }
           100% {
             filter: blur(0px);

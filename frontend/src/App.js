@@ -57,6 +57,9 @@ const LoginBridgePage = lazy(() => import('@/pages/LoginBridgePage'));
 const DownloadPage     = lazy(() => import('@/pages/DownloadPage'));
 const SearchPage       = lazy(() => import('@/pages/SearchPage'));
 const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
+const LoadingPreviewPage = process.env.NODE_ENV !== 'production'
+  ? lazy(() => import('@/pages/dev/LoadingPreviewPage'))
+  : null;
 
 const PUBLIC_ROUTES = new Set([
   '/', '/about', '/careers', '/blogs', '/contact', '/login', '/register',
@@ -97,6 +100,22 @@ function RouteFallback() {
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    // Once auth is resolved and user is authenticated, ensure Median native splash
+    // is dismissed after real UI paint, preventing any visible intermediate dots stage.
+    if (!loading && user && isMedianApp()) {
+      if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            hideNativeSplash();
+          });
+        });
+      } else {
+        hideNativeSplash();
+      }
+    }
+  }, [loading, user]);
 
   if (loading) {
     return <LoadingScreen message="Opening Discuss…" compact />;
@@ -239,6 +258,11 @@ function AppRoutes() {
         <Route path="/talentgraph"             element={<ProtectedRoute><TalentGraphPage /></ProtectedRoute>} />
         <Route path="/sherlock"                element={<ProtectedRoute><DiscussSherlockPage /></ProtectedRoute>} />
 
+        {/* Development-Only Motion Playground (excluded from production builds) */}
+        {process.env.NODE_ENV !== 'production' && LoadingPreviewPage && (
+          <Route path="/dev/loading-preview" element={<LoadingPreviewPage />} />
+        )}
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -264,7 +288,7 @@ function App() {
           hideNativeSplash();
         }
       };
-      dismissTimer = window.setTimeout(scheduleDismiss, 350);
+      dismissTimer = window.setTimeout(scheduleDismiss, 3500);
     }
 
     // Warm the most frequently visited route chunks after first paint. This
