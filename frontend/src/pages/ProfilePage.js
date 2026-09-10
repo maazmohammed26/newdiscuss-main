@@ -32,6 +32,7 @@ import {
 import { resolveBanner } from '@/lib/bannerPresets';
 import ProfileSocialLinks from '@/components/ProfileSocialLinks';
 import ProfileHeroSkeleton from '@/components/ProfileHeroSkeleton';
+import { FocusReveal, DelayedNetworkLoader } from '@/components/loading';
 
 import {
   saveUserLocation,
@@ -1453,7 +1454,7 @@ export default function ProfilePage() {
             {loadingProfile && !profileData ? (
               <ProfileHeroSkeleton />
             ) : (
-              <>
+              <FocusReveal ready={Boolean(profileData || user)} variant="hero" triggerKey={user?.id}>
                 {/* Banner */}
                 <div className={`relative w-full h-32 sm:h-36 md:h-44 overflow-hidden ${resolvedBanner.type === 'gradient' ? resolvedBanner.className : 'bg-neutral-100 dark:bg-neutral-900'}`}>
 
@@ -1636,7 +1637,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-      </>
+      </FocusReveal>
     )}
 
         {/* Sticky Tabs Bar */}

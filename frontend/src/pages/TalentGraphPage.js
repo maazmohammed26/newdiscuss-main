@@ -31,6 +31,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DelayedNetworkLoader, FocusReveal, SectionSkeleton } from '@/components/loading';
 
 export default function TalentGraphPage() {
   const { user } = useAuth();
@@ -422,7 +423,7 @@ export default function TalentGraphPage() {
               >
                 {loadingMatches ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Finding…
+                    <DelayedNetworkLoader active={true} delay={200} size="inline" mode="inline" className="mr-1.5" /> Finding…
                   </>
                 ) : (
                   <>
@@ -448,14 +449,10 @@ export default function TalentGraphPage() {
               </div>
             )}
 
-            {loadingMatches ? (
-              <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="py-4 space-y-2 animate-pulse">
-                    <div className="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded" />
-                    <div className="h-3 w-80 bg-neutral-100 dark:bg-neutral-900 rounded" />
-                  </div>
-                ))}
+            {loadingMatches && matches.length === 0 ? (
+              <div className="space-y-3 py-2">
+                <DelayedNetworkLoader active={true} delay={450} size="sm" mode="center" />
+                <SectionSkeleton variant="list" count={3} />
               </div>
             ) : matches.length === 0 ? (
               <div className="py-12 text-center text-xs text-neutral-500 space-y-3">
@@ -470,7 +467,8 @@ export default function TalentGraphPage() {
                 </Button>
               </div>
             ) : (
-              <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              <FocusReveal ready={true} variant="standard" triggerKey={matches.map(m => m.userId).join(',')}>
+                <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
                 {matches.map((match) => {
                   const details = findUser(match.userId);
                   const skillsList = details?.talentGraph?.skills || details?.skills || match.sharedSkills || [];
@@ -580,7 +578,8 @@ export default function TalentGraphPage() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+              </FocusReveal>
             )}
           </div>
         )}
@@ -633,7 +632,7 @@ export default function TalentGraphPage() {
                 >
                   {loadingFeed ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Updating…
+                      <DelayedNetworkLoader active={true} delay={200} size="inline" mode="inline" className="mr-1.5" /> Updating…
                     </>
                   ) : (
                     <>
@@ -647,14 +646,10 @@ export default function TalentGraphPage() {
             {/* Opportunities List (when not in Hiring sub-view) */}
             {oppFilter !== 'hiring' && (
               <>
-                {loadingFeed ? (
-                  <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                    {[1, 2].map((i) => (
-                      <div key={i} className="py-4 space-y-2 animate-pulse">
-                        <div className="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded" />
-                        <div className="h-3 w-72 bg-neutral-100 dark:bg-neutral-900 rounded" />
-                      </div>
-                    ))}
+                {loadingFeed && opportunities.length === 0 ? (
+                  <div className="space-y-3 py-2">
+                    <DelayedNetworkLoader active={true} delay={450} size="sm" mode="center" />
+                    <SectionSkeleton variant="card" count={2} />
                   </div>
                 ) : opportunities.length === 0 ? (
                   <div className="py-12 text-center text-xs text-neutral-500 space-y-3">
@@ -668,7 +663,8 @@ export default function TalentGraphPage() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                  <FocusReveal ready={true} variant="standard" triggerKey={opportunities.map(o => o.id || o.title).join(',')}>
+                    <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
                     {opportunities
                       .filter((opp) => (oppFilter === 'ideas' ? opp.category !== 'Hiring' : true))
                       .map((opp) => (
@@ -703,7 +699,8 @@ export default function TalentGraphPage() {
                           )}
                         </div>
                       ))}
-                  </div>
+                    </div>
+                  </FocusReveal>
                 )}
               </>
             )}
@@ -733,7 +730,7 @@ export default function TalentGraphPage() {
                     >
                       {loadingHiring ? (
                         <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Searching…
+                          <DelayedNetworkLoader active={true} delay={200} size="inline" mode="inline" className="mr-1.5" /> Searching…
                         </>
                       ) : (
                         'Find Candidates'
@@ -805,7 +802,7 @@ export default function TalentGraphPage() {
                 >
                   {buildingTeam ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Assembling Team…
+                      <DelayedNetworkLoader active={true} delay={200} size="inline" mode="inline" className="mr-1.5" /> Assembling Team…
                     </>
                   ) : (
                     'Find Teammates'
@@ -815,29 +812,31 @@ export default function TalentGraphPage() {
             </form>
 
             {teamRecommendations.length > 0 && (
-              <div className="divide-y divide-neutral-200 dark:divide-neutral-800 pt-3">
-                {teamRecommendations.map((rec) => (
-                  <div key={rec.userId} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-neutral-900 dark:text-white">@{rec.username}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400">
-                          {rec.role}
-                        </span>
+              <FocusReveal ready={true} variant="standard" triggerKey={teamRecommendations.length}>
+                <div className="divide-y divide-neutral-200 dark:divide-neutral-800 pt-3">
+                  {teamRecommendations.map((rec) => (
+                    <div key={rec.userId} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-neutral-900 dark:text-white">@{rec.username}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400">
+                            {rec.role}
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{rec.reason}</p>
                       </div>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{rec.reason}</p>
+                      <Button
+                        onClick={() => handleSendInvite(rec.userId, rec.username, rec.role)}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs rounded-lg border-neutral-300 dark:border-neutral-700 self-start sm:self-auto"
+                      >
+                        Send Invitation
+                      </Button>
                     </div>
-                    <Button
-                      onClick={() => handleSendInvite(rec.userId, rec.username, rec.role)}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs rounded-lg border-neutral-300 dark:border-neutral-700 self-start sm:self-auto"
-                    >
-                      Send Invitation
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </FocusReveal>
             )}
           </div>
         )}

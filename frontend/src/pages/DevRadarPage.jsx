@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { subscribeToPublicLocations, getUserLocation, saveUserLocation } from '@/lib/firebaseSixth';
 import { ArrowLeft, MapPin, Loader2, ExternalLink, X, Navigation, User, ChevronLeft, Sparkles, Compass, ShieldCheck, Check, Radar } from 'lucide-react';
+import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import UserAvatar from '@/components/UserAvatar';
 import Sidebar from '@/components/Sidebar';
@@ -604,17 +605,22 @@ export default function DevRadarPage() {
                 <Radar className={`w-8 h-8 ${getThemeTextClass()} animate-pulse`} />
               </div>
             </div>
-            <p className={`text-[10px] uppercase font-black tracking-widest ${getThemeTextClass()} animate-pulse`}>
-              Syncing DevRadar Coordinates...
-            </p>
+            <div className="flex flex-col items-center gap-1.5">
+              <p className={`text-[10px] uppercase font-black tracking-widest ${getThemeTextClass()} animate-pulse`}>
+                Syncing DevRadar Coordinates...
+              </p>
+              <DelayedNetworkLoader active={loading} delay={500} size="sm" mode="inline" />
+            </div>
           </div>
         ) : null}
         
-        {/* Leaflet map object */}
-        <div 
-          ref={mapContainerRef} 
-          className={`w-full h-full z-10 ${mapThemeClass}`} 
-        />
+        {/* Leaflet map object with FocusReveal */}
+        <FocusReveal ready={!loading} variant="standard" className="w-full h-full">
+          <div 
+            ref={mapContainerRef} 
+            className={`w-full h-full z-10 ${mapThemeClass}`} 
+          />
+        </FocusReveal>
       </div>
 
       {/* ── RADAR CONTROLS & DOCKS ───────────────────────────────────────────── */}

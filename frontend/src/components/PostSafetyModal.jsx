@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ShieldCheck, AlertTriangle, AlertOctagon, AlertCircle, Loader2 } from 'lucide-react';
 import { evaluatePostSafety } from '@/lib/safetyService';
+import { DelayedNetworkLoader, FocusReveal } from './loading';
 
 export default function PostSafetyModal({ open, onClose, post }) {
   const [loading, setLoading] = useState(false);
@@ -71,9 +72,13 @@ export default function PostSafetyModal({ open, onClose, post }) {
 
         <div className="pt-3 space-y-4 text-left">
           {loading ? (
-            <div className="py-8 flex flex-col items-center justify-center gap-3 text-neutral-500">
-              <Loader2 className="w-5 h-5 animate-spin text-neutral-600 dark:text-neutral-400" />
-              <span className="text-xs font-medium">Reviewing post content…</span>
+            <div className="py-6 space-y-3">
+              <DelayedNetworkLoader active={true} delay={450} size="sm" mode="center" />
+              <div className="space-y-2 animate-pulse">
+                <div className="h-4 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+                <div className="h-3 w-full rounded bg-neutral-200/70 dark:bg-neutral-800/70" />
+                <div className="h-3 w-5/6 rounded bg-neutral-200/60 dark:bg-neutral-800/60" />
+              </div>
             </div>
           ) : error ? (
             <div className="space-y-1.5 text-xs">
@@ -85,8 +90,10 @@ export default function PostSafetyModal({ open, onClose, post }) {
                 Could not retrieve a content review at this moment. You can retry later.
               </p>
             </div>
-          ) : status === 'high_risk' ? (
-            <div className="space-y-3 text-xs">
+          ) : (
+            <FocusReveal ready={Boolean(safetyInfo)} variant="standard">
+              {status === 'high_risk' ? (
+                <div className="space-y-3 text-xs">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-xs tracking-wider uppercase text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
                   <AlertOctagon className="w-4 h-4" />
@@ -155,6 +162,8 @@ export default function PostSafetyModal({ open, onClose, post }) {
                 No significant concerns detected.
               </div>
             </div>
+          )}
+            </FocusReveal>
           )}
 
           <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">

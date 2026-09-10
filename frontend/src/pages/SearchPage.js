@@ -8,8 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { searchPosts } from '@/lib/db';
 import { searchUsers, getSuggestedFriends } from '@/lib/relationshipsDb';
 import FriendRequestButton from '@/components/FriendRequestButton';
-import { ArrowLeft, FileText, Search, Users, X, Loader2, Hash, ChevronRight, Home, UserPlus } from 'lucide-react';
+import { ArrowLeft, FileText, Search, Users, X, Hash, ChevronRight, Home, UserPlus } from 'lucide-react';
 import { SearchSkeleton } from '@/components/skeletons';
+import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 
 const tabs = [
   { id: 'all', label: 'Top' },
@@ -145,7 +146,7 @@ export default function SearchPage() {
                       <Users className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
                       People you may know
                     </h2>
-                    {loadingSuggestions && <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-400" />}
+                    <DelayedNetworkLoader active={loadingSuggestions} delay={500} size="inline" mode="inline" />
                   </div>
 
                   <div className="divide-y divide-neutral-100 dark:divide-[#222222]">
@@ -201,41 +202,56 @@ export default function SearchPage() {
 
           {normalizedQuery && normalizedQuery.length < 2 && <p className="py-12 text-center text-[13px] text-neutral-500">Enter at least two characters to search.</p>}
 
-          {loading && <SearchSkeleton />}
+          {loading && resultCount === 0 && (
+            <div className="space-y-2">
+              <DelayedNetworkLoader active={true} delay={450} size="sm" mode="center" />
+              <SearchSkeleton />
+            </div>
+          )}
+
+          {loading && resultCount > 0 && (
+            <div className="flex justify-end py-1">
+              <DelayedNetworkLoader active={true} delay={400} size="inline" mode="inline" />
+            </div>
+          )}
 
           {!loading && normalizedQuery.length >= 2 && resultCount === 0 && (
             <div className="py-16 text-center"><p className="font-semibold text-neutral-900 dark:text-white">No results found</p><p className="mt-1 text-[13px] text-neutral-500">Try a different name, phrase, or hashtag.</p></div>
           )}
 
-          {!loading && showPeople && people.length > 0 && (
-            <section className="mb-6">
-              <div className="mb-2 flex items-center justify-between"><h2 className="flex items-center gap-2 text-[13px] font-bold text-neutral-900 dark:text-white"><Users className="h-4 w-4" /> People</h2><span className="text-[11px] text-neutral-400">{people.length}</span></div>
-              <div className="overflow-hidden rounded-2xl border border-[#EFEFEF] dark:border-[#262626]">
-                {people.map((person) => (
-                  <Link key={person.id} to={`/user/${person.id}`} className="flex items-center gap-3 border-b border-[#EFEFEF] px-4 py-3.5 transition-colors last:border-0 hover:bg-[#FAFAFA] dark:border-[#262626] dark:hover:bg-[#0A0A0A]">
-                    <UserAvatar userId={person.id} src={person.photo_url} username={person.username} className="h-11 w-11 rounded-full object-cover" />
-                    <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><span className="truncate text-[14px] font-bold text-neutral-900 dark:text-white">{person.username}</span>{isUserVerified(person) && <VerifiedBadge size="sm" />}</div><p className="truncate text-[12px] text-neutral-500">View developer profile</p></div>
-                    <ChevronRight className="h-4 w-4 text-neutral-400" />
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+          {resultCount > 0 && (
+            <FocusReveal ready={!loading} variant="standard" triggerKey={normalizedQuery}>
+              {showPeople && people.length > 0 && (
+                <section className="mb-6">
+                  <div className="mb-2 flex items-center justify-between"><h2 className="flex items-center gap-2 text-[13px] font-bold text-neutral-900 dark:text-white"><Users className="h-4 w-4" /> People</h2><span className="text-[11px] text-neutral-400">{people.length}</span></div>
+                  <div className="overflow-hidden rounded-2xl border border-[#EFEFEF] dark:border-[#262626]">
+                    {people.map((person) => (
+                      <Link key={person.id} to={`/user/${person.id}`} className="flex items-center gap-3 border-b border-[#EFEFEF] px-4 py-3.5 transition-colors last:border-0 hover:bg-[#FAFAFA] dark:border-[#262626] dark:hover:bg-[#0A0A0A]">
+                        <UserAvatar userId={person.id} src={person.photo_url} username={person.username} className="h-11 w-11 rounded-full object-cover" />
+                        <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><span className="truncate text-[14px] font-bold text-neutral-900 dark:text-white">{person.username}</span>{isUserVerified(person) && <VerifiedBadge size="sm" />}</div><p className="truncate text-[12px] text-neutral-500">View developer profile</p></div>
+                        <ChevronRight className="h-4 w-4 text-neutral-400" />
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          {!loading && showPosts && posts.length > 0 && (
-            <section>
-              <div className="mb-2 flex items-center justify-between"><h2 className="flex items-center gap-2 text-[13px] font-bold text-neutral-900 dark:text-white"><FileText className="h-4 w-4" /> Discussions & projects</h2><span className="text-[11px] text-neutral-400">{posts.length}</span></div>
-              <div className="overflow-hidden rounded-2xl border border-[#EFEFEF] dark:border-[#262626]">
-                {posts.map((post) => (
-                  <Link key={post.id} to={`/post/${post.id}`} className="block border-b border-[#EFEFEF] px-4 py-4 transition-colors last:border-0 hover:bg-[#FAFAFA] dark:border-[#262626] dark:hover:bg-[#0A0A0A]">
-                    <div className="mb-1.5 flex items-center gap-2 text-[11px] text-neutral-500"><span className="font-semibold text-neutral-700 dark:text-neutral-300">@{post.author_username || 'developer'}</span><span>·</span><span className="capitalize">{post.type || 'discussion'}</span></div>
-                    <h3 className="line-clamp-1 text-[14px] font-bold text-neutral-900 dark:text-white">{post.title || post.content || 'Untitled discussion'}</h3>
-                    {post.title && post.content && <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-neutral-500">{post.content}</p>}
-                    {post.hashtags?.length > 0 && <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#0095F6]"><Hash className="h-3 w-3" />{post.hashtags.slice(0, 3).join('  #')}</div>}
-                  </Link>
-                ))}
-              </div>
-            </section>
+              {showPosts && posts.length > 0 && (
+                <section>
+                  <div className="mb-2 flex items-center justify-between"><h2 className="flex items-center gap-2 text-[13px] font-bold text-neutral-900 dark:text-white"><FileText className="h-4 w-4" /> Discussions & projects</h2><span className="text-[11px] text-neutral-400">{posts.length}</span></div>
+                  <div className="overflow-hidden rounded-2xl border border-[#EFEFEF] dark:border-[#262626]">
+                    {posts.map((post) => (
+                      <Link key={post.id} to={`/post/${post.id}`} className="block border-b border-[#EFEFEF] px-4 py-4 transition-colors last:border-0 hover:bg-[#FAFAFA] dark:border-[#262626] dark:hover:bg-[#0A0A0A]">
+                        <div className="mb-1.5 flex items-center gap-2 text-[11px] text-neutral-500"><span className="font-semibold text-neutral-700 dark:text-neutral-300">@{post.author_username || 'developer'}</span><span>·</span><span className="capitalize">{post.type || 'discussion'}</span></div>
+                        <h3 className="line-clamp-1 text-[14px] font-bold text-neutral-900 dark:text-white">{post.title || post.content || 'Untitled discussion'}</h3>
+                        {post.title && post.content && <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-neutral-500">{post.content}</p>}
+                        {post.hashtags?.length > 0 && <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#0095F6]"><Hash className="h-3 w-3" />{post.hashtags.slice(0, 3).join('  #')}</div>}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </FocusReveal>
           )}
         </div>
       </main>

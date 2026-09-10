@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { getProfileShareUrl } from '@/platform/deepLinks';
 import UserAvatar from '@/components/UserAvatar';
+import { DelayedNetworkLoader, FocusReveal } from './loading';
 
 /**
  * ProfileShareModal - Flat, premium, monochrome share modal
@@ -140,6 +141,7 @@ export default function ProfileShareModal({ open, onClose, user = null, username
         {!isTargetResolved ? (
           /* Loading Skeleton if user data has not yet resolved */
           <div className="space-y-4 mt-3 animate-pulse" data-testid="share-skeleton">
+            <DelayedNetworkLoader active={true} delay={450} size="sm" mode="center" />
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-800 shrink-0" />
               <div className="space-y-2 flex-1">
@@ -158,7 +160,8 @@ export default function ProfileShareModal({ open, onClose, user = null, username
             </div>
           </div>
         ) : (
-          <div className="space-y-4 mt-2 min-w-0 w-full">
+          <FocusReveal ready={isTargetResolved} variant="standard" triggerKey={resolvedUserId || resolvedUsername}>
+            <div className="space-y-4 mt-2 min-w-0 w-full">
             {/* Target User Identity Header */}
             <div className="flex items-center gap-3 py-1 min-w-0">
               <UserAvatar
@@ -281,6 +284,7 @@ export default function ProfileShareModal({ open, onClose, user = null, username
               </div>
             </div>
           </div>
+          </FocusReveal>
         )}
       </DialogContent>
     </Dialog>

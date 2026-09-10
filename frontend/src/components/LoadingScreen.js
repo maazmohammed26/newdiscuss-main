@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import DiscussLogo from '@/components/DiscussLogo';
-import { Loader2, WifiOff } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
+import { DiscussLoadingDots } from '@/components/loading';
 
 export default function LoadingScreen({ message = 'Loading...', compact = false }) {
   const [elapsed, setElapsed] = useState(0);
@@ -48,7 +49,7 @@ export default function LoadingScreen({ message = 'Loading...', compact = false 
 
         <div className="flex items-center gap-2 mt-3 text-xs font-semibold text-neutral-400 dark:text-neutral-500">
           {!showRetry ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[#0095F6]" />
+            <DiscussLoadingDots size="sm" />
           ) : (
             <WifiOff className="w-4 h-4 text-[#ED4956]" />
           )}

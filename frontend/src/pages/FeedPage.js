@@ -7,6 +7,7 @@ import SignalStoriesRow from '@/components/SignalStoriesRow';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { PostCardSkeleton } from '@/components/skeletons';
+import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   WifiOff, 
@@ -173,7 +174,10 @@ export default function FeedPage() {
 
             {/* Posts Feed */}
             {loading ? (
-              <PostCardSkeleton count={3} />
+              <div className="space-y-3">
+                <DelayedNetworkLoader active={true} delay={550} size="sm" mode="center" />
+                <PostCardSkeleton count={3} />
+              </div>
             ) : error && allPosts.length === 0 && !isOffline ? (
               <div className="py-20 text-center">
                 <p className="mb-3 text-sm text-neutral-500">The feed could not sync.</p>
@@ -202,18 +206,20 @@ export default function FeedPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {filteredPosts.map((post) => (
-                  <MemoPostCard
-                    key={post.id}
-                    post={post}
-                    currentUser={user}
-                    onDeleted={handlePostDeleted}
-                    onUpdated={handlePostUpdated}
-                    onVoteChanged={handleVoteChanged}
-                  />
-                ))}
-              </div>
+              <FocusReveal ready={!loading && filteredPosts.length > 0} variant="standard" triggerKey={activeTab}>
+                <div className="space-y-1">
+                  {filteredPosts.map((post) => (
+                    <MemoPostCard
+                      key={post.id}
+                      post={post}
+                      currentUser={user}
+                      onDeleted={handlePostDeleted}
+                      onUpdated={handlePostUpdated}
+                      onVoteChanged={handleVoteChanged}
+                    />
+                  ))}
+                </div>
+              </FocusReveal>
             )}
 
             {error && allPosts.length > 0 && !isOffline && (
@@ -231,7 +237,7 @@ export default function FeedPage() {
             {hasMore && (
               <div ref={loadMoreRef} className="flex min-h-20 items-center justify-center py-6">
                 {loadingMore ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-[#0095F6]" />
+                  <DelayedNetworkLoader active={true} delay={300} minVisible={180} size="sm" mode="inline" />
                 ) : (
                   <button
                     type="button"

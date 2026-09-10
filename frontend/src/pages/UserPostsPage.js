@@ -18,6 +18,7 @@ import ProfileSocialLinks from '@/components/ProfileSocialLinks';
 import ProfileShareModal from '@/components/ProfileShareModal';
 import ProfileHeroSkeleton from '@/components/ProfileHeroSkeleton';
 import LinkifiedText from '@/components/LinkifiedText';
+import { FocusReveal } from '@/components/loading';
 
 import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2 } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
@@ -215,7 +216,7 @@ export default function UserPostsPage() {
               </div>
 
             ) : (
-              <>
+              <FocusReveal ready={Boolean(userData)} variant="hero" triggerKey={userData?.id || userId}>
                 {/* Banner */}
                 <div className={`relative w-full h-32 sm:h-36 md:h-44 overflow-hidden ${resolvedBanner.type === 'gradient' ? resolvedBanner.className : 'bg-neutral-100 dark:bg-neutral-900'}`}>
                   {resolvedBanner.type === 'image' && (
@@ -405,7 +406,7 @@ export default function UserPostsPage() {
                     )}
                   </div>
                 )}
-              </>
+              </FocusReveal>
             )}
           </div>
         </div>

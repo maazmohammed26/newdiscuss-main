@@ -27,6 +27,7 @@ import { isUserVerified } from '@/lib/verification';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send, Info, Loader2, Copy, Reply, Trash2, MoreVertical, X, Clock, AlertCircle, ChevronDown, Camera } from 'lucide-react';
+import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
 import BlinkViewer from '@/components/Blink/BlinkViewer';
 import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
@@ -893,8 +894,8 @@ export default function GroupConversationPage() {
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 ">
         <Header />
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#0095F6] text-[#0095F6] mb-3" />
-          <p className="text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm">Loading group chat...</p>
+          <DelayedNetworkLoader active={true} delay={500} size="md" mode="center" />
+          <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-2">Loading group chat...</p>
         </div>
       </div>
     );
@@ -943,11 +944,13 @@ export default function GroupConversationPage() {
       >
         <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4">
           {loadingOld && (
-            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm animate-pulse">
-              <Loader2 className="w-4 h-4 animate-spin text-[#0095F6] text-[#0095F6]" />
-              <span>Loading old messages, please wait...</span>
+            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 text-xs">
+              <DelayedNetworkLoader active={loadingOld} delay={300} minVisible={180} size="sm" mode="inline" />
+              <span>Loading older messages…</span>
             </div>
           )}
+
+          <FocusReveal ready={!loading} variant="standard" triggerKey={groupId}>
 
           {!isMember && (
             <div className="mb-4 bg-amber-50 dark:bg-amber-950/30 discuss:bg-amber-950/30 border border-amber-200 dark:border-amber-800 discuss:border-amber-800 rounded-[12px] p-4">
@@ -1000,6 +1003,7 @@ export default function GroupConversationPage() {
           ) : null}
           
           <div ref={messagesEndRef} />
+          </FocusReveal>
         </div>
       </div>
 

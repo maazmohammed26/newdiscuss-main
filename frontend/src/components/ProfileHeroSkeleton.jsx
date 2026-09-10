@@ -1,16 +1,23 @@
 import React from 'react';
+import DelayedNetworkLoader from './loading/DelayedNetworkLoader';
 
 /**
  * ProfileHeroSkeleton
  * Rendered when profile data or banner is loading and not yet resolved,
  * preventing any flash of default gradient or old content.
+ * Gracefully reveals a small Discuss loader if the network wait becomes noticeable (>600ms).
  */
-export default function ProfileHeroSkeleton({ hasTopBar = false }) {
+export default function ProfileHeroSkeleton({ hasTopBar = false, showLoader = true }) {
   return (
-    <div className="w-full select-none" data-testid="profile-hero-skeleton">
+    <div className="relative w-full select-none" data-testid="profile-hero-skeleton">
       {/* Banner Skeleton */}
       <div className="relative w-full h-32 sm:h-36 md:h-44 bg-neutral-200 dark:bg-neutral-800/80 animate-pulse overflow-hidden">
         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        {showLoader && (
+          <div className="absolute top-3 right-3 z-10">
+            <DelayedNetworkLoader active={true} delay={600} size="sm" mode="inline" />
+          </div>
+        )}
       </div>
 
       {/* Hero Body Skeleton */}

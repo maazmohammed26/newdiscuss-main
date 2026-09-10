@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import LinkifiedText from './LinkifiedText';
 import ReportModal from './ReportModal';
 import { hasUserReportedTarget } from '@/lib/reportService';
+import { DelayedNetworkLoader, FocusReveal } from './loading';
 import './PulseFeed.css';
 
 const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
@@ -209,20 +210,22 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
 
   return (
     <div className="pulse-item" onClick={handleTogglePlay}>
-      <video
-        ref={videoRef}
-        className="pulse-video"
-        src={getOptimizedVideoUrl(pulse.videoUrl)}
-        loop
-        muted={muted}
-        playsInline
-        onWaiting={() => setIsVideoLoading(true)}
-        onPlaying={() => setIsVideoLoading(false)}
-        onCanPlay={() => setIsVideoLoading(false)}
-        onLoadStart={() => setIsVideoLoading(true)}
-        onLoadedData={() => { setIsVideoLoading(false); setVideoFailed(false); }}
-        onError={() => { setIsVideoLoading(false); setVideoFailed(true); }}
-      />
+      <FocusReveal ready={!isVideoLoading && !videoFailed} variant="media" triggerKey={pulse.videoUrl} className="w-full h-full">
+        <video
+          ref={videoRef}
+          className="pulse-video"
+          src={getOptimizedVideoUrl(pulse.videoUrl)}
+          loop
+          muted={muted}
+          playsInline
+          onWaiting={() => setIsVideoLoading(true)}
+          onPlaying={() => setIsVideoLoading(false)}
+          onCanPlay={() => setIsVideoLoading(false)}
+          onLoadStart={() => setIsVideoLoading(true)}
+          onLoadedData={() => { setIsVideoLoading(false); setVideoFailed(false); }}
+          onError={() => { setIsVideoLoading(false); setVideoFailed(true); }}
+        />
+      </FocusReveal>
       
       {videoFailed && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white z-[6] p-6 text-center">
@@ -232,11 +235,13 @@ const PulseItem = ({ pulse, userId, onLike, checkLiked, onPulseDeleted }) => {
         </div>
       )}
       
-      {isVideoLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-[5] pointer-events-none bg-black/10">
-          <Loader2 className="w-8 h-8 animate-spin text-white drop-shadow-md opacity-80" />
-        </div>
-      )}
+      <DelayedNetworkLoader
+        active={isVideoLoading && !videoFailed && !playing}
+        delay={450}
+        minVisible={180}
+        size="md"
+        mode="overlay"
+      />
       
       {!playing && !pureMode && (
         <div className="play-overlay">

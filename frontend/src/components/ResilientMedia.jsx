@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ImageOff, VideoOff, Loader2 } from 'lucide-react';
+import { ImageOff, VideoOff } from 'lucide-react';
+import { DelayedNetworkLoader, FocusReveal } from './loading';
 
 // Module-level cache of URLs that have failed to load, preventing infinite
 // or repeated retry storms across React rerenders.
@@ -88,35 +89,39 @@ export default function ResilientMedia({
       className={`relative w-full overflow-hidden ${aspectRatioClassName} bg-neutral-900/10 dark:bg-black/40 ${containerClassName}`}
       onClick={onClick}
     >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-100/50 dark:bg-neutral-900/50 z-10 pointer-events-none">
-          <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-        </div>
-      )}
+      <DelayedNetworkLoader
+        active={isLoading}
+        delay={400}
+        minVisible={180}
+        size="sm"
+        mode="overlay"
+      />
 
-      {isVideoMedia ? (
-        <video
-          src={src}
-          className={className}
-          controls={false}
-          muted
-          loop
-          playsInline
-          onLoadedData={handleLoaded}
-          onError={handleError}
-        />
-      ) : (
-        <img
-          src={src}
-          alt={alt}
-          className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
-          loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
-          referrerPolicy="no-referrer"
-          onLoad={handleLoaded}
-          onError={handleError}
-        />
-      )}
+      <FocusReveal ready={!isLoading && !hasFailed} variant="media" triggerKey={src} className="w-full h-full">
+        {isVideoMedia ? (
+          <video
+            src={src}
+            className={className}
+            controls={false}
+            muted
+            loop
+            playsInline
+            onLoadedData={handleLoaded}
+            onError={handleError}
+          />
+        ) : (
+          <img
+            src={src}
+            alt={alt}
+            className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onLoad={handleLoaded}
+            onError={handleError}
+          />
+        )}
+      </FocusReveal>
     </div>
   );
 }

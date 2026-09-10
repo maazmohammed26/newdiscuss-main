@@ -36,6 +36,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 
 export default function EditProfilePage() {
   const { user, patchUser } = useAuth();
@@ -355,11 +356,26 @@ export default function EditProfilePage() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-24">
-                <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+              <div className="space-y-6 animate-pulse select-none">
+                <div className="flex justify-center pb-2">
+                  <DelayedNetworkLoader active={true} delay={500} size="sm" mode="inline" />
+                </div>
+                <div className="h-32 sm:h-36 rounded-2xl bg-neutral-200 dark:bg-neutral-800" />
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 w-40 bg-neutral-200 dark:bg-neutral-800 rounded" />
+                    <div className="h-3 w-24 bg-neutral-200 dark:bg-neutral-800/60 rounded" />
+                  </div>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <div className="h-3 w-20 bg-neutral-200 dark:bg-neutral-800 rounded" />
+                  <div className="h-20 bg-neutral-200 dark:bg-neutral-800 rounded-xl" />
+                </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <FocusReveal ready={!loading} variant="standard">
+                <div className="space-y-6">
                 {/* Section 1: Banner & Avatar */}
                 <div className="space-y-4">
                   {/* Banner Preview */}
@@ -772,6 +788,7 @@ export default function EditProfilePage() {
                   )}
                 </div>
               </div>
+              </FocusReveal>
             )}
           </main>
         </div>

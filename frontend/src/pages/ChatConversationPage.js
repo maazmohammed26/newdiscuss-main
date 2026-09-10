@@ -60,6 +60,7 @@ import {
   ArrowLeft, Send, Loader2, Lock, MoreVertical, Trash2, User, AlertTriangle, Clock, 
   Copy, X, Reply, Flag, Check, ChevronDown, Phone, Camera
 } from 'lucide-react';
+import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
 import BlinkViewer from '@/components/Blink/BlinkViewer';
 import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
@@ -1200,14 +1201,17 @@ export default function ChatConversationPage() {
       >
         <div className="mx-auto w-full max-w-[935px] px-2 sm:px-4 space-y-4">
           {loadingOld && (
-            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-sm animate-pulse">
-              <Loader2 className="w-4 h-4 animate-spin text-[#0095F6] text-[#0095F6]" />
-              <span>Loading old messages, please wait...</span>
+            <div className="flex items-center justify-center py-2 gap-2 text-neutral-500 dark:text-neutral-400 text-xs">
+              <DelayedNetworkLoader active={loadingOld} delay={300} minVisible={180} size="sm" mode="inline" />
+              <span>Loading older messages…</span>
             </div>
           )}
 
           {positionedChatId !== chatId && (
             <div className="absolute inset-x-4 top-4 z-10 space-y-3 bg-neutral-50/95 py-2 dark:bg-neutral-950/95" aria-hidden>
+              <div className="flex justify-center pb-2">
+                <DelayedNetworkLoader active={true} delay={550} size="sm" mode="inline" />
+              </div>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
@@ -1219,6 +1223,7 @@ export default function ChatConversationPage() {
             </div>
           )}
 
+          <FocusReveal ready={positionedChatId === chatId} variant="standard" triggerKey={chatId}>
           <div className={positionedChatId === chatId ? 'visible' : 'invisible'}>
           {Object.entries(groupedMessages).map(([date, dateMessages]) => (
             <div key={date}>
@@ -1464,6 +1469,7 @@ export default function ChatConversationPage() {
           
           <div ref={messagesEndRef} />
           </div>
+          </FocusReveal>
         </div>
       </div>
 
