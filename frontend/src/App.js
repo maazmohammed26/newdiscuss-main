@@ -57,9 +57,6 @@ const LoginBridgePage = lazy(() => import('@/pages/LoginBridgePage'));
 const DownloadPage     = lazy(() => import('@/pages/DownloadPage'));
 const SearchPage       = lazy(() => import('@/pages/SearchPage'));
 const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
-const LoadingPreviewPage = process.env.NODE_ENV !== 'production'
-  ? lazy(() => import('@/pages/dev/LoadingPreviewPage'))
-  : null;
 
 const PUBLIC_ROUTES = new Set([
   '/', '/about', '/careers', '/blogs', '/contact', '/login', '/register',
@@ -257,11 +254,6 @@ function AppRoutes() {
         <Route path="/ai-assistant"            element={<Navigate to="/talentgraph" replace />} />
         <Route path="/talentgraph"             element={<ProtectedRoute><TalentGraphPage /></ProtectedRoute>} />
         <Route path="/sherlock"                element={<ProtectedRoute><DiscussSherlockPage /></ProtectedRoute>} />
-
-        {/* Development-Only Motion Playground (excluded from production builds) */}
-        {process.env.NODE_ENV !== 'production' && LoadingPreviewPage && (
-          <Route path="/dev/loading-preview" element={<LoadingPreviewPage />} />
-        )}
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

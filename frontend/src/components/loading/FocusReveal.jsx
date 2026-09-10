@@ -5,9 +5,9 @@ import React, { useState, useEffect, useRef } from 'react';
  * 
  * Discuss signature focus reveal motion primitive.
  * Animates newly resolved, canonical content smoothly from a gentle blur into crisp focus:
- * - STANDARD (Text, search, Content Review, chat): blur 4px -> 0, opacity 0.92 -> 1, scale 0.995 -> 1, ~220ms
- * - HERO (Profile banners, major page headers): blur 6px -> 0, opacity 0.90 -> 1, scale 0.99 -> 1, ~280ms
- * - MEDIA (Pulse video, fullscreen media, images): blur 8px -> 0, opacity 0.88 -> 1, ~300ms
+ * - STANDARD (Text, search, Content Review, chat): blur 6px -> 0, opacity 0.90 -> 1, scale 0.993 -> 1, ~250ms
+ * - HERO (Profile banners, major page headers): blur 8.5px -> 0, opacity 0.88 -> 1, scale 0.985 -> 1, ~310ms
+ * - MEDIA (Pulse video, fullscreen media, images): blur 11px -> 0, opacity 0.86 -> 1, scale 1.005 -> 1, ~340ms
  * 
  * Strict Production Rules:
  * 1. Blur is NOT loading. It is only applied to correct, resolved content coming into clarity.
@@ -42,22 +42,22 @@ export default function FocusReveal({
 
   const variantConfig = {
     standard: {
-      blurStart: 4,
-      opacityStart: 0.92,
-      scaleStart: 0.995,
-      duration: 220,
-    },
-    hero: {
       blurStart: 6,
       opacityStart: 0.90,
-      scaleStart: 0.99,
-      duration: 280,
+      scaleStart: 0.993,
+      duration: 250,
+    },
+    hero: {
+      blurStart: 8.5,
+      opacityStart: 0.88,
+      scaleStart: 0.985,
+      duration: 310,
     },
     media: {
-      blurStart: 8,
-      opacityStart: 0.88,
-      scaleStart: 1.0,
-      duration: 300,
+      blurStart: 11,
+      opacityStart: 0.86,
+      scaleStart: 1.005,
+      duration: 340,
     },
   };
 
@@ -86,7 +86,7 @@ export default function FocusReveal({
         setAnimState('settled');
         cleanupTimerRef.current = null;
         if (onComplete) onComplete();
-      }, config.duration + 40);
+      }, config.duration + 25);
     }
   }, [ready, activeKey, prefersReducedMotion, config.duration, onComplete]);
 
@@ -121,9 +121,9 @@ export default function FocusReveal({
       <style>{`
         @keyframes discuss-focus-reveal-standard {
           0% {
-            filter: blur(4px);
-            opacity: 0.92;
-            transform: scale(0.995);
+            filter: blur(6px);
+            opacity: 0.90;
+            transform: scale(0.993);
           }
           100% {
             filter: blur(0px);
@@ -133,9 +133,9 @@ export default function FocusReveal({
         }
         @keyframes discuss-focus-reveal-hero {
           0% {
-            filter: blur(6px);
-            opacity: 0.90;
-            transform: scale(0.99);
+            filter: blur(8.5px);
+            opacity: 0.88;
+            transform: scale(0.985);
           }
           100% {
             filter: blur(0px);
@@ -145,9 +145,9 @@ export default function FocusReveal({
         }
         @keyframes discuss-focus-reveal-media {
           0% {
-            filter: blur(8px);
-            opacity: 0.88;
-            transform: scale(1.0);
+            filter: blur(11px);
+            opacity: 0.86;
+            transform: scale(1.005);
           }
           100% {
             filter: blur(0px);
