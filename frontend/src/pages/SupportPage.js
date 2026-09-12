@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, LifeBuoy, Clock3, ShieldCheck, Loader2 } from 'lucide-react';
 import SettingsInfoPageShell from '@/components/SettingsInfoPageShell';
 import { useAuth } from '@/contexts/AuthContext';
+import { DiscussLoadingDots } from '@/components/loading';
 
 const SUPPORT_MESSAGE_LIMIT = 1200;
 
 export default function SupportPage() {
-  const { user, deleteAccount } = useAuth();
+  const navigate = useNavigate();
+  const { user, deleteAccount, reauthenticateUser } = useAuth();
   const [requestType, setRequestType] = useState('bug');
   const [supportMessage, setSupportMessage] = useState('');
   const [status, setStatus] = useState('idle');
@@ -17,6 +19,11 @@ export default function SupportPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleteStatus, setDeleteStatus] = useState('idle');
   const [deleteError, setDeleteError] = useState('');
+  const [reauthPassword, setReauthPassword] = useState('');
+  const [reauthStatus, setReauthStatus] = useState('idle');
+
+  const isGoogleUser = user?.auth_provider?.includes('google') ||
+    (Array.isArray(user?.providerData) && user.providerData.some((p) => p?.providerId === 'google.com'));
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -66,24 +73,56 @@ export default function SupportPage() {
   };
 
   const closeDeleteFlow = () => {
-    if (deleteStatus === 'deleting') return;
+    if (deleteStatus === 'deleting' || reauthStatus === 'verifying') return;
     setDeleteStep('closed');
     setDeleteConfirmation('');
     setDeleteStatus('idle');
     setDeleteError('');
+    setReauthPassword('');
+    setReauthStatus('idle');
   };
 
   const permanentlyDeleteAccount = async () => {
     if (deleteStatus === 'deleting') return;
     setDeleteStatus('deleting');
     setDeleteError('');
+
     const result = await deleteAccount();
-    if (result.success) {
-      window.location.replace('/login?accountDeleted=1');
+    if (result.requiresRecentLogin) {
+      setDeleteStatus('idle');
+      setDeleteStep('reauth');
       return;
     }
+
+    if (result.success) {
+      navigate('/', { replace: true });
+      return;
+    }
+
     setDeleteStatus('error');
     setDeleteError(result.error || 'Your account could not be deleted. Please try again.');
+  };
+
+  const handleReauthenticate = async (e) => {
+    if (e) e.preventDefault();
+    if (reauthStatus === 'verifying') return;
+    setReauthStatus('verifying');
+    setDeleteError('');
+
+    const res = await reauthenticateUser({
+      password: isGoogleUser ? undefined : reauthPassword,
+    });
+
+    setReauthStatus('idle');
+
+    if (!res.success) {
+      setDeleteError(res.error || 'Verification failed. Please check and try again.');
+      return;
+    }
+
+    // Automatically return to deletion confirmation and re-run deletion
+    setDeleteStep('final-warning');
+    permanentlyDeleteAccount();
   };
 
   return (
@@ -212,10 +251,10 @@ export default function SupportPage() {
         <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
           <div className="w-full max-w-md overflow-hidden rounded-[26px] bg-white p-6 shadow-2xl dark:bg-[#0A0A0A] sm:p-7">
             <h2 id="delete-account-title" className="text-xl font-black tracking-[-0.025em] text-neutral-950 dark:text-white">
-              Delete account permanently
+              {deleteStep === 'reauth' ? 'Verify it’s you' : 'Delete account permanently'}
             </h2>
 
-            {deleteStep === 'confirm-text' ? (
+            {deleteStep === 'confirm-text' && (
               <>
                 <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
                   Type DELETE below to confirm that you understand your account cannot be recovered.
@@ -236,17 +275,20 @@ export default function SupportPage() {
                   className="mt-2 h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-bold tracking-[0.12em] text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/10 dark:border-neutral-700 dark:bg-black dark:text-white dark:focus:border-white"
                 />
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  <button type="button" onClick={closeDeleteFlow} className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900">Cancel</button>
-                  <button type="button" disabled={deleteConfirmation !== 'DELETE'} onClick={() => setDeleteStep('final-warning')} className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-35 dark:bg-white dark:text-neutral-950">Continue</button>
+                  <button type="button" onClick={closeDeleteFlow} className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900">
+                    Cancel
+                  </button>
+                  <button type="button" disabled={deleteConfirmation !== 'DELETE'} onClick={() => setDeleteStep('final-warning')} className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-35 dark:bg-white dark:text-neutral-950">
+                    Continue
+                  </button>
                 </div>
               </>
-            ) : (
+            )}
+
+            {deleteStep === 'final-warning' && (
               <>
                 <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                  Do you really want to permanently delete this account? Discuss really will miss you.
-                </p>
-                <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-                  Your profile, posts, chats, groups, stories, pulses, sessions, and account details will be permanently removed. Existing comments and likes remain as historical activity without an active profile.
+                  Your profile, posts, personal chat index, groups, stories, pulses, and account details will be permanently removed. Existing comments and likes remain as historical activity without an active profile.
                 </p>
                 {deleteError && (
                   <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-5 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">
@@ -254,12 +296,88 @@ export default function SupportPage() {
                   </div>
                 )}
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  <button type="button" disabled={deleteStatus === 'deleting'} onClick={() => setDeleteStep('confirm-text')} className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900">Back</button>
-                  <button type="button" disabled={deleteStatus === 'deleting'} onClick={permanentlyDeleteAccount} className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60 dark:bg-white dark:text-neutral-950">
-                    {deleteStatus === 'deleting' ? 'Deleting account' : 'Delete permanently'}
+                  <button type="button" disabled={deleteStatus === 'deleting'} onClick={() => setDeleteStep('confirm-text')} className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleteStatus === 'deleting'}
+                    onClick={permanentlyDeleteAccount}
+                    aria-busy={deleteStatus === 'deleting'}
+                    className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60 dark:bg-white dark:text-neutral-950 flex items-center justify-center gap-2"
+                  >
+                    {deleteStatus === 'deleting' ? (
+                      <DiscussLoadingDots size="inline" color="currentColor" title="Deleting account…" />
+                    ) : (
+                      'Delete my account'
+                    )}
                   </button>
                 </div>
               </>
+            )}
+
+            {deleteStep === 'reauth' && (
+              <form onSubmit={handleReauthenticate}>
+                <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+                  {isGoogleUser
+                    ? 'For your security, please verify your Google account before deleting your Discuss account.'
+                    : 'For your security, please enter your password to confirm it’s you before deleting your account.'}
+                </p>
+
+                {!isGoogleUser && (
+                  <div className="mt-4">
+                    <label htmlFor="reauth-password-input" className="block text-[11px] font-bold uppercase tracking-[0.12em] text-neutral-500">
+                      Password
+                    </label>
+                    <input
+                      id="reauth-password-input"
+                      type="password"
+                      autoComplete="current-password"
+                      value={reauthPassword}
+                      onChange={(e) => {
+                        setReauthPassword(e.target.value);
+                        setDeleteError('');
+                      }}
+                      placeholder="Enter your password"
+                      className="mt-2 h-12 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 text-sm font-medium text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/10 dark:border-neutral-700 dark:bg-black dark:text-white dark:focus:border-white"
+                    />
+                  </div>
+                )}
+
+                {deleteError && (
+                  <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-5 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">
+                    {deleteError}
+                  </div>
+                )}
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    disabled={reauthStatus === 'verifying'}
+                    onClick={() => {
+                      setDeleteStep('final-warning');
+                      setDeleteError('');
+                    }}
+                    className="min-h-11 rounded-xl border border-neutral-200 px-4 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={reauthStatus === 'verifying' || (!isGoogleUser && !reauthPassword)}
+                    aria-busy={reauthStatus === 'verifying'}
+                    className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-neutral-950 flex items-center justify-center gap-2"
+                  >
+                    {reauthStatus === 'verifying' ? (
+                      <DiscussLoadingDots size="inline" color="currentColor" title="Verifying…" />
+                    ) : isGoogleUser ? (
+                      'Verify it’s you'
+                    ) : (
+                      'Verify and continue'
+                    )}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>

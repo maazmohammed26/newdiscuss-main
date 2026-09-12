@@ -7,7 +7,7 @@ const Toaster = ({
 }) => {
   const { theme = "light" } = useTheme()
   const location = useLocation()
-  const publicPaths = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines']
+  const publicPaths = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines', '/delete-account']
   const renderedTheme = publicPaths.includes(location.pathname) ? 'light' : theme
 
   return (

@@ -6,7 +6,7 @@ const sections = [
   {
     title: 'Information you provide',
     icon: UserRound,
-    content: 'Discuss stores the account details, profile information, posts, messages, media, and preferences you choose to provide so the service can operate as expected.',
+    content: 'Discuss collects your email address and authentication details for account management, identity verification, and security, along with profile information, posts, messages, media, and preferences you choose to provide so the service can operate as expected.',
   },
   {
     title: 'How information is used',
@@ -31,7 +31,7 @@ const sections = [
   {
     title: 'Deletion and retention',
     icon: Trash2,
-    content: 'You can request account deletion from Discuss. Information is removed or de-identified according to the service workflow, while limited records may be retained when necessary for security, fraud prevention, or legal obligations.',
+    content: 'You can permanently delete your account directly in the app (Settings & Privacy → Community & Legal → Support & Help → Delete account permanently) or via the web at https://discussit.in/delete-account. Upon deletion, your profile, username, email index, authored posts, personal chat index, stories, pulses, and authentication credentials are permanently removed from our databases. To maintain conversation integrity, existing comments and replies are preserved as historical activity without an active profile or identity. No secondary retention period applies once deletion is processed.',
   },
 ];
 

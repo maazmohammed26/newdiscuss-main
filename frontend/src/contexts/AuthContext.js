@@ -43,6 +43,9 @@ import {
   sendEmailVerification,
   deleteUser as firebaseDeleteUser,
   fetchSignInMethodsForEmail,
+  reauthenticateWithPopup,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from '@/lib/firebase';
 import { database, ref, onValue, get, set } from '@/lib/firebase';
 import { update, onDisconnect } from 'firebase/database';
@@ -1075,6 +1078,43 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const reauthenticateUser = async ({ password } = {}) => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      return { success: false, error: 'Your session has expired. Please sign in again.' };
+    }
+
+    const isGoogle = firebaseUser.providerData.some((p) => p.providerId === 'google.com');
+    try {
+      if (isGoogle) {
+        await reauthenticateWithPopup(firebaseUser, googleProvider);
+        return { success: true };
+      } else {
+        if (!password) {
+          return { success: false, error: 'Please enter your password to confirm it’s you.' };
+        }
+        const credential = EmailAuthProvider.credential(firebaseUser.email, password);
+        await reauthenticateWithCredential(firebaseUser, credential);
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('[Auth] Reauthentication error:', error);
+      if (
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-credential'
+      ) {
+        return { success: false, error: 'Incorrect password. Please try again.' };
+      }
+      if (error.code === 'auth/popup-closed-by-user') {
+        return { success: false, error: 'Verification window was closed. Please try again.' };
+      }
+      return {
+        success: false,
+        error: error.message || 'Verification failed. Please try again.',
+      };
+    }
+  };
+
   const deleteAccount = async () => {
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) {
@@ -1082,17 +1122,79 @@ export function AuthProvider({ children }) {
     }
 
     const uid = firebaseUser.uid;
+    const isGoogle = firebaseUser.providerData.some((p) => p.providerId === 'google.com');
+
     try {
-      await firebaseDeleteUser(firebaseUser);
+      // 1. Obtain ID token for canonical backend deletion
+      let idToken = null;
+      try {
+        idToken = await firebaseUser.getIdToken(false);
+      } catch (tokenErr) {
+        console.warn('[Auth] getIdToken error:', tokenErr.message);
+      }
+
+      let backendSucceeded = false;
+      if (idToken) {
+        try {
+          const res = await fetch('/api/account-deletion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({ action: 'delete' }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.ok) {
+            backendSucceeded = true;
+          } else if (res.status === 401) {
+            return {
+              success: false,
+              requiresRecentLogin: true,
+              authProvider: isGoogle ? 'google' : 'email',
+              error: 'For your security, please verify your identity before deleting your account.',
+            };
+          } else {
+            console.warn('[Auth] Backend deletion response:', data.error);
+          }
+        } catch (fetchErr) {
+          console.warn('[Auth] Canonical backend deletion call failed (fallback will run):', fetchErr.message);
+        }
+      }
+
+      // If backend didn't delete the Firebase Auth user, delete it directly via Firebase Client SDK
+      if (!backendSucceeded) {
+        await firebaseDeleteUser(firebaseUser);
+      }
+
+      // 2. Clear session registrations and purge local user caches
       if (sessionCleanupRef.current) {
         try {
           await sessionCleanupRef.current();
         } catch (_) {}
         sessionCleanupRef.current = null;
       }
-      await purgeUserSessionCaches(uid).catch(() => {});
+      try {
+        await purgeUserSessionCaches(uid);
+      } catch (_) {}
+      try {
+        logoutOneSignalUser();
+      } catch (_) {}
+      try {
+        await signOutAuxiliaryAuth();
+      } catch (_) {}
+
+      // 3. Clear auth session cache & react user state
       writeCachedAuthSession(null);
+      window.localStorage.removeItem(AUTH_SESSION_CACHE_KEY);
+      window.localStorage.removeItem('pendingVerification');
+      window.localStorage.removeItem('emailForSignIn');
+      window.localStorage.removeItem('discuss_last_unlocked');
       setUser(null);
+
+      // 4. Ensure Firebase sign out completes
+      await firebaseSignOut(auth).catch(() => {});
+
       return { success: true };
     } catch (error) {
       console.error('[Auth] Delete account error:', error);
@@ -1100,7 +1202,8 @@ export function AuthProvider({ children }) {
         return {
           success: false,
           requiresRecentLogin: true,
-          error: 'For your security, please sign out, sign in again, and then return here to delete your account.',
+          authProvider: isGoogle ? 'google' : 'email',
+          error: 'For your security, please verify your identity before deleting your account.',
         };
       }
       return {
@@ -1144,6 +1247,7 @@ export function AuthProvider({ children }) {
         logout,
         signOut: logout,
         deleteAccount,
+        reauthenticateUser,
         resendVerificationEmail,
         refreshUser,
         patchUser,

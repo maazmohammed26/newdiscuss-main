@@ -46,7 +46,7 @@ export default function Header() {
     });
   }, [user?.id]);
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', ...(user ? [] : ['/guidelines'])];
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/delete-account', ...(user ? [] : ['/guidelines'])];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
   const hasNavbar = (user || isAppRoute) && !loading && !isPublicRoute;

@@ -33,6 +33,9 @@ import {
   checkActionCode,
   deleteUser,
   fetchSignInMethodsForEmail,
+  reauthenticateWithPopup,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from 'firebase/auth';
 const getAuthDomain = () => {
   return process.env.REACT_APP_FIREBASE_AUTH_DOMAIN;
@@ -108,6 +111,9 @@ export {
   checkActionCode,
   deleteUser,
   fetchSignInMethodsForEmail,
+  reauthenticateWithPopup,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 };
 
 export default app;

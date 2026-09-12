@@ -57,10 +57,12 @@ const LoginBridgePage = lazy(() => import('@/pages/LoginBridgePage'));
 const DownloadPage     = lazy(() => import('@/pages/DownloadPage'));
 const SearchPage       = lazy(() => import('@/pages/SearchPage'));
 const GuidelinesPage   = lazy(() => import('@/pages/GuidelinesPage'));
+const DeleteAccountPage = lazy(() => import('@/pages/DeleteAccountPage'));
 
 const PUBLIC_ROUTES = new Set([
   '/', '/about', '/careers', '/blogs', '/contact', '/login', '/register',
   '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines',
+  '/delete-account',
 ]);
 
 const isPublicPath = (pathname) => PUBLIC_ROUTES.has(pathname);
@@ -233,6 +235,7 @@ function AppRoutes() {
         <Route path="/download" element={<DownloadPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/guidelines" element={<GuidelinesPage />} />
+        <Route path="/delete-account" element={<DeleteAccountPage />} />
 
         {/* Auth (redirect if already logged in) */}
         <Route path="/login"    element={<AuthRedirect><LoginPage /></AuthRedirect>} />
@@ -434,7 +437,7 @@ function OnboardingWrapper({ children }) {
     navigate('/profile?section=notifications');
   };
 
-  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', ...(user ? [] : ['/guidelines'])];
+  const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/delete-account', ...(user ? [] : ['/guidelines'])];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   const isAppRoute = location.pathname === '/feed' || location.pathname === '/search' || location.pathname === '/guidelines' || location.pathname.startsWith('/post/') || location.pathname.startsWith('/user/');
   const showNavbar = (user || isAppRoute) && !loading && !isPublicRoute;

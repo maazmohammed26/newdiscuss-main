@@ -42,7 +42,7 @@ const getEffectiveTheme = () => {
   try {
     if (typeof window === 'undefined') return 'light';
     const pathname = window.location.pathname;
-    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines'];
+    const publicRoutes = ['/', '/about', '/careers', '/blogs', '/contact', '/login', '/register', '/terms', '/privacy', '/support', '/verify-email', '/login-bridge', '/download', '/guidelines', '/delete-account'];
     const session = localStorage.getItem('discuss_auth_session_v1');
     const isPublic = publicRoutes.includes(pathname);
 
