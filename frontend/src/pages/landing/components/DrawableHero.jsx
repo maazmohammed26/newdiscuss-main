@@ -9,6 +9,7 @@ import {
   DrawableFrame,
   DrawablePlayStoreIcon,
 } from './DrawablePrimitives';
+import { GOOGLE_PLAY_URL } from '@/lib/clientPlatform';
 
 /**
  * DrawableHero
@@ -17,20 +18,11 @@ import {
  * - Blue technical accents & handwritten annotations
  * - Primary CTA: Join Discuss (Red marker button)
  * - Secondary CTA: Explore Discussions (Blue outline button)
- * - Play Store sketch icon shortcut to Android early access
+ * - Play Store sketch icon shortcut directly to official Google Play application
  * - Real discussion mockup with actual Discuss interaction language (likes, replies)
  * - Zero fake resolution badges
  */
 export default function DrawableHero() {
-  const scrollToAndroid = () => {
-    const target = document.getElementById('mobile-access');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
-      const emailInput = document.getElementById('android-access-email');
-      if (emailInput) setTimeout(() => emailInput.focus(), 600);
-    }
-  };
-
   return (
     <section className="relative pt-12 pb-16 sm:pt-16 sm:pb-20 overflow-hidden bg-white">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
@@ -71,11 +63,13 @@ export default function DrawableHero() {
                 <span>Explore Discussions</span>
               </DrawableButton>
 
-              {/* Hand-Drawn Play Store Sketch Icon Shortcut */}
+              {/* Hand-Drawn Play Store Sketch Icon Direct Link */}
               <div className="inline-flex items-center" data-testid="hero-playstore-icon">
                 <DrawablePlayStoreIcon
-                  onClick={scrollToAndroid}
+                  href={GOOGLE_PLAY_URL}
                   size={48}
+                  ariaLabel="Get Discuss on Google Play"
+                  title="Discuss on Google Play"
                 />
               </div>
 

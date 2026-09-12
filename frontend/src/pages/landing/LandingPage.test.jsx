@@ -102,10 +102,10 @@ describe('Discuss Public LandingPage (Production Hand-Drawn / Drawable UI)', () 
     expect(html).toContain('@rahul_ts');
     expect(html).toContain('@neha_dev');
 
-    // 6. Region 5: Mobile Access (Android Early Access + iOS PWA)
+    // 6. Region 5: Mobile Access (Android Google Play + iOS PWA)
     expect(html).toContain('Take Discuss with you');
-    expect(html).toContain('Discuss on Android');
-    expect(html).toContain('Google Play Early Access');
+    expect(html).toContain('Discuss for Android');
+    expect(html).toContain('Get it on Google Play');
     expect(html).toContain('Discuss on iPhone');
 
     // 7. Region 6: Final CTA Section
@@ -122,79 +122,41 @@ describe('Discuss Public LandingPage (Production Hand-Drawn / Drawable UI)', () 
     expect(html).toContain('/guidelines');
   });
 
-  it('validates invalid email on Android access form submission', async () => {
+  it('renders Google Play CTA in Mobile Access section with correct official URL', async () => {
     await act(async () => {
       root.render(<LandingPage />);
     });
 
-    const form = container.querySelector('form');
-    const input = container.querySelector('#android-access-email');
-    expect(form).toBeTruthy();
-    expect(input).toBeTruthy();
+    const mobileSection = container.querySelector('#mobile-access');
+    expect(mobileSection).toBeTruthy();
 
-    await act(async () => {
-      setInputValue(input, 'invalid-email');
-      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    });
-
-    expect(container.textContent).toContain('Enter a valid Google Play email.');
-    expect(global.fetch).not.toHaveBeenCalled();
+    const playStoreLink = Array.from(mobileSection.querySelectorAll('a')).find((a) =>
+      a.textContent.includes('Get it on Google Play')
+    );
+    expect(playStoreLink).toBeTruthy();
+    expect(playStoreLink.getAttribute('href')).toBe(
+      'https://play.google.com/store/apps/details?id=co.median.android.lpowadz'
+    );
+    expect(playStoreLink.getAttribute('target')).toBe('_blank');
+    expect(playStoreLink.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
-  it('submits valid email to /api/android-access endpoint with honeypot', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        success: true,
-        message: 'Request sent. Check Google Play in 4–6 hours with this email.',
-      }),
-    });
-
+  it('renders hero Play Store sketch icon linking directly to official Google Play URL', async () => {
     await act(async () => {
       root.render(<LandingPage />);
     });
 
-    const form = container.querySelector('form');
-    const input = container.querySelector('#android-access-email');
+    const playStoreIconWrapper = container.querySelector('[data-testid="hero-playstore-icon"]');
+    expect(playStoreIconWrapper).toBeTruthy();
 
-    await act(async () => {
-      setInputValue(input, 'dev@example.com');
-      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    });
-
-    expect(global.fetch).toHaveBeenCalledWith('/api/android-access', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'dev@example.com',
-        website: '',
-      }),
-    });
-
-    expect(container.textContent).toContain('Request sent.');
-  });
-
-  it('handles server failure during Android access submission', async () => {
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({
-        error: 'Too many requests. Please try again later.',
-      }),
-    });
-
-    await act(async () => {
-      root.render(<LandingPage />);
-    });
-
-    const form = container.querySelector('form');
-    const input = container.querySelector('#android-access-email');
-
-    await act(async () => {
-      setInputValue(input, 'dev@example.com');
-      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    });
-
-    expect(container.textContent).toContain('Too many requests. Please try again later.');
+    const playStoreLink = playStoreIconWrapper.querySelector('a');
+    expect(playStoreLink).toBeTruthy();
+    expect(playStoreLink.getAttribute('aria-label')).toBe('Get Discuss on Google Play');
+    expect(playStoreLink.getAttribute('href')).toBe(
+      'https://play.google.com/store/apps/details?id=co.median.android.lpowadz'
+    );
+    expect(playStoreLink.getAttribute('target')).toBe('_blank');
+    expect(playStoreLink.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
   it('toggles iOS PWA install help correctly', async () => {
@@ -211,29 +173,6 @@ describe('Discuss Public LandingPage (Production Hand-Drawn / Drawable UI)', () 
     });
 
     expect(container.textContent).toContain('Add to Home Screen');
-  });
-
-  it('renders hero Play Store sketch icon and triggers navigation to Android access', async () => {
-    await act(async () => {
-      root.render(<LandingPage />);
-    });
-
-    const playStoreIconWrapper = container.querySelector('[data-testid="hero-playstore-icon"]');
-    expect(playStoreIconWrapper).toBeTruthy();
-
-    const playStoreBtn = playStoreIconWrapper.querySelector('button');
-    expect(playStoreBtn).toBeTruthy();
-    expect(playStoreBtn.getAttribute('aria-label')).toBe('Jump to Android early access');
-
-    const mobileSection = container.querySelector('#mobile-access');
-    expect(mobileSection).toBeTruthy();
-    mobileSection.scrollIntoView = jest.fn();
-
-    await act(async () => {
-      playStoreBtn.click();
-    });
-
-    expect(mobileSection.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
   });
 
   it('redirects authenticated users to /feed', async () => {

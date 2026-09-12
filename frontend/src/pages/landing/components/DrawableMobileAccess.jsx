@@ -1,61 +1,25 @@
 import React, { useState } from 'react';
-import { ExternalLink, Loader2, CheckCircle2, Mail } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { FaApple } from 'react-icons/fa';
 import { SiGoogleplay } from 'react-icons/si';
 import {
   DrawableUnderline,
   DrawableFrame,
   DrawableNote,
-  DrawableInput,
   DrawableButton,
 } from './DrawablePrimitives';
+import { GOOGLE_PLAY_URL } from '@/lib/clientPlatform';
 
-export const PLAY_STORE_URL =
-  'https://play.google.com/store/apps/details?id=co.median.android.lpowadz';
+export const PLAY_STORE_URL = GOOGLE_PLAY_URL;
 
 /**
  * DrawableMobileAccess
- * Preserves the exact Android early-access flow, endpoint (/api/android-access),
- * honeypot, validation, and feedback states.
- * Preserves the exact iOS PWA install guidance.
- * Visual treatment: Hand-drawn drawable form fields and buttons on pure white canvas.
+ * - Official Google Play production download for Android
+ * - Standalone full-screen PWA installation guidance for iOS
+ * - Visual treatment: Hand-drawn drawable surfaces on pure white canvas
  */
 export default function DrawableMobileAccess() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle');
-  const [message, setMessage] = useState('');
   const [showIosHelp, setShowIosHelp] = useState(false);
-
-  const requestAndroidAccess = async (event) => {
-    event.preventDefault();
-    if (status === 'sending' || status === 'success') return;
-
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setStatus('error');
-      setMessage('Enter a valid Google Play email.');
-      return;
-    }
-
-    setStatus('sending');
-    setMessage('');
-
-    try {
-      const response = await fetch('/api/android-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail, website: '' }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || 'Could not send your request.');
-
-      setStatus('success');
-      setMessage('Request sent. Check Google Play in 4–6 hours with this email.');
-    } catch (error) {
-      setStatus('error');
-      setMessage(error.message || 'Could not send your request. Please try again.');
-    }
-  };
 
   return (
     <section
@@ -71,7 +35,7 @@ export default function DrawableMobileAccess() {
             </span>
             <span className="text-neutral-300">·</span>
             <span className="font-mono text-[11px] text-neutral-400">
-              New Discuss 2.0 app icon rolling out
+              Official mobile experience
             </span>
           </div>
 
@@ -82,27 +46,27 @@ export default function DrawableMobileAccess() {
             </span>
           </h2>
           <p className="mt-3 text-base text-neutral-600 leading-relaxed">
-            Google Play early access for Android, or install the standalone full-screen PWA on iOS.
+            Get Discuss for Android on Google Play, or install the standalone full-screen PWA on iOS.
           </p>
         </div>
 
         {/* Responsive Side-by-Side Grid */}
         <div className="grid gap-8 lg:grid-cols-2 items-stretch">
-          {/* Card 1: Android Early Access */}
+          {/* Card 1: Android Google Play Production */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-3 px-1">
               <span className="font-mono text-xs font-bold text-neutral-500 uppercase tracking-wide">
                 GOOGLE PLAY
               </span>
               <DrawableNote rotate={-2} color="blue" className="text-sm">
-                * early access rollout
+                * official release
               </DrawableNote>
             </div>
 
             <DrawableFrame
               variant="charcoal-pen"
               className="flex-1 p-6 sm:p-7 bg-white flex flex-col justify-between"
-              ariaLabel="Android Early Access"
+              ariaLabel="Discuss on Android"
             >
               <div>
                 <div className="flex items-start justify-between gap-4 pb-4 border-b border-neutral-200">
@@ -111,107 +75,37 @@ export default function DrawableMobileAccess() {
                       <SiGoogleplay className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Discuss on Android</h3>
-                      <span className="font-mono text-xs text-neutral-400 block mt-0.5">Google Play Early Access</span>
+                      <h3 className="text-xl font-bold text-neutral-900 tracking-tight">Discuss for Android</h3>
+                      <span className="font-mono text-xs text-neutral-400 block mt-0.5">Google Play Store</span>
                     </div>
                   </div>
-                  <span className="rounded-xs bg-neutral-100 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-700 border border-neutral-300">
-                    Early access
+                  <span className="rounded-xs bg-[#0095F6]/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-[#0095F6] border border-[#0095F6]/30">
+                    Live Now
                   </span>
                 </div>
 
                 <p className="mt-4 text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  Enter your Google Play email below. Access is reviewed and granted via the Discuss Admin flow within 4–6 hours.
+                  Download Discuss for Android directly from Google Play. Native performance, push notifications, and fast developer discussions on the go.
                 </p>
 
-                {/* Hand-Drawn Android Access Form */}
-                <form onSubmit={requestAndroidAccess} className="mt-5" noValidate>
-                  <label
-                    htmlFor="android-access-email"
-                    className="block font-mono text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1.5"
+                {/* Google Play CTA */}
+                <div className="mt-6">
+                  <a
+                    href={GOOGLE_PLAY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative inline-flex w-full items-center justify-center gap-2.5 rounded-xs bg-neutral-950 px-5 py-3 text-sm font-bold text-white shadow-xs transition-all hover:bg-neutral-900 hover:shadow-sm active:translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0095F6]"
                   >
-                    Google Play email
-                  </label>
-
-                  <div className="flex flex-col sm:flex-row gap-3 items-stretch">
-                    {/* Hand-drawn input field */}
-                    <div className="flex-1">
-                      <DrawableInput
-                        id="android-access-email"
-                        type="email"
-                        inputMode="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(event) => {
-                          setEmail(event.target.value);
-                          if (status === 'error') setStatus('idle');
-                        }}
-                        placeholder="you@gmail.com"
-                        disabled={status === 'sending' || status === 'success'}
-                        icon={Mail}
-                        ariaDescribedBy="android-access-status"
-                        required
-                      />
-                      {/* Honeypot field preserved exactly */}
-                      <input
-                        name="website"
-                        tabIndex="-1"
-                        autoComplete="off"
-                        className="absolute -left-[9999px]"
-                        aria-hidden="true"
-                      />
-                    </div>
-
-                    {/* Red Hand-Drawn Button */}
-                    <DrawableButton
-                      type="submit"
-                      variant="red-marker"
-                      size="md"
-                      disabled={status === 'sending' || status === 'success'}
-                      className="shrink-0"
-                    >
-                      {status === 'sending' ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Sending</span>
-                        </>
-                      ) : status === 'success' ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-white" />
-                          <span>Requested</span>
-                        </>
-                      ) : (
-                        'Request access'
-                      )}
-                    </DrawableButton>
-                  </div>
-
-                  <div
-                    id="android-access-status"
-                    aria-live="polite"
-                    className={`mt-2.5 min-h-5 text-xs font-mono ${
-                      status === 'error'
-                        ? 'text-red-600'
-                        : status === 'success'
-                        ? 'text-[#0095F6] font-semibold'
-                        : 'text-neutral-500'
-                    }`}
-                  >
-                    {message || 'We only send this request to the Discuss Admin bot. It is not saved in our database.'}
-                  </div>
-                </form>
+                    <SiGoogleplay className="h-4 w-4 text-white" aria-hidden="true" />
+                    <span>Get it on Google Play</span>
+                    <ExternalLink className="h-3.5 w-3.5 opacity-70 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  </a>
+                </div>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-neutral-100 flex items-center justify-between">
-                <a
-                  href={PLAY_STORE_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0095F6] hover:text-[#1877F2] transition-colors"
-                >
-                  Open Google Play <ExternalLink className="h-3 w-3" />
-                </a>
-                <span className="font-mono text-[11px] text-neutral-400">v2.0 build</span>
+              <div className="mt-6 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-mono text-neutral-400">
+                <span>Official production app</span>
+                <span className="text-neutral-600 font-semibold">Free · No ads</span>
               </div>
             </DrawableFrame>
           </div>
@@ -252,7 +146,7 @@ export default function DrawableMobileAccess() {
                   Install the progressive web app directly from Safari for a fast, standalone full-screen experience with native gestures and instant launch.
                 </p>
 
-                <div className="mt-5">
+                <div className="mt-6">
                   <DrawableButton
                     type="button"
                     onClick={() => setShowIosHelp((curr) => !curr)}
@@ -271,7 +165,7 @@ export default function DrawableMobileAccess() {
                 </div>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-mono text-neutral-400">
+              <div className="mt-6 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-mono text-neutral-400">
                 <span>No App Store needed</span>
                 <span className="text-neutral-600 font-semibold">Offline-ready</span>
               </div>

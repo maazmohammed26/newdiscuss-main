@@ -650,19 +650,15 @@ export function DrawableNote({
 // ── 11. DRAWABLE PLAY STORE SKETCH ICON ─────────────────────────────────────
 
 export function DrawablePlayStoreIcon({
+  href,
   onClick,
   className = '',
   size = 48,
+  ariaLabel = 'Get Discuss on Google Play',
+  title = 'Discuss on Google Play',
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Jump to Android early access"
-      title="Discuss on Android (Early Access)"
-      className={`group relative inline-flex items-center justify-center transition-transform hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0095F6] rounded-xs bg-white ${className}`}
-      style={{ width: `${size}px`, height: `${size}px` }}
-    >
+  const content = (
+    <>
       {/* Hand-drawn outer border box */}
       <svg
         viewBox="0 0 48 48"
@@ -737,6 +733,38 @@ export function DrawablePlayStoreIcon({
           strokeOpacity="0.9"
         />
       </svg>
+    </>
+  );
+
+  const sharedClasses = `group relative inline-flex items-center justify-center transition-transform hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0095F6] rounded-xs bg-white ${className}`;
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        aria-label={ariaLabel}
+        title={title}
+        className={sharedClasses}
+        style={{ width: `${size}px`, height: `${size}px` }}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      title={title}
+      className={sharedClasses}
+      style={{ width: `${size}px`, height: `${size}px` }}
+    >
+      {content}
     </button>
   );
 }

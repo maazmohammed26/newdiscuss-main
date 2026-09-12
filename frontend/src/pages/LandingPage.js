@@ -10,6 +10,7 @@ import DrawableDiscoverySection from './landing/components/DrawableDiscoverySect
 import DrawableMobileAccess from './landing/components/DrawableMobileAccess';
 import DrawableFinalCta from './landing/components/DrawableFinalCta';
 import DrawableFooter from './landing/components/DrawableFooter';
+import AndroidPromotionSheet from './landing/components/AndroidPromotionSheet';
 
 import './LandingPage.css';
 
@@ -19,7 +20,8 @@ import './LandingPage.css';
  * - Pure White (#FFFFFF) canvas across entire page (no textures, no grids)
  * - Official Discuss branding & logo preserved exactly
  * - Hand-drawn / drawable UI surfaces: buttons, frames, inputs, tags, connectors, underlines
- * - Play Store sketch icon shortcut to Android early access
+ * - Direct Google Play Store production launch for Android + iOS PWA install guidance
+ * - Smart Android promotion bottom sheet for Android mobile visitors (once per session)
  * - Real Discuss interaction model (likes, replies, comments, save, share)
  * - Redirects authenticated users to /feed
  */
@@ -94,7 +96,7 @@ export default function LandingPage() {
         {/* 4. Combined Developer Discovery (TalentGraph skill pairing + DevRadar proximity) */}
         <DrawableDiscoverySection />
 
-        {/* 5. Mobile Access (Android Early Access with drawable input + iOS PWA guidance) */}
+        {/* 5. Mobile Access (Android Google Play download + iOS PWA guidance) */}
         <DrawableMobileAccess />
 
         {/* 6. Final High-Impact CTA: "talk less? nah. we discuss." */}
@@ -103,6 +105,9 @@ export default function LandingPage() {
 
       {/* 7. Footer with official logo, all existing routes, and ONYIIX attribution */}
       <DrawableFooter />
+
+      {/* 8. Smart Android App Promotion Sheet (Mobile Android Only, 1x Per Session) */}
+      <AndroidPromotionSheet />
     </div>
   );
 }
