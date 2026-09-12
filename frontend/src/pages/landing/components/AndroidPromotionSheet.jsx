@@ -164,14 +164,14 @@ export default function AndroidPromotionSheet() {
                   id="android-promo-title"
                   className="text-base font-bold text-neutral-950 tracking-tight leading-tight"
                 >
-                  Discuss for Android
+                  {isInstalled ? 'Discuss is installed' : 'Discuss for Android'}
                 </h3>
                 <p
                   id="android-promo-desc"
                   className="text-xs text-neutral-600 mt-0.5"
                 >
                   {isInstalled
-                    ? 'Installed on your device.'
+                    ? 'Launch Discuss on your device.'
                     : 'Now available on Google Play.'}
                 </p>
               </div>
@@ -191,7 +191,7 @@ export default function AndroidPromotionSheet() {
           <div className="mt-4 flex items-center gap-2.5">
             <a
               ref={primaryButtonRef}
-              href={GOOGLE_PLAY_URL}
+              href={isInstalled ? 'https://www.discussit.in/feed' : GOOGLE_PLAY_URL}
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleActionClick}

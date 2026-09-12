@@ -47,5 +47,12 @@
     { "name": "Feed", "url": "/feed", "icons": [{ "src": "/logo192.png", "sizes": "192x192" }] },
     { "name": "Messages", "url": "/chat", "icons": [{ "src": "/logo192.png", "sizes": "192x192" }] },
     { "name": "Notifications", "url": "/notifications", "icons": [{ "src": "/logo192.png", "sizes": "192x192" }] }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "co.median.android.lpowadz",
+      "url": "https://play.google.com/store/apps/details?id=co.median.android.lpowadz"
+    }
   ]
 }

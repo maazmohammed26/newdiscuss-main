@@ -124,6 +124,27 @@ describe('AndroidPromotionSheet component', () => {
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
+  it('renders Open Discuss and Discuss is installed when app is detected', async () => {
+    jest.spyOn(clientPlatform, 'getClientPlatform').mockReturnValue('android');
+    jest.spyOn(clientPlatform, 'checkDiscussInstalled').mockResolvedValue(true);
+
+    await act(async () => {
+      root.render(<AndroidPromotionSheet />);
+    });
+
+    // Wait for checkDiscussInstalled promise resolution and timer
+    await act(async () => {
+      jest.advanceTimersByTime(800);
+    });
+
+    expect(container.textContent).toContain('Discuss is installed');
+    expect(container.textContent).toContain('Launch Discuss on your device.');
+    expect(container.textContent).toContain('Open Discuss');
+
+    const link = container.querySelector('a');
+    expect(link.getAttribute('href')).toBe('https://www.discussit.in/feed');
+  });
+
   it('dismisses when Not now is clicked and records session flag', async () => {
     jest.spyOn(clientPlatform, 'getClientPlatform').mockReturnValue('android');
     jest.spyOn(clientPlatform, 'checkDiscussInstalled').mockResolvedValue(false);
