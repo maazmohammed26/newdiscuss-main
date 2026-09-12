@@ -209,12 +209,14 @@ export function AuthProvider({ children }) {
   const [user, setUser]                         = useState(() => readCachedAuthSession());
   const [loading, setLoading]                   = useState(() => !readCachedAuthSession());
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [signingOut, setSigningOut]             = useState(false);
 
-  // Ref guards to prevent double-resolution
-  const hasResolved     = useRef(false);
-  const hardTimeoutRef  = useRef(null);
-  const sessionCleanupRef = useRef(null);
+  // Ref guards to prevent double-resolution and handle sign-out races
+  const hasResolved         = useRef(false);
+  const hardTimeoutRef      = useRef(null);
+  const sessionCleanupRef   = useRef(null);
   const hadCachedSessionRef = useRef(Boolean(user));
+  const isSigningOutRef     = useRef(false);
 
   useEffect(() => {
     writeCachedAuthSession(user);
@@ -471,6 +473,10 @@ export function AuthProvider({ children }) {
       // Subscribe to auth state
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (!mounted) return;
+        if (isSigningOutRef.current) {
+          setUser(null);
+          return;
+        }
         try {
           // ── Pending email verification: sign out password providers ──
           if (
@@ -594,7 +600,11 @@ export function AuthProvider({ children }) {
     };
 
     const unsub = onValue(userRef, handleUserUpdate);
-    return () => unsub();
+    return () => {
+      if (typeof unsub === 'function') {
+        unsub();
+      }
+    };
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Real-time presence engine ───────────────────────────────────────────
@@ -609,11 +619,15 @@ export function AuthProvider({ children }) {
     const userLastSeenRef = ref(database, `users/${user.id}/lastSeen`);
 
     // Primary DB onDisconnect handlers
-    const primaryPresenceOnDisconnect = onDisconnect(userPresenceRef);
-    const primaryLastSeenOnDisconnect = onDisconnect(userLastSeenRef);
+    let primaryPresenceOnDisconnect = null;
+    let primaryLastSeenOnDisconnect = null;
+    try {
+      primaryPresenceOnDisconnect = typeof onDisconnect === 'function' ? onDisconnect(userPresenceRef) : null;
+      primaryLastSeenOnDisconnect = typeof onDisconnect === 'function' ? onDisconnect(userLastSeenRef) : null;
 
-    primaryPresenceOnDisconnect.set(false);
-    primaryLastSeenOnDisconnect.set(isVisible ? Date.now() : 0);
+      primaryPresenceOnDisconnect?.set?.(false);
+      primaryLastSeenOnDisconnect?.set?.(isVisible ? Date.now() : 0);
+    } catch (_) {}
 
     // Update immediately on load
     const updateOnline = () => {
@@ -625,7 +639,7 @@ export function AuthProvider({ children }) {
         lastSeen: isVisible ? now : 0,
       };
       
-      update(userRef, updates).catch(() => {});
+      Promise.resolve(update(userRef, updates)).catch(() => {});
 
       // If sixth db is available, synchronise presence
       if (isDevRadarDbAvailable()) {
@@ -660,11 +674,11 @@ export function AuthProvider({ children }) {
 
     return () => {
       clearInterval(interval);
-      primaryPresenceOnDisconnect.cancel();
-      primaryLastSeenOnDisconnect.cancel();
+      primaryPresenceOnDisconnect?.cancel?.();
+      primaryLastSeenOnDisconnect?.cancel?.();
       
       // Set to offline when unmounting (logging out / session expired)
-      update(userRef, { isOnline: false, lastSeen: Date.now() }).catch(() => {});
+      Promise.resolve(update(userRef, { isOnline: false, lastSeen: Date.now() })).catch(() => {});
       
       if (isDevRadarDbAvailable()) {
         const sixthUserLocRef = ref(devRadarDatabase, `devRadarLocations/${user.id}`);
@@ -999,28 +1013,67 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
+  const logout = useCallback(async ({ navigate } = {}) => {
+    if (isSigningOutRef.current) return;
+    isSigningOutRef.current = true;
+    setSigningOut(true);
+
     try {
+      // 1. Immediately wipe local session snapshot and sensitive security keys
+      writeCachedAuthSession(null);
+      window.localStorage.removeItem(AUTH_SESSION_CACHE_KEY);
       window.localStorage.removeItem('pendingVerification');
       window.localStorage.removeItem('emailForSignIn');
+      window.localStorage.removeItem('discuss_last_unlocked');
       setPendingVerification(false);
+      hadCachedSessionRef.current = false;
 
+      // 2. Clear current React user state synchronously to prevent route guards from seeing user
+      setUser(null);
+
+      // 3. Clean up active session records and purge user-specific caches safely
       const uid = auth.currentUser?.uid;
       if (uid) {
-        // Clean up session record
         if (sessionCleanupRef.current) {
-          await sessionCleanupRef.current();
+          try {
+            await sessionCleanupRef.current();
+          } catch (_) {}
           sessionCleanupRef.current = null;
         }
-        await purgeUserSessionCaches(uid);
+        try {
+          await purgeUserSessionCaches(uid);
+        } catch (e) {
+          console.warn('[Auth] purgeUserSessionCaches error:', e);
+        }
       }
 
+      // 4. Auxiliary auth & push notification logout
+      try {
+        logoutOneSignalUser();
+      } catch (_) {}
+      try {
+        await signOutAuxiliaryAuth();
+      } catch (_) {}
+
+      // 5. Firebase signOut
       await firebaseSignOut(auth);
       setUser(null);
+      writeCachedAuthSession(null);
+
+      if (typeof navigate === 'function') {
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       console.error('[Auth] Logout error:', error);
+      if (typeof navigate === 'function') {
+        navigate('/', { replace: true });
+      }
+    } finally {
+      setUser(null);
+      setSigningOut(false);
+      isSigningOutRef.current = false;
     }
-  };
+  }, []);
 
   const deleteAccount = async () => {
     const firebaseUser = auth.currentUser;
@@ -1069,10 +1122,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (oneSignalUserId) {
       syncOneSignalUser(oneSignalUserId, oneSignalUsername);
-      synchronizeAuxiliaryAuth(oneSignalUserId).catch((error) => console.warn('[AUTH] Auxiliary authentication failed:', error.message));
+      Promise.resolve(synchronizeAuxiliaryAuth(oneSignalUserId)).catch((error) => console.warn('[AUTH] Auxiliary authentication failed:', error.message));
     } else {
       logoutOneSignalUser();
-      signOutAuxiliaryAuth().catch(() => {});
+      Promise.resolve(signOutAuxiliaryAuth()).catch(() => {});
     }
   }, [oneSignalUserId, oneSignalUsername]);
 
@@ -1081,12 +1134,15 @@ export function AuthProvider({ children }) {
       value={{
         user,
         loading,
+        signingOut,
+        isLoggingOut: signingOut,
         pendingVerification,
         login,
         register,
         checkEmailRegistration,
         loginWithGoogle,
         logout,
+        signOut: logout,
         deleteAccount,
         resendVerificationEmail,
         refreshUser,

@@ -6,6 +6,7 @@ import { useSecurity } from '@/contexts/SecurityContext';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import NotificationToggle from '@/components/NotificationToggle';
+import { DiscussLoadingDots } from '@/components/loading';
 import { useInteractionFeedback } from '@/hooks/useInteractionFeedback';
 import {
   ArrowLeft,
@@ -44,7 +45,7 @@ import {
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
-  const { user, signOut } = useAuth();
+  const { user, logout, signingOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, themeMode, setTheme } = useTheme();
@@ -392,7 +393,8 @@ export default function SettingsPage() {
               <div className="py-2">
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="w-full py-4 flex items-center justify-between text-left hover:bg-red-50/50 dark:hover:bg-red-950/20 px-2 rounded-xl transition-colors cursor-pointer group"
+                  disabled={signingOut}
+                  className="w-full py-4 flex items-center justify-between text-left hover:bg-red-50/50 dark:hover:bg-red-950/20 px-2 rounded-xl transition-colors cursor-pointer group disabled:opacity-50"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <LogOut className="w-5 h-5 text-red-500 shrink-0 stroke-[1.8px]" />
@@ -486,7 +488,7 @@ export default function SettingsPage() {
       )}
 
       {/* Logout Confirmation Dialog */}
-      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+      <AlertDialog open={showLogoutConfirm} onOpenChange={(open) => !signingOut && setShowLogoutConfirm(open)}>
         <AlertDialogContent className="rounded-2xl dark:bg-[#141414] dark:border-[#262626]">
           <AlertDialogHeader>
             <AlertDialogTitle className="dark:text-white">Log Out of Discuss?</AlertDialogTitle>
@@ -495,15 +497,26 @@ export default function SettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl dark:border-neutral-700">Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={signingOut} className="rounded-xl dark:border-neutral-700">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                signOut?.();
-                navigate('/login');
+              onClick={async (e) => {
+                e.preventDefault();
+                if (signingOut) return;
+                await logout({ navigate });
+                setShowLogoutConfirm(false);
               }}
-              className="rounded-xl bg-red-600 hover:bg-red-700 text-white"
+              disabled={signingOut}
+              aria-busy={signingOut}
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-w-[96px]"
             >
-              Log Out
+              {signingOut ? (
+                <>
+                  <DiscussLoadingDots size="inline" color="#ffffff" title="Logging out…" />
+                  <span>Logging out…</span>
+                </>
+              ) : (
+                'Log Out'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

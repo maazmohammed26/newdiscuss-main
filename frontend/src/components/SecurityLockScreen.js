@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { verifyBiometric } from '@/lib/securityService';
 import { ShieldCheck, ShieldAlert, Delete, LogOut, Lock, Info, Clock, Fingerprint } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
+import { DiscussLoadingDots } from '@/components/loading';
 
 const QUOTES = [
   "Your privacy is our priority.",
@@ -25,7 +27,9 @@ export default function SecurityLockScreen() {
   const [isBiometricLoading, setIsBiometricLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showForgotPinModal, setShowForgotPinModal] = useState(false);
-  const { user } = useAuth();
+  const { user, signingOut } = useAuth();
+  const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleBiometricUnlock = useCallback(async () => {
     setVerifying(true);
@@ -100,13 +104,18 @@ export default function SecurityLockScreen() {
   };
 
   const handleFullLogout = async () => {
-    setShowLogoutConfirm(false);
+    if (loggingOut || signingOut) return;
+    setLoggingOut(true);
     try {
-      await logout();
+      await logout({ navigate });
+      setShowLogoutConfirm(false);
     } catch (err) {
       console.error(err);
+      setShowLogoutConfirm(false);
+      navigate('/', { replace: true });
+    } finally {
+      setLoggingOut(false);
     }
-    window.location.href = '/';
   };
 
   return (
@@ -246,8 +255,9 @@ export default function SecurityLockScreen() {
             {!showLogoutConfirm ? (
               <Button
                 onClick={() => setShowLogoutConfirm(true)}
+                disabled={loggingOut || signingOut}
                 variant="ghost"
-                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 flex items-center gap-2"
+                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 flex items-center gap-2 disabled:opacity-50"
               >
                 <LogOut className="w-4 h-4" />
                 Logout from Account
@@ -260,15 +270,27 @@ export default function SecurityLockScreen() {
                 <div className="flex gap-3 w-full">
                   <Button
                     onClick={handleFullLogout}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black py-2.5 rounded-xl shadow-md transition-all active:scale-95 border-none"
+                    disabled={loggingOut || signingOut}
+                    aria-busy={loggingOut || signingOut}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black py-2.5 rounded-xl shadow-md transition-all active:scale-95 border-none flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <LogOut className="w-3.5 h-3.5 mr-1.5" />
-                    YES, LOGOUT
+                    {loggingOut || signingOut ? (
+                      <>
+                        <DiscussLoadingDots size="inline" color="#ffffff" title="Logging out…" />
+                        <span>LOGGING OUT…</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="w-3.5 h-3.5 mr-1.5" />
+                        YES, LOGOUT
+                      </>
+                    )}
                   </Button>
                   <Button
                     onClick={() => setShowLogoutConfirm(false)}
+                    disabled={loggingOut || signingOut}
                     variant="outline"
-                    className="flex-1 text-[10px] font-black py-2.5 rounded-xl border border-red-200 transition-all"
+                    className="flex-1 text-[10px] font-black py-2.5 rounded-xl border border-red-200 transition-all disabled:opacity-50"
                     style={{ color: '#b91c1c', backgroundColor: '#fff' }}
                   >
                     CANCEL

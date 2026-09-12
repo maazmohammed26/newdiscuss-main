@@ -20,7 +20,13 @@ const SecurityContext = createContext({
 });
 
 export function SecurityProvider({ children }) {
-  const { user, logout: authLogout } = useAuth();
+  const { user, logout: authLogout, signingOut } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      localStorage.removeItem('discuss_last_unlocked');
+    }
+  }, [user]);
   const [isLocked, setIsLocked] = useState(false);
   const [localSettings, setLocalSettings] = useState(() => getLocalSecuritySettings());
   const [remoteSettings, setRemoteSettings] = useState(null);
@@ -212,17 +218,17 @@ export function SecurityProvider({ children }) {
   /**
    * logout — fully logs out from the account (goes to login page).
    */
-  const logout = async () => {
+  const logout = async (options) => {
     localStorage.removeItem('discuss_last_unlocked');
     // On logout, disable biometrics on this device (revert to PIN only)
     const currentLocal = localSettingsRef.current;
-    if (currentLocal.enabled) {
+    if (currentLocal?.enabled) {
       const updated = { ...currentLocal, type: 'pin' };
       setLocalSettings(updated);
       saveLocalSecuritySettings(updated);
       localSettingsRef.current = updated;
     }
-    await authLogout();
+    await authLogout(options);
   };
 
   const setSecurityEnabled = (enabled) => {

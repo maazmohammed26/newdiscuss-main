@@ -128,7 +128,11 @@ function ProtectedRoute({ children }) {
 // ── AuthRedirect ──────────────────────────────────────────────────────────────
 // Wraps login/register pages. Redirects already-authenticated users to /feed.
 function AuthRedirect({ children }) {
-  const { user } = useAuth();
+  const { user, signingOut } = useAuth();
+
+  if (signingOut) {
+    return children;
+  }
 
   if (user) {
     return <Navigate to="/feed" replace />;
@@ -138,7 +142,10 @@ function AuthRedirect({ children }) {
 }
 
 function HomeRoute() {
-  const { user } = useAuth();
+  const { user, signingOut } = useAuth();
+  if (signingOut) {
+    return <LandingPage />;
+  }
   return user ? <Navigate to="/feed" replace /> : <LandingPage />;
 }
 

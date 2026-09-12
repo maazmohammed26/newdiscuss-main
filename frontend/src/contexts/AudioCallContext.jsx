@@ -210,6 +210,7 @@ export function AudioCallProvider({ children }) {
   const audioContainerRef = useRef(null);
   const callUnsubscribeRef = useRef(null);
   const pendingStartRef = useRef(null);
+  const isConnectingRef = useRef(false);
   const [incoming, setIncoming] = useState(null);
   const [incomingInvites, setIncomingInvites] = useState([]);
   const [session, setSession] = useState(null);
@@ -327,24 +328,34 @@ export function AudioCallProvider({ children }) {
       await connectRoom(result, 'calling');
       setIncoming(null);
       setMinimized(false);
+      return { success: true, call: result.call };
     } catch (error) {
       disconnectRoom();
       if (createdCallId) leaveAudioCall(createdCallId).catch(() => {});
       toast.error(friendlyCallError(error));
+      return { success: false, error };
     } finally {
       setBusy(false);
     }
   }, [connectRoom, disconnectRoom]);
 
-  const startAudioCall = useCallback((targetId, chatId) => {
-    if (session || busy) return;
+  const startAudioCall = useCallback(async (targetId, chatId) => {
+    if (session || busy || isConnectingRef.current) return false;
+    isConnectingRef.current = true;
+    setBusy(true);
     const request = { targetId, chatId };
     if (localStorage.getItem(CALL_GUIDE_KEY) !== 'seen') {
       pendingStartRef.current = request;
       setShowGuide(true);
-      return;
+      return true;
     }
-    executeStart(request);
+    try {
+      const res = await executeStart(request);
+      return res?.success ?? false;
+    } finally {
+      isConnectingRef.current = false;
+      setBusy(false);
+    }
   }, [busy, executeStart, session]);
 
   const acceptIncoming = useCallback(async (selectedInvite = incoming) => {
@@ -472,11 +483,12 @@ export function AudioCallProvider({ children }) {
   const value = useMemo(() => ({
     activeCall: session?.call || null,
     isCalling: Boolean(session),
+    isCallConnecting: busy,
     incomingCallInvites: incomingInvites,
     startAudioCall,
     acceptAudioCallInvite: acceptIncoming,
     restoreCall: () => setMinimized(false),
-  }), [acceptIncoming, incomingInvites, session, startAudioCall]);
+  }), [acceptIncoming, busy, incomingInvites, session, startAudioCall]);
 
   return (
     <AudioCallContext.Provider value={value}>
@@ -484,13 +496,26 @@ export function AudioCallProvider({ children }) {
       <div ref={audioContainerRef} className="hidden" aria-hidden />
       {showGuide && (
         <CallingGuide
-          onClose={() => { pendingStartRef.current = null; setShowGuide(false); }}
+          onClose={() => {
+            pendingStartRef.current = null;
+            setShowGuide(false);
+            setBusy(false);
+            isConnectingRef.current = false;
+          }}
           onContinue={() => {
             const request = pendingStartRef.current;
             localStorage.setItem(CALL_GUIDE_KEY, 'seen');
             pendingStartRef.current = null;
             setShowGuide(false);
-            if (request) executeStart(request);
+            if (request) {
+              executeStart(request).finally(() => {
+                isConnectingRef.current = false;
+                setBusy(false);
+              });
+            } else {
+              isConnectingRef.current = false;
+              setBusy(false);
+            }
           }}
         />
       )}

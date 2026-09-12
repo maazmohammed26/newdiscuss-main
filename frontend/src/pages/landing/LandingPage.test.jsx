@@ -249,4 +249,19 @@ describe('Discuss Public LandingPage (Production Hand-Drawn / Drawable UI)', () 
     expect(mockNavigate).toHaveBeenCalledWith('/feed', { replace: true });
     expect(container.querySelector('#discuss-loading-screen')).toBeTruthy();
   });
+
+  it('does NOT redirect to /feed when signingOut is true even if user object exists', async () => {
+    mockAuthState = {
+      user: { uid: 'user_123' },
+      loading: false,
+      signingOut: true,
+    };
+
+    await act(async () => {
+      root.render(<LandingPage />);
+    });
+
+    expect(mockNavigate).not.toHaveBeenCalledWith('/feed', { replace: true });
+    expect(container.querySelector('#discuss-loading-screen')).toBeNull();
+  });
 });

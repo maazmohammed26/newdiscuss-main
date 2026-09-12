@@ -32,7 +32,7 @@ import {
 import { resolveBanner } from '@/lib/bannerPresets';
 import ProfileSocialLinks from '@/components/ProfileSocialLinks';
 import ProfileHeroSkeleton from '@/components/ProfileHeroSkeleton';
-import { FocusReveal, DelayedNetworkLoader } from '@/components/loading';
+import { FocusReveal, DelayedNetworkLoader, DiscussLoadingDots } from '@/components/loading';
 
 import {
   saveUserLocation,
@@ -131,7 +131,7 @@ import { ADMIN_MESSAGE_PREVIEW_LENGTH } from '@/lib/uiConstants';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 export default function ProfilePage() {
-  const { user, logout, patchUser } = useAuth();
+  const { user, logout, signingOut, patchUser } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1115,16 +1115,16 @@ export default function ProfilePage() {
   }, [userPosts, filterType, filterMonth, filterYear]);
 
   const handleLogout = async () => { 
+    if (loggingOut || signingOut) return;
     setLoggingOut(true);
     try {
-      await logout();
-      window.history.replaceState(null, '', '/');
-      navigate('/', { replace: true });
+      await logout({ navigate });
+      setShowLogoutConfirm(false);
     } catch (error) {
       console.error('Logout failed:', error);
       toast.error('Unable to log out. Please try again.');
+    } finally {
       setLoggingOut(false);
-      setShowLogoutConfirm(false);
     }
   };
 
@@ -2159,7 +2159,7 @@ export default function ProfilePage() {
       />
 
       {/* Logout Confirmation */}
-      <AlertDialog open={showLogoutConfirm} onOpenChange={(open) => !loggingOut && setShowLogoutConfirm(open)}>
+      <AlertDialog open={showLogoutConfirm} onOpenChange={(open) => !(loggingOut || signingOut) && setShowLogoutConfirm(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Log out of Discuss?</AlertDialogTitle>
@@ -2168,13 +2168,21 @@ export default function ProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loggingOut}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loggingOut || signingOut}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLogout}
-              disabled={loggingOut}
-              className="bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200"
+              disabled={loggingOut || signingOut}
+              aria-busy={loggingOut || signingOut}
+              className="bg-neutral-950 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-w-[96px]"
             >
-              {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Log out'}
+              {loggingOut || signingOut ? (
+                <>
+                  <DiscussLoadingDots size="inline" color="#ffffff" title="Logging out…" />
+                  <span>Logging out…</span>
+                </>
+              ) : (
+                'Log out'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -4,6 +4,7 @@ import { database, ref, onValue } from '@/lib/firebase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudioCall } from '@/contexts/AudioCallContext';
+import { DiscussLoadingDots } from '@/components/loading';
 import { useHighlights } from '@/contexts/HighlightsContext';
 import { getUser } from '@/lib/db';
 import { getUserProfile } from '@/lib/userProfileDb';
@@ -107,7 +108,9 @@ const mergeChronological = (current, incoming) => {
 export default function ChatConversationPage() {
   const { otherUserId } = useParams();
   const { user, patchUser } = useAuth();
-  const { startAudioCall, isCalling, incomingCallInvites, acceptAudioCallInvite } = useAudioCall();
+  const { startAudioCall, isCalling, isCallConnecting, incomingCallInvites, acceptAudioCallInvite } = useAudioCall();
+  const [isConnectingCall, setIsConnectingCall] = useState(false);
+  const callConnectingRef = useRef(false);
   const { markChatReadLocally } = useHighlights();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
@@ -134,6 +137,13 @@ export default function ChatConversationPage() {
   const [chatStatus, setChatStatus] = useState(CHAT_STATUS.ACTIVE);
   const [relationshipStatus, setRelationshipStatus] = useState(RELATIONSHIP_STATUS.NONE);
   const [unfollowedBy, setUnfollowedBy] = useState(null);
+
+  useEffect(() => {
+    if (isCalling) {
+      callConnectingRef.current = false;
+      setIsConnectingCall(false);
+    }
+  }, [isCalling]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAutoDeleteConfirm, setShowAutoDeleteConfirm] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
@@ -964,7 +974,8 @@ export default function ChatConversationPage() {
     return '';
   }, [chatEnabled, chatStatus, otherUser?.callingEnabled, otherUser?.username, relationshipStatus]);
 
-  const handleStartAudioCall = useCallback(() => {
+  const handleStartAudioCall = useCallback(async () => {
+    if (callConnectingRef.current || isConnectingCall || isCallConnecting) return;
     if (callUnavailableReason) {
       toast(callUnavailableReason);
       return;
@@ -973,8 +984,28 @@ export default function ChatConversationPage() {
       toast('Return to your current audio call before starting another.');
       return;
     }
-    if (otherUserId && chatId) startAudioCall(otherUserId, chatId);
-  }, [callUnavailableReason, chatId, isCalling, otherUserId, startAudioCall]);
+    if (!otherUserId || !chatId) return;
+
+    callConnectingRef.current = true;
+    setIsConnectingCall(true);
+
+    const watchdogTimer = setTimeout(() => {
+      if (callConnectingRef.current) {
+        callConnectingRef.current = false;
+        setIsConnectingCall(false);
+      }
+    }, 20000);
+
+    try {
+      await startAudioCall(otherUserId, chatId);
+    } catch (err) {
+      console.warn('[AudioCall] Call start error:', err?.message || err);
+    } finally {
+      clearTimeout(watchdogTimer);
+      callConnectingRef.current = false;
+      setIsConnectingCall(false);
+    }
+  }, [callUnavailableReason, chatId, isCallConnecting, isCalling, isConnectingCall, otherUserId, startAudioCall]);
 
   const handleCallingPreference = useCallback(async () => {
     if (callingPreferenceBusy) return;
@@ -1084,15 +1115,33 @@ export default function ChatConversationPage() {
           </div>
 
           <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={handleStartAudioCall}
-            aria-label="Start audio call"
-            aria-disabled={Boolean(callUnavailableReason) || isCalling}
-            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${callUnavailableReason || isCalling ? 'text-neutral-300 dark:text-neutral-700' : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-[#1A1A1A]'}`}
-          >
-            <Phone className="h-5 w-5" />
-          </button>
+          {(() => {
+            const isConnecting = isConnectingCall || Boolean(isCallConnecting);
+            return (
+              <button
+                type="button"
+                onClick={handleStartAudioCall}
+                disabled={isConnecting || isCalling || Boolean(callUnavailableReason)}
+                aria-label={isConnecting ? 'Connecting audio call' : 'Start audio call'}
+                aria-busy={isConnecting}
+                className={`relative flex items-center justify-center rounded-full transition-all duration-150 active:scale-[0.96] ${
+                  isConnecting
+                    ? 'h-10 px-3.5 gap-2 bg-neutral-100 dark:bg-[#1A1A1A] text-neutral-800 dark:text-neutral-200 cursor-not-allowed border border-neutral-200/80 dark:border-neutral-800 shadow-xs'
+                    : callUnavailableReason || isCalling
+                    ? 'h-10 w-10 text-neutral-300 dark:text-neutral-700 cursor-not-allowed'
+                    : 'h-10 w-10 text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-[#1A1A1A] cursor-pointer'
+                }`}
+              >
+                <Phone className={`shrink-0 ${isConnecting ? 'h-4 w-4 animate-pulse text-[#0095F6]' : 'h-5 w-5'}`} />
+                {isConnecting && (
+                  <span className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold tracking-tight">
+                    <span>Connecting…</span>
+                    <DiscussLoadingDots size="inline" className="opacity-80" />
+                  </span>
+                )}
+              </button>
+            );
+          })()}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="p-2 rounded-[6px] hover:bg-neutral-100 dark:hover:bg-neutral-700 dark:hover:bg-[#1A1A1A] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400">

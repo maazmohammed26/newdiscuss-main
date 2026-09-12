@@ -24,13 +24,13 @@ import './LandingPage.css';
  * - Redirects authenticated users to /feed
  */
 export default function LandingPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, signingOut } = useAuth();
   const navigate = useNavigate();
 
   // Redirect authenticated users to the feed
   useEffect(() => {
-    if (!loading && user) navigate('/feed', { replace: true });
-  }, [user, loading, navigate]);
+    if (!loading && user && !signingOut) navigate('/feed', { replace: true });
+  }, [user, loading, signingOut, navigate]);
 
   // Set Page Title and SEO metadata
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function LandingPage() {
   }, []);
 
   // Signed-in users see loading screen while redirecting to /feed
-  if (user) return <LoadingScreen message="Opening Discuss…" compact />;
+  if (user && !signingOut) return <LoadingScreen message="Opening Discuss…" compact />;
 
   return (
     <div className="drawable-landing bg-white selection:bg-[#0095F6]/15 selection:text-[#0095F6]">
