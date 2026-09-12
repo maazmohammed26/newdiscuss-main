@@ -33,6 +33,11 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const getReturnTarget = () => {
+    const searchParams = new URLSearchParams(location.search);
+    return location.state?.from || searchParams.get('returnTo') || searchParams.get('redirect') || '/feed';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -41,7 +46,7 @@ export default function LoginPage() {
     setLoading(true);
     const r = await login(email, password);
     setLoading(false);
-    if (r.success) navigate(location.state?.from || '/feed', { replace: true });
+    if (r.success) navigate(getReturnTarget(), { replace: true });
     else setError(r.error);
   };
 
@@ -52,7 +57,7 @@ export default function LoginPage() {
     const r = await loginWithGoogle({ useBrowser });
     setGoogleRecovery(Boolean(r.canUseBrowser));
     setGoogleLoading(false);
-    if (r.success) navigate(location.state?.from || '/feed', { replace: true });
+    if (r.success) navigate(getReturnTarget(), { replace: true });
     else if (r.error) setError(r.error);
   };
 

@@ -128,16 +128,19 @@ function ProtectedRoute({ children }) {
 }
 
 // ── AuthRedirect ──────────────────────────────────────────────────────────────
-// Wraps login/register pages. Redirects already-authenticated users to /feed.
+// Wraps login/register pages. Redirects already-authenticated users to /feed or returnTo.
 function AuthRedirect({ children }) {
   const { user, signingOut } = useAuth();
+  const location = useLocation();
 
   if (signingOut) {
     return children;
   }
 
   if (user) {
-    return <Navigate to="/feed" replace />;
+    const searchParams = new URLSearchParams(location.search);
+    const returnTarget = location.state?.from || searchParams.get('returnTo') || searchParams.get('redirect') || '/feed';
+    return <Navigate to={returnTarget} replace />;
   }
 
   return children;
