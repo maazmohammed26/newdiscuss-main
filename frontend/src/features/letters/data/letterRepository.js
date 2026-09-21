@@ -175,7 +175,12 @@ export const subscribeToThreadHead = (threadId, onUpdate) => {
   if (!fifthDatabase || !threadId) return () => {};
 
   const lettersRef = fifthRef(fifthDatabase, `letterThreads/${threadId}/letters`);
-  const q = fifthQuery(lettersRef, orderByChild('createdAt'), limitToLast(10));
+  let q;
+  try {
+    q = fifthQuery(lettersRef, orderByChild('createdAt'), limitToLast(10));
+  } catch (_) {
+    q = lettersRef;
+  }
 
   const listener = async (snapshot) => {
     if (!snapshot.exists()) return;
@@ -192,10 +197,17 @@ export const subscribeToThreadHead = (threadId, onUpdate) => {
     }
   };
 
-  fifthOnValue(q, listener, (err) => console.warn('[LettersRepo] Thread letters listener error:', err?.message));
+  fifthOnValue(q, listener, (err) => {
+    if (err?.message && err.message.includes('Index not defined')) {
+      fifthOnValue(lettersRef, listener, () => {});
+    } else {
+      console.warn('[LettersRepo] Thread letters listener notice:', err?.message);
+    }
+  });
 
   return () => {
     fifthOff(q, 'value', listener);
+    fifthOff(lettersRef, 'value', listener);
   };
 };
 
@@ -207,8 +219,13 @@ export const fetchEarlierLetters = async (threadId, beforeCreatedAt, limit = 10)
 
   try {
     const lettersRef = fifthRef(fifthDatabase, `letterThreads/${threadId}/letters`);
-    const q = fifthQuery(lettersRef, orderByChild('createdAt'), limitToLast(limit * 2));
-    const snap = await fifthGet(q);
+    let snap;
+    try {
+      const q = fifthQuery(lettersRef, orderByChild('createdAt'), limitToLast(limit * 2));
+      snap = await fifthGet(q);
+    } catch (_) {
+      snap = await fifthGet(lettersRef);
+    }
     if (!snap.exists()) return [];
 
     const beforeTime = new Date(beforeCreatedAt).getTime();
@@ -221,7 +238,7 @@ export const fetchEarlierLetters = async (threadId, beforeCreatedAt, limit = 10)
     await saveLocalLetters(items);
     return items;
   } catch (err) {
-    console.warn('[LettersRepo] Earlier letters fetch failed:', err?.message);
+    console.warn('[LettersRepo] Earlier letters fetch notice:', err?.message);
     return [];
   }
 };
