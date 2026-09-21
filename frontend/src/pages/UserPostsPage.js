@@ -19,8 +19,10 @@ import ProfileShareModal from '@/components/ProfileShareModal';
 import ProfileHeroSkeleton from '@/components/ProfileHeroSkeleton';
 import LinkifiedText from '@/components/LinkifiedText';
 import { FocusReveal } from '@/components/loading';
+import LetterComposerModal from '@/features/letters/components/LetterComposerModal';
+import { isLettersEnabled } from '@/features/letters/data/letterRepository';
 
-import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2 } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2, Send } from 'lucide-react';
 import { database, ref, onValue } from '@/lib/firebase';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 import ReportModal from '@/components/ReportModal';
@@ -45,6 +47,7 @@ export default function UserPostsPage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportedLocally, setReportedLocally] = useState(false);
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'pulses'
+  const [showLetterComposer, setShowLetterComposer] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -256,6 +259,17 @@ export default function UserPostsPage() {
                           showChat={true}
                         />
                       )}
+                      {currentUser && currentUser.id !== userId && isLettersEnabled() && (
+                        <button
+                          type="button"
+                          onClick={() => setShowLetterComposer(true)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+                          title="Send a handwritten Letter"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Letter</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowShareModal(true)}
                         className="p-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -446,6 +460,21 @@ export default function UserPostsPage() {
         currentUser={currentUser}
         onReportSuccess={() => setReportedLocally(true)}
       />
+
+      {/* Letter Composer Modal */}
+      {showLetterComposer && (
+        <LetterComposerModal
+          isOpen={showLetterComposer}
+          onClose={() => setShowLetterComposer(false)}
+          currentUser={currentUser}
+          recipient={{
+            id: userId,
+            ...userData,
+            ...profileData,
+            displayName: profileData?.fullName || userData?.full_name || userData?.username,
+          }}
+        />
+      )}
     </div>
   );
 }

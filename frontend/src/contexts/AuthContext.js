@@ -1223,6 +1223,7 @@ export function AuthProvider({ children }) {
   const oneSignalUserId = user?.id;
   const oneSignalUsername = user?.username;
   useEffect(() => {
+    if (loading) return;
     if (oneSignalUserId) {
       syncOneSignalUser(oneSignalUserId, oneSignalUsername);
       Promise.resolve(synchronizeAuxiliaryAuth(oneSignalUserId)).catch((error) => console.warn('[AUTH] Auxiliary authentication failed:', error.message));
@@ -1230,7 +1231,7 @@ export function AuthProvider({ children }) {
       logoutOneSignalUser();
       Promise.resolve(signOutAuxiliaryAuth()).catch(() => {});
     }
-  }, [oneSignalUserId, oneSignalUsername]);
+  }, [loading, oneSignalUserId, oneSignalUsername]);
 
   return (
     <AuthContext.Provider

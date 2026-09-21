@@ -6,6 +6,7 @@ const ROUTES = Object.freeze({
   group: ({ groupId }) => `/group/${encodeURIComponent(groupId)}`,
   group_chat: ({ groupId }) => `/group/${encodeURIComponent(groupId)}`,
   notifications: () => '/notifications',
+  letter: ({ threadId } = {}) => (threadId ? `/chat?tab=letters&thread=${encodeURIComponent(threadId)}` : '/chat?tab=letters'),
 });
 
 export const buildDeepLink = (type, params = {}) => {

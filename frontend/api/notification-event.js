@@ -8,6 +8,7 @@ const APP_ORIGIN = process.env.PUBLIC_APP_ORIGIN || 'https://www.discussit.in';
 const ALLOWED_TYPES = new Set([
   'direct_message', 'group_message', 'comment', 'reply', 'like', 'pulse_like',
   'friend_request', 'friend_accepted', 'group_join_accepted', 'blink', 'report',
+  'letter_received',
 ]);
 const rateWindows = new Map();
 
@@ -50,6 +51,7 @@ const renderEvent = (type, actor, data) => {
     group_join_accepted: ['Group request accepted', `You can now join ${groupName}`],
     blink: [`New Blink from @${name}`, 'Open Discuss to view it once'],
     report: ['Report received', 'Your report was saved for review'],
+    letter_received: [`New Letter from @${name}`, 'Sent you a handwritten Letter'],
   };
   return templates[type];
 };

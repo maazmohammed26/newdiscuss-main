@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 
 export const LOCAL_DATABASE_NAME = 'discuss_cache';
-export const LOCAL_DATABASE_VERSION = 8;
+export const LOCAL_DATABASE_VERSION = 9;
 
 let databasePromise;
 
@@ -99,6 +99,25 @@ export const getLocalDatabase = () => {
           ['usageCount', 'usageCount'],
           ['lastUsedAt', 'lastUsedAt'],
         ]);
+
+        // Letters stores (version 9)
+        ensureStore(db, transaction, 'letter_threads', { keyPath: 'threadId' }, [
+          ['counterpartUid', 'counterpartUid'],
+          ['relationBucket', 'relationBucket'],
+          ['lastActivityAt', 'lastActivityAt'],
+        ]);
+        ensureStore(db, transaction, 'letters', { keyPath: 'id' }, [
+          ['threadId', 'threadId'],
+          ['createdAt', 'createdAt'],
+          ['threadCreatedAt', ['threadId', 'createdAt']],
+        ]);
+        ensureStore(db, transaction, 'letter_drafts', { keyPath: 'draftKey' }, [
+          ['senderUid', 'senderUid'],
+          ['recipientUid', 'recipientUid'],
+          ['updatedAt', 'updatedAt'],
+        ]);
+        ensureStore(db, transaction, 'letter_policies', { keyPath: 'uid' });
+        ensureStore(db, transaction, 'letter_preferences', { keyPath: 'uid' });
       },
       blocked() {
         console.warn('[LOCAL_DB] Upgrade blocked by another open Discuss tab.');

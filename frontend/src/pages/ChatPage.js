@@ -1,8 +1,10 @@
 import UserAvatar from '@/components/UserAvatar';
 import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHighlights } from '@/contexts/HighlightsContext';
+import LettersInbox from '@/features/letters/components/LettersInbox';
+import { isLettersEnabled } from '@/features/letters/data/letterRepository';
 import { getUser } from '@/lib/db';
 import { database, ref, onValue } from '@/lib/firebase';
 import { getChatsWithUserDetails, subscribeToUserChats, getUserChats, getChatSettings, markMessagesAsRead } from '@/lib/chatsDb';
@@ -41,7 +43,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Search, X, MessageCircle, Users, Loader2, 
-  MessageSquarePlus, Timer, MoreVertical, UserPlus, Inbox, Globe, Camera
+  MessageSquarePlus, Timer, MoreVertical, UserPlus, Inbox, Globe, Camera, Mail
 } from 'lucide-react';
 import BlinkCameraModal from '@/components/Blink/BlinkCameraModal';
 import { runRegistry24HourPurge } from '@/lib/blinkService';
@@ -77,6 +79,17 @@ const reconcileCollection = (current, incoming, getKey) => {
 export default function ChatPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const lettersFeatureActive = isLettersEnabled();
+  const requestedTab = searchParams.get('tab');
+  const urlThreadId = searchParams.get('thread');
+
+  const [primaryMode, setPrimaryMode] = useState(() => {
+    if (requestedTab === 'letters' && lettersFeatureActive) return 'letters';
+    return 'chats';
+  });
+
   const { pendingGroupRequests, markChatReadLocally } = useHighlights();
   const [chats, setChats] = useState(() => {
     if (typeof window !== 'undefined' && window.__discuss_chats_cache) {
@@ -758,60 +771,131 @@ export default function ChatPage() {
           </DropdownMenu>
         </div>
 
-        {/* Tabs */}
-        <div className="mx-4 mt-4 flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-900">
-          <button
-            onClick={() => { setActiveTab('chats'); setSearchQuery(''); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
-              activeTab === 'chats'
-                ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
-            }`}
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Chats</span>
-            {totalUnread > 0 && (
-              <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                {totalUnread > 99 ? '99+' : totalUnread}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => { setActiveTab('friends'); setSearchQuery(''); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
-              activeTab === 'friends'
-                ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
-                : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Friends</span>
-            <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[10px] px-1.5 py-0.5 rounded-full">
-              {friends.length}
-            </span>
-          </button>
-        </div>
-
-        {/* Search bar */}
-        <div className="px-4 py-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={activeTab === 'chats' ? 'Search chats and groups...' : 'Search friends...'}
-              className="h-11 rounded-xl border-transparent bg-neutral-100 pl-10 pr-10 text-sm text-neutral-900 placeholder:text-neutral-500 focus:border-[#0095F6]/30 focus:bg-white dark:bg-neutral-900 dark:text-white dark:focus:bg-black"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+        {/* Primary Navigation Modes: Chats | Letters */}
+        {lettersFeatureActive ? (
+          <div className="mx-4 mt-4 flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-900">
+            <button
+              onClick={() => { setPrimaryMode('chats'); setSearchQuery(''); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[8px] text-[13px] font-semibold transition-all ${
+                primaryMode === 'chats'
+                  ? 'bg-[#0095F6] text-white shadow-button'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+              }`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Chats</span>
+              {totalUnread > 0 && (
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                  {totalUnread > 99 ? '99+' : totalUnread}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => { setPrimaryMode('letters'); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[8px] text-[13px] font-semibold transition-all ${
+                primaryMode === 'letters'
+                  ? 'bg-amber-500 text-white shadow-button'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              <span>Letters</span>
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="mx-4 mt-4 flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-900">
+            <button
+              onClick={() => { setActiveTab('chats'); setSearchQuery(''); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
+                activeTab === 'chats'
+                  ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
+                  : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
+              }`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Chats</span>
+              {totalUnread > 0 && (
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                  {totalUnread > 99 ? '99+' : totalUnread}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => { setActiveTab('friends'); setSearchQuery(''); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[6px] text-[13px] font-semibold transition-all ${
+                activeTab === 'friends'
+                  ? 'bg-[#0095F6] bg-[#0095F6] text-white shadow-button'
+                  : 'text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Friends</span>
+              <span className="bg-neutral-100 dark:bg-neutral-700 discuss:bg-[#333333] text-neutral-500 dark:text-neutral-400 dark:text-neutral-400 text-[10px] px-1.5 py-0.5 rounded-full">
+                {friends.length}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* If in Letters mode, render LettersInbox */}
+        {lettersFeatureActive && primaryMode === 'letters' ? (
+          <div className="py-2">
+            <LettersInbox
+              currentUserId={user?.id}
+              currentUser={user}
+              activeThreadId={urlThreadId}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Chats Sub-Filter: All vs Friends */}
+            {lettersFeatureActive && (
+              <div className="mx-4 mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('chats'); setSearchQuery(''); }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                    activeTab === 'chats'
+                      ? 'bg-neutral-900 dark:bg-white text-white dark:text-black shadow-xs'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  }`}
+                >
+                  All Chats ({combinedChatsAndGroups.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('friends'); setSearchQuery(''); }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                    activeTab === 'friends'
+                      ? 'bg-neutral-900 dark:bg-white text-white dark:text-black shadow-xs'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  }`}
+                >
+                  Friends ({friends.length})
+                </button>
+              </div>
+            )}
+
+            {/* Search bar */}
+            <div className="px-4 py-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-500 dark:text-neutral-400" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={activeTab === 'chats' ? 'Search chats and groups...' : 'Search friends...'}
+                  className="h-11 rounded-xl border-transparent bg-neutral-100 pl-10 pr-10 text-sm text-neutral-900 placeholder:text-neutral-500 focus:border-[#0095F6]/30 focus:bg-white dark:bg-neutral-900 dark:text-white dark:focus:bg-black"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white dark:hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
 
         {/* Content */}
         {loading ? (
@@ -903,6 +987,8 @@ export default function ChatPage() {
               : displayData.map(renderFriendItem).filter(Boolean)
             }
           </div>
+        )}
+          </>
         )}
           </main>
         </div>

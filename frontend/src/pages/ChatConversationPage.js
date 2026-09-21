@@ -59,8 +59,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ArrowLeft, Send, Loader2, Lock, MoreVertical, Trash2, User, AlertTriangle, Clock, 
-  Copy, X, Reply, Flag, Check, ChevronDown, Phone, Camera
+  Copy, X, Reply, Flag, Check, ChevronDown, Phone, Camera, Mail
 } from 'lucide-react';
+import LetterComposerModal from '@/features/letters/components/LetterComposerModal';
+import { isLettersEnabled } from '@/features/letters/data/letterRepository';
 import { DelayedNetworkLoader, FocusReveal } from '@/components/loading';
 import BlinkMessageCard from '@/components/Blink/BlinkMessageCard';
 import BlinkViewer from '@/components/Blink/BlinkViewer';
@@ -130,6 +132,7 @@ export default function ChatConversationPage() {
   const [messages, setMessages] = useState(() => initialMessages || []);
   const [deletedMessageIds, setDeletedMessageIds] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [showLetterComposer, setShowLetterComposer] = useState(false);
   const [loading, setLoading] = useState(() => !initialOtherUser);
   const [sending, setSending] = useState(false);
   const [chatId, setChatId] = useState(initialChatId);
@@ -1156,6 +1159,18 @@ export default function ChatConversationPage() {
                 <User className="w-4 h-4 mr-2" />
                 View Profile
               </DropdownMenuItem>
+              {isLettersEnabled() && (
+                <>
+                  <DropdownMenuSeparator className="dark:bg-neutral-700 discuss:bg-[#333333]" />
+                  <DropdownMenuItem
+                    onClick={() => setShowLetterComposer(true)}
+                    className="dark:text-neutral-50 dark:text-white dark:focus:bg-neutral-700 discuss:focus:bg-[#333333] rounded-[6px]"
+                  >
+                    <Mail className="w-4 h-4 mr-2 text-amber-500" />
+                    <span>Send a Letter</span>
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator className="dark:bg-neutral-700 discuss:bg-[#333333]" />
               <DropdownMenuItem
                 onSelect={(event) => event.preventDefault()}
@@ -2087,6 +2102,20 @@ export default function ChatConversationPage() {
           currentUserId={user?.id}
           currentUsername={user?.username}
           onClose={() => setActiveBlink(null)}
+        />
+      )}
+
+      {showLetterComposer && (
+        <LetterComposerModal
+          isOpen={showLetterComposer}
+          onClose={() => setShowLetterComposer(false)}
+          currentUser={user}
+          recipient={{
+            id: otherUserId,
+            ...otherUser,
+            ...otherUserProfile,
+            displayName: otherUserProfile?.fullName || otherUser?.username || 'Discuss Member',
+          }}
         />
       )}
 

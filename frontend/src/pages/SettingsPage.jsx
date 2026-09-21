@@ -26,7 +26,15 @@ import {
   Check,
   ExternalLink,
   Shield,
+  Mail,
 } from 'lucide-react';
+import {
+  isLettersEnabled,
+  getLetterPolicy,
+  updateLetterPolicy,
+  getRemoteLetterPreference,
+  updateRemoteLetterPreference,
+} from '@/features/letters/data/letterRepository';
 import {
   getUserLocation,
 } from '@/lib/firebaseSixth';
@@ -43,6 +51,100 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+
+function LetterSettingsSection({ userId }) {
+  const [whoCanSend, setWhoCanSend] = useState('everyone');
+  const [pref, setPref] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    Promise.all([
+      getLetterPolicy(userId),
+      getRemoteLetterPreference(userId),
+    ]).then(([policy, savedPref]) => {
+      if (policy?.whoCanSend) setWhoCanSend(policy.whoCanSend);
+      if (savedPref) setPref(savedPref);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [userId]);
+
+  const handlePolicyChange = async (val) => {
+    setWhoCanSend(val);
+    try {
+      await updateLetterPolicy(userId, val);
+      toast.success('Letter privacy preference saved');
+    } catch (_) {
+      toast.error('Could not save privacy preference');
+    }
+  };
+
+  const handleVisibilityToggle = async () => {
+    const nextVis = pref?.cityVisibility === 'public' ? 'private' : 'public';
+    const updated = { ...(pref || {}), cityVisibility: nextVis };
+    setPref(updated);
+    try {
+      await updateRemoteLetterPreference(userId, updated);
+      toast.success(`Origin city visibility set to ${nextVis}`);
+    } catch (_) {
+      toast.error('Could not update city visibility');
+    }
+  };
+
+  if (loading) {
+    return <div className="py-2 text-xs text-neutral-400">Loading Letter settings...</div>;
+  }
+
+  return (
+    <div className="py-2 space-y-4">
+      <div>
+        <span className="text-xs font-semibold text-neutral-900 dark:text-white block mb-2">
+          Who can send you Letters?
+        </span>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { id: 'everyone', label: 'Everyone' },
+            { id: 'friends', label: 'Friends only' },
+            { id: 'nobody', label: 'Nobody' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => handlePolicyChange(opt.id)}
+              className={`py-1.5 px-2 rounded-lg text-xs font-medium border transition-colors ${
+                whoCanSend === opt.id
+                  ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold'
+                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+        <div>
+          <span className="text-xs font-semibold text-neutral-900 dark:text-white block">
+            Default Origin City
+          </span>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {pref?.cityLabel ? `${pref.cityLabel} (${pref.cityVisibility || 'public'})` : 'Not set (chosen per letter)'}
+          </span>
+        </div>
+        {pref?.cityLabel && (
+          <button
+            type="button"
+            onClick={handleVisibilityToggle}
+            className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline"
+          >
+            {pref.cityVisibility === 'public' ? 'Make Private' : 'Make Public'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { user, logout, signingOut } = useAuth();
@@ -295,6 +397,13 @@ export default function SettingsPage() {
         </div>
       ),
     },
+    ...(isLettersEnabled() ? [{
+      id: 'letters',
+      label: 'Discuss Letters',
+      subtitle: 'Delivery rules & origin city',
+      icon: Mail,
+      renderContent: () => <LetterSettingsSection userId={user?.id} />,
+    }] : []),
     {
       id: 'legal',
       label: 'Community & Legal',

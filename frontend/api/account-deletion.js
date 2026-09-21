@@ -260,6 +260,16 @@ async function deleteDiscussAccount(uid, { email = '', initiatedBy = 'user' } = 
     console.warn('[AccountDeletion] Signals cleanup error:', err.message);
   }
 
+  // 6b. Signals Database (Database 5): Discuss Letters cleanup
+  try {
+    await auxiliaryRequest(SIGNALS_DATABASE_URL, `userLetterThreads/${uid}`, 'DELETE');
+    await auxiliaryRequest(SIGNALS_DATABASE_URL, `letterPolicies/${uid}`, 'DELETE');
+    await auxiliaryRequest(SIGNALS_DATABASE_URL, `letterPreferences/${uid}`, 'DELETE');
+    await auxiliaryRequest(SIGNALS_DATABASE_URL, `letterPendingNonFriend/${uid}`, 'DELETE');
+  } catch (err) {
+    console.warn('[AccountDeletion] Letters cleanup error:', err.message);
+  }
+
   // 7. DevRadar Database: location marker
   try {
     await auxiliaryRequest(DEVRADAR_DATABASE_URL, `devRadarLocations/${uid}`, 'DELETE');
