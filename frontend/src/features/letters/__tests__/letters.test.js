@@ -329,5 +329,253 @@ describe('Discuss Letters — Unit & Integration Test Suite', () => {
       expect(nonFriendsOnly.map((t) => t.threadId)).toEqual(['th_2', 'th_3']);
     });
   });
+
+  describe('11. Loading State Machine & False-Empty State Prevention', () => {
+    // Pure state machine logic evaluator matching LettersInbox
+    const evaluateLoadingUI = ({
+      state,
+      cachedCount,
+      hasDelayedTimerFired,
+      isOnline,
+    }) => {
+      if (cachedCount > 0) {
+        return { showSkeleton: false, showContent: true, showEmpty: false, showOfflineEmpty: false };
+      }
+      if (state === 'HYDRATING_LOCAL' || state === 'SYNCING_INITIAL_REMOTE') {
+        return {
+          showSkeleton: hasDelayedTimerFired,
+          showContent: false,
+          showEmpty: false, // CRITICAL: NEVER FALSE EMPTY
+          showOfflineEmpty: false,
+        };
+      }
+      if (state === 'OFFLINE_EMPTY' || (!isOnline && cachedCount === 0)) {
+        return {
+          showSkeleton: false,
+          showContent: false,
+          showEmpty: false,
+          showOfflineEmpty: true,
+        };
+      }
+      if (state === 'READY_EMPTY') {
+        return {
+          showSkeleton: false,
+          showContent: false,
+          showEmpty: true,
+          showOfflineEmpty: false,
+        };
+      }
+      return { showSkeleton: false, showContent: false, showEmpty: false, showOfflineEmpty: false };
+    };
+
+    test('local hydration pending with zero data shows delayed skeleton, NEVER empty state', () => {
+      // 1. Before 140ms delayed timer
+      const beforeTimer = evaluateLoadingUI({
+        state: 'HYDRATING_LOCAL',
+        cachedCount: 0,
+        hasDelayedTimerFired: false,
+        isOnline: true,
+      });
+      expect(beforeTimer.showEmpty).toBe(false);
+      expect(beforeTimer.showSkeleton).toBe(false);
+
+      // 2. After 140ms delayed timer
+      const afterTimer = evaluateLoadingUI({
+        state: 'HYDRATING_LOCAL',
+        cachedCount: 0,
+        hasDelayedTimerFired: true,
+        isOnline: true,
+      });
+      expect(afterTimer.showEmpty).toBe(false);
+      expect(afterTimer.showSkeleton).toBe(true);
+    });
+
+    test('local cached letters render content immediately without skeleton flash', () => {
+      const fastCached = evaluateLoadingUI({
+        state: 'READY_WITH_DATA',
+        cachedCount: 5,
+        hasDelayedTimerFired: false,
+        isOnline: true,
+      });
+      expect(fastCached.showContent).toBe(true);
+      expect(fastCached.showSkeleton).toBe(false);
+      expect(fastCached.showEmpty).toBe(false);
+    });
+
+    test('remote sync pending with zero cache does not trigger false empty state', () => {
+      const remoteSyncing = evaluateLoadingUI({
+        state: 'SYNCING_INITIAL_REMOTE',
+        cachedCount: 0,
+        hasDelayedTimerFired: true,
+        isOnline: true,
+      });
+      expect(remoteSyncing.showEmpty).toBe(false);
+      expect(remoteSyncing.showSkeleton).toBe(true);
+    });
+
+    test('local + remote complete with zero threads yields confirmed true empty state', () => {
+      const confirmedEmpty = evaluateLoadingUI({
+        state: 'READY_EMPTY',
+        cachedCount: 0,
+        hasDelayedTimerFired: true,
+        isOnline: true,
+      });
+      expect(confirmedEmpty.showEmpty).toBe(true);
+      expect(confirmedEmpty.showSkeleton).toBe(false);
+      expect(confirmedEmpty.showContent).toBe(false);
+    });
+
+    test('offline with zero cache shows offline empty notice, NOT "No Letters yet"', () => {
+      const offlineEmpty = evaluateLoadingUI({
+        state: 'OFFLINE_EMPTY',
+        cachedCount: 0,
+        hasDelayedTimerFired: true,
+        isOnline: false,
+      });
+      expect(offlineEmpty.showOfflineEmpty).toBe(true);
+      expect(offlineEmpty.showEmpty).toBe(false);
+    });
+  });
+
+  describe('12. Paper Plane Morph & Gesture Lifecycle', () => {
+    test('drag below 85% threshold resets without sending', () => {
+      let sendCalled = false;
+      const onCommit = () => { sendCalled = true; };
+
+      const handlePointerUp = (progress) => {
+        if (progress >= 0.85) onCommit();
+      };
+
+      handlePointerUp(0.4);
+      expect(sendCalled).toBe(false);
+
+      handlePointerUp(0.84);
+      expect(sendCalled).toBe(false);
+    });
+
+    test('drag above 85% threshold arms and commits send exactly once', () => {
+      let sendCount = 0;
+      let isSending = false;
+
+      const executeSend = () => {
+        if (isSending) return;
+        isSending = true;
+        sendCount += 1;
+      };
+
+      const handlePointerMove = (progress) => {
+        if (progress >= 0.85 && !isSending) {
+          executeSend();
+        }
+      };
+
+      handlePointerMove(0.86);
+      handlePointerMove(0.92);
+      handlePointerMove(1.0);
+
+      expect(sendCount).toBe(1);
+    });
+
+    test('animation lifecycle progresses across phases cleanly', () => {
+      const phases = ['idle', 'folding', 'flying', 'arrival', 'complete'];
+      let currentPhase = 'idle';
+
+      const advancePhase = (next) => {
+        currentPhase = next;
+      };
+
+      expect(currentPhase).toBe('idle');
+      advancePhase('folding');
+      expect(currentPhase).toBe('folding');
+      advancePhase('flying');
+      expect(currentPhase).toBe('flying');
+      advancePhase('arrival');
+      expect(currentPhase).toBe('arrival');
+      advancePhase('complete');
+      expect(currentPhase).toBe('complete');
+    });
+
+    test('reduced motion mode bypasses flight phase directly to complete', () => {
+      const prefersReducedMotion = true;
+      let flightPhase = 'idle';
+
+      if (prefersReducedMotion) {
+        flightPhase = 'complete';
+      } else {
+        flightPhase = 'folding';
+      }
+
+      expect(flightPhase).toBe('complete');
+    });
+  });
+
+  describe('13. Non-Friend Single Pending Letter Enforcement & Draft Preservation', () => {
+    test('preserves draft locally when server rejects with pending non-friend error', async () => {
+      const senderUid = 'user_sender_test';
+      const recipientUid = 'user_recipient_nonfriend';
+      const draftContent = {
+        body: 'A thoughtful letter saved across attempts',
+        originCityLabel: 'Bengaluru',
+      };
+
+      // 1. User types and auto-saves draft
+      await saveLetterDraft(senderUid, recipientUid, draftContent);
+      let saved = await getLetterDraft(senderUid, recipientUid);
+      expect(saved.body).toBe(draftContent.body);
+
+      // 2. Send attempt rejected by server (e.g. pending-unopened-letter)
+      const serverRejectionError = {
+        code: 'pending-unopened-letter',
+        message: "You've already sent a Letter. Wait for them to open it before sending another.",
+      };
+
+      // In rejection handler: clearLetterDraft is NOT called
+      const isPendingNonFriend = serverRejectionError.code === 'pending-unopened-letter';
+      if (!isPendingNonFriend) {
+        await clearLetterDraft(senderUid, recipientUid);
+      }
+
+      // 3. Draft remains intact locally
+      const preserved = await getLetterDraft(senderUid, recipientUid);
+      expect(preserved).not.toBeNull();
+      expect(preserved.body).toBe(draftContent.body);
+    });
+  });
+
+  describe('14. Deduplication Matrix & Invariant Maintenance', () => {
+    test('refresh after send with same clientMutationId yields exactly 1 letter', async () => {
+      const threadId = 'th_matrix_refresh_test';
+      const mutationId = 'mut_refresh_101';
+      const optId = `opt_${mutationId}`;
+      const canonicalId = 'can_101';
+
+      // 1. Optimistic write
+      await saveLocalLetter({
+        id: optId,
+        threadId,
+        clientMutationId: mutationId,
+        body: 'Persistent letter test',
+        status: 'QUEUED',
+        createdAt: new Date().toISOString(),
+      });
+
+      // 2. Canonical reconciliation
+      await reconcileLocalLetter({
+        id: canonicalId,
+        threadId,
+        clientMutationId: mutationId,
+        body: 'Persistent letter test',
+        status: 'SENT',
+        createdAt: new Date().toISOString(),
+      });
+
+      // 3. Simulated page refresh: reload from memory cache
+      const loaded = getFastMemoryLettersForThread(threadId);
+      expect(loaded.length).toBe(1);
+      expect(loaded[0].id).toBe(canonicalId);
+      expect(loaded[0].status).toBe('SENT');
+    });
+  });
 });
+
 

@@ -20,7 +20,8 @@ export default function LetterCard({
 
   const authorProfile = isSender ? senderProfile : (senderProfile || recipientProfile);
 
-  // Status computation according to Part 8
+  // Status computation according to PRD Section 14:
+  // Allowed: On its way, Sent, Opened, Couldn't send (Remove Delivered)
   const isPending = letter.status === 'QUEUED' || letter.status === 'PENDING' || String(letter.id || '').startsWith('opt_');
   const isFailed = letter.status === 'FAILED';
   const isOpened = Boolean(letter.openedAt);
@@ -39,23 +40,33 @@ export default function LetterCard({
     }
   };
 
+  // Middle-dot separated date & city formatting (PRD Section 13)
+  // e.g. "Sep 21 · Bengaluru"
   const formattedDate = letter.createdAt
     ? new Date(letter.createdAt).toLocaleDateString(undefined, {
         month: 'short',
         day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
       })
     : '';
 
+  const locationSubtitle = [
+    formattedDate,
+    letter.originCityLabel || null,
+  ].filter(Boolean).join(' · ');
+
+  // Canonical author username/name: never "Sent by you", never "undefined"
+  const authorName = authorProfile?.username
+    ? `@${authorProfile.username}`
+    : (authorProfile?.displayName || authorProfile?.fullName || 'Discuss Member');
+
   return (
     <div
-      className={`w-full max-w-lg mx-auto bg-[#fcfaf4] dark:bg-[#1c1a17] rounded-xl border border-neutral-200/80 dark:border-neutral-800 shadow-xs transition-all duration-300 overflow-hidden relative ${className}`}
+      className={`w-full max-w-lg mx-auto bg-[#fcfaf4] dark:bg-[#1c1a17] rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 shadow-xs transition-all duration-300 overflow-hidden relative select-none ${className}`}
     >
       {/* Subtle Paper Texture */}
-      <div className="absolute inset-0 opacity-[0.025] dark:opacity-[0.05] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
 
-      {/* Header / Envelope flap */}
+      {/* Header Bar */}
       <div
         onClick={handleOpenLetter}
         role="button"
@@ -71,34 +82,25 @@ export default function LetterCard({
         }`}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <UserAvatar user={authorProfile} size="md" />
+          <UserAvatar user={authorProfile} size="md" className="w-10 h-10 rounded-full object-cover" />
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-                {authorProfile?.displayName || authorProfile?.fullName || (isSender ? 'You' : authorProfile?.username ? `@${authorProfile.username}` : 'Deleted user')}
+                {authorName}
               </span>
-              {authorProfile?.username && <VerifiedBadge user={authorProfile} size="xs" />}
+              {authorProfile && <VerifiedBadge user={authorProfile} size="xs" />}
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-              <span>{formattedDate}</span>
-              {letter.originCityLabel && (
-                <>
-                  <span>•</span>
-                  <span className="flex items-center gap-0.5 text-neutral-600 dark:text-neutral-300">
-                    <MapPin className="w-3 h-3" />
-                    {letter.originCityLabel}
-                  </span>
-                </>
-              )}
+            <div className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+              <span className="truncate">{locationSubtitle || formattedDate}</span>
             </div>
           </div>
         </div>
 
-        {/* Status / Receipt Badge — Removed Delivered completely per Part 8 */}
+        {/* Status Badge: Sent, Opened, On its way, Couldn't send (No Delivered) */}
         <div className="flex items-center gap-2 shrink-0">
           {!isExpanded ? (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-neutral-200/70 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-full text-xs font-medium hover:bg-neutral-300/70 dark:hover:bg-neutral-700 transition-colors">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-neutral-200/60 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-full text-xs font-medium hover:bg-neutral-300/60 dark:hover:bg-neutral-700 transition-colors">
               <Mail className="w-3.5 h-3.5" />
               <span>Unfold</span>
             </div>
@@ -130,7 +132,7 @@ export default function LetterCard({
         </div>
       </div>
 
-      {/* Unfolded Content (Gentle unfold transition) */}
+      {/* Unfolded Content */}
       {isExpanded && (
         <div className="px-5 pb-5 pt-1 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200 relative z-10">
           {/* Flight route if cities present */}
@@ -144,12 +146,12 @@ export default function LetterCard({
             />
           )}
 
-          {/* Letter Body in Caveat handwritten script - Hero Element */}
+          {/* Letter Body in Caveat handwritten script */}
           <div className="py-2 text-neutral-900 dark:text-neutral-100 font-['Caveat'] text-2xl sm:text-[26px] leading-relaxed whitespace-pre-wrap select-text">
             {letter.body}
           </div>
 
-          {/* Footer - No sparkles, restrained typography */}
+          {/* Footer - Text only, no decorative star */}
           <div className="flex items-center justify-between pt-3 border-t border-neutral-200/60 dark:border-neutral-800/70 text-xs text-neutral-400 dark:text-neutral-500">
             <span className="tracking-widest font-semibold text-[10px] uppercase text-neutral-400 dark:text-neutral-500">
               DISCUSS LETTER
@@ -172,4 +174,3 @@ export default function LetterCard({
     </div>
   );
 }
-

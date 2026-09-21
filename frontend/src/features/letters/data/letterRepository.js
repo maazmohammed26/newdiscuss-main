@@ -430,6 +430,44 @@ export const getRemoteLetterPreference = async (uid) => {
   }
 };
 
+/**
+ * Checks whether an outstanding unopened letter exists for a non-friend pair.
+ * Combines zero-latency local evaluation with DB5 verification.
+ */
+export const checkPendingNonFriendLetter = async (senderUid, recipientUid) => {
+  if (!senderUid || !recipientUid || senderUid === recipientUid) return false;
+
+  const threadId = getLetterThreadId(senderUid, recipientUid);
+
+  // 1. Fast local evaluation
+  const localLetters = await getLocalLettersForThread(threadId, 5);
+  if (localLetters && localLetters.length > 0) {
+    const last = localLetters[localLetters.length - 1];
+    if (
+      last.senderId === senderUid &&
+      last.relationAtSend !== 'friends' &&
+      !last.openedAt &&
+      last.status !== 'FAILED'
+    ) {
+      return true;
+    }
+  }
+
+  // 2. Remote check against DB5 non-friend pending index
+  if (fifthDatabase && navigator.onLine) {
+    try {
+      const snap = await fifthGet(
+        fifthRef(fifthDatabase, `letterPendingNonFriend/${recipientUid}/${senderUid}`)
+      );
+      if (snap.exists() && snap.val()?.letterId) {
+        return true;
+      }
+    } catch (_) {}
+  }
+
+  return false;
+};
+
 export {
   getFastMemoryThreads,
   getFastMemoryLettersForThread,
@@ -437,3 +475,4 @@ export {
   getLetterDraft,
   clearLetterDraft,
 };
+

@@ -4,6 +4,8 @@ import UserAvatar from '@/components/UserAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import { getFriends, searchUsers } from '@/lib/relationshipsDb';
 import { getUserProfile } from '@/lib/userProfileDb';
+import { checkPendingNonFriendLetter } from '../data/letterRepository';
+import { toast } from 'sonner';
 
 export default function LetterRecipientSearch({
   isOpen,
@@ -171,7 +173,17 @@ export default function LetterRecipientSearch({
           {displayList.map((user) => (
             <button
               key={user.id}
-              onClick={() => {
+              onClick={async () => {
+                if (!user.isFriend && currentUserId) {
+                  const isPending = await checkPendingNonFriendLetter(currentUserId, user.id);
+                  if (isPending) {
+                    toast.info("You've already sent a Letter.", {
+                      description: "Wait for them to open it before sending another.",
+                    });
+                    onClose();
+                    return;
+                  }
+                }
                 onSelectRecipient(user);
                 onClose();
               }}

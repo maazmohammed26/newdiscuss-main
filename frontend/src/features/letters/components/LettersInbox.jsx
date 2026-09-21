@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Mail, Send, MapPin, Users, Plus, Search, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Mail, Send, MapPin, Search, X, WifiOff, RefreshCw } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import LetterThreadView from './LetterThreadView';
@@ -9,10 +9,16 @@ import {
   getLetterThreads,
   subscribeToLetterThreads,
   isLettersEnabled,
+  checkPendingNonFriendLetter,
 } from '../data/letterRepository';
 import { getUserProfile, getCachedUserProfile } from '@/lib/userProfileDb';
 import { getUser } from '@/lib/db';
+import { toast } from 'sonner';
 
+/**
+ * Letters Inbox Loading State Machine:
+ * IDLE -> HYDRATING_LOCAL -> SYNCING_INITIAL_REMOTE -> READY_WITH_DATA | READY_EMPTY | REFRESHING_BACKGROUND | OFFLINE_WITH_CACHE | OFFLINE_EMPTY | ERROR
+ */
 export default function LettersInbox({
   currentUserId,
   currentUser,
@@ -27,34 +33,120 @@ export default function LettersInbox({
   const [isRecipientSearchOpen, setIsRecipientSearchOpen] = useState(false);
   const [composerRecipient, setComposerRecipient] = useState(null);
 
+  // Loading State Machine
+  const [loadingState, setLoadingState] = useState('HYDRATING_LOCAL');
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const skeletonTimerRef = useRef(null);
+
   // Check feature kill switch
   const enabled = isLettersEnabled();
 
-  // Load threads from local store first, then subscribe to DB5 updates
+  // Hydration & Synchronization Pipeline
+  const loadData = useCallback(() => {
+    if (!currentUserId || !enabled) return;
+
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+    // 140ms delayed skeleton threshold: prevents flash if IndexedDB responds quickly (<100ms)
+    setShowSkeleton(false);
+    if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+    skeletonTimerRef.current = setTimeout(() => {
+      setShowSkeleton(true);
+    }, 140);
+
+    setLoadingState('HYDRATING_LOCAL');
+
+    // STEP 1 & 2: Instant local read from IndexedDB
+    getLetterThreads(
+      currentUserId,
+      null,
+      // STEP 4: Background remote DB5 delta callback
+      (freshThreads) => {
+        setThreads(freshThreads);
+        if (freshThreads.length > 0) {
+          setLoadingState('READY_WITH_DATA');
+        } else {
+          setLoadingState('READY_EMPTY');
+        }
+      }
+    )
+      .then((cached) => {
+        if (cached && cached.length > 0) {
+          // Fast cached hit: immediately cancel skeleton reveal
+          if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+          setShowSkeleton(false);
+          setThreads(cached);
+          setLoadingState(isOnline ? 'READY_WITH_DATA' : 'OFFLINE_WITH_CACHE');
+        } else {
+          // Cache is empty: if offline, go directly to OFFLINE_EMPTY
+          if (!isOnline) {
+            if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+            setShowSkeleton(false);
+            setLoadingState('OFFLINE_EMPTY');
+          } else {
+            // STEP 3: Online with zero cache -> wait for initial remote sync
+            setLoadingState('SYNCING_INITIAL_REMOTE');
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('[LettersInbox] Local hydration error:', err);
+        if (!isOnline) {
+          setLoadingState('OFFLINE_EMPTY');
+        } else {
+          setLoadingState('ERROR');
+        }
+      });
+  }, [currentUserId, enabled]);
+
+  // Initial load and Realtime listener
   useEffect(() => {
     if (!currentUserId || !enabled) return;
 
-    let isMounted = true;
+    loadData();
 
-    // 1. Initial fast local read + background DB5 delta sync
-    getLetterThreads(currentUserId, null, (freshThreads) => {
-      if (isMounted) setThreads(freshThreads);
-    }).then((cached) => {
-      if (isMounted) setThreads(cached);
-    });
-
-    // 2. Realtime listener on user's thread index
+    // Subscribe to DB5 thread index updates
     const unsubscribe = subscribeToLetterThreads(currentUserId, (updated) => {
-      if (isMounted) setThreads(updated);
+      if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+      setShowSkeleton(false);
+      setThreads(updated);
+      if (updated.length > 0) {
+        setLoadingState('READY_WITH_DATA');
+      } else {
+        setLoadingState('READY_EMPTY');
+      }
     });
 
     return () => {
-      isMounted = false;
+      if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
       unsubscribe();
     };
-  }, [currentUserId, enabled]);
+  }, [currentUserId, enabled, loadData]);
 
-  // Resolve counterpart profiles with deleted-user safety
+  // Network online/offline listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      if (loadingState === 'OFFLINE_EMPTY' || loadingState === 'OFFLINE_WITH_CACHE') {
+        loadData();
+      }
+    };
+    const handleOffline = () => {
+      if (threads.length > 0) {
+        setLoadingState('OFFLINE_WITH_CACHE');
+      } else {
+        setLoadingState('OFFLINE_EMPTY');
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [loadingState, threads.length, loadData]);
+
+  // Resolve counterpart profiles with deleted-user safety and cached fallback
   useEffect(() => {
     if (!threads.length) return;
     const uidsToFetch = threads
@@ -104,6 +196,12 @@ export default function LettersInbox({
       if (target) setSelectedThread(target);
     }
   }, [activeThreadId, threads]);
+
+  // Preflight check when user taps on an existing thread
+  const handleSelectThread = async (thread) => {
+    setSelectedThread(thread);
+    if (onSelectThread) onSelectThread(thread.threadId);
+  };
 
   // Filtered threads by active tab & search query
   const filteredThreads = useMemo(() => {
@@ -164,14 +262,26 @@ export default function LettersInbox({
     );
   }
 
+  // Are we currently showing the delayed skeleton?
+  const isLoadingActive = (loadingState === 'HYDRATING_LOCAL' || loadingState === 'SYNCING_INITIAL_REMOTE') && threads.length === 0;
+  const shouldRenderSkeleton = isLoadingActive && showSkeleton;
+
   return (
     <div className="w-full h-full flex flex-col bg-white dark:bg-black select-none relative">
       {/* Header Area */}
       <div className="px-4 pt-3 pb-3 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-neutral-900 dark:text-white tracking-tight">
-            Letters
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-neutral-900 dark:text-white tracking-tight">
+              Letters
+            </h2>
+            {loadingState === 'OFFLINE_WITH_CACHE' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">
+                <WifiOff className="w-2.5 h-2.5" />
+                <span>Offline</span>
+              </span>
+            )}
+          </div>
 
           <button
             type="button"
@@ -183,7 +293,7 @@ export default function LettersInbox({
           </button>
         </div>
 
-        {/* Tab switcher: Friends vs Non-friends (explicit product terminology) */}
+        {/* Tab switcher: Friends vs Non-friends */}
         <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl mb-3">
           <button
             type="button"
@@ -233,7 +343,7 @@ export default function LettersInbox({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -241,15 +351,46 @@ export default function LettersInbox({
         </div>
       </div>
 
-      {/* Flat Threads List */}
+      {/* Primary Threads List / Skeleton / States Container */}
       <div 
         className="flex-1 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-900"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
         }}
+        aria-busy={isLoadingActive}
       >
-        {filteredThreads.map((thread) => {
+        {/* State A: Delayed Letters Inbox Skeleton (Section 4) */}
+        {shouldRenderSkeleton && (
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-900 animate-in fade-in duration-200" aria-hidden="true">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="px-4 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {/* 40px Circular Avatar Skeleton */}
+                  <div className="w-10 h-10 rounded-full bg-neutral-200/60 dark:bg-neutral-800/80 shrink-0 animate-pulse" />
+
+                  <div className="flex flex-col min-w-0 flex-1 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Name line skeleton */}
+                      <div className="w-28 h-3.5 bg-neutral-200/60 dark:bg-neutral-800/80 rounded animate-pulse" />
+                      {/* Date skeleton */}
+                      <div className="w-10 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-pulse shrink-0" />
+                    </div>
+
+                    {/* City line skeleton */}
+                    <div className="w-20 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-pulse" />
+
+                    {/* Preview line skeleton */}
+                    <div className="w-48 max-w-full h-3 bg-neutral-200/40 dark:bg-neutral-800/50 rounded animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* State B: Loaded Threads List with smooth dissolve transition (Section 9) */}
+        {!shouldRenderSkeleton && filteredThreads.map((thread) => {
           const profile = profiles[thread.counterpartUid];
           const isDeleted = profile?.isDeleted;
           const hasUnread = (thread.unreadCount || 0) > 0;
@@ -267,11 +408,8 @@ export default function LettersInbox({
           return (
             <div
               key={thread.threadId}
-              onClick={() => {
-                setSelectedThread(thread);
-                if (onSelectThread) onSelectThread(thread.threadId);
-              }}
-              className={`px-4 py-3.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-900/60 cursor-pointer transition-colors ${
+              onClick={() => handleSelectThread(thread)}
+              className={`px-4 py-3.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-900/60 cursor-pointer transition-colors animate-in fade-in duration-150 ${
                 hasUnread ? 'bg-neutral-50/70 dark:bg-neutral-900/40' : ''
               }`}
             >
@@ -312,7 +450,7 @@ export default function LettersInbox({
                     </div>
                   )}
 
-                  {/* Snippet preview in handwriting style */}
+                  {/* Snippet preview in Caveat style */}
                   <div className="flex items-center justify-between gap-2 mt-0.5">
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate max-w-[260px] sm:max-w-xs font-['Caveat'] text-[15px] leading-tight">
                       {thread.lastSnippet || 'Sent a handwritten letter...'}
@@ -330,19 +468,17 @@ export default function LettersInbox({
           );
         })}
 
-        {/* Empty state */}
-        {filteredThreads.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-sm mx-auto space-y-3">
+        {/* State C: Confirmed True Empty State (Sections 1, 2, 7) */}
+        {!isLoadingActive && filteredThreads.length === 0 && (loadingState === 'READY_EMPTY' || loadingState === 'READY_WITH_DATA') && (
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-sm mx-auto space-y-3 animate-in fade-in duration-200">
             <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">
               <Mail className="w-6 h-6" />
             </div>
             <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
-              {activeTab === 'friends' ? 'No letters from friends yet' : 'No non-friends letters yet'}
+              No Letters yet.
             </h4>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              {activeTab === 'friends'
-                ? 'Send a quiet, handwritten note to a friend. Letters travel slowly and build lasting connections.'
-                : 'Letters from outside your friends circle will appear here. Non-friends are limited to 1 unopened letter at a time.'}
+              Write something worth keeping.
             </p>
             <button
               type="button"
@@ -354,6 +490,44 @@ export default function LettersInbox({
             </button>
           </div>
         )}
+
+        {/* State D: Offline with Zero Cache (Section 43) */}
+        {loadingState === 'OFFLINE_EMPTY' && (
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-sm mx-auto space-y-3 animate-in fade-in duration-200">
+            <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-500 flex items-center justify-center">
+              <WifiOff className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
+              You're offline.
+            </h4>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+              No cached Letters available. Retry when connection returns automatically.
+            </p>
+          </div>
+        )}
+
+        {/* State E: Remote Error with Zero Cache (Section 44) */}
+        {loadingState === 'ERROR' && (
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-sm mx-auto space-y-3 animate-in fade-in duration-200">
+            <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-500 flex items-center justify-center">
+              <Mail className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
+              Couldn't load Letters.
+            </h4>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+              Please check your connection and try again.
+            </p>
+            <button
+              type="button"
+              onClick={loadData}
+              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Recipient Search Modal */}
@@ -362,7 +536,7 @@ export default function LettersInbox({
           isOpen={isRecipientSearchOpen}
           onClose={() => setIsRecipientSearchOpen(false)}
           currentUserId={currentUserId}
-          onSelectRecipient={(chosen) => {
+          onSelectRecipient={async (chosen) => {
             setComposerRecipient(chosen);
           }}
         />
