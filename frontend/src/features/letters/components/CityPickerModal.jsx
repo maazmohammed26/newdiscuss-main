@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { X, Search, MapPin, Check, Plus } from 'lucide-react';
-import { searchCities, POPULAR_CITIES, formatCityLabel } from '../city/indiaCities';
+import { searchCities, POPULAR_CITIES } from '../city/indiaCities';
 
 export default function CityPickerModal({
   isOpen,
@@ -53,29 +53,29 @@ export default function CityPickerModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+        className="w-full max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[85vh]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="city-picker-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 dark:border-neutral-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 flex items-center justify-center">
               <MapPin className="w-4 h-4" />
             </div>
             <div>
-              <h3 id="city-picker-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              <h3 id="city-picker-title" className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                 Select Origin City
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Stamped on your letter as the mailing origin
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -83,21 +83,21 @@ export default function CityPickerModal({
         </div>
 
         {/* Search bar */}
-        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="p-4 border-b border-neutral-100 dark:border-neutral-800">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search 350+ Indian cities & towns..."
-              className="w-full pl-9 pr-4 py-2.5 bg-zinc-100 dark:bg-zinc-800/80 border border-transparent focus:border-amber-500 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-neutral-100 dark:bg-neutral-800 border-0 rounded-xl text-xs text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-700 transition-all"
             />
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
               >
                 Clear
               </button>
@@ -105,11 +105,17 @@ export default function CityPickerModal({
           </div>
         </div>
 
-        {/* City list / popular chips */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* City list / popular chips with hidden scrollbar */}
+        <div 
+          className="flex-1 overflow-y-auto p-4 space-y-4"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
           {!query.trim() && (
             <div>
-              <div className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2.5">
+              <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-2.5">
                 Popular Cities
               </div>
               <div className="flex flex-wrap gap-2">
@@ -119,10 +125,10 @@ export default function CityPickerModal({
                     <button
                       key={city.id}
                       onClick={() => handleSelect(city)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400'
+                          ? 'bg-neutral-900 dark:bg-white text-white dark:text-black shadow-xs'
+                          : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                       }`}
                     >
                       {city.name}
@@ -137,7 +143,7 @@ export default function CityPickerModal({
           {/* Search results */}
           {query.trim() && searchResults.length > 0 && (
             <div className="space-y-1">
-              <div className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
+              <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-2">
                 Search Results ({searchResults.length})
               </div>
               {searchResults.map((city) => {
@@ -146,20 +152,20 @@ export default function CityPickerModal({
                   <button
                     key={city.id}
                     onClick={() => handleSelect(city)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm transition-colors ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs transition-colors cursor-pointer ${
                       isSelected
-                        ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-medium'
-                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200'
+                        ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold'
+                        : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/60 text-neutral-800 dark:text-neutral-200'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       <span>{city.name}</span>
                       {city.state && (
-                        <span className="text-xs text-zinc-400">({city.state})</span>
+                        <span className="text-xs text-neutral-400">({city.state})</span>
                       )}
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-amber-500" />}
+                    {isSelected && <Check className="w-4 h-4 text-neutral-900 dark:text-white" />}
                   </button>
                 );
               })}
@@ -169,7 +175,7 @@ export default function CityPickerModal({
           {/* No results */}
           {query.trim() && searchResults.length === 0 && !isAddingCustom && (
             <div className="py-8 text-center">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 No city found matching "{query}"
               </p>
               <button
@@ -177,7 +183,7 @@ export default function CityPickerModal({
                   setCustomCity(query);
                   setIsAddingCustom(true);
                 }}
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-neutral-900 dark:text-white bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-xl transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add "{query}" as custom city
@@ -187,8 +193,8 @@ export default function CityPickerModal({
 
           {/* Custom city form */}
           {isAddingCustom && (
-            <form onSubmit={handleCustomSubmit} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl space-y-3">
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+            <form onSubmit={handleCustomSubmit} className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl space-y-3">
+              <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300">
                 Enter Custom City / Town Name
               </label>
               <input
@@ -196,21 +202,21 @@ export default function CityPickerModal({
                 value={customCity}
                 onChange={(e) => setCustomCity(e.target.value.slice(0, 48))}
                 placeholder="e.g., Kalady, Kerala"
-                className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-amber-500"
+                className="w-full px-3 py-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl text-xs text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
                 autoFocus
               />
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddingCustom(false)}
-                  className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  className="px-3 py-1.5 text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!customCity.trim()}
-                  className="px-3 py-1.5 text-xs font-medium bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Use Custom City
                 </button>
@@ -220,14 +226,14 @@ export default function CityPickerModal({
         </div>
 
         {/* Footer options */}
-        <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
+        <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex items-center justify-between">
           {onToggleRemember && (
-            <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberCity}
                 onChange={(e) => onToggleRemember(e.target.checked)}
-                className="rounded border-zinc-300 text-amber-500 focus:ring-amber-500/20"
+                className="rounded border-neutral-300 text-neutral-900 focus:ring-neutral-400"
               />
               <span>Remember as my default city</span>
             </label>
@@ -235,7 +241,7 @@ export default function CityPickerModal({
 
           <button
             onClick={() => handleSelect(null)}
-            className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 ml-auto"
+            className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 ml-auto cursor-pointer"
           >
             Clear / Omit City
           </button>

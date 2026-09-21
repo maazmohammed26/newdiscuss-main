@@ -22,11 +22,18 @@ import { FocusReveal } from '@/components/loading';
 import LetterComposerModal from '@/features/letters/components/LetterComposerModal';
 import { isLettersEnabled } from '@/features/letters/data/letterRepository';
 
-import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2, Send } from 'lucide-react';
-import { database, ref, onValue } from '@/lib/firebase';
+import { ArrowLeft, User, FileText, Calendar, Loader2, PlayCircle, ShieldCheck, Flag, Share2, Send, Mail, UserX, WifiOff } from 'lucide-react';
+import { database, ref, onValue, get } from '@/lib/firebase';
 import useSecurityProtection from '@/hooks/useSecurityProtection';
 import ReportModal from '@/components/ReportModal';
 import { hasUserReportedTarget } from '@/lib/reportService';
+
+export const PROFILE_RESOLUTION_STATE = {
+  LOADING: 'LOADING',
+  ACTIVE: 'ACTIVE',
+  DELETED: 'DELETED',
+  TEMPORARILY_UNAVAILABLE: 'TEMPORARILY_UNAVAILABLE'
+};
 
 export default function UserPostsPage() {
   useSecurityProtection();
@@ -41,6 +48,7 @@ export default function UserPostsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(() => !getCachedUserProfile(userId));
 
+  const [profileResolutionState, setProfileResolutionState] = useState(PROFILE_RESOLUTION_STATE.LOADING);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [presenceData, setPresenceData] = useState({ isOnline: false, lastSeen: 0 });
@@ -100,34 +108,94 @@ export default function UserPostsPage() {
   };
 
   useEffect(() => {
-    if (userId) {
-      const cached = getCachedUserProfile(userId);
-      if (cached) {
-        setProfileData(cached);
-        setLoadingProfile(false);
-      } else {
-        setLoadingProfile(true);
-      }
-      setLoading(true);
+    if (!userId) return;
 
-      // Fetch primary user data, posts, and pulses
-      Promise.all([getUser(userId), getPostsByUser(userId), getUserPulses(userId)])
-        .then(([u, p, pulses]) => {
-          setUserData(u);
+    const cached = getCachedUserProfile(userId);
+    if (cached) {
+      setProfileData(cached);
+      setUserData(prev => prev || cached);
+      setLoadingProfile(false);
+      setProfileResolutionState(PROFILE_RESOLUTION_STATE.ACTIVE);
+    } else {
+      setLoadingProfile(true);
+      setProfileResolutionState(PROFILE_RESOLUTION_STATE.LOADING);
+    }
+    setLoading(true);
+
+    let isMounted = true;
+
+    const fetchAllData = async () => {
+      let isConfirmedDeleted = false;
+      let isNetworkOrServerError = false;
+      let fetchedUser = null;
+
+      try {
+        const userRef = ref(database, `users/${userId}`);
+        const snap = await get(userRef);
+        if (snap.exists()) {
+          const val = snap.val();
+          if (val && val.isDeleted) {
+            isConfirmedDeleted = true;
+          } else {
+            fetchedUser = {
+              id: userId,
+              ...val,
+              verified: val?.verified || false,
+              admin_message: val?.admin_message || ''
+            };
+          }
+        } else {
+          // Node confirmed absent in Realtime Database
+          isConfirmedDeleted = true;
+        }
+      } catch (err) {
+        console.warn(`[UserPostsPage] Transient user fetch failure for ${userId}:`, err?.message);
+        isNetworkOrServerError = true;
+      }
+
+      if (!isMounted) return;
+
+      if (isConfirmedDeleted) {
+        setProfileResolutionState(PROFILE_RESOLUTION_STATE.DELETED);
+        setUserData(null);
+      } else if (fetchedUser) {
+        setProfileResolutionState(PROFILE_RESOLUTION_STATE.ACTIVE);
+        setUserData(fetchedUser);
+      } else if (isNetworkOrServerError) {
+        setProfileResolutionState(PROFILE_RESOLUTION_STATE.TEMPORARILY_UNAVAILABLE);
+      }
+
+      // Fetch posts and pulses gracefully
+      try {
+        const [p, pulses] = await Promise.all([
+          getPostsByUser(userId).catch(() => []),
+          getUserPulses(userId).catch(() => [])
+        ]);
+        if (isMounted) {
           setPosts(p || []);
           setUserPulses(pulses || []);
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
+        }
+      } catch (_) {}
 
-      // Fetch profile data from secondary Firebase (silent revalidation)
-      getUserProfile(userId)
-        .then(data => {
-          if (data) setProfileData(data);
-        })
-        .catch(() => {})
-        .finally(() => setLoadingProfile(false));
-    }
+      // Fetch secondary profile data
+      try {
+        const secondaryData = await getUserProfile(userId).catch(() => null);
+        if (isMounted && secondaryData) {
+          setProfileData(secondaryData);
+        }
+      } catch (_) {}
+
+      if (isMounted) {
+        setLoading(false);
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchAllData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
 
@@ -195,10 +263,12 @@ export default function UserPostsPage() {
                 <span>{location.state?.fromMap ? 'Back to Map' : 'Back'}</span>
               </button>
               <span className="text-sm font-bold text-neutral-900 dark:text-white truncate max-w-[200px]">
-                {profileData?.fullName || userData?.full_name || userData?.username || 'Profile'}
+                {profileResolutionState === PROFILE_RESOLUTION_STATE.DELETED
+                  ? 'Account removed'
+                  : (profileData?.fullName || userData?.full_name || (userData?.username ? `@${userData.username}` : 'Profile'))}
               </span>
               <div className="flex items-center gap-2">
-                {currentUser && currentUser.id !== userId && (
+                {currentUser && currentUser.id !== userId && profileResolutionState === PROFILE_RESOLUTION_STATE.ACTIVE && userData?.username && (
                   <button
                     onClick={handleReportClick}
                     className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -211,13 +281,42 @@ export default function UserPostsPage() {
               </div>
             </div>
 
-            {loading && !userData ? (
+            {loading && !userData && !profileData ? (
               <ProfileHeroSkeleton />
-            ) : !userData ? (
-              <div className="text-center py-20 px-4">
-                <p className="text-sm font-medium text-neutral-500">This account has been deleted or does not exist.</p>
+            ) : profileResolutionState === PROFILE_RESOLUTION_STATE.DELETED ? (
+              <div className="min-h-[55vh] flex flex-col items-center justify-center text-center px-6 py-16 max-w-sm mx-auto select-none">
+                <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center mb-4 text-neutral-400 dark:text-neutral-500">
+                  <UserX className="w-8 h-8 stroke-[1.5]" />
+                </div>
+                <h1 className="text-base font-bold text-neutral-900 dark:text-white">
+                  Account removed
+                </h1>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 leading-relaxed">
+                  This profile is no longer available.
+                </p>
+                <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-3 leading-relaxed">
+                  Previous posts from this account may remain in discussions.
+                </p>
               </div>
-
+            ) : profileResolutionState === PROFILE_RESOLUTION_STATE.TEMPORARILY_UNAVAILABLE && !userData && !profileData ? (
+              <div className="min-h-[55vh] flex flex-col items-center justify-center text-center px-6 py-16 max-w-sm mx-auto select-none">
+                <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center mb-4 text-neutral-400 dark:text-neutral-500">
+                  <WifiOff className="w-8 h-8 stroke-[1.5]" />
+                </div>
+                <h1 className="text-base font-bold text-neutral-900 dark:text-white">
+                  Profile temporarily unavailable
+                </h1>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 leading-relaxed">
+                  We couldn't connect to retrieve this profile. Please check your network connection or try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-4 px-4 py-1.5 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+                >
+                  Try again
+                </button>
+              </div>
             ) : (
               <FocusReveal ready={Boolean(userData)} variant="hero" triggerKey={userData?.id || userId}>
                 {/* Banner */}
@@ -250,24 +349,24 @@ export default function UserPostsPage() {
                     </div>
 
                     {/* Relationship Actions */}
-                    <div className="flex items-center gap-2">
-                      {currentUser && currentUser.id !== userId && (
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {currentUser && currentUser.id !== userId && profileResolutionState === PROFILE_RESOLUTION_STATE.ACTIVE && userData?.username && (
                         <FriendRequestButton
                           targetUserId={userId}
-                          targetUsername={userData?.username}
+                          targetUsername={userData.username}
                           size="sm"
                           showChat={true}
                         />
                       )}
-                      {currentUser && currentUser.id !== userId && isLettersEnabled() && (
+                      {currentUser && currentUser.id !== userId && profileResolutionState === PROFILE_RESOLUTION_STATE.ACTIVE && isLettersEnabled() && userData?.username && (
                         <button
                           type="button"
                           onClick={() => setShowLetterComposer(true)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-all active:scale-95 cursor-pointer"
                           title="Send a handwritten Letter"
                         >
-                          <Send className="w-3.5 h-3.5" />
-                          <span>Letter</span>
+                          <Mail className="w-3.5 h-3.5" />
+                          <span className="hidden xs:inline">Letter</span>
                         </button>
                       )}
                       <button
@@ -289,9 +388,11 @@ export default function UserPostsPage() {
                       </h1>
                       {(isUserVerified(userData) || isUserVerified(profileData)) && <VerifiedBadge size="md" />}
                     </div>
-                    <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm font-medium">
-                      @{userData?.username}
-                    </p>
+                    {userData?.username && (
+                      <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm font-medium">
+                        @{userData.username}
+                      </p>
+                    )}
                   </div>
 
                   {userId === 'ZUPjqx5LCwPqe2THOcIkrU7KaEj2' && (

@@ -149,27 +149,98 @@ export const saveLocalLetter = async (letter) => {
   }
 };
 
+export const reconcileLocalLetter = async (canonicalLetter) => {
+  const normalized = normalizeLetter(canonicalLetter);
+  if (!normalized) return null;
+
+  const mutationId = normalized.clientMutationId;
+  const canonicalId = normalized.id;
+  const threadId = normalized.threadId;
+
+  let oldOptId = null;
+
+  // 1. Identify existing optimistic key in working set
+  if (mutationId) {
+    const directOptId = `opt_${mutationId}`;
+    if (letterCache.has(directOptId) && directOptId !== canonicalId) {
+      oldOptId = directOptId;
+    } else {
+      for (const [id, item] of letterCache.entries()) {
+        if (item.clientMutationId === mutationId && id !== canonicalId) {
+          oldOptId = id;
+          break;
+        }
+      }
+    }
+  }
+
+  // 2. Remove obsolete optimistic record from memory cache
+  if (oldOptId) {
+    letterCache.delete(oldOptId);
+    if (threadLettersIndex.has(threadId)) {
+      threadLettersIndex.get(threadId).delete(oldOptId);
+    }
+  }
+
+  // 3. Put canonical record in memory
+  letterCache.set(canonicalId, normalized);
+  if (!threadLettersIndex.has(threadId)) {
+    threadLettersIndex.set(threadId, new Set());
+  }
+  threadLettersIndex.get(threadId).add(canonicalId);
+
+  // 4. Atomically migrate in IndexedDB
+  try {
+    const db = await getLocalDatabase();
+    const tx = db.transaction(['letters', 'letter_threads'], 'readwrite');
+    const lettersStore = tx.objectStore('letters');
+
+    if (oldOptId) {
+      await lettersStore.delete(oldOptId);
+    } else if (mutationId) {
+      // Check for direct opt_ key in store as well
+      const optRecord = await lettersStore.get(`opt_${mutationId}`);
+      if (optRecord) {
+        await lettersStore.delete(`opt_${mutationId}`);
+      }
+    }
+
+    await lettersStore.put(normalized);
+
+    // Update thread's lastLetterId if it pointed to the optimistic key
+    const threadsStore = tx.objectStore('letter_threads');
+    const existingThread = await threadsStore.get(threadId);
+    if (existingThread) {
+      if (
+        existingThread.lastLetterId === oldOptId ||
+        !existingThread.lastLetterId ||
+        existingThread.lastLetterId.startsWith('opt_')
+      ) {
+        existingThread.lastLetterId = canonicalId;
+        existingThread.lastActivityAt = normalized.createdAt;
+        await threadsStore.put(existingThread);
+        threadCache.set(threadId, existingThread);
+      }
+    }
+
+    await tx.done;
+  } catch (error) {
+    console.warn('[LettersLocal] Failed to reconcile letter in IndexedDB:', error.message);
+  }
+
+  return normalized;
+};
+
 export const saveLocalLetters = async (letters) => {
   if (!Array.isArray(letters) || !letters.length) return;
   const normalizedList = letters.map(normalizeLetter).filter(Boolean);
 
-  normalizedList.forEach((l) => {
-    letterCache.set(l.id, l);
-    if (!threadLettersIndex.has(l.threadId)) {
-      threadLettersIndex.set(l.threadId, new Set());
+  for (const l of normalizedList) {
+    if (l.clientMutationId && !l.id.startsWith('opt_')) {
+      await reconcileLocalLetter(l);
+    } else {
+      await saveLocalLetter(l);
     }
-    threadLettersIndex.get(l.threadId).add(l.id);
-  });
-
-  try {
-    const db = await getLocalDatabase();
-    const tx = db.transaction('letters', 'readwrite');
-    for (const l of normalizedList) {
-      await tx.store.put(l);
-    }
-    await tx.done;
-  } catch (error) {
-    console.warn('[LettersLocal] Failed to persist letters bulk:', error.message);
   }
 };
 
@@ -186,8 +257,51 @@ export const getLocalLettersForThread = async (threadId, limit = 20) => {
     }
   }
 
-  // Populate memory cache
+  // Deduplicate by clientMutationId defensively:
+  // If both a canonical letter and its optimistic counterpart exist, keep only canonical
+  const canonicalMutations = new Set();
   rows.forEach((l) => {
+    if (l.clientMutationId && !l.id.startsWith('opt_')) {
+      canonicalMutations.add(l.clientMutationId);
+    }
+  });
+
+  const deduplicated = [];
+  const orphanIdsToDelete = [];
+  const seenKeys = new Set();
+
+  for (const l of rows) {
+    if (l.id.startsWith('opt_') && l.clientMutationId && canonicalMutations.has(l.clientMutationId)) {
+      orphanIdsToDelete.push(l.id);
+      continue;
+    }
+    const dedupKey = l.clientMutationId || l.id;
+    if (seenKeys.has(dedupKey)) {
+      if (l.id.startsWith('opt_')) orphanIdsToDelete.push(l.id);
+      continue;
+    }
+    seenKeys.add(dedupKey);
+    deduplicated.push(l);
+  }
+
+  // Purge any identified orphan optimistic records asynchronously
+  if (orphanIdsToDelete.length > 0) {
+    (async () => {
+      try {
+        const db = await getLocalDatabase();
+        const tx = db.transaction('letters', 'readwrite');
+        for (const id of orphanIdsToDelete) {
+          letterCache.delete(id);
+          threadLettersIndex.get(threadId)?.delete(id);
+          await tx.store.delete(id);
+        }
+        await tx.done;
+      } catch (_) {}
+    })();
+  }
+
+  // Populate memory cache with clean deduplicated set
+  deduplicated.forEach((l) => {
     letterCache.set(l.id, l);
     if (!threadLettersIndex.has(l.threadId)) {
       threadLettersIndex.set(l.threadId, new Set());
@@ -196,16 +310,37 @@ export const getLocalLettersForThread = async (threadId, limit = 20) => {
   });
 
   // Sort ascending by createdAt
-  rows.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  return rows.slice(-limit);
+  deduplicated.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  return deduplicated.slice(-limit);
 };
 
 export const getFastMemoryLettersForThread = (threadId, limit = 20) => {
   const ids = threadLettersIndex.get(threadId);
   if (!ids || ids.size === 0) return [];
   const list = Array.from(ids).map((id) => letterCache.get(id)).filter(Boolean);
-  list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  return list.slice(-limit);
+
+  // Defensively deduplicate memory set
+  const canonicalMutations = new Set();
+  list.forEach((l) => {
+    if (l.clientMutationId && !l.id.startsWith('opt_')) {
+      canonicalMutations.add(l.clientMutationId);
+    }
+  });
+
+  const deduplicated = [];
+  const seenKeys = new Set();
+  for (const l of list) {
+    if (l.id.startsWith('opt_') && l.clientMutationId && canonicalMutations.has(l.clientMutationId)) {
+      continue;
+    }
+    const key = l.clientMutationId || l.id;
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    deduplicated.push(l);
+  }
+
+  deduplicated.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  return deduplicated.slice(-limit);
 };
 
 export const markLocalLetterOpened = async (letterId, openedAt = new Date().toISOString()) => {

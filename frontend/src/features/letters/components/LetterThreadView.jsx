@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Send, MapPin, Loader2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ArrowLeft, Send, MapPin, Loader2, Mail } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import LetterCard from './LetterCard';
@@ -9,7 +9,47 @@ import {
   subscribeToThreadHead,
   fetchEarlierLetters,
 } from '../data/letterRepository';
-import { getUserProfile } from '@/lib/userProfileDb';
+import { getUserProfile, getCachedUserProfile } from '@/lib/userProfileDb';
+import { database, ref, get } from '@/lib/firebase';
+
+/**
+ * Reconciles local and realtime letters by clientMutationId and id,
+ * ensuring optimistic records are seamlessly replaced when canonical echoes arrive.
+ */
+const reconcileLettersList = (existingLetters, incomingLetters) => {
+  const all = [...(existingLetters || []), ...(incomingLetters || [])];
+  const canonicalMutations = new Set();
+
+  all.forEach((l) => {
+    if (l && l.clientMutationId && !String(l.id || '').startsWith('opt_')) {
+      canonicalMutations.add(l.clientMutationId);
+    }
+  });
+
+  const dedupMap = new Map();
+  for (const l of all) {
+    if (!l || !l.id) continue;
+    const isOpt = String(l.id).startsWith('opt_');
+    if (isOpt && l.clientMutationId && canonicalMutations.has(l.clientMutationId)) {
+      continue; // Exclude orphan optimistic duplicate
+    }
+    const key = l.clientMutationId || l.id;
+    if (dedupMap.has(key)) {
+      const prev = dedupMap.get(key);
+      if (String(prev.id).startsWith('opt_') && !isOpt) {
+        dedupMap.set(key, l);
+      } else {
+        dedupMap.set(key, { ...prev, ...l });
+      }
+    } else {
+      dedupMap.set(key, l);
+    }
+  }
+
+  const result = Array.from(dedupMap.values());
+  result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  return result;
+};
 
 export default function LetterThreadView({
   threadId,
@@ -26,24 +66,58 @@ export default function LetterThreadView({
   const [hasMoreEarlier, setHasMoreEarlier] = useState(true);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
 
-  // Fetch counterpart profile
+  // Fetch counterpart profile with deleted-user safety and cached fallback
   useEffect(() => {
     if (!counterpartUid) return;
     let isMounted = true;
-    getUserProfile(counterpartUid).then((prof) => {
-      if (isMounted) {
-        setCounterpartProfile(prof);
-        setIsProfileLoaded(true);
+
+    // Use fast local profile cache first
+    const cached = getCachedUserProfile?.(counterpartUid);
+    if (cached && isMounted) {
+      setCounterpartProfile(cached);
+    }
+
+    const loadProfile = async () => {
+      try {
+        const userRef = ref(database, `users/${counterpartUid}`);
+        const snap = await get(userRef);
+        if (!isMounted) return;
+
+        if (snap.exists()) {
+          const val = snap.val();
+          if (val && val.isDeleted) {
+            setCounterpartProfile({ isDeleted: true });
+          } else {
+            const extProfile = await getUserProfile(counterpartUid).catch(() => null);
+            if (isMounted) {
+              setCounterpartProfile({ id: counterpartUid, ...val, ...extProfile, isDeleted: false });
+            }
+          }
+        } else {
+          // Explicitly absent in canonical DB
+          setCounterpartProfile({ isDeleted: true });
+        }
+      } catch (err) {
+        // Transient network or server failure — DO NOT mark as deleted
+        console.warn(`[LetterThreadView] Transient profile load error for ${counterpartUid}:`, err?.message);
+        if (cached && isMounted) {
+          setCounterpartProfile(cached);
+        }
+      } finally {
+        if (isMounted) setIsProfileLoaded(true);
       }
-    }).catch(() => {
-      if (isMounted) setIsProfileLoaded(true);
-    });
+    };
+
+    loadProfile();
+
     return () => {
       isMounted = false;
     };
   }, [counterpartUid]);
 
-  const isDeletedUser = isProfileLoaded && !counterpartProfile;
+  const isDeletedUser = Boolean(
+    isProfileLoaded && counterpartProfile?.isDeleted === true
+  );
 
   // Load initial local letters and subscribe to DB5 thread head
   useEffect(() => {
@@ -55,7 +129,7 @@ export default function LetterThreadView({
     // 1. Read fast local cached letters
     getThreadLetters(threadId, 20).then((cached) => {
       if (isMounted) {
-        setLetters(cached);
+        setLetters((prev) => reconcileLettersList(prev, cached));
         setIsLoading(false);
       }
     });
@@ -63,14 +137,7 @@ export default function LetterThreadView({
     // 2. Realtime listener for incoming letters in DB5
     const unsubscribe = subscribeToThreadHead(threadId, (freshList) => {
       if (isMounted) {
-        setLetters((prev) => {
-          const map = new Map();
-          prev.forEach((l) => map.set(l.id, l));
-          freshList.forEach((l) => map.set(l.id, l));
-          const merged = Array.from(map.values());
-          merged.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          return merged;
-        });
+        setLetters((prev) => reconcileLettersList(prev, freshList));
       }
     });
 
@@ -91,32 +158,31 @@ export default function LetterThreadView({
     if (!earlier.length) {
       setHasMoreEarlier(false);
     } else {
-      setLetters((prev) => {
-        const map = new Map();
-        earlier.forEach((l) => map.set(l.id, l));
-        prev.forEach((l) => map.set(l.id, l));
-        const merged = Array.from(map.values());
-        merged.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        return merged;
-      });
+      setLetters((prev) => reconcileLettersList(earlier, prev));
     }
 
     setIsLoadingEarlier(false);
   };
 
   const handleReply = () => {
-    setIsComposerOpen(true);
+    if (!isDeletedUser) {
+      setIsComposerOpen(true);
+    }
   };
 
+  const counterpartDisplayName = isDeletedUser
+    ? 'Deleted user'
+    : (counterpartProfile?.displayName || counterpartProfile?.fullName || (counterpartProfile?.username ? `@${counterpartProfile.username}` : (isLoading ? 'Loading...' : 'Discuss Member')));
+
   return (
-    <div className="w-full h-full flex flex-col bg-zinc-50 dark:bg-black overflow-hidden select-none">
-      {/* Top Header */}
-      <div className="h-16 px-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0 z-20">
+    <div className="fixed inset-0 z-40 w-full h-full flex flex-col bg-neutral-50 dark:bg-black overflow-hidden select-none">
+      {/* Dedicated Full-Screen Header */}
+      <div className="h-14 px-4 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="p-2 -ml-2 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-1.5 -ml-1.5 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             aria-label="Back to letters inbox"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -126,15 +192,13 @@ export default function LetterThreadView({
             <UserAvatar user={isDeletedUser ? null : counterpartProfile} size="sm" />
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[160px] sm:max-w-xs">
-                  {isDeletedUser
-                    ? 'Deleted user'
-                    : (counterpartProfile?.displayName || counterpartProfile?.username || (isLoading ? 'Loading...' : 'Discuss Member'))}
+                <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-[180px] sm:max-w-xs">
+                  {counterpartDisplayName}
                 </span>
                 {!isDeletedUser && counterpartProfile && <VerifiedBadge user={counterpartProfile} size="xs" />}
               </div>
               {!isDeletedUser && counterpartProfile?.username && (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   @{counterpartProfile.username}
                 </span>
               )}
@@ -143,16 +207,22 @@ export default function LetterThreadView({
         </div>
 
         {/* Right side city badge if recipient allows */}
-        {counterpartProfile?.letterCityLabel && (
-          <div className="hidden sm:flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-            <MapPin className="w-3.5 h-3.5" />
+        {counterpartProfile?.letterCityLabel && !isDeletedUser && (
+          <div className="hidden sm:flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-full border border-neutral-200 dark:border-neutral-700">
+            <MapPin className="w-3.5 h-3.5 text-neutral-500" />
             <span>{counterpartProfile.letterCityLabel}</span>
           </div>
         )}
       </div>
 
-      {/* Letters List / Stack formation */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+      {/* Letters List / Stack formation with hidden scrollbar */}
+      <div 
+        className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
         {/* Load earlier letters button */}
         {hasMoreEarlier && letters.length >= 10 && (
           <div className="flex justify-center pb-2">
@@ -160,10 +230,10 @@ export default function LetterThreadView({
               type="button"
               onClick={handleLoadEarlier}
               disabled={isLoadingEarlier}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-zinc-200/60 dark:bg-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300/60 dark:hover:bg-zinc-700 rounded-full transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-200/70 dark:bg-neutral-800 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300/70 dark:hover:bg-neutral-700 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
             >
               {isLoadingEarlier && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Load earlier letters</span>
+              <span>View earlier letters</span>
             </button>
           </div>
         )}
@@ -171,35 +241,37 @@ export default function LetterThreadView({
         {/* Loading skeleton */}
         {isLoading && letters.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-            <p className="text-xs text-zinc-400">Unfolding letter correspondence...</p>
+            <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+            <p className="text-xs text-neutral-400">Unfolding letter correspondence...</p>
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && letters.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4 max-w-sm mx-auto space-y-3">
-            <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Sparkles className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 flex items-center justify-center">
+              <Mail className="w-6 h-6" />
             </div>
-            <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">
               No letters yet
             </h4>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
               Start this thread with a handwritten note. Letters take time to travel and build lasting connections.
             </p>
-            <button
-              type="button"
-              onClick={handleReply}
-              className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl shadow-md transition-all"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Write the First Letter</span>
-            </button>
+            {!isDeletedUser && (
+              <button
+                type="button"
+                onClick={handleReply}
+                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Write the First Letter</span>
+              </button>
+            )}
           </div>
         )}
 
-        {/* Letters cards */}
+        {/* Letters cards (deduplicated) */}
         {letters.map((letter, idx) => {
           const isLatest = idx === letters.length - 1;
           return (
@@ -216,25 +288,23 @@ export default function LetterThreadView({
         })}
       </div>
 
-      {/* Floating or Bottom Quick Reply Bar */}
-      {letters.length > 0 && (
-        <div className="p-3 sm:p-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-center shrink-0">
-          {isDeletedUser ? (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 italic">
-              This Discuss account has been deleted. Historical letters are retained in your inbox, but new replies cannot be sent.
-            </p>
-          ) : (
-            <button
-              type="button"
-              onClick={handleReply}
-              className="w-full max-w-md inline-flex items-center justify-center gap-2 py-3 bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-amber-500/20 transition-all"
-            >
-              <Send className="w-4 h-4" />
-              <span>Write a Letter</span>
-            </button>
-          )}
-        </div>
-      )}
+      {/* Bottom Reply Bar */}
+      <div className="p-3 sm:p-4 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-center shrink-0">
+        {isDeletedUser ? (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 italic text-center">
+            This Discuss account has been deleted. Historical letters are retained in your inbox, but new replies cannot be sent.
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={handleReply}
+            className="w-full max-w-md inline-flex items-center justify-center gap-2 py-2.5 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 active:scale-[0.99] text-white dark:text-black text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Reply with a Letter</span>
+          </button>
+        )}
+      </div>
 
       {/* Composer Modal */}
       {isComposerOpen && (
@@ -245,7 +315,7 @@ export default function LetterThreadView({
           recipient={counterpartProfile || { id: counterpartUid }}
           onLetterSent={(newLetter) => {
             if (newLetter) {
-              setLetters((prev) => [...prev, newLetter]);
+              setLetters((prev) => reconcileLettersList(prev, [newLetter]));
             }
           }}
         />

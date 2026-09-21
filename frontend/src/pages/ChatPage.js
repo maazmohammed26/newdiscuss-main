@@ -794,7 +794,7 @@ export default function ChatPage() {
               onClick={() => { setPrimaryMode('letters'); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[8px] text-[13px] font-semibold transition-all ${
                 primaryMode === 'letters'
-                  ? 'bg-amber-500 text-white shadow-button'
+                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-black shadow-xs'
                   : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
               }`}
             >

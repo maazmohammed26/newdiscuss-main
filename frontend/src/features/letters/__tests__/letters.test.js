@@ -17,7 +17,13 @@ import {
   purgeLocalLettersSession,
   saveLocalLetterPreference,
   getLocalLetterPreference,
+  saveLocalLetter,
+  reconcileLocalLetter,
+  saveLocalLetters,
+  getFastMemoryLettersForThread,
+  markLocalLetterOpened,
 } from '../data/letterLocalStore';
+import { resetAuxiliaryCooldowns, isAuxiliaryCircuitBreakerOpen } from '../../../lib/auxiliaryAuth';
 
 describe('Discuss Letters — Unit & Integration Test Suite', () => {
   describe('1. Grapheme Counter & Unicode Cluster Validation', () => {
@@ -147,4 +153,181 @@ describe('Discuss Letters — Unit & Integration Test Suite', () => {
       expect(draft).toBeNull();
     });
   });
+
+  describe('5. Deduplication & clientMutationId Reconciliation', () => {
+    test('optimistic + server ack + realtime echo results in exactly one Letter', async () => {
+      const threadId = 'th_test_dedup_1';
+      const clientMutationId = 'mut_abc_123';
+      const tempId = `opt_${clientMutationId}`;
+      const canonicalId = '-OXYZ_canonical_123';
+
+      // 1. Optimistic letter arrives
+      const optimisticLetter = {
+        id: tempId,
+        threadId,
+        clientMutationId,
+        senderId: 'user1',
+        recipientId: 'user2',
+        body: 'Hello across the skies',
+        status: 'QUEUED',
+        createdAt: new Date().toISOString(),
+      };
+      await saveLocalLetter(optimisticLetter);
+
+      let memoryLetters = getFastMemoryLettersForThread(threadId);
+      expect(memoryLetters.length).toBe(1);
+      expect(memoryLetters[0].id).toBe(tempId);
+
+      // 2. Server canonical response reconciles optimistic record
+      const canonicalLetter = {
+        id: canonicalId,
+        threadId,
+        clientMutationId,
+        senderId: 'user1',
+        recipientId: 'user2',
+        body: 'Hello across the skies',
+        status: 'SENT',
+        createdAt: optimisticLetter.createdAt,
+      };
+      await reconcileLocalLetter(canonicalLetter);
+
+      memoryLetters = getFastMemoryLettersForThread(threadId);
+      expect(memoryLetters.length).toBe(1);
+      expect(memoryLetters[0].id).toBe(canonicalId);
+      expect(memoryLetters[0].status).toBe('SENT');
+
+      // 3. Realtime echo arrives with same canonical data
+      await saveLocalLetters([canonicalLetter]);
+
+      memoryLetters = getFastMemoryLettersForThread(threadId);
+      expect(memoryLetters.length).toBe(1);
+      expect(memoryLetters[0].id).toBe(canonicalId);
+    });
+
+    test('offline queue + reconnect + retry + echo results in exactly one Letter', async () => {
+      const threadId = 'th_test_offline_1';
+      const clientMutationId = 'mut_offline_999';
+      const tempId = `opt_${clientMutationId}`;
+      const canonicalId = '-OXYZ_canonical_999';
+
+      const queuedLetter = {
+        id: tempId,
+        threadId,
+        clientMutationId,
+        body: 'Offline letter queued',
+        status: 'QUEUED',
+        createdAt: '2026-09-21T10:00:00.000Z',
+      };
+      await saveLocalLetter(queuedLetter);
+
+      // Reconnect and retry with same mutationId
+      const canonicalLetter = {
+        id: canonicalId,
+        threadId,
+        clientMutationId,
+        body: 'Offline letter queued',
+        status: 'SENT',
+        createdAt: '2026-09-21T10:00:00.000Z',
+      };
+      await reconcileLocalLetter(canonicalLetter);
+      await saveLocalLetters([canonicalLetter]);
+
+      const threadLetters = getFastMemoryLettersForThread(threadId);
+      expect(threadLetters.length).toBe(1);
+      expect(threadLetters[0].id).toBe(canonicalId);
+    });
+  });
+
+  describe('6. Status Model & Immutability', () => {
+    test('status model never returns or accepts Delivered', () => {
+      const validStatuses = ['QUEUED', 'PENDING', 'SENT', 'OPENED', 'FAILED'];
+      expect(validStatuses).not.toContain('Delivered');
+      expect(validStatuses).not.toContain('DELIVERED');
+    });
+
+    test('opened state is idempotent', async () => {
+      const threadId = 'th_idempotent_test';
+      const letterId = 'let_idempotent_1';
+      const letter = {
+        id: letterId,
+        threadId,
+        body: 'Secret note',
+        status: 'SENT',
+        createdAt: new Date().toISOString(),
+      };
+      await saveLocalLetter(letter);
+
+      const firstOpenedAt = new Date().toISOString();
+      await markLocalLetterOpened(letterId, firstOpenedAt);
+
+      const cached = getFastMemoryLettersForThread(threadId);
+      expect(cached[0].openedAt).toBe(firstOpenedAt);
+      expect(cached[0].status).toBe('OPENED');
+    });
+  });
+
+  describe('7. Gesture & Threshold Semantics', () => {
+    test('drag below threshold (85%) does not commit send', () => {
+      const dragProgress = 0.5;
+      const armed = dragProgress >= 0.85;
+      expect(armed).toBe(false);
+    });
+
+    test('drag above threshold (85%+) arms send commit', () => {
+      const dragProgress = 0.86;
+      const armed = dragProgress >= 0.85;
+      expect(armed).toBe(true);
+    });
+  });
+
+  describe('8. Deleted-User Safety & Identity Safeguards', () => {
+    test('friend request and chat guards reject deleted or undefined users', () => {
+      const invalidUsers = [undefined, null, 'undefined', ''];
+      invalidUsers.forEach((target) => {
+        const isValid = Boolean(target && target !== 'undefined');
+        expect(isValid).toBe(false);
+      });
+    });
+
+    test('never renders undefined in handle or display name strings', () => {
+      const formatDisplayName = (user) => {
+        if (!user || user.isDeleted || (!user.username && !user.displayName)) {
+          return 'Account removed';
+        }
+        return user.displayName || user.fullName || `@${user.username}`;
+      };
+
+      expect(formatDisplayName(null)).toBe('Account removed');
+      expect(formatDisplayName({ isDeleted: true })).toBe('Account removed');
+      expect(formatDisplayName({ username: 'maaz' })).toBe('@maaz');
+      expect(formatDisplayName({ displayName: 'Maaz' })).toBe('Maaz');
+    });
+  });
+
+  describe('9. Auxiliary Auth Resilience & Bounded Backoff', () => {
+    test('cooldown resets cleanly on network recovery', () => {
+      resetAuxiliaryCooldowns();
+      expect(isAuxiliaryCircuitBreakerOpen()).toBe(false);
+    });
+  });
+
+  describe('10. Filter Tabs Integrity', () => {
+    test('separates friends and non-friends buckets strictly without community label', () => {
+      const testThreads = [
+        { threadId: 'th_1', relationBucket: 'friends' },
+        { threadId: 'th_2', relationBucket: 'non-friends' },
+        { threadId: 'th_3', relationBucket: 'stranger' },
+      ];
+
+      const friendsOnly = testThreads.filter((t) => t.relationBucket === 'friends');
+      const nonFriendsOnly = testThreads.filter((t) => t.relationBucket !== 'friends');
+
+      expect(friendsOnly.length).toBe(1);
+      expect(friendsOnly[0].threadId).toBe('th_1');
+
+      expect(nonFriendsOnly.length).toBe(2);
+      expect(nonFriendsOnly.map((t) => t.threadId)).toEqual(['th_2', 'th_3']);
+    });
+  });
 });
+

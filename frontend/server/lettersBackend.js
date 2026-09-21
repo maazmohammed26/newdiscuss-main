@@ -81,7 +81,9 @@ const sendLetterServer = async ({
 }) => {
   if (!actorUid) throw new ApiError(401, 'unauthenticated', 'You must be signed in.');
   const cleanRecipientId = cleanId(recipientUid);
-  if (!cleanRecipientId) throw new ApiError(400, 'invalid-recipient', 'Invalid recipient identifier.');
+  if (!cleanRecipientId || cleanRecipientId === 'undefined' || cleanRecipientId === 'null') {
+    throw new ApiError(400, 'invalid-recipient', 'Invalid recipient identifier.');
+  }
 
   // 1. Reject self-send
   if (actorUid === cleanRecipientId) {
@@ -128,11 +130,11 @@ const sendLetterServer = async ({
     primaryDb().ref(`users/${cleanRecipientId}`).once('value'),
   ]);
 
-  if (!recipientProfileSnap.exists()) {
+  const recipientProfile = recipientProfileSnap.val();
+  if (!recipientProfileSnap.exists() || !recipientProfile || !recipientProfile.username) {
     throw new ApiError(404, 'recipient-not-found', 'This Discuss member does not exist or has been removed.');
   }
   const actorProfile = actorProfileSnap.val() || {};
-  const recipientProfile = recipientProfileSnap.val() || {};
 
   // Check blocks in Secondary DB
   const [recipientBlockSnap, senderBlockSnap] = await Promise.all([

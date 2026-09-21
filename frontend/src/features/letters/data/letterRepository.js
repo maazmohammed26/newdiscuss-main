@@ -28,6 +28,7 @@ import {
   getFastMemoryLettersForThread,
   saveLocalLetter,
   saveLocalLetters,
+  reconcileLocalLetter,
   markLocalLetterOpened as markLocalOpenedStore,
   saveLetterDraft,
   getLetterDraft,
@@ -78,8 +79,14 @@ export const syncUserLetterThreads = async (currentUserId, relationBucket = null
 
   try {
     const userThreadsRef = fifthRef(fifthDatabase, `userLetterThreads/${currentUserId}`);
-    const q = fifthQuery(userThreadsRef, orderByChild('lastActivityAt'), limitToLast(40));
-    const snapshot = await fifthGet(q);
+    let snapshot;
+    try {
+      const q = fifthQuery(userThreadsRef, orderByChild('lastActivityAt'), limitToLast(40));
+      snapshot = await fifthGet(q);
+    } catch (queryErr) {
+      // If server index is not yet indexed in RTDB rules, fall back to direct ref read
+      snapshot = await fifthGet(userThreadsRef);
+    }
 
     if (!snapshot.exists()) return;
 
@@ -97,6 +104,9 @@ export const syncUserLetterThreads = async (currentUserId, relationBucket = null
       destinationCityLabel: data.destinationCityLabel || null,
     }));
 
+    // Sort descending by lastActivityAt locally
+    threadsList.sort((a, b) => new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0));
+
     await saveLocalThreads(threadsList);
 
     if (typeof onUpdate === 'function') {
@@ -104,7 +114,7 @@ export const syncUserLetterThreads = async (currentUserId, relationBucket = null
       onUpdate(fresh);
     }
   } catch (err) {
-    console.warn('[LettersRepo] Bounded sync failed:', err?.message);
+    console.warn('[LettersRepo] Bounded sync notice:', err?.message);
   }
 };
 
@@ -115,7 +125,12 @@ export const subscribeToLetterThreads = (currentUserId, onUpdate) => {
   if (!fifthDatabase || !currentUserId) return () => {};
 
   const userThreadsRef = fifthRef(fifthDatabase, `userLetterThreads/${currentUserId}`);
-  const q = fifthQuery(userThreadsRef, orderByChild('lastActivityAt'), limitToLast(30));
+  let targetQuery;
+  try {
+    targetQuery = fifthQuery(userThreadsRef, orderByChild('lastActivityAt'), limitToLast(30));
+  } catch (_) {
+    targetQuery = userThreadsRef;
+  }
 
   const listener = async (snapshot) => {
     if (!snapshot.exists()) return;
@@ -131,10 +146,17 @@ export const subscribeToLetterThreads = (currentUserId, onUpdate) => {
     }
   };
 
-  fifthOnValue(q, listener, (err) => console.warn('[LettersRepo] Threads listener error:', err?.message));
+  fifthOnValue(targetQuery, listener, (err) => {
+    if (err?.message && err.message.includes('Index not defined')) {
+      fifthOnValue(userThreadsRef, listener, () => {});
+    } else {
+      console.warn('[LettersRepo] Threads listener notice:', err?.message);
+    }
+  });
 
   return () => {
-    fifthOff(q, 'value', listener);
+    fifthOff(targetQuery, 'value', listener);
+    fifthOff(userThreadsRef, 'value', listener);
   };
 };
 
@@ -310,7 +332,7 @@ export const sendLetterCommand = async ({
       status: 'SENT',
     };
 
-    await saveLocalLetter(canonicalLetter);
+    await reconcileLocalLetter(canonicalLetter);
     await saveLocalThread({
       threadId,
       counterpartUid: recipientUid,
