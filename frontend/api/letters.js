@@ -1,0 +1,69 @@
+'use strict';
+
+const { verifyUser } = require('../server/audioCallBackend');
+const { isAllowedOrigin } = require('../server/requestSecurity');
+const { sendLetterServer, markLetterOpenedServer } = require('../server/lettersBackend');
+
+/**
+ * Canonical unified Vercel Serverless Function for Discuss Letters.
+ * Handles both "send" and "open" actions in a single endpoint to stay within
+ * Vercel Hobby plan function-count constraints (max 12 functions).
+ */
+module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ ok: false, code: 'method-not-allowed', error: 'Method not allowed.' });
+  }
+
+  if (!isAllowedOrigin(req.headers.origin, req.headers.host)) {
+    return res.status(403).json({ ok: false, code: 'forbidden-origin', error: 'Forbidden origin.' });
+  }
+
+  try {
+    const actorToken = await verifyUser(req.headers.authorization);
+    const input = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+    const action = String(input.action || req.query.action || '').trim().toLowerCase();
+
+    switch (action) {
+      case 'send': {
+        const result = await sendLetterServer({
+          actorUid: actorToken.uid,
+          recipientUid: input.recipientUid,
+          body: input.body,
+          originCityId: input.originCityId,
+          originCityLabel: input.originCityLabel,
+          rememberCity: Boolean(input.rememberCity),
+          clientMutationId: input.clientMutationId || req.headers['x-discuss-client-mutation-id'],
+        });
+        return res.status(200).json(result);
+      }
+
+      case 'open': {
+        const result = await markLetterOpenedServer({
+          actorUid: actorToken.uid,
+          letterId: input.letterId,
+          threadId: input.threadId,
+        });
+        return res.status(200).json(result);
+      }
+
+      default:
+        return res.status(400).json({
+          ok: false,
+          code: 'invalid-action',
+          error: "Supported actions are 'send' and 'open'.",
+        });
+    }
+  } catch (error) {
+    const status = error.status || 500;
+    if (status >= 500) console.error('[LettersApi] Request failed:', error);
+    return res.status(status).json({
+      ok: false,
+      code: error.code || 'letters-api-error',
+      error: error.message || 'Operation failed.',
+    });
+  }
+};

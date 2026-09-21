@@ -433,7 +433,8 @@ module.exports = async function handler(req, res) {
   }
   body = body && typeof body === 'object' ? body : {};
 
-  const { action, payload = {} } = body;
+  const action = body.action || req.query?.action || (body.messages ? 'openrouter' : null);
+  const payload = body.payload || body;
   if (!action) return res.status(400).json({ success: false, error: 'Action is required' });
 
   // Authenticate user if token is present
@@ -939,6 +940,22 @@ Return JSON array:
         }
 
         return res.status(200).json({ success: true, data: Array.isArray(result) ? result : [] });
+      }
+
+      case 'openrouter': {
+        const key = process.env.OPENROUTER_API_KEY;
+        if (!key) return res.status(503).json({ error: 'AI service is not configured' });
+        const messages = (Array.isArray(body.messages) ? body.messages : (Array.isArray(payload.messages) ? payload.messages : []))
+          .slice(-20)
+          .map((item) => ({ role: ['system', 'assistant'].includes(item.role) ? item.role : 'user', content: String(item.content || '').slice(0, 12_000) }));
+        if (!messages.length) return res.status(400).json({ error: 'Messages are required' });
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({ model: 'poolside/laguna-m.1:free', messages, stream: false, max_tokens: 1000, temperature: 0.2 }),
+        });
+        const result = await response.json().catch(() => ({}));
+        return res.status(response.status).json(result);
       }
 
       default:

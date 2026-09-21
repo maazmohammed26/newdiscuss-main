@@ -268,7 +268,7 @@ export const sendLetterCommand = async ({
   // 3. Dispatch to server send endpoint
   try {
     const idToken = await getAuthenticatedIdToken();
-    const response = await fetch('/api/letters/send', {
+    const response = await fetch('/api/letters', {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
@@ -277,6 +277,7 @@ export const sendLetterCommand = async ({
         'X-Discuss-Client-Mutation-Id': clientMutationId,
       },
       body: JSON.stringify({
+        action: 'send',
         recipientUid,
         body: body.trim(),
         originCityId,
@@ -345,14 +346,14 @@ export const markLetterOpened = async (letterId, threadId, recipientUid) => {
 
   try {
     const idToken = await getAuthenticatedIdToken();
-    await fetch('/api/letters/open', {
+    await fetch('/api/letters', {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ letterId, threadId }),
+      body: JSON.stringify({ action: 'open', letterId, threadId }),
     }).catch(() => {});
   } catch (_) {}
 };
