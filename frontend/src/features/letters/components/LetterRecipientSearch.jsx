@@ -191,7 +191,7 @@ export default function LetterRecipientSearch({
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <UserAvatar user={user} className="w-full h-full" interactive={false} fit="cover" />
+                  <UserAvatar user={user} size={40} className="w-full h-full" interactive={false} fit="cover" />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5">

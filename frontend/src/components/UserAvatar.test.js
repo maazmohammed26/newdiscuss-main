@@ -184,5 +184,97 @@ describe('UserAvatar Universal Resolution and Caching', () => {
     expect(html).toContain('DD');
     expect(html).not.toContain('drive.google.com');
   });
+
+  describe('UserAvatar Sizing Safety & Regression Protection', () => {
+    it('normal chat avatar with className="w-12 h-12" does NOT receive full viewport width: 100%', () => {
+      const html = renderToStaticMarkup(
+        <UserAvatar
+          userId="usr-chat-target"
+          src="https://cdn.example.com/chat-avatar.jpg"
+          username="chatuser"
+          className="w-12 h-12"
+        />
+      );
+
+      // Must have w-12 h-12 and rounded-full
+      expect(html).toContain('w-12 h-12');
+      expect(html).toContain('rounded-full');
+      // Must NOT force inline width: 100% on the image when w-12 h-12 is provided
+      expect(html).not.toContain('width:100%');
+      expect(html).not.toContain('height:100%');
+      expect(html).toContain('aspect-ratio:1 / 1');
+    });
+
+    it('explicit size={40} resolves to 40px width and height', () => {
+      const html = renderToStaticMarkup(
+        <UserAvatar
+          userId="usr-inbox-user"
+          src="https://cdn.example.com/inbox-avatar.jpg"
+          username="inboxuser"
+          size={40}
+          interactive={false}
+          fit="cover"
+        />
+      );
+
+      expect(html).toContain('width:40px');
+      expect(html).toContain('height:40px');
+      expect(html).toContain('min-width:40px');
+      expect(html).toContain('min-height:40px');
+      expect(html).toContain('aspect-ratio:1 / 1');
+      expect(html).toContain('rounded-full');
+    });
+
+    it('Letter composer size={48} resolves to 48px width and height', () => {
+      const html = renderToStaticMarkup(
+        <UserAvatar
+          userId="usr-composer-user"
+          src="https://cdn.example.com/composer-avatar.jpg"
+          username="composeruser"
+          size={48}
+          interactive={false}
+          fit="cover"
+        />
+      );
+
+      expect(html).toContain('width:48px');
+      expect(html).toContain('height:48px');
+      expect(html).toContain('min-width:48px');
+      expect(html).toContain('min-height:48px');
+      expect(html).toContain('aspect-ratio:1 / 1');
+    });
+
+    it('applies width: 100% only when caller explicitly requests full fill via w-full / h-full', () => {
+      const html = renderToStaticMarkup(
+        <UserAvatar
+          src="https://cdn.example.com/full-avatar.jpg"
+          username="fulluser"
+          className="w-full h-full"
+          interactive={false}
+        />
+      );
+
+      expect(html).toContain('width:100%');
+      expect(html).toContain('height:100%');
+      expect(html).toContain('aspect-ratio:1 / 1');
+    });
+
+    it('preserves saved crop metadata objectPosition when provided in user object', () => {
+      const html = renderToStaticMarkup(
+        <UserAvatar
+          user={{
+            id: 'usr-crop-1',
+            photo_url: 'https://cdn.example.com/cropped.jpg',
+            avatar_crop: '30% 70%',
+          }}
+          size={40}
+          interactive={false}
+        />
+      );
+
+      expect(html).toContain('object-position:30% 70%');
+    });
+  });
 });
+
 

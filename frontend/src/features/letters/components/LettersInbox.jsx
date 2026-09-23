@@ -453,6 +453,7 @@ export default function LettersInbox({
                   <div className="w-10 h-10 rounded-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
                     <UserAvatar 
                       user={isDeleted ? null : profile} 
+                      size={40}
                       className="w-full h-full" 
                       interactive={false}
                       fit="cover"

@@ -554,11 +554,12 @@ export default function ChatPage() {
               : 'bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950'
         } ${hasUnread ? 'bg-blue-50/70 dark:bg-blue-950/20' : ''}`}
       >
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 w-12 h-12">
           <UserAvatar
             userId={otherUser.id || otherUser.userId}
             src={otherUser.photo_url}
             username={otherUser.username}
+            size={48}
             className="w-12 h-12"
           />
           {hasUnread && (
@@ -669,12 +670,15 @@ export default function ChatPage() {
         onClick={() => handleStartNewChat(friend)}
         className="w-full flex items-center gap-3 px-4 py-3.5 bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-950 transition-colors"
       >
-        <UserAvatar
-          userId={friend.id}
-          src={friend.photo_url}
-          username={friend.username}
-          className="w-12 h-12 shrink-0"
-        />
+        <div className="relative shrink-0 w-12 h-12">
+          <UserAvatar
+            userId={friend.id}
+            src={friend.photo_url}
+            username={friend.username}
+            size={48}
+            className="w-12 h-12 shrink-0"
+          />
+        </div>
         
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-1">

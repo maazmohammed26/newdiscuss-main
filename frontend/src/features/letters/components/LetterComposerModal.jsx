@@ -376,7 +376,7 @@ export default function LetterComposerModal({
               {isProfileResolving ? (
                 <div className="w-12 h-12 rounded-full bg-neutral-800 animate-letters-skeleton shrink-0" />
               ) : (
-                <UserAvatar user={recipient?.isDeleted ? null : recipient} className="w-full h-full" interactive={false} fit="cover" />
+                <UserAvatar user={recipient?.isDeleted ? null : recipient} size={48} className="w-full h-full" interactive={false} fit="cover" />
               )}
             </div>
           </div>

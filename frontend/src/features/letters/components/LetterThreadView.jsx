@@ -249,6 +249,7 @@ export default function LetterThreadView({
             <div className="w-10 h-10 rounded-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
               <UserAvatar
                 user={isDeletedUser ? null : counterpartProfile}
+                size={40}
                 className="w-full h-full"
                 interactive={false}
                 fit="cover"

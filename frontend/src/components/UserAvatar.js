@@ -176,6 +176,7 @@ export default function UserAvatar({
   user,
   username = '?',
   className = 'w-9 h-9',
+  size,
   alt,
   fallbackBg = 'linear-gradient(135deg, #2563EB, #1d4ed8)',
   style = {},
@@ -371,6 +372,38 @@ export default function UserAvatar({
     resolvedFit = fit || 'cover';
   }
 
+  // Component sizing safety:
+  // Explicit size prop (e.g. size={40} or size={48}) takes top precedence.
+  // When no size is provided, we respect caller's className sizing (e.g. w-12 h-12)
+  // and NEVER force inline width: 100% / height: 100% unless caller explicitly requests
+  // full container fill via w-full or h-full.
+  const sizeStyle = useMemo(() => {
+    if (typeof size === 'number') {
+      return {
+        width: `${size}px`,
+        height: `${size}px`,
+        minWidth: `${size}px`,
+        minHeight: `${size}px`,
+        maxWidth: `${size}px`,
+        maxHeight: `${size}px`,
+      };
+    }
+    if (typeof size === 'string' && size.trim() !== '') {
+      return {
+        width: size,
+        height: size,
+        minWidth: size,
+        minHeight: size,
+        maxWidth: size,
+        maxHeight: size,
+      };
+    }
+    return null;
+  }, [size]);
+
+  const isExplicitFullFill = Boolean(className && (className.includes('w-full') || className.includes('h-full')));
+  const computedFillStyle = sizeStyle || (isExplicitFullFill ? { width: '100%', height: '100%' } : {});
+
   const innerAvatarMarkup = displaySrc && !failed ? (
     <img
       src={displaySrc}
@@ -380,8 +413,7 @@ export default function UserAvatar({
         objectFit: resolvedFit,
         objectPosition: resolvedObjectPosition,
         aspectRatio: '1 / 1',
-        width: '100%',
-        height: '100%',
+        ...computedFillStyle,
         display: 'block',
         backgroundColor: resolvedFit === 'contain' ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
         ...style,
@@ -415,8 +447,7 @@ export default function UserAvatar({
       style={{
         background: fallbackBg,
         aspectRatio: '1 / 1',
-        width: '100%',
-        height: '100%',
+        ...computedFillStyle,
         display: 'flex',
         ...style,
       }}
@@ -436,7 +467,11 @@ export default function UserAvatar({
 
   return (
     <div 
-      className="relative inline-flex items-center justify-center flex-shrink-0 cursor-pointer"
+      className={`relative inline-flex items-center justify-center flex-shrink-0 cursor-pointer ${isExplicitFullFill ? 'w-full h-full' : ''}`}
+      style={{
+        ...sizeStyle,
+        aspectRatio: '1 / 1',
+      }}
       onClick={handleAvatarClick}
     >
       {hasStory && <div className="story-shining-portal-ring" />}
