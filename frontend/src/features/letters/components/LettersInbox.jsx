@@ -37,6 +37,7 @@ export default function LettersInbox({
   const [loadingState, setLoadingState] = useState('HYDRATING_LOCAL');
   const [showSkeleton, setShowSkeleton] = useState(false);
   const skeletonTimerRef = useRef(null);
+  const slowSyncTimerRef = useRef(null);
 
   // Check feature kill switch
   const enabled = isLettersEnabled();
@@ -50,6 +51,7 @@ export default function LettersInbox({
     // 140ms delayed skeleton threshold: prevents flash if IndexedDB responds quickly (<100ms)
     setShowSkeleton(false);
     if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+    if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
     skeletonTimerRef.current = setTimeout(() => {
       setShowSkeleton(true);
     }, 140);
@@ -61,12 +63,28 @@ export default function LettersInbox({
       currentUserId,
       null,
       // STEP 4: Background remote DB5 delta callback
-      (freshThreads) => {
-        setThreads(freshThreads);
-        if (freshThreads.length > 0) {
+      (freshThreads, meta = {}) => {
+        if (meta.isError) {
+          // If remote sync fails, keep whatever is in local state, do NOT set READY_EMPTY
+          if (threads.length === 0) {
+            setLoadingState(navigator.onLine ? 'ERROR' : 'OFFLINE_EMPTY');
+            setShowSkeleton(false);
+          }
+          return;
+        }
+
+        if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+        if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
+        setShowSkeleton(false);
+        setThreads(freshThreads || []);
+        if (freshThreads && freshThreads.length > 0) {
           setLoadingState('READY_WITH_DATA');
-        } else {
+        } else if (meta.confirmedEmpty) {
+          // ONLY enter READY_EMPTY when remote snapshot was confirmed empty!
           setLoadingState('READY_EMPTY');
+        } else {
+          // Still waiting for true remote confirmation
+          setLoadingState('SYNCING_INITIAL_REMOTE');
         }
       }
     )
@@ -74,6 +92,7 @@ export default function LettersInbox({
         if (cached && cached.length > 0) {
           // Fast cached hit: immediately cancel skeleton reveal
           if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+          if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
           setShowSkeleton(false);
           setThreads(cached);
           setLoadingState(isOnline ? 'READY_WITH_DATA' : 'OFFLINE_WITH_CACHE');
@@ -81,23 +100,31 @@ export default function LettersInbox({
           // Cache is empty: if offline, go directly to OFFLINE_EMPTY
           if (!isOnline) {
             if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+            if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
             setShowSkeleton(false);
             setLoadingState('OFFLINE_EMPTY');
           } else {
-            // STEP 3: Online with zero cache -> wait for initial remote sync
+            // STEP 3: Online with zero cache -> wait for true remote confirmation
             setLoadingState('SYNCING_INITIAL_REMOTE');
+            if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
+            slowSyncTimerRef.current = setTimeout(() => {
+              setLoadingState((curr) => (curr === 'SYNCING_INITIAL_REMOTE' ? 'TEMPORARILY_SLOW' : curr));
+            }, 2500);
           }
         }
       })
       .catch((err) => {
         console.warn('[LettersInbox] Local hydration error:', err);
+        if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+        if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
+        setShowSkeleton(false);
         if (!isOnline) {
           setLoadingState('OFFLINE_EMPTY');
         } else {
           setLoadingState('ERROR');
         }
       });
-  }, [currentUserId, enabled]);
+  }, [currentUserId, enabled, threads.length]);
 
   // Initial load and Realtime listener
   useEffect(() => {
@@ -106,19 +133,21 @@ export default function LettersInbox({
     loadData();
 
     // Subscribe to DB5 thread index updates
-    const unsubscribe = subscribeToLetterThreads(currentUserId, (updated) => {
+    const unsubscribe = subscribeToLetterThreads(currentUserId, (updated, meta = {}) => {
       if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+      if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
       setShowSkeleton(false);
       setThreads(updated);
       if (updated.length > 0) {
         setLoadingState('READY_WITH_DATA');
-      } else {
+      } else if (meta.confirmedEmpty) {
         setLoadingState('READY_EMPTY');
       }
     });
 
     return () => {
       if (skeletonTimerRef.current) clearTimeout(skeletonTimerRef.current);
+      if (slowSyncTimerRef.current) clearTimeout(slowSyncTimerRef.current);
       unsubscribe();
     };
   }, [currentUserId, enabled, loadData]);
@@ -263,7 +292,7 @@ export default function LettersInbox({
   }
 
   // Are we currently showing the delayed skeleton?
-  const isLoadingActive = (loadingState === 'HYDRATING_LOCAL' || loadingState === 'SYNCING_INITIAL_REMOTE') && threads.length === 0;
+  const isLoadingActive = (loadingState === 'HYDRATING_LOCAL' || loadingState === 'SYNCING_INITIAL_REMOTE' || loadingState === 'TEMPORARILY_SLOW') && threads.length === 0;
   const shouldRenderSkeleton = isLoadingActive && showSkeleton;
 
   return (
@@ -367,25 +396,30 @@ export default function LettersInbox({
               <div key={i} className="px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   {/* 40px Circular Avatar Skeleton */}
-                  <div className="w-10 h-10 rounded-full bg-neutral-200/60 dark:bg-neutral-800/80 shrink-0 animate-pulse" />
+                  <div className="w-10 h-10 rounded-full bg-neutral-200/70 dark:bg-neutral-800/80 shrink-0 animate-letters-skeleton" />
 
                   <div className="flex flex-col min-w-0 flex-1 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       {/* Name line skeleton */}
-                      <div className="w-28 h-3.5 bg-neutral-200/60 dark:bg-neutral-800/80 rounded animate-pulse" />
+                      <div className="w-28 h-3.5 bg-neutral-200/70 dark:bg-neutral-800/80 rounded animate-letters-skeleton" />
                       {/* Date skeleton */}
-                      <div className="w-10 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-pulse shrink-0" />
+                      <div className="w-10 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-letters-skeleton shrink-0" />
                     </div>
 
                     {/* City line skeleton */}
-                    <div className="w-20 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-pulse" />
+                    <div className="w-20 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-letters-skeleton" />
 
                     {/* Preview line skeleton */}
-                    <div className="w-48 max-w-full h-3 bg-neutral-200/40 dark:bg-neutral-800/50 rounded animate-pulse" />
+                    <div className="w-48 max-w-full h-3 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-letters-skeleton" />
                   </div>
                 </div>
               </div>
             ))}
+            {loadingState === 'TEMPORARILY_SLOW' && (
+              <div className="px-4 py-3 text-center text-[11px] text-neutral-400 dark:text-neutral-500 animate-in fade-in duration-300">
+                Taking a little longer...
+              </div>
+            )}
           </div>
         )}
 
@@ -414,14 +448,18 @@ export default function LettersInbox({
               }`}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* 40px Avatar */}
+                {/* 40px Avatar Container */}
                 <div className="relative shrink-0 w-10 h-10">
-                  <UserAvatar 
-                    user={isDeleted ? null : profile} 
-                    className="w-10 h-10 rounded-full object-cover" 
-                  />
+                  <div className="w-10 h-10 rounded-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                    <UserAvatar 
+                      user={isDeleted ? null : profile} 
+                      className="w-full h-full" 
+                      interactive={false}
+                      fit="cover"
+                    />
+                  </div>
                   {hasUnread && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-black absolute -top-0.5 -right-0.5" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444] ring-2 ring-white dark:ring-black absolute -top-0.5 -right-0.5 z-10" />
                   )}
                 </div>
 

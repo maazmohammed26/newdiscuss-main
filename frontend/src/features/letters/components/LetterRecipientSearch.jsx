@@ -190,7 +190,9 @@ export default function LetterRecipientSearch({
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <UserAvatar user={user} size="md" />
+                <div className="w-10 h-10 rounded-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                  <UserAvatar user={user} className="w-full h-full" interactive={false} fit="cover" />
+                </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate group-hover:text-black dark:group-hover:text-white transition-colors">

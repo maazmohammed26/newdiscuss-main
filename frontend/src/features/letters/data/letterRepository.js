@@ -88,7 +88,13 @@ export const syncUserLetterThreads = async (currentUserId, relationBucket = null
       snapshot = await fifthGet(userThreadsRef);
     }
 
-    if (!snapshot.exists()) return;
+    if (!snapshot.exists()) {
+      if (typeof onUpdate === 'function') {
+        const fresh = await getLocalThreads(relationBucket);
+        onUpdate(fresh || [], { confirmedEmpty: true });
+      }
+      return;
+    }
 
     const threadsData = snapshot.val();
     const threadsList = Object.entries(threadsData).map(([threadId, data]) => ({
@@ -111,10 +117,14 @@ export const syncUserLetterThreads = async (currentUserId, relationBucket = null
 
     if (typeof onUpdate === 'function') {
       const fresh = await getLocalThreads(relationBucket);
-      onUpdate(fresh);
+      onUpdate(fresh, { confirmedEmpty: false });
     }
   } catch (err) {
     console.warn('[LettersRepo] Bounded sync notice:', err?.message);
+    if (typeof onUpdate === 'function') {
+      const local = await getLocalThreads(relationBucket).catch(() => []);
+      onUpdate(local, { isError: true, error: err });
+    }
   }
 };
 
@@ -133,7 +143,13 @@ export const subscribeToLetterThreads = (currentUserId, onUpdate) => {
   }
 
   const listener = async (snapshot) => {
-    if (!snapshot.exists()) return;
+    if (!snapshot.exists()) {
+      if (typeof onUpdate === 'function') {
+        const allThreads = await getLocalThreads().catch(() => []);
+        onUpdate(allThreads, { confirmedEmpty: true });
+      }
+      return;
+    }
     const threadsData = snapshot.val();
     const threadsList = Object.entries(threadsData).map(([threadId, data]) => ({
       threadId,
@@ -142,7 +158,7 @@ export const subscribeToLetterThreads = (currentUserId, onUpdate) => {
     await saveLocalThreads(threadsList);
     if (typeof onUpdate === 'function') {
       const allThreads = await getLocalThreads();
-      onUpdate(allThreads);
+      onUpdate(allThreads, { confirmedEmpty: false });
     }
   };
 
@@ -301,9 +317,6 @@ export const sendLetterCommand = async ({
     destinationCityLabel,
   });
 
-  // Clear local draft for this sender + recipient pair
-  await clearLetterDraft(senderUid, recipientUid);
-
   // 3. Dispatch to server send endpoint
   try {
     const idToken = await getAuthenticatedIdToken();
@@ -336,8 +349,12 @@ export const sendLetterCommand = async ({
       optimisticLetter.status = 'FAILED';
       await saveLocalLetter(optimisticLetter);
 
+      const isPolicyRejection = response.status === 429 || errCode === 'pending-unopened-letter';
       const err = new Error(errMsg);
       err.code = errCode;
+      err.status = response.status;
+      err.isPolicyRejection = isPolicyRejection;
+      err.domainResult = isPolicyRejection ? 'PENDING_LETTER_EXISTS' : null;
       throw err;
     }
 
@@ -363,9 +380,14 @@ export const sendLetterCommand = async ({
       destinationCityLabel: canonicalLetter.destinationCityLabel,
     });
 
+    // Clear local draft only on confirmed dispatch
+    await clearLetterDraft(senderUid, recipientUid);
+
     return canonicalLetter;
   } catch (error) {
-    console.warn('[LettersRepo] Send command failed/deferred:', error.message);
+    if (!error.isPolicyRejection) {
+      console.warn('[LettersRepo] Send command failed/deferred:', error.message);
+    }
     if (!navigator.onLine) {
       // Offline fallback: retains QUEUED status
       optimisticLetter.status = 'QUEUED';

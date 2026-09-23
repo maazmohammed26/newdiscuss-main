@@ -220,6 +220,9 @@ export default function LetterComposerModal({
       clearTimeout(startFlightTimer);
       const isPendingNonFriend = err?.code === 'pending-unopened-letter' ||
         err?.code === 'PENDING_NON_FRIEND_LETTER' ||
+        err?.domainResult === 'PENDING_LETTER_EXISTS' ||
+        err?.status === 429 ||
+        err?.isPolicyRejection ||
         err?.message?.includes('already sent a Letter') ||
         err?.message?.includes('Wait for them to open');
 
@@ -227,7 +230,7 @@ export default function LetterComposerModal({
         // Race condition / server rejection:
         // 1. Do NOT play flight
         // 2. Do NOT mark Sent
-        // 3. Preserve draft locally (do not call clearLetterDraft)
+        // 3. Preserve draft locally (clearLetterDraft is skipped)
         // 4. Show compact notice panel
         // 5. Hold notice ~1.2s
         // 6. Automatically close composer
@@ -236,12 +239,12 @@ export default function LetterComposerModal({
         setDragProgress(0);
 
         setBlockedNotice(
-          "Your Letter is already on the way.\nThey need to open it before you can send another."
+          "You've already sent a Letter.\nWait for them to open it before sending another."
         );
 
         setTimeout(() => {
           onClose();
-        }, 1250);
+        }, 1200);
       } else {
         console.error('[LetterComposer] Send failed:', err);
         toast.error(err?.message || 'Could not deliver letter. Saved to outbox.');
@@ -350,32 +353,30 @@ export default function LetterComposerModal({
         <div className="flex flex-col items-center mb-4 mt-1 relative z-20">
           <div
             ref={avatarWrapperRef}
-            className={`relative rounded-full transition-all duration-300 ${
-              isArrival ? 'scale-105' : 'scale-100'
-            }`}
+            className="relative rounded-full shrink-0"
           >
             {/* Discuss Proximity Halo: Red + Blue soft rings, 2 rings max */}
             {isArrival && (
               <>
                 <div
-                  className="absolute -inset-3 rounded-full pointer-events-none opacity-70 animate-ping"
+                  className="absolute -inset-2 rounded-full pointer-events-none opacity-60 animate-ping"
                   style={{
                     background: 'radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, rgba(59, 130, 246, 0.3) 100%)',
-                    animationDuration: '1.2s',
+                    animationDuration: '0.9s',
                   }}
                 />
                 <div
-                  className="absolute -inset-1.5 rounded-full border-2 border-blue-500/80 pointer-events-none animate-pulse"
+                  className="absolute -inset-1 rounded-full border border-blue-500/70 pointer-events-none animate-pulse"
                 />
               </>
             )}
 
-            {/* Target Avatar (44px - 48px) */}
-            <div className="w-12 h-12 rounded-full ring-2 ring-white/20 shadow-md flex items-center justify-center overflow-hidden bg-neutral-800">
+            {/* Target Avatar (48px) */}
+            <div className="w-12 h-12 rounded-full aspect-square ring-2 ring-white/20 shadow-md flex items-center justify-center overflow-hidden bg-neutral-800 shrink-0">
               {isProfileResolving ? (
-                <div className="w-12 h-12 rounded-full bg-neutral-800 animate-pulse" />
+                <div className="w-12 h-12 rounded-full bg-neutral-800 animate-letters-skeleton shrink-0" />
               ) : (
-                <UserAvatar user={recipient?.isDeleted ? null : recipient} size="md" className="w-12 h-12 rounded-full object-cover" />
+                <UserAvatar user={recipient?.isDeleted ? null : recipient} className="w-full h-full" interactive={false} fit="cover" />
               )}
             </div>
           </div>

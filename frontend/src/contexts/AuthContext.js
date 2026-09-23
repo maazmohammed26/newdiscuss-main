@@ -1052,7 +1052,7 @@ export function AuthProvider({ children }) {
 
       // 4. Auxiliary auth & push notification logout
       try {
-        logoutOneSignalUser();
+        logoutOneSignalUser(true);
       } catch (_) {}
       try {
         await signOutAuxiliaryAuth();
@@ -1227,9 +1227,6 @@ export function AuthProvider({ children }) {
     if (oneSignalUserId) {
       syncOneSignalUser(oneSignalUserId, oneSignalUsername);
       Promise.resolve(synchronizeAuxiliaryAuth(oneSignalUserId)).catch((error) => console.warn('[AUTH] Auxiliary authentication failed:', error.message));
-    } else {
-      logoutOneSignalUser();
-      Promise.resolve(signOutAuxiliaryAuth()).catch(() => {});
     }
   }, [loading, oneSignalUserId, oneSignalUsername]);
 

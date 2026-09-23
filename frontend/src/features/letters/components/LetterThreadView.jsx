@@ -8,9 +8,11 @@ import {
   getThreadLetters,
   subscribeToThreadHead,
   fetchEarlierLetters,
+  checkPendingNonFriendLetter,
 } from '../data/letterRepository';
 import { getUserProfile, getCachedUserProfile } from '@/lib/userProfileDb';
 import { database, ref, get } from '@/lib/firebase';
+import { toast } from 'sonner';
 
 /**
  * Reconciles local and realtime letters by clientMutationId and canonical id,
@@ -199,10 +201,20 @@ export default function LetterThreadView({
     setIsLoadingEarlier(false);
   };
 
-  const handleReply = () => {
-    if (!isDeletedUser) {
-      setIsComposerOpen(true);
+  const handleReply = async () => {
+    if (isDeletedUser) return;
+    if (currentUserId && counterpartUid) {
+      try {
+        const isPending = await checkPendingNonFriendLetter(currentUserId, counterpartUid);
+        if (isPending) {
+          toast.info("You've already sent a Letter.", {
+            description: "Wait for them to open it before sending another.",
+          });
+          return;
+        }
+      } catch (_) {}
     }
+    setIsComposerOpen(true);
   };
 
   const counterpartDisplayName = isDeletedUser
@@ -234,8 +246,13 @@ export default function LetterThreadView({
 
           {/* 40px avatar + user identifiers */}
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
-              <UserAvatar user={isDeletedUser ? null : counterpartProfile} size="sm" className="w-10 h-10 rounded-full object-cover" />
+            <div className="w-10 h-10 rounded-full aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+              <UserAvatar
+                user={isDeletedUser ? null : counterpartProfile}
+                className="w-full h-full"
+                interactive={false}
+                fit="cover"
+              />
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
@@ -294,23 +311,23 @@ export default function LetterThreadView({
           >
             {/* Header line skeleton */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-neutral-200/60 dark:bg-neutral-800/70 animate-pulse" />
+              <div className="w-9 h-9 rounded-full bg-neutral-200/70 dark:bg-neutral-800/80 shrink-0 animate-letters-skeleton" />
               <div className="space-y-1.5">
-                <div className="w-28 h-3.5 bg-neutral-200/60 dark:bg-neutral-800/70 rounded animate-pulse" />
-                <div className="w-16 h-2.5 bg-neutral-100 dark:bg-neutral-800/50 rounded animate-pulse" />
+                <div className="w-28 h-3.5 bg-neutral-200/70 dark:bg-neutral-800/80 rounded animate-letters-skeleton" />
+                <div className="w-16 h-2.5 bg-neutral-100 dark:bg-neutral-800/60 rounded animate-letters-skeleton" />
               </div>
             </div>
 
             {/* Handwritten line skeletons */}
             <div className="py-4 space-y-3">
-              <div className="w-[88%] h-3.5 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-pulse" />
-              <div className="w-[68%] h-3.5 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-pulse" />
-              <div className="w-[78%] h-3.5 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-pulse" />
+              <div className="w-[88%] h-3.5 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-letters-skeleton" />
+              <div className="w-[68%] h-3.5 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-letters-skeleton" />
+              <div className="w-[78%] h-3.5 bg-neutral-200/50 dark:bg-neutral-800/60 rounded animate-letters-skeleton" />
             </div>
 
             {/* Footer skeleton */}
             <div className="pt-3 border-t border-neutral-200/60 dark:border-neutral-800/70 flex justify-between">
-              <div className="w-20 h-2.5 bg-neutral-100 dark:bg-neutral-800/50 rounded animate-pulse" />
+              <div className="w-20 h-2.5 bg-neutral-100 dark:bg-neutral-800/50 rounded animate-letters-skeleton" />
             </div>
           </div>
         )}

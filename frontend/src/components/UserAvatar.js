@@ -181,6 +181,8 @@ export default function UserAvatar({
   style = {},
   userId: propUserId,
   priority = false,
+  interactive = true,
+  fit = 'cover',
 }) {
   const { user: currentUser } = useAuth();
   const highlights = useHighlights();
@@ -316,6 +318,7 @@ export default function UserAvatar({
   }, [displaySrc, resolvedSrc, isBlockedResource]);
 
   const initials = useMemo(() => getDeterministicInitials(alt || username), [alt, username]);
+  const [detectedAspect, setDetectedAspect] = useState(null);
 
   // Safe checks for story presence
   const usersWithStories = highlights?.usersWithStories || new Set();
@@ -350,13 +353,42 @@ export default function UserAvatar({
     }
   };
 
+  // Priority 1: Respect saved Discuss avatar crop / position metadata if present
+  const savedCropPosition = (user && typeof user === 'object')
+    ? (user.avatar_crop || user.crop || user.crop_position || user.avatar_position || user.object_position || user.objectPosition)
+    : null;
+  const resolvedObjectPosition = savedCropPosition || 'center';
+
+  // Priority 2: Use explicit fit or 'cover'; if extreme aspect is detected and fit is not forced to cover, allow 'contain'
+  const resolvedFit = fit === 'contain' || (detectedAspect === 'extreme' && fit !== 'cover')
+    ? 'contain'
+    : (fit || 'cover');
+
   const innerAvatarMarkup = displaySrc && !failed ? (
     <img
       src={displaySrc}
       alt={altText}
-      className={`${className} rounded-full object-cover object-center flex-shrink-0 story-shining-avatar no-drag ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
-      style={{ objectFit: 'cover', objectPosition: 'center', ...style }}
+      className={`${className} rounded-full object-center flex-shrink-0 story-shining-avatar no-drag ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
+      style={{
+        objectFit: resolvedFit,
+        objectPosition: resolvedObjectPosition,
+        aspectRatio: '1 / 1',
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        backgroundColor: resolvedFit === 'contain' ? 'rgba(0, 0, 0, 0.06)' : 'transparent',
+        ...style,
+      }}
       referrerPolicy="no-referrer"
+      onLoad={(e) => {
+        const { naturalWidth, naturalHeight } = e.currentTarget;
+        if (naturalWidth && naturalHeight) {
+          const ratio = naturalWidth / naturalHeight;
+          if (ratio > 1.85 || ratio < 0.54) {
+            setDetectedAspect('extreme');
+          }
+        }
+      }}
       onError={() => setFailed(true)}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
@@ -372,7 +404,14 @@ export default function UserAvatar({
   ) : (
     <div
       className={`${className} rounded-full flex items-center justify-center flex-shrink-0 select-none font-semibold text-white story-shining-avatar ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
-      style={{ background: fallbackBg, ...style }}
+      style={{
+        background: fallbackBg,
+        aspectRatio: '1 / 1',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        ...style,
+      }}
       aria-label={altText}
       role="img"
     >
@@ -382,8 +421,8 @@ export default function UserAvatar({
     </div>
   );
 
-  // Fallback to pure avatar markup for ourselves or if no user ID is provided
-  if (isSelf || !userId) {
+  // Fallback to pure avatar markup for ourselves, if no user ID is provided, or if non-interactive
+  if (isSelf || !userId || !interactive) {
     return innerAvatarMarkup;
   }
 
