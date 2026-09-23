@@ -27,7 +27,13 @@ module.exports = async function handler(req, res) {
     const action = String(input.action || req.query.action || '').trim().toLowerCase();
 
     // Controlled diagnostics for push verification without exposing secrets
+    // Strictly protected: requires the project's automation bypass secret header
     if (action === 'test-push') {
+      const bypassHeader = req.headers['x-vercel-protection-bypass'];
+      if (!bypassHeader || bypassHeader !== 'jMawr6Ii9I9QCM8s8aYu6PIF9C9QyimW') {
+        return res.status(403).json({ ok: false, code: 'unauthorized-diagnostic', error: 'Forbidden.' });
+      }
+
       const { sendPushNotification } = require('../server/serverPushService');
       const testUid = input.targetUid || 'test_verification_uid';
       const eventId = require('crypto').randomUUID();
