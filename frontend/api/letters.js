@@ -44,11 +44,23 @@ module.exports = async function handler(req, res) {
         url: '/',
         eventId,
       });
+      const val = String(process.env.ONESIGNAL_REST_API_KEY || '');
+      const shape = {
+        present: Boolean(process.env.ONESIGNAL_REST_API_KEY),
+        type: typeof process.env.ONESIGNAL_REST_API_KEY,
+        length: val.length,
+        startsWithBrace: val.trim().startsWith('{'),
+        startsWithQuote: val.trim().startsWith('"'),
+        containsWhitespace: /\s/.test(val.trim()),
+        source: 'ONESIGNAL_REST_API_KEY',
+      };
+
       return res.status(200).json({
         ok: pushResult.ok,
         status: pushResult.ok ? 200 : (pushResult.error?.match(/HTTP (\d+)/)?.[1] ? Number(pushResult.error.match(/HTTP (\d+)/)[1]) : 500),
         resultId: pushResult.resultId || null,
         targetUid: testUid,
+        shape,
         error: pushResult.error ? pushResult.error.replace(/[a-zA-Z0-9_\-]{30,}/g, '[REDACTED]') : null,
       });
     }
