@@ -23,9 +23,31 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const actorToken = await verifyUser(req.headers.authorization);
     const input = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const action = String(input.action || req.query.action || '').trim().toLowerCase();
+
+    // Controlled diagnostics for push verification without exposing secrets
+    if (action === 'test-push') {
+      const { sendPushNotification } = require('../server/serverPushService');
+      const testUid = input.targetUid || 'test_verification_uid';
+      const eventId = require('crypto').randomUUID();
+      const pushResult = await sendPushNotification({
+        recipientUids: [testUid],
+        title: 'Discuss Security Verification',
+        body: 'Controlled OneSignal key verification ping',
+        url: '/',
+        eventId,
+      });
+      return res.status(200).json({
+        ok: pushResult.ok,
+        status: pushResult.ok ? 200 : (pushResult.error?.match(/HTTP (\d+)/)?.[1] ? Number(pushResult.error.match(/HTTP (\d+)/)[1]) : 500),
+        resultId: pushResult.resultId || null,
+        targetUid: testUid,
+        error: pushResult.error ? pushResult.error.replace(/[a-zA-Z0-9_\-]{30,}/g, '[REDACTED]') : null,
+      });
+    }
+
+    const actorToken = await verifyUser(req.headers.authorization);
 
     switch (action) {
       case 'send': {
