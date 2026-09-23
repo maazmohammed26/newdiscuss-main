@@ -359,10 +359,17 @@ export default function UserAvatar({
     : null;
   const resolvedObjectPosition = savedCropPosition || 'center';
 
-  // Priority 2: Use explicit fit or 'cover'; if extreme aspect is detected and fit is not forced to cover, allow 'contain'
-  const resolvedFit = fit === 'contain' || (detectedAspect === 'extreme' && fit !== 'cover')
-    ? 'contain'
-    : (fit || 'cover');
+  // Priority 2: Normal images use cover. Extreme aspect images automatically use contain
+  // with neutral background so the image remains naturally visible without harsh clipping,
+  // unless a component intentionally specifies fit="force-cover".
+  let resolvedFit = 'cover';
+  if (fit === 'force-cover') {
+    resolvedFit = 'cover';
+  } else if (fit === 'contain' || detectedAspect === 'extreme') {
+    resolvedFit = 'contain';
+  } else {
+    resolvedFit = fit || 'cover';
+  }
 
   const innerAvatarMarkup = displaySrc && !failed ? (
     <img
@@ -376,7 +383,7 @@ export default function UserAvatar({
         width: '100%',
         height: '100%',
         display: 'block',
-        backgroundColor: resolvedFit === 'contain' ? 'rgba(0, 0, 0, 0.06)' : 'transparent',
+        backgroundColor: resolvedFit === 'contain' ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
         ...style,
       }}
       referrerPolicy="no-referrer"
@@ -384,7 +391,8 @@ export default function UserAvatar({
         const { naturalWidth, naturalHeight } = e.currentTarget;
         if (naturalWidth && naturalHeight) {
           const ratio = naturalWidth / naturalHeight;
-          if (ratio > 1.85 || ratio < 0.54) {
+          // Aspect ratio threshold: wide landscape or tall portrait
+          if (ratio > 1.38 || ratio < 0.72) {
             setDetectedAspect('extreme');
           }
         }
