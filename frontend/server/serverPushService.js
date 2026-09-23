@@ -10,7 +10,7 @@
  * - Push failure NEVER throws or cancels callers (e.g. Letters)
  */
 
-const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || '280791b6-7711-4b32-8897-449efe155f2b';
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || process.env.REACT_APP_ONESIGNAL_APP_ID || '280791b6-7711-4b32-8897-449efe155f2b';
 const APP_ORIGIN = process.env.PUBLIC_APP_ORIGIN || 'https://www.discussit.in';
 
 const postJson = async (url, body, headers = {}) => {
@@ -55,7 +55,7 @@ const sendPushNotification = async ({
   additionalData = {},
   recipientProfiles = {},
 }) => {
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY || process.env.REACT_APP_ONESIGNAL_REST_API_KEY;
   const validRecipients = [...new Set(recipientUids.map(String).filter((u) => Boolean(u) && u.length >= 6))];
 
   if (!apiKey) {
@@ -94,6 +94,20 @@ const sendPushNotification = async ({
     return { ok: true, delivered: true, resultId: result.id, recipientsCount: result.recipients || validRecipients.length };
   } catch (aliasError) {
     console.warn('[PushService] Primary alias push failed, evaluating fallback:', aliasError.message);
+
+    // Attempt 2: Canonical v1 external user ID push with Basic auth
+    try {
+      const v1Payload = {
+        ...basePayload,
+        include_external_user_ids: validRecipients,
+      };
+      const result = await postJson('https://onesignal.com/api/v1/notifications', v1Payload, {
+        Authorization: `Basic ${apiKey}`,
+      });
+      return { ok: true, delivered: true, fallback: 'external_user_ids', resultId: result.id, recipientsCount: result.recipients || validRecipients.length };
+    } catch (v1Error) {
+      console.warn('[PushService] v1 external user ID push failed:', v1Error.message);
+    }
 
     // Fallback: check if any recipient has direct subscription IDs in their profile
     const directSubscriptionIds = [];
