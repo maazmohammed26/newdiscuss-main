@@ -10,7 +10,7 @@
  * - Push failure NEVER throws or cancels callers (e.g. Letters)
  */
 
-const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || process.env.REACT_APP_ONESIGNAL_APP_ID || '280791b6-7711-4b32-8897-449efe155f2b';
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || '280791b6-7711-4b32-8897-449efe155f2b';
 const APP_ORIGIN = process.env.PUBLIC_APP_ORIGIN || 'https://www.discussit.in';
 
 const postJson = async (url, body, headers = {}) => {
@@ -26,9 +26,19 @@ const postJson = async (url, body, headers = {}) => {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       const errDetail = typeof result === 'object' ? JSON.stringify(result.errors || result.error || response.statusText) : String(result);
-      throw new Error(`OneSignal HTTP ${response.status}: ${errDetail}`);
+      const error = new Error(`OneSignal HTTP ${response.status}: ${errDetail}`);
+      error.status = response.status;
+      error.details = result;
+      throw error;
     }
     return result;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      const timeoutError = new Error('OneSignal request timed out (8s)');
+      timeoutError.isTimeout = true;
+      throw timeoutError;
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
@@ -55,7 +65,8 @@ const sendPushNotification = async ({
   additionalData = {},
   recipientProfiles = {},
 }) => {
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY || process.env.REACT_APP_ONESIGNAL_REST_API_KEY;
+  // STRICT SECURITY: Only server-only secret variable. Never read REACT_APP_*
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
   const validRecipients = [...new Set(recipientUids.map(String).filter((u) => Boolean(u) && u.length >= 6))];
 
   if (!apiKey) {
@@ -81,7 +92,7 @@ const sendPushNotification = async ({
     basePayload.idempotency_key = eventId;
   }
 
-  // Attempt 1: Modern alias-based targeting by external_id (Firebase UID)
+  // Canonical Path: Firebase UID -> OneSignal External ID via current Create Notification API
   try {
     const aliasPayload = {
       ...basePayload,
@@ -92,35 +103,27 @@ const sendPushNotification = async ({
     });
 
     return { ok: true, delivered: true, resultId: result.id, recipientsCount: result.recipients || validRecipients.length };
-  } catch (aliasError) {
-    console.warn('[PushService] Primary alias push failed, evaluating fallback:', aliasError.message);
+  } catch (primaryError) {
+    console.warn('[PushService] Primary alias push failed:', primaryError.message);
 
-    // Attempt 2: Canonical v1 external user ID push with Basic auth
-    try {
-      const v1Payload = {
-        ...basePayload,
-        include_external_user_ids: validRecipients,
-      };
-      const result = await postJson('https://onesignal.com/api/v1/notifications', v1Payload, {
-        Authorization: `Basic ${apiKey}`,
-      });
-      return { ok: true, delivered: true, fallback: 'external_user_ids', resultId: result.id, recipientsCount: result.recipients || validRecipients.length };
-    } catch (v1Error) {
-      console.warn('[PushService] v1 external user ID push failed:', v1Error.message);
+    // CRITICAL: DO NOT call fallback after ambiguous failures (timeout or network error or 5xx server error).
+    // A timeout does NOT prove OneSignal rejected the original request; re-dispatching risks duplicate push.
+    const isAmbiguous = primaryError.isTimeout ||
+                        primaryError.name === 'AbortError' ||
+                        !primaryError.status ||
+                        primaryError.status >= 500;
+
+    if (isAmbiguous) {
+      return { ok: false, error: `Ambiguous delivery failure: ${primaryError.message}`, ambiguous: true };
     }
 
-    // Fallback: check if any recipient has direct subscription IDs in their profile
+    // Only attempt direct Subscription ID fallback if primary explicitly rejected with client error (e.g. 400 unmapped alias)
+    // and verified subscription IDs are known for the intended recipients.
     const directSubscriptionIds = [];
-    const legacyPlayerIds = [];
-
     for (const uid of validRecipients) {
       const profile = recipientProfiles[uid];
       if (profile?.oneSignalSubscriptionId) {
         directSubscriptionIds.push(String(profile.oneSignalSubscriptionId));
-      }
-      const legacyId = profile?.oneSignalUserId || profile?.playerId;
-      if (legacyId) {
-        legacyPlayerIds.push(String(legacyId));
       }
     }
 
@@ -135,26 +138,11 @@ const sendPushNotification = async ({
         });
         return { ok: true, delivered: true, fallback: 'subscription_id', resultId: result.id };
       } catch (subError) {
-        console.warn('[PushService] Direct subscription push failed:', subError.message);
+        console.warn('[PushService] Direct subscription fallback failed:', subError.message);
       }
     }
 
-    if (legacyPlayerIds.length > 0) {
-      try {
-        const legacyPayload = {
-          ...basePayload,
-          include_player_ids: legacyPlayerIds,
-        };
-        const result = await postJson('https://onesignal.com/api/v1/notifications', legacyPayload, {
-          Authorization: `Basic ${apiKey}`,
-        });
-        return { ok: true, delivered: true, fallback: 'player_id', resultId: result.id };
-      } catch (legacyError) {
-        console.warn('[PushService] Legacy player ID push failed:', legacyError.message);
-      }
-    }
-
-    return { ok: false, error: aliasError.message };
+    return { ok: false, error: primaryError.message };
   }
 };
 
