@@ -49,6 +49,7 @@ module.exports = async function handler(req, res) {
         present: Boolean(process.env.ONESIGNAL_REST_API_KEY),
         type: typeof process.env.ONESIGNAL_REST_API_KEY,
         length: val.length,
+        startsWithOsV2App: val.trim().startsWith('os_v2_app_'),
         startsWithBrace: val.trim().startsWith('{'),
         startsWithQuote: val.trim().startsWith('"'),
         containsWhitespace: /\s/.test(val.trim()),
