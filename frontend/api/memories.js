@@ -33,9 +33,28 @@ module.exports = async function handler(req, res) {
     return res.status(204).end();
   }
 
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      ok: false,
+      code: 'unauthenticated',
+      error: 'Please sign in to access Discuss Memories.',
+    });
+  }
+
+  let actorUid;
   try {
-    const actorToken = await verifyUser(req.headers.authorization);
-    const actorUid = actorToken.uid;
+    const actorToken = await verifyUser(authHeader);
+    actorUid = actorToken.uid;
+  } catch (authErr) {
+    return res.status(401).json({
+      ok: false,
+      code: 'unauthenticated',
+      error: 'Your session has expired or is invalid. Please sign in again.',
+    });
+  }
+
+  try {
 
     const input = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const action = String(input.action || req.query.action || '').trim().toLowerCase();

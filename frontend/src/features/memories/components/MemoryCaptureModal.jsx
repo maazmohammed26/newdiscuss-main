@@ -155,30 +155,32 @@ export default function MemoryCaptureModal({
           {/* Stamp Preview or Picker Trigger */}
           <div className="flex flex-col items-center justify-center">
             {previewUrl ? (
-              <div className="relative group flex flex-col items-center">
-                <MemoryStamp
-                  memory={{
-                    id: 'temp-preview',
-                    url: previewUrl,
-                    memoryDate: initialDate,
-                  }}
-                  variant={STAMP_VARIANTS.PREVIEW}
-                  alt="Memory stamp preview"
-                />
-
-                {!uploading && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFile(null);
-                      setPreviewUrl('');
+              <div className="w-full flex flex-col items-center justify-center p-3 bg-neutral-100/70 dark:bg-neutral-900/60 rounded-2xl border border-neutral-200/60 dark:border-neutral-800">
+                <div className="relative group flex flex-col items-center max-w-full">
+                  <MemoryStamp
+                    memory={{
+                      id: 'temp-preview',
+                      url: previewUrl,
+                      memoryDate: initialDate,
                     }}
-                    className="mt-2 text-xs text-neutral-500 hover:text-[#0095F6] flex items-center gap-1 transition-colors"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Change photograph</span>
-                  </button>
-                )}
+                    variant={STAMP_VARIANTS.PREVIEW}
+                    alt="Memory stamp preview"
+                  />
+
+                  {!uploading && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFile(null);
+                        setPreviewUrl('');
+                      }}
+                      className="mt-3 text-xs text-neutral-600 dark:text-neutral-400 hover:text-[#0095F6] flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Change photograph</span>
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="w-full py-8 px-4 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl flex flex-col items-center justify-center gap-3 bg-neutral-50/50 dark:bg-neutral-900/30">

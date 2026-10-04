@@ -288,37 +288,63 @@ html.dark, html.dark body, html.dark #root {
 
 .postage-stamp-container {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   user-select: none;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
 }
 
+/* Authentic Postage Stamp Paper with Perforated Scalloped Teeth */
 .postage-stamp-paper {
-  background-color: #faf7f2;
-  padding: 6px;
+  background-color: #ffffff;
+  padding: 8px 8px 12px 8px;
   position: relative;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px dashed rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
+  box-sizing: border-box;
+  
+  /* Perforated scalloped teeth along all four borders */
+  --stamp-hole: 4.5px;
+  --stamp-gap: 13px;
+  
+  -webkit-mask:
+    radial-gradient(circle var(--stamp-hole) at 50% 0, transparent 98%, #000 100%) 50% 0 / var(--stamp-gap) 100%,
+    radial-gradient(circle var(--stamp-hole) at 50% 100%, transparent 98%, #000 100%) 50% 100% / var(--stamp-gap) 100%,
+    radial-gradient(circle var(--stamp-hole) at 0 50%, transparent 98%, #000 100%) 0 50% / 100% var(--stamp-gap),
+    radial-gradient(circle var(--stamp-hole) at 100% 50%, transparent 98%, #000 100%) 100% 50% / 100% var(--stamp-gap);
+  -webkit-mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  -webkit-mask-composite: source-in;
+
+  mask:
+    radial-gradient(circle var(--stamp-hole) at 50% 0, transparent 98%, #000 100%) 50% 0 / var(--stamp-gap) 100%,
+    radial-gradient(circle var(--stamp-hole) at 50% 100%, transparent 98%, #000 100%) 50% 100% / var(--stamp-gap) 100%,
+    radial-gradient(circle var(--stamp-hole) at 0 50%, transparent 98%, #000 100%) 0 50% / 100% var(--stamp-gap),
+    radial-gradient(circle var(--stamp-hole) at 100% 50%, transparent 98%, #000 100%) 100% 50% / 100% var(--stamp-gap);
+  mask-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  mask-composite: intersect;
+
+  /* Real physical stamp drop shadow that follows the perforation curves */
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.12)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
 }
 
 .dark .postage-stamp-paper {
-  background-color: #1e1e1e;
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  background-color: #23211f;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
 }
 
-/* Subtle serrated perforation edging */
-.stamp-serration {
-  position: relative;
-  overflow: hidden;
+@supports not ((-webkit-mask-composite: source-in) or (mask-composite: intersect)) {
+  .postage-stamp-paper {
+    border: 2px dashed rgba(0, 0, 0, 0.18);
+    border-radius: 2px;
+  }
 }
 
 .stamp-inner-border {
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 .dark .stamp-inner-border {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
 }
 
 /* Scrapbook textured paper surface */

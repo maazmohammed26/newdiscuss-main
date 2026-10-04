@@ -71,33 +71,33 @@ function MemoryStamp({
   switch (variant) {
     case STAMP_VARIANTS.CALENDAR:
       containerDimensions = 'w-10 h-10 sm:w-11 sm:h-11 p-1';
-      imageDimensions = 'w-full h-full';
+      imageDimensions = 'w-full h-full object-cover';
       break;
 
     case STAMP_VARIANTS.SCRAPBOOK:
-      containerDimensions = 'w-full p-2';
+      containerDimensions = 'w-full p-2 sm:p-2.5 flex flex-col items-center';
       imageDimensions = 'w-full aspect-[4/5] object-cover';
       break;
 
     case STAMP_VARIANTS.GALLERY:
-      containerDimensions = 'w-full p-2';
+      containerDimensions = 'w-full p-2 sm:p-2.5 flex flex-col items-center';
       imageDimensions = 'w-full aspect-square sm:aspect-[4/5] object-cover';
       break;
 
     case STAMP_VARIANTS.PREVIEW:
-      containerDimensions = 'w-full max-w-[280px] p-2.5';
-      imageDimensions = 'w-full aspect-[4/5] object-cover';
+      containerDimensions = 'max-w-full p-2.5 sm:p-3 flex flex-col items-center';
+      imageDimensions = 'max-h-[220px] max-w-full w-auto h-auto object-contain';
       break;
 
     case STAMP_VARIANTS.VIEWER:
-      containerDimensions = 'max-w-full max-h-[75vh] p-3 sm:p-4';
-      imageDimensions = 'max-h-[65vh] w-auto max-w-full object-contain';
+      containerDimensions = 'max-w-full max-h-[75vh] p-3 sm:p-4 flex flex-col items-center';
+      imageDimensions = 'max-h-[60vh] max-w-full w-auto h-auto object-contain';
       break;
 
     case STAMP_VARIANTS.SHARED:
     case STAMP_VARIANTS.PUBLIC:
     default:
-      containerDimensions = 'w-full p-2.5 sm:p-3';
+      containerDimensions = 'w-full p-2.5 sm:p-3 flex flex-col items-center';
       imageDimensions = 'w-full max-h-[460px] aspect-[4/5] object-cover';
       break;
   }
@@ -127,7 +127,7 @@ function MemoryStamp({
       {/* Postage Stamp Outer Paper with serrated edges */}
       <div className={`postage-stamp-paper ${containerDimensions} relative flex flex-col items-center justify-center`}>
         {/* Inner Stamp Framing */}
-        <div className="relative w-full h-full overflow-hidden rounded-xs bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center stamp-inner-border">
+        <div className="relative w-full h-full overflow-hidden rounded-[1px] bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center stamp-inner-border">
           {!loaded && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-neutral-200/50 dark:bg-neutral-800/50 animate-pulse">
               <ImageIcon className="w-5 h-5 text-neutral-400 opacity-60" />
@@ -152,26 +152,35 @@ function MemoryStamp({
             />
           )}
 
-          {/* Postal postmark cancellation watermark on scrapbook/gallery */}
-          {(variant === STAMP_VARIANTS.SCRAPBOOK || variant === STAMP_VARIANTS.GALLERY) && memory.memoryDate && (
+          {/* Postal postmark cancellation watermark on stamp */}
+          {variant !== STAMP_VARIANTS.CALENDAR && (
             <div
-              className="absolute bottom-1.5 right-1.5 w-10 h-10 rounded-full border border-neutral-800/15 dark:border-white/15 flex items-center justify-center text-[8px] font-mono tracking-tighter text-neutral-800/30 dark:text-white/30 rotate-12 pointer-events-none select-none"
+              className="absolute -bottom-1 -right-1 w-11 h-11 rounded-full border border-neutral-800/25 dark:border-white/25 flex flex-col items-center justify-center text-[7px] font-mono tracking-tighter text-neutral-800/40 dark:text-white/40 rotate-12 pointer-events-none select-none z-10"
               aria-hidden="true"
             >
-              <span>{memory.memoryDate.slice(5)}</span>
+              <span className="font-bold leading-none">POST</span>
+              <span className="leading-none text-[6px]">{memory.memoryDate ? memory.memoryDate.slice(5) : '10-04'}</span>
             </div>
           )}
         </div>
 
+        {/* Authentic Philatelic Postage Stamp Typography Bar */}
+        {variant !== STAMP_VARIANTS.CALENDAR && (
+          <div className="w-full flex items-center justify-between px-1 pt-1.5 pb-0.5 text-[8px] font-mono tracking-widest text-neutral-600 dark:text-neutral-400 uppercase select-none font-semibold">
+            <span>DISCUSS POSTAGE</span>
+            <span>{memory.memoryDate ? memory.memoryDate.slice(0, 4) : '2026'}</span>
+          </div>
+        )}
+
         {/* Optional caption or location underneath stamp photo */}
         {showCaption && memory.caption && (
-          <p className="mt-2 text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2 px-1 text-center font-normal">
+          <p className="mt-1 text-xs text-neutral-700 dark:text-neutral-300 line-clamp-2 px-1 text-center font-normal">
             {memory.caption}
           </p>
         )}
 
         {showDate && memory.memoryDate && (
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 px-1">
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 px-1">
             <span>{formatDisplayDate(memory.memoryDate)}</span>
             {memory.location && (
               <>

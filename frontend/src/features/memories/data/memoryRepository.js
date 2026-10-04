@@ -13,6 +13,7 @@
 
 import imageCompression from 'browser-image-compression';
 import { database, ref, get, query, orderByChild, limitToLast } from '@/lib/firebase';
+import { getAuthenticatedIdToken } from '@/lib/authenticatedRequest';
 import { memoryStorage } from './memoryStorageService';
 import {
   getCachedMonthMemories,
@@ -25,6 +26,26 @@ import {
 import { isValidDateStr, getYearMonth } from '../utils/dateUtils';
 
 const MEMORIES_API_URL = '/api/memories';
+
+/**
+ * Resolves Firebase Auth ID token from the passed user object or authenticated session.
+ * @param {Object} [user]
+ * @returns {Promise<string>}
+ */
+async function resolveAuthToken(user) {
+  if (typeof user?.getIdToken === 'function') {
+    try {
+      const token = await user.getIdToken();
+      if (token) return token;
+    } catch (_) {}
+  }
+  try {
+    return await getAuthenticatedIdToken();
+  } catch (err) {
+    console.warn('[Memories] Could not resolve ID token from session:', err.message);
+    return '';
+  }
+}
 
 /**
  * Compresses an image file client-side before cloud upload.
@@ -43,7 +64,7 @@ export async function compressMemoryImage(file) {
   const options = {
     maxSizeMB: 1.2,
     maxWidthOrHeight: 2200,
-    useWebWorker: true,
+    useWebWorker: false, // Runs directly on Canvas; avoids blob worker CSP restrictions
     fileType: 'image/webp',
     initialQuality: 0.88,
   };
@@ -153,7 +174,10 @@ export async function createMemory(file, { memoryDate, caption = '', location = 
   });
 
   // 5. Authorize creation via backend serverless API
-  const token = typeof user.getIdToken === 'function' ? await user.getIdToken() : '';
+  const token = await resolveAuthToken(user);
+  if (!token) {
+    throw new Error('Please sign in to save your memory.');
+  }
   const response = await fetch(MEMORIES_API_URL, {
     method: 'POST',
     headers: {
@@ -199,7 +223,10 @@ export async function deleteMemory(memoryId, yearMonth, user) {
     throw new Error('Missing parameters to delete memory.');
   }
 
-  const token = typeof user.getIdToken === 'function' ? await user.getIdToken() : '';
+  const token = await resolveAuthToken(user);
+  if (!token) {
+    throw new Error('Please sign in to delete your memory.');
+  }
   const response = await fetch(MEMORIES_API_URL, {
     method: 'POST',
     headers: {
@@ -237,7 +264,10 @@ export async function shareMemory(memoryId, yearMonth, recipientUids = [], user)
     throw new Error('Missing parameters to share memory.');
   }
 
-  const token = typeof user.getIdToken === 'function' ? await user.getIdToken() : '';
+  const token = await resolveAuthToken(user);
+  if (!token) {
+    throw new Error('Please sign in to share your memory.');
+  }
   const response = await fetch(MEMORIES_API_URL, {
     method: 'POST',
     headers: {
@@ -270,7 +300,10 @@ export async function toggleHeart(memoryId, user) {
   const userId = user?.uid || user?.id;
   if (!userId || !memoryId) throw new Error('Authentication required.');
 
-  const token = typeof user.getIdToken === 'function' ? await user.getIdToken() : '';
+  const token = await resolveAuthToken(user);
+  if (!token) {
+    throw new Error('Please sign in to heart memories.');
+  }
   const response = await fetch(MEMORIES_API_URL, {
     method: 'POST',
     headers: {
@@ -305,7 +338,10 @@ export async function downloadMemory(memoryId, yearMonth, user) {
   const userId = user?.uid || user?.id;
   if (!userId || !memoryId || !yearMonth) throw new Error('Missing parameters.');
 
-  const token = typeof user.getIdToken === 'function' ? await user.getIdToken() : '';
+  const token = await resolveAuthToken(user);
+  if (!token) {
+    throw new Error('Please sign in to download your memory.');
+  }
   const response = await fetch(`${MEMORIES_API_URL}?action=download&memoryId=${memoryId}&yearMonth=${yearMonth}`, {
     headers: {
       Authorization: `Bearer ${token}`,
