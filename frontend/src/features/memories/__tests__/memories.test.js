@@ -465,6 +465,39 @@ describe('Discuss Memories — Production Feature Test Suite', () => {
       expect(mockDbStore.shared_sent?.user_owner_unshare_all?.[memRes.memory.id]).toBeUndefined();
     });
 
+    test('Scenario: shareMemoryServer includes image asset and caption in shared_sent and getSharedSentServer enriches missing images', async () => {
+      const memRes = await createMemoryServer({
+        actorUid: 'user_sent_test',
+        memoryDate: '2026-10-04',
+        caption: 'Beautiful night street lights',
+        cloudinaryPublicId: 'discuss/memories/user_sent_test/tree',
+        cloudinaryUrl: 'https://res.cloudinary.com/test/tree.jpg',
+      });
+
+      await shareMemoryServer({
+        actorUid: 'user_sent_test',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        recipientUids: ['user_receiver_1'],
+      });
+
+      // 1. Verify shared_sent has full image URLs and metadata for the owner
+      const sentItem = mockDbStore.shared_sent?.user_sent_test?.[memRes.memory.id];
+      expect(sentItem).toBeDefined();
+      expect(sentItem.cloudinaryUrl).toBe('https://res.cloudinary.com/test/tree.jpg');
+      expect(sentItem.caption).toBe('Beautiful night street lights');
+
+      // 2. Simulate historical record without cloudinaryUrl in shared_sent and verify getSharedSentServer auto-enriches it
+      delete sentItem.cloudinaryUrl;
+      delete sentItem.url;
+      delete sentItem.cloudinaryPublicId;
+
+      const sentFetchRes = await getSharedSentServer({ actorUid: 'user_sent_test' });
+      expect(sentFetchRes.ok).toBe(true);
+      expect(sentFetchRes.memories.length).toBe(1);
+      expect(sentFetchRes.memories[0].cloudinaryUrl).toBe('https://res.cloudinary.com/test/tree.jpg');
+    });
+
     test('Scenario: getMemorySharesServer returns recipient profiles for a memory', async () => {
       // Seed user profiles
       mockDbStore.users = {

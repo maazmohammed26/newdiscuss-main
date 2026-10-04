@@ -415,29 +415,94 @@ export async function downloadMemory(memoryId, yearMonth, user) {
   const userId = user?.uid || user?.id;
   if (!userId || !memoryId || !yearMonth) throw new Error('Missing parameters.');
 
-  const token = await resolveAuthToken(user);
-  if (!token) {
-    throw new Error('Please sign in to download your memory.');
-  }
-  const response = await fetch(`${MEMORIES_API_URL}?action=download&memoryId=${memoryId}&yearMonth=${yearMonth}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  let targetUrl = null;
+  let targetPublicId = null;
 
-  const data = await response.json();
-  if (!response.ok || !data.ok) {
-    throw new Error(data.error || 'Download unauthorized.');
+  // 1. Try server API first
+  try {
+    const token = await resolveAuthToken(user);
+    if (token) {
+      const response = await fetch(`${MEMORIES_API_URL}?action=download&memoryId=${memoryId}&yearMonth=${yearMonth}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.ok) {
+          targetUrl = data.downloadUrl;
+          targetPublicId = data.publicId;
+        }
+      }
+    }
+  } catch (_) {}
+
+  // 2. Direct RTDB fallback for owner if server API was unavailable
+  if (!targetUrl && !targetPublicId) {
+    try {
+      const memRef = ref(database, `user_memories/${userId}/${yearMonth}/${memoryId}`);
+      const snap = await get(memRef);
+      if (snap.exists()) {
+        const mem = snap.val();
+        if (mem.ownerId === userId) {
+          targetUrl = mem.cloudinaryUrl || mem.url;
+          targetPublicId = mem.cloudinaryPublicId || mem.publicId;
+        }
+      }
+    } catch (_) {}
   }
 
-  const downloadUrl = memoryStorage.getDownloadUrl(data.publicId, `discuss_memory_${memoryId}.jpg`);
-  
-  // Trigger browser download via anchor
+  if (!targetUrl && !targetPublicId) {
+    throw new Error('Download unauthorized or memory asset not found.');
+  }
+
+  const finalUrl = targetUrl || (targetPublicId ? memoryStorage.getDownloadUrl(targetPublicId, `discuss_memory_${memoryId}.jpg`) : null);
+  if (!finalUrl) {
+    throw new Error('Unable to resolve download URL.');
+  }
+
+  const filename = `discuss_memory_${memoryId}.jpg`;
+
+  // Fetch binary blob to download automatically to gallery/device without opening Cloudinary in browser tab
+  try {
+    const imgResponse = await fetch(finalUrl, { mode: 'cors' });
+    if (imgResponse.ok) {
+      const blob = await imgResponse.blob();
+      const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+
+      // If mobile supports Web Share API with files (iOS Safari, Android Chrome), allow direct Save to Gallery
+      if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Discuss Memory',
+          });
+          return true;
+        } catch (shareErr) {
+          if (shareErr.name === 'AbortError') return true;
+        }
+      }
+
+      // Same-origin blob URL triggers direct browser file save
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+      return true;
+    }
+  } catch (blobErr) {
+    console.warn('[Memories] Blob download fallback to direct anchor:', blobErr);
+  }
+
+  // Fallback: direct anchor without target="_blank"
   const a = document.createElement('a');
-  a.href = downloadUrl;
-  a.download = `discuss_memory_${memoryId}.jpg`;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
+  a.href = finalUrl;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -492,7 +557,7 @@ export async function getSharedReceivedMemories(userId, user = null) {
 
 /**
  * Fetches memories shared by the current user.
- * Tries server API first (Admin SDK), falls back to RTDB.
+ * Tries server API first (Admin SDK), falls back to RTDB with automatic legacy enrichment.
  * @param {string} userId
  * @param {Object} [user]
  * @returns {Promise<Array<Object>>}
@@ -516,13 +581,41 @@ export async function getSharedSentMemories(userId, user = null) {
     }
   } catch (_) {}
 
-  // 2. Direct RTDB fallback
+  // 2. Direct RTDB fallback with image enrichment
   try {
     const sentRef = ref(database, `shared_sent/${userId}`);
     const snapshot = await get(sentRef);
     if (snapshot.exists()) {
       const data = snapshot.val();
-      return Object.values(data).sort((a, b) => (b.sharedAt || 0) - (a.sharedAt || 0));
+      const rawList = Object.values(data).sort((a, b) => (b.sharedAt || 0) - (a.sharedAt || 0));
+      // Enrich any item missing image data by fetching user_memories
+      const enrichedList = await Promise.all(
+        rawList.map(async (item) => {
+          if (item.cloudinaryUrl || item.cloudinaryPublicId || item.url) return item;
+          const memId = item.memoryId || item.id;
+          const ym = item.yearMonth || (item.memoryDate ? item.memoryDate.slice(0, 7) : null);
+          if (memId && ym) {
+            try {
+              const memSnap = await get(ref(database, `user_memories/${userId}/${ym}/${memId}`));
+              if (memSnap.exists()) {
+                const orig = memSnap.val();
+                return {
+                  ...orig,
+                  ...item,
+                  cloudinaryUrl: orig.cloudinaryUrl || orig.url,
+                  cloudinaryPublicId: orig.cloudinaryPublicId || orig.publicId,
+                  url: orig.cloudinaryUrl || orig.url,
+                  caption: orig.caption || item.caption || '',
+                  location: orig.location || item.location || '',
+                  yearMonth: orig.yearMonth || ym,
+                };
+              }
+            } catch (_) {}
+          }
+          return item;
+        })
+      );
+      return enrichedList;
     }
     return [];
   } catch (e) {

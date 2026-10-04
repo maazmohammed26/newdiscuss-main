@@ -35,8 +35,8 @@ export default function SharedMemoriesView({
       setLoading(true);
       try {
         const [recv, sent] = await Promise.all([
-          getSharedReceivedMemories(userId),
-          getSharedSentMemories(userId),
+          getSharedReceivedMemories(userId, currentUser),
+          getSharedSentMemories(userId, currentUser),
         ]);
         if (mounted) {
           setReceivedMemories(recv || []);
@@ -53,7 +53,7 @@ export default function SharedMemoriesView({
     return () => {
       mounted = false;
     };
-  }, [userId]);
+  }, [userId, currentUser]);
 
   const activeList = subTab === 'received' ? receivedMemories : sentMemories;
 

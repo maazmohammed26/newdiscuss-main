@@ -5,6 +5,7 @@ import MemoryStamp from './MemoryStamp';
 import { STAMP_VARIANTS } from '../utils/stampTheme';
 import { formatDisplayDate } from '../utils/dateUtils';
 import { deleteMemory, downloadMemory, toggleHeart, updateMemoryVisibility } from '../data/memoryRepository';
+import { database, ref, get } from '@/lib/firebase';
 import UserAvatar from '@/components/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -37,31 +38,49 @@ export default function MemoryFullViewerModal({
   const [heartCount, setHeartCount] = useState(memory?.heartCount || 0);
   const [visibility, setVisibility] = useState(memory?.visibility || 'private');
   const [updatingVisibility, setUpdatingVisibility] = useState(false);
+  const [activeMemory, setActiveMemory] = useState(memory);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    setActiveMemory(memory);
     if (memory) {
       setVisibility(memory.visibility || 'private');
       setHeartCount(memory.heartCount || 0);
+
+      // If memory lacks direct image URLs (e.g. from historical shared sent list), hydrate from user_memories
+      if (open && !memory.cloudinaryUrl && !memory.url && memory.id) {
+        const ym = memory.yearMonth || memory.memoryDate?.slice(0, 7);
+        const uid = memory.ownerId || memory.userId || (currentUser?.uid || currentUser?.id);
+        if (uid && ym) {
+          get(ref(database, `user_memories/${uid}/${ym}/${memory.id}`))
+            .then((snap) => {
+              if (snap && snap.exists()) {
+                setActiveMemory((prev) => ({ ...snap.val(), ...prev, ...snap.val() }));
+              }
+            })
+            .catch(() => {});
+        }
+      }
     }
-  }, [memory]);
+  }, [open, memory, currentUser]);
 
   if (!open || !memory) return null;
 
+  const currentMem = activeMemory || memory;
   const currentUid = currentUser?.uid || currentUser?.id;
-  const isOwner = Boolean(currentUid && (memory.ownerId === currentUid || memory.userId === currentUid));
+  const isOwner = Boolean(currentUid && (currentMem.ownerId === currentUid || currentMem.userId === currentUid));
 
   const handleDelete = async () => {
     if (!isOwner) return;
     setDeleting(true);
     try {
-      const yearMonth = memory.yearMonth || memory.memoryDate?.slice(0, 7);
-      await deleteMemory(memory.id, yearMonth, currentUser);
+      const yearMonth = currentMem.yearMonth || currentMem.memoryDate?.slice(0, 7);
+      await deleteMemory(currentMem.id, yearMonth, currentUser);
       toast.success('Memory deleted.');
-      onDeleted?.(memory.id);
+      onDeleted?.(currentMem.id);
       onClose();
     } catch (err) {
       toast.error(err.message || 'Failed to delete memory.');
@@ -75,9 +94,9 @@ export default function MemoryFullViewerModal({
     if (!isOwner) return;
     setDownloading(true);
     try {
-      const yearMonth = memory.yearMonth || memory.memoryDate?.slice(0, 7);
-      await downloadMemory(memory.id, yearMonth, currentUser);
-      toast.success('Memory downloaded.');
+      const yearMonth = currentMem.yearMonth || currentMem.memoryDate?.slice(0, 7);
+      await downloadMemory(currentMem.id, yearMonth, currentUser);
+      toast.success('Memory downloaded to your device.');
     } catch (err) {
       toast.error(err.message || 'Download failed.');
     } finally {
@@ -90,15 +109,15 @@ export default function MemoryFullViewerModal({
     const nextVis = visibility === 'public' ? 'private' : 'public';
     setUpdatingVisibility(true);
     try {
-      const yearMonth = memory.yearMonth || memory.memoryDate?.slice(0, 7);
-      const updated = await updateMemoryVisibility(memory.id, yearMonth, nextVis, currentUser);
+      const yearMonth = currentMem.yearMonth || currentMem.memoryDate?.slice(0, 7);
+      const updated = await updateMemoryVisibility(currentMem.id, yearMonth, nextVis, currentUser);
       setVisibility(nextVis);
       toast.success(
         nextVis === 'public'
           ? 'Memory is now Public (visible in Public gallery).'
           : 'Memory is now Private.'
       );
-      onVisibilityChanged?.({ ...memory, visibility: nextVis });
+      onVisibilityChanged?.({ ...currentMem, visibility: nextVis });
     } catch (err) {
       toast.error(err.message || 'Failed to update visibility.');
     } finally {
@@ -108,7 +127,7 @@ export default function MemoryFullViewerModal({
 
   const handleHeartToggle = async () => {
     try {
-      const res = await toggleHeart(memory.id, currentUser);
+      const res = await toggleHeart(currentMem.id, currentUser);
       setHearted(res.hearted);
       setHeartCount(res.heartCount);
     } catch (e) {
@@ -119,7 +138,7 @@ export default function MemoryFullViewerModal({
   };
 
   const handleProfileClick = () => {
-    const ownerId = memory.ownerId || memory.userId;
+    const ownerId = currentMem.ownerId || currentMem.userId;
     if (ownerId === currentUid) {
       navigate('/profile');
     } else if (ownerId) {
@@ -149,17 +168,17 @@ export default function MemoryFullViewerModal({
           >
             <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20">
               <UserAvatar
-                userId={memory.ownerId || memory.userId}
-                username={memory.ownerUsername || 'User'}
+                userId={currentMem.ownerId || currentMem.userId}
+                username={currentMem.ownerUsername || 'User'}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="leading-tight">
               <span className="text-xs font-semibold text-white block">
-                {memory.ownerUsername || (isOwner ? 'You' : 'Discuss User')}
+                {currentMem.ownerUsername || (isOwner ? 'You' : 'Discuss User')}
               </span>
               <span className="text-[10px] text-white/60 block">
-                {formatDisplayDate(memory.memoryDate)}
+                {formatDisplayDate(currentMem.memoryDate)}
               </span>
             </div>
           </button>
@@ -200,27 +219,27 @@ export default function MemoryFullViewerModal({
         {/* Central Stamp Display */}
         <div className="w-full flex items-center justify-center my-auto py-2">
           <MemoryStamp
-            memory={memory}
+            memory={currentMem}
             variant={STAMP_VARIANTS.VIEWER}
             priority
-            alt={memory.caption || 'Memory stamp'}
+            alt={currentMem.caption || 'Memory stamp'}
           />
         </div>
 
         {/* Bottom Card: Metadata & Actions */}
         <div className="w-full max-w-sm bg-neutral-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-white shadow-xl mt-2">
           {/* Caption */}
-          {memory.caption && (
+          {currentMem.caption && (
             <p className="text-xs sm:text-sm text-neutral-200 mb-1 text-center font-normal px-2">
-              "{memory.caption}"
+              "{currentMem.caption}"
             </p>
           )}
 
           {/* Location */}
-          {memory.location && (
+          {currentMem.location && (
             <div className="flex items-center justify-center gap-1 text-[11px] text-neutral-400 mb-2">
               <MapPin className="w-3 h-3 text-[#ED4956]" />
-              <span>{memory.location}</span>
+              <span>{currentMem.location}</span>
             </div>
           )}
 
@@ -268,7 +287,7 @@ export default function MemoryFullViewerModal({
                 type="button"
                 onClick={() => {
                   onClose();
-                  onOpenShare?.(memory);
+                  onOpenShare?.(currentMem);
                 }}
                 title="Share privately"
                 className="flex items-center gap-1 text-xs text-neutral-300 hover:text-white transition-colors p-1.5 cursor-pointer"

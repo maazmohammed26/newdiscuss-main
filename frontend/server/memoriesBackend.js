@@ -330,9 +330,22 @@ async function shareMemoryServer({ actorUid, memoryId, yearMonth, recipientUids 
       id: memoryId,
       memoryId,
       ownerId: actorUid,
+      ownerUsername,
+      ownerAvatar,
+      senderId: actorUid,
       sharedAt: now,
       memoryDate: memory.memoryDate,
+      yearMonth: memory.yearMonth,
+      caption: memory.caption || '',
+      location: memory.location || '',
+      cloudinaryPublicId: memory.cloudinaryPublicId,
+      cloudinaryUrl: memory.cloudinaryUrl,
+      url: memory.cloudinaryUrl || memory.url,
+      imageWidth: memory.imageWidth || 0,
+      imageHeight: memory.imageHeight || 0,
+      heartCount: memory.heartCount || 0,
       recipientCount: targetRecipients.length,
+      recipients: targetRecipients,
     };
   }
 
@@ -555,7 +568,38 @@ async function getSharedSentServer({ actorUid }) {
   const root = db.ref();
   const snap = await root.child(`shared_sent/${actorUid}`).once('value');
   if (!snap.exists()) return { ok: true, memories: [] };
-  const list = Object.values(snap.val() || {});
+  const rawList = Object.values(snap.val() || {});
+
+  // Enrich any items missing image data (e.g. historical records) from user_memories
+  const list = await Promise.all(
+    rawList.map(async (item) => {
+      if (item.cloudinaryUrl || item.cloudinaryPublicId || item.url) {
+        return item;
+      }
+      const memId = item.memoryId || item.id;
+      const ym = item.yearMonth || (item.memoryDate ? item.memoryDate.slice(0, 7) : null);
+      if (memId && ym) {
+        try {
+          const origSnap = await root.child(`user_memories/${actorUid}/${ym}/${memId}`).once('value');
+          if (origSnap.exists()) {
+            const orig = origSnap.val();
+            return {
+              ...orig,
+              ...item,
+              cloudinaryUrl: orig.cloudinaryUrl || orig.url,
+              cloudinaryPublicId: orig.cloudinaryPublicId || orig.publicId,
+              url: orig.cloudinaryUrl || orig.url,
+              caption: orig.caption || item.caption || '',
+              location: orig.location || item.location || '',
+              yearMonth: orig.yearMonth || ym,
+            };
+          }
+        } catch (_) {}
+      }
+      return item;
+    })
+  );
+
   list.sort((a, b) => (b.sharedAt || 0) - (a.sharedAt || 0));
   return { ok: true, memories: list };
 }
