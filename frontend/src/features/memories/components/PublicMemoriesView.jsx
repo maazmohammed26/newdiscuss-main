@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Globe, Heart, Share2, MapPin, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Globe, Heart, Share2, MapPin, Loader2, RotateCw } from 'lucide-react';
 import MemoryStamp from './MemoryStamp';
 import { STAMP_VARIANTS } from '../utils/stampTheme';
 import { formatDisplayDate } from '../utils/dateUtils';
@@ -25,30 +25,28 @@ export default function PublicMemoriesView({
 }) {
   const [memories, setMemories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
   const currentUid = currentUser?.uid || currentUser?.id;
 
-  useEffect(() => {
-    let mounted = true;
-    async function loadInitial() {
-      setLoading(true);
-      try {
-        const publicList = await getPublicMemories(20);
-        if (mounted) setMemories(publicList || []);
-      } catch (err) {
-        console.warn('[PublicMemories] Load error:', err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
+  const loadMemories = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const publicList = await getPublicMemories(30, currentUser);
+      setMemories(publicList || []);
+    } catch (err) {
+      console.warn('[PublicMemories] Load error:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  }, [currentUser]);
 
-    loadInitial();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  useEffect(() => {
+    loadMemories(false);
+  }, [loadMemories]);
 
   const handleProfileClick = (e, ownerId) => {
     e.stopPropagation();
@@ -88,6 +86,23 @@ export default function PublicMemoriesView({
 
   return (
     <div className="w-full flex flex-col items-center select-none pb-6">
+      {/* Header Bar with Refresh Action */}
+      <div className="w-full max-w-md flex items-center justify-between px-3 py-1 mb-2">
+        <span className="text-xs font-semibold text-neutral-500">
+          Community Gallery {memories.length > 0 && `(${memories.length})`}
+        </span>
+        <button
+          type="button"
+          onClick={() => loadMemories(true)}
+          disabled={loading || refreshing}
+          className="text-xs text-neutral-400 hover:text-[#0095F6] flex items-center gap-1.5 p-1 transition-colors cursor-pointer"
+          title="Refresh public gallery"
+        >
+          <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-[#0095F6]' : ''}`} />
+          <span>Refresh</span>
+        </button>
+      </div>
+
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center text-neutral-400 gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-[#0095F6]" />
@@ -99,9 +114,17 @@ export default function PublicMemoriesView({
           <h4 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
             No public memories yet
           </h4>
-          <p className="text-xs text-neutral-400 max-w-xs mt-1">
+          <p className="text-xs text-neutral-400 max-w-xs mt-1 mb-4">
             When users preserve memories with Public visibility, their stamps will appear in this calm community gallery.
           </p>
+          <button
+            type="button"
+            onClick={() => loadMemories(true)}
+            className="px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-semibold text-neutral-800 dark:text-neutral-200 flex items-center gap-2 transition-colors cursor-pointer"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+            <span>Check for new stamps</span>
+          </button>
         </div>
       ) : (
         <div className="w-full max-w-md space-y-4 px-2">

@@ -12,6 +12,11 @@ const {
   createMemoryServer,
   deleteMemoryServer,
   shareMemoryServer,
+  getMemorySharesServer,
+  getPublicMemoriesServer,
+  updateMemoryVisibilityServer,
+  getSharedReceivedServer,
+  getSharedSentServer,
   toggleHeartServer,
   getAuthorizedDownloadServer,
 } = require('../server/memoriesBackend');
@@ -31,6 +36,29 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
+  }
+
+  const input = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+  const action = String(input.action || req.query.action || '').trim().toLowerCase();
+
+  // Public action does not strictly require auth, but enriches hearts if token is provided
+  if (action === 'public') {
+    try {
+      let actorUid = null;
+      const authHeader = req.headers.authorization || '';
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const actorToken = await verifyUser(authHeader);
+          actorUid = actorToken.uid;
+        } catch (_) {}
+      }
+
+      const limit = Number(req.query.limit || input.limit || 30);
+      const result = await getPublicMemoriesServer({ limit, actorUid });
+      return res.status(200).json(result);
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message || 'Failed to fetch public memories.' });
+    }
   }
 
   const authHeader = req.headers.authorization || '';
@@ -55,10 +83,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-
-    const input = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const action = String(input.action || req.query.action || '').trim().toLowerCase();
-
     switch (action) {
       case 'create': {
         if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST required.' });
@@ -87,7 +111,18 @@ module.exports = async function handler(req, res) {
         return res.status(200).json(result);
       }
 
-      case 'share': {
+      case 'shares':
+      case 'get_shares': {
+        const memoryId = input.memoryId || req.query.memoryId;
+        const result = await getMemorySharesServer({
+          actorUid,
+          memoryId,
+        });
+        return res.status(200).json(result);
+      }
+
+      case 'share':
+      case 'update_shares': {
         if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST required.' });
         const result = await shareMemoryServer({
           actorUid,
@@ -95,6 +130,28 @@ module.exports = async function handler(req, res) {
           yearMonth: input.yearMonth,
           recipientUids: input.recipientUids,
         });
+        return res.status(200).json(result);
+      }
+
+      case 'visibility':
+      case 'update_visibility': {
+        if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'POST required.' });
+        const result = await updateMemoryVisibilityServer({
+          actorUid,
+          memoryId: input.memoryId,
+          yearMonth: input.yearMonth,
+          visibility: input.visibility,
+        });
+        return res.status(200).json(result);
+      }
+
+      case 'shared_received': {
+        const result = await getSharedReceivedServer({ actorUid });
+        return res.status(200).json(result);
+      }
+
+      case 'shared_sent': {
+        const result = await getSharedSentServer({ actorUid });
         return res.status(200).json(result);
       }
 
@@ -122,7 +179,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({
           ok: false,
           code: 'invalid-action',
-          error: "Supported actions are 'create', 'delete', 'share', 'heart', and 'download'.",
+          error: "Supported actions are 'public', 'shares', 'share', 'visibility', 'create', 'delete', 'heart', 'download', 'shared_received', and 'shared_sent'.",
         });
     }
   } catch (error) {

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { X, Download, Share2, Trash2, Heart, MapPin, Calendar, User, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Download, Share2, Trash2, Heart, MapPin, Calendar, User, Loader2, Globe, Lock } from 'lucide-react';
 import MemoryStamp from './MemoryStamp';
 import { STAMP_VARIANTS } from '../utils/stampTheme';
 import { formatDisplayDate } from '../utils/dateUtils';
-import { deleteMemory, downloadMemory, toggleHeart } from '../data/memoryRepository';
+import { deleteMemory, downloadMemory, toggleHeart, updateMemoryVisibility } from '../data/memoryRepository';
 import UserAvatar from '@/components/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ export default function MemoryFullViewerModal({
   currentUser,
   onDeleted,
   onOpenShare,
+  onVisibilityChanged,
 }) {
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -32,6 +33,15 @@ export default function MemoryFullViewerModal({
   const [downloading, setDownloading] = useState(false);
   const [hearted, setHearted] = useState(false);
   const [heartCount, setHeartCount] = useState(memory?.heartCount || 0);
+  const [visibility, setVisibility] = useState(memory?.visibility || 'private');
+  const [updatingVisibility, setUpdatingVisibility] = useState(false);
+
+  useEffect(() => {
+    if (memory) {
+      setVisibility(memory.visibility || 'private');
+      setHeartCount(memory.heartCount || 0);
+    }
+  }, [memory]);
 
   if (!open || !memory) return null;
 
@@ -66,6 +76,27 @@ export default function MemoryFullViewerModal({
       toast.error(err.message || 'Download failed.');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    if (!isOwner || updatingVisibility) return;
+    const nextVis = visibility === 'public' ? 'private' : 'public';
+    setUpdatingVisibility(true);
+    try {
+      const yearMonth = memory.yearMonth || memory.memoryDate?.slice(0, 7);
+      const updated = await updateMemoryVisibility(memory.id, yearMonth, nextVis, currentUser);
+      setVisibility(nextVis);
+      toast.success(
+        nextVis === 'public'
+          ? 'Memory is now Public (visible in Public gallery).'
+          : 'Memory is now Private.'
+      );
+      onVisibilityChanged?.({ ...memory, visibility: nextVis });
+    } catch (err) {
+      toast.error(err.message || 'Failed to update visibility.');
+    } finally {
+      setUpdatingVisibility(false);
     }
   };
 
@@ -127,15 +158,37 @@ export default function MemoryFullViewerModal({
             </div>
           </button>
 
-          {/* Close button */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Visibility pill and close button */}
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                visibility === 'public'
+                  ? 'text-sky-400 bg-sky-950/60 border-sky-800/40'
+                  : 'text-neutral-400 bg-neutral-800/60 border-neutral-700/40'
+              }`}
+            >
+              {visibility === 'public' ? (
+                <>
+                  <Globe className="w-2.5 h-2.5" />
+                  <span>Public</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-2.5 h-2.5" />
+                  <span>Private</span>
+                </>
+              )}
+            </span>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Central Stamp Display */}
@@ -171,7 +224,7 @@ export default function MemoryFullViewerModal({
             <button
               type="button"
               onClick={handleHeartToggle}
-              className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-[#ED4956] transition-colors p-1.5"
+              className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-[#ED4956] transition-colors p-1.5 cursor-pointer"
             >
               <Heart
                 className={`w-4 h-4 ${
@@ -180,6 +233,28 @@ export default function MemoryFullViewerModal({
               />
               {heartCount > 0 && <span>{heartCount}</span>}
             </button>
+
+            {/* Owner Visibility Toggle Action */}
+            {isOwner && (
+              <button
+                type="button"
+                onClick={handleToggleVisibility}
+                disabled={updatingVisibility}
+                title={visibility === 'public' ? 'Make private' : 'Make public'}
+                className="flex items-center gap-1 text-xs text-neutral-300 hover:text-white transition-colors p-1.5 cursor-pointer"
+              >
+                {updatingVisibility ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+                ) : visibility === 'public' ? (
+                  <Globe className="w-4 h-4 text-sky-400" />
+                ) : (
+                  <Lock className="w-4 h-4 text-neutral-400" />
+                )}
+                <span className="hidden sm:inline">
+                  {visibility === 'public' ? 'Make Private' : 'Make Public'}
+                </span>
+              </button>
+            )}
 
             {/* Owner Share Action */}
             {isOwner && (
@@ -190,7 +265,7 @@ export default function MemoryFullViewerModal({
                   onOpenShare?.(memory);
                 }}
                 title="Share privately"
-                className="flex items-center gap-1 text-xs text-neutral-300 hover:text-white transition-colors p-1.5"
+                className="flex items-center gap-1 text-xs text-neutral-300 hover:text-white transition-colors p-1.5 cursor-pointer"
               >
                 <Share2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Share</span>
@@ -204,7 +279,7 @@ export default function MemoryFullViewerModal({
                 onClick={handleDownload}
                 disabled={downloading}
                 title="Download high quality stamp"
-                className="flex items-center gap-1 text-xs text-neutral-300 hover:text-white transition-colors p-1.5"
+                className="flex items-center gap-1 text-xs text-neutral-300 hover:text-white transition-colors p-1.5 cursor-pointer"
               >
                 {downloading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -221,7 +296,7 @@ export default function MemoryFullViewerModal({
                 type="button"
                 onClick={() => setConfirmDelete(true)}
                 title="Delete memory"
-                className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors p-1.5"
+                className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors p-1.5 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Delete</span>

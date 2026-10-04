@@ -130,6 +130,15 @@ export default function MemoriesHub() {
     setMonthMemories((prev) => prev.filter((m) => m.id !== deletedId));
   };
 
+  const handleVisibilityChanged = (updatedMemory) => {
+    setMonthMemories((prev) =>
+      prev.map((m) => (m.id === updatedMemory.id ? { ...m, ...updatedMemory } : m))
+    );
+    if (activeViewerMemory?.id === updatedMemory.id) {
+      setActiveViewerMemory((prev) => ({ ...prev, ...updatedMemory }));
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 flex flex-col pb-[calc(var(--bottom-nav-height,49px)+env(safe-area-inset-bottom,0px)+3rem)]">
       {/* Top App Bar Header */}
@@ -368,6 +377,7 @@ export default function MemoriesHub() {
         currentUser={user}
         onDeleted={handleMemoryDeleted}
         onOpenShare={(mem) => setActiveShareMemory(mem)}
+        onVisibilityChanged={handleVisibilityChanged}
       />
 
       {/* Private Share Modal */}

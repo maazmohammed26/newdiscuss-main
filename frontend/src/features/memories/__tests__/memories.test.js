@@ -45,6 +45,11 @@ import {
   createMemoryServer,
   deleteMemoryServer,
   shareMemoryServer,
+  getMemorySharesServer,
+  getPublicMemoriesServer,
+  updateMemoryVisibilityServer,
+  getSharedReceivedServer,
+  getSharedSentServer,
   toggleHeartServer,
   getAuthorizedDownloadServer,
 } from '../../../../server/memoriesBackend';
@@ -101,19 +106,24 @@ jest.mock('../../../../server/audioCallBackend', () => {
     }
   };
 
-  const createMockRef = (path = '') => ({
-    child: (subPath) => createMockRef(path ? `${path}/${subPath}` : subPath),
-    once: jest.fn().mockImplementation(async () => {
-      const val = getNested(mockDbStore, path);
-      return mockSnapshot(val);
-    }),
-    update: jest.fn().mockImplementation(async (updates) => {
-      for (const [key, value] of Object.entries(updates)) {
-        const fullPath = path ? `${path}/${key}` : key;
-        setNested(mockDbStore, fullPath, value);
-      }
-    }),
-  });
+  const createMockRef = (path = '') => {
+    const refObj = {
+      child: (subPath) => createMockRef(path ? `${path}/${subPath}` : subPath),
+      orderByChild: jest.fn().mockImplementation(() => refObj),
+      limitToLast: jest.fn().mockImplementation(() => refObj),
+      once: jest.fn().mockImplementation(async () => {
+        const val = getNested(mockDbStore, path);
+        return mockSnapshot(val);
+      }),
+      update: jest.fn().mockImplementation(async (updates) => {
+        for (const [key, value] of Object.entries(updates)) {
+          const fullPath = path ? `${path}/${key}` : key;
+          setNested(mockDbStore, fullPath, value);
+        }
+      }),
+    };
+    return refObj;
+  };
 
   return {
     ApiError: MockApiError,
@@ -371,6 +381,179 @@ describe('Discuss Memories — Production Feature Test Suite', () => {
       expect(recipientShare).toBeDefined();
       expect(recipientShare.ownerId).toBe('user_owner');
       expect(recipientShare.cloudinaryPublicId).toBe('discuss/memories/user_owner/mem_shared');
+    });
+
+    test('Scenario: Unshare 1 user from 5 selected users updates shares correctly', async () => {
+      // 1. Create a memory
+      const memRes = await createMemoryServer({
+        actorUid: 'user_sharer',
+        memoryDate: '2026-10-04',
+        cloudinaryPublicId: 'discuss/memories/user_sharer/mem_5share',
+        cloudinaryUrl: 'https://res.cloudinary.com/test/share5.jpg',
+      });
+
+      // 2. Share with 5 users
+      const fiveUsers = ['user_a', 'user_b', 'user_c', 'user_d', 'user_e'];
+      const initialShare = await shareMemoryServer({
+        actorUid: 'user_sharer',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        recipientUids: fiveUsers,
+      });
+      expect(initialShare.sharedCount).toBe(5);
+
+      // Verify all 5 received it
+      for (const u of fiveUsers) {
+        expect(mockDbStore.shared_received?.[u]?.[memRes.memory.id]).toBeDefined();
+        expect(mockDbStore.memory_shares?.[memRes.memory.id]?.[u]).toBeDefined();
+      }
+
+      // 3. User unselects user_c (shares with 4 users: a, b, d, e)
+      const fourUsers = ['user_a', 'user_b', 'user_d', 'user_e'];
+      const updatedShare = await shareMemoryServer({
+        actorUid: 'user_sharer',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        recipientUids: fourUsers,
+      });
+
+      expect(updatedShare.sharedCount).toBe(4);
+      expect(updatedShare.removedCount).toBe(1);
+
+      // user_c is unshared and deleted from shared_received and memory_shares
+      expect(mockDbStore.shared_received?.user_c?.[memRes.memory.id]).toBeUndefined();
+      expect(mockDbStore.memory_shares?.[memRes.memory.id]?.user_c).toBeUndefined();
+
+      // Remaining 4 users are still shared
+      for (const u of fourUsers) {
+        expect(mockDbStore.shared_received?.[u]?.[memRes.memory.id]).toBeDefined();
+        expect(mockDbStore.memory_shares?.[memRes.memory.id]?.[u]).toBeDefined();
+      }
+      expect(mockDbStore.shared_sent?.user_sharer?.[memRes.memory.id]?.recipientCount).toBe(4);
+    });
+
+    test('Scenario: Unshare with all users removes all shares and sent records', async () => {
+      const memRes = await createMemoryServer({
+        actorUid: 'user_owner_unshare_all',
+        memoryDate: '2026-10-04',
+        cloudinaryPublicId: 'discuss/memories/user_owner_unshare_all/mem_all',
+        cloudinaryUrl: 'https://res.cloudinary.com/test/all.jpg',
+      });
+
+      await shareMemoryServer({
+        actorUid: 'user_owner_unshare_all',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        recipientUids: ['user_x', 'user_y'],
+      });
+
+      expect(mockDbStore.shared_received?.user_x?.[memRes.memory.id]).toBeDefined();
+
+      // Unshare all by passing empty recipientUids
+      const unshareRes = await shareMemoryServer({
+        actorUid: 'user_owner_unshare_all',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        recipientUids: [],
+      });
+
+      expect(unshareRes.sharedCount).toBe(0);
+      expect(unshareRes.removedCount).toBe(2);
+      expect(mockDbStore.shared_received?.user_x?.[memRes.memory.id]).toBeUndefined();
+      expect(mockDbStore.shared_received?.user_y?.[memRes.memory.id]).toBeUndefined();
+      expect(mockDbStore.shared_sent?.user_owner_unshare_all?.[memRes.memory.id]).toBeUndefined();
+    });
+
+    test('Scenario: getMemorySharesServer returns recipient profiles for a memory', async () => {
+      // Seed user profiles
+      mockDbStore.users = {
+        user_alpha: { username: 'alpha', name: 'Alpha Tester', photo_url: 'https://photo.alpha' },
+        user_beta: { username: 'beta', name: 'Beta Tester' },
+      };
+
+      const memRes = await createMemoryServer({
+        actorUid: 'user_host',
+        memoryDate: '2026-10-04',
+        cloudinaryPublicId: 'discuss/memories/user_host/mem_host',
+        cloudinaryUrl: 'https://res.cloudinary.com/test/host.jpg',
+      });
+
+      await shareMemoryServer({
+        actorUid: 'user_host',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        recipientUids: ['user_alpha', 'user_beta'],
+      });
+
+      const sharesRes = await getMemorySharesServer({
+        actorUid: 'user_host',
+        memoryId: memRes.memory.id,
+      });
+
+      expect(sharesRes.ok).toBe(true);
+      expect(sharesRes.recipients.length).toBe(2);
+      expect(sharesRes.recipients.map((r) => r.username)).toContain('alpha');
+      expect(sharesRes.recipients.map((r) => r.username)).toContain('beta');
+    });
+
+    test('Scenario: getPublicMemoriesServer returns public memories with creator profile enrichment', async () => {
+      mockDbStore.users = {
+        user_creator: { username: 'photomaster', name: 'Photo Master', photo_url: 'https://photo.master' },
+      };
+
+      const memRes = await createMemoryServer({
+        actorUid: 'user_creator',
+        memoryDate: '2026-10-04',
+        caption: 'Sunset in Goa',
+        visibility: 'public',
+        cloudinaryPublicId: 'discuss/memories/user_creator/mem_goa',
+        cloudinaryUrl: 'https://res.cloudinary.com/test/goa.jpg',
+      });
+
+      const publicListRes = await getPublicMemoriesServer({ limit: 10, actorUid: 'viewer_user' });
+      expect(publicListRes.ok).toBe(true);
+      expect(publicListRes.memories.length).toBeGreaterThanOrEqual(1);
+
+      const found = publicListRes.memories.find((m) => m.id === memRes.memory.id);
+      expect(found).toBeDefined();
+      expect(found.ownerUsername).toBe('photomaster');
+      expect(found.caption).toBe('Sunset in Goa');
+    });
+
+    test('Scenario: updateMemoryVisibilityServer toggles visibility between public and private', async () => {
+      const memRes = await createMemoryServer({
+        actorUid: 'user_toggler',
+        memoryDate: '2026-10-04',
+        caption: 'Secret morning note',
+        visibility: 'private',
+        cloudinaryPublicId: 'discuss/memories/user_toggler/mem_toggle',
+        cloudinaryUrl: 'https://res.cloudinary.com/test/note.jpg',
+      });
+
+      // Initially private: not in public_memories
+      expect(mockDbStore.public_memories?.[memRes.memory.id]).toBeUndefined();
+
+      // Toggle to public
+      const pubRes = await updateMemoryVisibilityServer({
+        actorUid: 'user_toggler',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        visibility: 'public',
+      });
+      expect(pubRes.ok).toBe(true);
+      expect(pubRes.memory.visibility).toBe('public');
+      expect(mockDbStore.public_memories?.[memRes.memory.id]).toBeDefined();
+
+      // Toggle back to private
+      const privRes = await updateMemoryVisibilityServer({
+        actorUid: 'user_toggler',
+        memoryId: memRes.memory.id,
+        yearMonth: '2026-10',
+        visibility: 'private',
+      });
+      expect(privRes.ok).toBe(true);
+      expect(privRes.memory.visibility).toBe('private');
+      expect(mockDbStore.public_memories?.[memRes.memory.id]).toBeUndefined();
     });
 
     test('Scenario 9: Unauthorized user attempts private access or deletion', async () => {

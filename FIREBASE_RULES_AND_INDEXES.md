@@ -72,6 +72,61 @@ Preserves user authentication and privacy boundaries while indexing notification
         ".write": "auth != null",
         ".indexOn": ["timestamp"]
       }
+    },
+
+    "public_memories": {
+      ".read": true,
+      ".write": "auth != null",
+      ".indexOn": ["createdAt", "memoryDate", "ownerId"]
+    },
+
+    "user_memories": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "user_day_memory_count": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "shared_received": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+
+    "shared_sent": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+
+    "memory_shares": {
+      "$memoryId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "memory_hearts": {
+      "$memoryId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+
+    "user_hearts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
     }
   }
 }

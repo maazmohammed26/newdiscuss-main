@@ -252,7 +252,39 @@ export async function deleteMemory(memoryId, yearMonth, user) {
 }
 
 /**
- * Shares a private memory with selected Discuss users.
+ * Retrieves the current shared recipients for a specific memory.
+ * @param {string} memoryId
+ * @param {Object} user
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getMemoryShares(memoryId, user) {
+  if (!memoryId) return [];
+
+  const token = await resolveAuthToken(user);
+  if (!token) return [];
+
+  try {
+    const response = await fetch(`${MEMORIES_API_URL}?action=get_shares&memoryId=${memoryId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.ok && Array.isArray(data.recipients)) {
+        return data.recipients;
+      }
+    }
+  } catch (err) {
+    console.warn('[Memories] Failed to get memory shares:', err.message);
+  }
+
+  return [];
+}
+
+/**
+ * Shares or updates shared recipient list for a memory.
  * @param {string} memoryId
  * @param {string} yearMonth
  * @param {Array<string>} recipientUids
@@ -266,7 +298,7 @@ export async function shareMemory(memoryId, yearMonth, recipientUids = [], user)
 
   const token = await resolveAuthToken(user);
   if (!token) {
-    throw new Error('Please sign in to share your memory.');
+    throw new Error('Please sign in to update sharing.');
   }
   const response = await fetch(MEMORIES_API_URL, {
     method: 'POST',
@@ -284,10 +316,55 @@ export async function shareMemory(memoryId, yearMonth, recipientUids = [], user)
 
   const data = await response.json();
   if (!response.ok || !data.ok) {
-    throw new Error(data.error || 'Failed to share memory.');
+    throw new Error(data.error || 'Failed to update sharing.');
   }
 
   return data;
+}
+
+/**
+ * Updates memory visibility between 'public' and 'private'.
+ * @param {string} memoryId
+ * @param {string} yearMonth
+ * @param {'public'|'private'} visibility
+ * @param {Object} user
+ * @returns {Promise<Object>} The updated memory
+ */
+export async function updateMemoryVisibility(memoryId, yearMonth, visibility, user) {
+  const userId = user?.uid || user?.id;
+  if (!userId || !memoryId || !yearMonth) {
+    throw new Error('Missing parameters to update memory visibility.');
+  }
+
+  const token = await resolveAuthToken(user);
+  if (!token) {
+    throw new Error('Please sign in to update visibility.');
+  }
+
+  const response = await fetch(MEMORIES_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      action: 'visibility',
+      memoryId,
+      yearMonth,
+      visibility,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || 'Failed to update memory visibility.');
+  }
+
+  if (data.memory) {
+    await saveSingleCachedMemory(data.memory);
+  }
+
+  return data.memory;
 }
 
 /**
@@ -370,13 +447,34 @@ export async function downloadMemory(memoryId, yearMonth, user) {
 
 /**
  * Fetches memories shared with the current user.
+ * Tries server API first (Admin SDK), falls back to RTDB and IndexedDB cache.
  * @param {string} userId
+ * @param {Object} [user]
  * @returns {Promise<Array<Object>>}
  */
-export async function getSharedReceivedMemories(userId) {
+export async function getSharedReceivedMemories(userId, user = null) {
   if (!userId) return [];
+  const cached = await getCachedSharedMemories(userId);
+
+  // 1. Try server API first
   try {
-    const cached = await getCachedSharedMemories(userId);
+    const token = await resolveAuthToken(user);
+    if (token) {
+      const res = await fetch(`${MEMORIES_API_URL}?action=shared_received`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.memories)) {
+          saveCachedSharedMemories(userId, data.memories);
+          return data.memories;
+        }
+      }
+    }
+  } catch (_) {}
+
+  // 2. Direct RTDB fallback
+  try {
     const sharesRef = ref(database, `shared_received/${userId}`);
     const snapshot = await get(sharesRef);
     if (snapshot.exists()) {
@@ -388,17 +486,37 @@ export async function getSharedReceivedMemories(userId) {
     return cached;
   } catch (e) {
     console.warn('[Memories] Failed to fetch shared received:', e);
-    return [];
+    return cached;
   }
 }
 
 /**
  * Fetches memories shared by the current user.
+ * Tries server API first (Admin SDK), falls back to RTDB.
  * @param {string} userId
+ * @param {Object} [user]
  * @returns {Promise<Array<Object>>}
  */
-export async function getSharedSentMemories(userId) {
+export async function getSharedSentMemories(userId, user = null) {
   if (!userId) return [];
+
+  // 1. Try server API first
+  try {
+    const token = await resolveAuthToken(user);
+    if (token) {
+      const res = await fetch(`${MEMORIES_API_URL}?action=shared_sent`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.memories)) {
+          return data.memories;
+        }
+      }
+    }
+  } catch (_) {}
+
+  // 2. Direct RTDB fallback
   try {
     const sentRef = ref(database, `shared_sent/${userId}`);
     const snapshot = await get(sentRef);
@@ -415,10 +533,28 @@ export async function getSharedSentMemories(userId) {
 
 /**
  * Fetches paginated public memories.
+ * Uses secure serverless API endpoint with fallback to RTDB query.
  * @param {number} [limit=20]
+ * @param {Object} [user]
  * @returns {Promise<Array<Object>>}
  */
-export async function getPublicMemories(limit = 20) {
+export async function getPublicMemories(limit = 20, user = null) {
+  // 1. Try serverless API first (uses Admin SDK, bypasses client RTDB security rules/indexes)
+  try {
+    const token = await resolveAuthToken(user);
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${MEMORIES_API_URL}?action=public&limit=${limit}`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.memories)) {
+        return data.memories;
+      }
+    }
+  } catch (apiErr) {
+    console.warn('[Memories] API getPublicMemories fallback to RTDB:', apiErr.message);
+  }
+
+  // 2. Direct RTDB query fallback
   try {
     const publicRef = query(ref(database, 'public_memories'), orderByChild('createdAt'), limitToLast(limit));
     const snapshot = await get(publicRef);
