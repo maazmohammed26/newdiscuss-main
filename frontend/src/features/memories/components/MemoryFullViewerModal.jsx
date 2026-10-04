@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Download, Share2, Trash2, Heart, MapPin, Calendar, User, Loader2, Globe, Lock } from 'lucide-react';
 import MemoryStamp from './MemoryStamp';
 import { STAMP_VARIANTS } from '../utils/stampTheme';
@@ -28,6 +29,7 @@ export default function MemoryFullViewerModal({
   onVisibilityChanged,
 }) {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -35,6 +37,10 @@ export default function MemoryFullViewerModal({
   const [heartCount, setHeartCount] = useState(memory?.heartCount || 0);
   const [visibility, setVisibility] = useState(memory?.visibility || 'private');
   const [updatingVisibility, setUpdatingVisibility] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (memory) {
@@ -121,9 +127,9 @@ export default function MemoryFullViewerModal({
     }
   };
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 select-none"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 select-none"
       role="dialog"
       aria-modal="true"
       aria-label="View Memory Stamp"
@@ -308,7 +314,7 @@ export default function MemoryFullViewerModal({
         {/* Delete Confirmation Alert */}
         {confirmDelete && (
           <div
-            className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4"
+            className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 p-4"
             role="alertdialog"
             aria-modal="true"
           >
@@ -343,4 +349,8 @@ export default function MemoryFullViewerModal({
       </div>
     </div>
   );
+
+  return mounted && typeof document !== 'undefined' && document.body
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 }

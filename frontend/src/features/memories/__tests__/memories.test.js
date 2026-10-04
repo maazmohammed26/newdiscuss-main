@@ -63,6 +63,7 @@ import MemoryStamp from '../components/MemoryStamp';
 import MemoriesCalendar from '../components/MemoriesCalendar';
 import MemoryFullViewerModal from '../components/MemoryFullViewerModal';
 import MemoryScrapbookView from '../components/MemoryScrapbookView';
+import MemoryShareModal from '../components/MemoryShareModal';
 
 // ── In-Memory Firebase RTDB Mock for Backend Testing ──
 let mockDbStore = {};
@@ -809,6 +810,32 @@ describe('Discuss Memories — Production Feature Test Suite', () => {
 
       expect(html).toContain('Tokyo street');
       expect(html).toContain('Page 1 of 1');
+    });
+
+    test('MemoryShareModal renders share dialog with search, hidden scrollbar classes, and sticky Save action button', () => {
+      const memory = {
+        id: 'mem_share_test',
+        ownerId: 'owner_user',
+        caption: 'Sharing Test',
+        memoryDate: '2026-10-04',
+        url: 'https://res.cloudinary.com/test/share.jpg',
+      };
+
+      const html = renderToStaticMarkup(
+        <MemoryShareModal
+          memory={memory}
+          open={true}
+          onClose={jest.fn()}
+          currentUser={{ id: 'owner_user' }}
+        />
+      );
+
+      expect(html).toContain('Share Memory Stamp');
+      expect(html).toContain('Select Discuss users to privately share this stamp with');
+      expect(html).toContain('Search by username or name');
+      expect(html).toContain('Cancel');
+      expect(html).toContain('Save');
+      expect(html).toContain('scrollbar-hide');
     });
   });
 });
