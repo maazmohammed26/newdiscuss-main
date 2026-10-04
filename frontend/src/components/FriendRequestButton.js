@@ -66,12 +66,17 @@ export default function FriendRequestButton({
   };
 
   const handleSendRequest = async () => {
+    if (!targetUserId || !targetUsername || targetUsername === 'undefined') {
+      toast.error('This account is no longer available.');
+      return;
+    }
     setActionLoading(true);
     try {
       await sendFriendRequest(user.id, targetUserId);
       setStatus(RELATIONSHIP_STATUS.PENDING_SENT);
       setHasSentRequest(true); // Mark that request was sent
-      toast.success(`Friend request sent to ${targetUsername}`);
+      const safeName = String(targetUsername || '').trim().replace(/^@/, '');
+      toast.success(safeName ? `Friend request sent to @${safeName}` : 'Friend request sent');
       onStatusChange?.(RELATIONSHIP_STATUS.PENDING_SENT);
     } catch (error) {
       toast.error('Failed to send friend request');
@@ -106,7 +111,8 @@ export default function FriendRequestButton({
         // Chat might not exist or wasn't blocked
       }
       setStatus(RELATIONSHIP_STATUS.FRIENDS);
-      toast.success(`You and ${targetUsername} are now friends!`);
+      const safeTargetName = (targetUsername && targetUsername !== 'undefined') ? `@${String(targetUsername).replace(/^@/, '')}` : 'this user';
+      toast.success(`You and ${safeTargetName} are now friends!`);
       onStatusChange?.(RELATIONSHIP_STATUS.FRIENDS);
     } catch (error) {
       toast.error('Failed to accept request');
@@ -142,7 +148,8 @@ export default function FriendRequestButton({
       }
       setStatus(RELATIONSHIP_STATUS.UNFOLLOWED);
       setShowUnfollowConfirm(false);
-      toast.success(`Unfollowed ${targetUsername}`);
+      const safeTargetName = (targetUsername && targetUsername !== 'undefined') ? `@${String(targetUsername).replace(/^@/, '')}` : 'this user';
+      toast.success(`Unfollowed ${safeTargetName}`);
       onStatusChange?.(RELATIONSHIP_STATUS.UNFOLLOWED);
     } catch (error) {
       toast.error('Failed to unfollow');
@@ -152,6 +159,10 @@ export default function FriendRequestButton({
   };
 
   const handleStartChat = async () => {
+    if (!targetUserId || !targetUsername || targetUsername === 'undefined') {
+      toast.error('This account is no longer available.');
+      return;
+    }
     setActionLoading(true);
     try {
       await getOrCreateChat(user.id, targetUserId);
@@ -163,8 +174,8 @@ export default function FriendRequestButton({
     }
   };
 
-  // Don't show if viewing own profile
-  if (!user || user.id === targetUserId) {
+  // Don't show if viewing own profile or if target is missing/deleted/undefined
+  if (!user || user.id === targetUserId || !targetUserId || !targetUsername || targetUsername === 'undefined') {
     return null;
   }
 

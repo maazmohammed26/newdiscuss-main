@@ -45,6 +45,7 @@ const EditorPage            = lazy(() => import('@/pages/EditorPage'));
 const BookmarksPage         = lazy(() => import('@/pages/BookmarksPage'));
 const DiscussSherlockPage   = lazy(() => import('@/pages/DiscussSherlockPage'));
 const TalentGraphPage       = lazy(() => import('@/pages/TalentGraphPage'));
+const MemoriesPage          = lazy(() => import('@/pages/MemoriesPage'));
 import SkillsOnboardingModal from '@/components/SkillsOnboardingModal';
 
 // Public static pages
@@ -264,6 +265,7 @@ function AppRoutes() {
         <Route path="/devradar"                element={<ProtectedRoute><DevRadarPage /></ProtectedRoute>} />
         <Route path="/editor"                  element={<EditorPage />} />
         <Route path="/bookmarks"               element={<ProtectedRoute><BookmarksPage /></ProtectedRoute>} />
+        <Route path="/memories"                element={<ProtectedRoute><MemoriesPage /></ProtectedRoute>} />
         <Route path="/ai-assistant"            element={<Navigate to="/talentgraph" replace />} />
         <Route path="/talentgraph"             element={<ProtectedRoute><TalentGraphPage /></ProtectedRoute>} />
         <Route path="/sherlock"                element={<ProtectedRoute><DiscussSherlockPage /></ProtectedRoute>} />

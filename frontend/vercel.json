@@ -14,6 +14,26 @@
       "destination": "https://discuss-13fbc.firebaseapp.com/__/auth/iframe"
     },
     {
+      "source": "/api/letters/send",
+      "destination": "/api/letters?action=send"
+    },
+    {
+      "source": "/api/letters/open",
+      "destination": "/api/letters?action=open"
+    },
+    {
+      "source": "/api/openrouter",
+      "destination": "/api/ai?action=openrouter"
+    },
+    {
+      "source": "/api/gemini",
+      "destination": "/api/ai?action=gemini"
+    },
+    {
+      "source": "/api/memories/:action",
+      "destination": "/api/memories?action=:action"
+    },
+    {
       "source": "/((?!api/|__/auth/|\\.well-known/).*)",
       "destination": "/index.html"
     }
@@ -28,7 +48,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; style-src 'self' 'unsafe-inline' https: http:; font-src 'self' https: http: data:; img-src * data: blob:; media-src * data: blob:; connect-src * data: blob:; frame-src *; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https: http:; font-src 'self' https: http: data:; img-src * data: blob:; media-src * data: blob:; connect-src * data: blob:; frame-src *; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         },
         {
           "key": "X-Frame-Options",

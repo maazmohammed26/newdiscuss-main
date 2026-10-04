@@ -18,17 +18,27 @@ const TARGET_APPS = [
 let activeUid = null;
 let synchronizationPromise = null;
 
-// Global circuit breaker tracker
-const COOLDOWN_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+// Bounded backoff circuit breaker tracker
+const INITIAL_COOLDOWN_MS = 5 * 1000; // 5 seconds initial backoff
+const MAX_COOLDOWN_MS = 60 * 1000; // 60 seconds maximum bounded backoff
+let failureCount = 0;
 let globalCooldownUntil = 0;
 let hasLoggedCooldownNotice = false;
 
 export const resetAuxiliaryCooldowns = () => {
+  failureCount = 0;
   globalCooldownUntil = 0;
   hasLoggedCooldownNotice = false;
   synchronizationPromise = null;
   activeUid = null;
 };
+
+// Automatically reset circuit breaker when browser regains network connectivity
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('online', () => {
+    resetAuxiliaryCooldowns();
+  });
+}
 
 export const isAuxiliaryCircuitBreakerOpen = () => {
   return Boolean(globalCooldownUntil && Date.now() < globalCooldownUntil);
@@ -50,7 +60,7 @@ const requestCustomToken = async (project) => {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok || !result.token) {
-    // If backend is unavailable or unconfigured, engage global circuit breaker immediately
+    // If backend is unavailable or unconfigured, engage bounded backoff circuit breaker
     if (
       response.status === 503 ||
       result.code === 'aux-auth-not-configured' ||
@@ -59,14 +69,21 @@ const requestCustomToken = async (project) => {
       result.code === 'AUX_CONFIG_INVALID_JSON' ||
       result.code === 'AUX_SERVICE_ACCOUNT_INVALID'
     ) {
-      globalCooldownUntil = Date.now() + COOLDOWN_DURATION_MS;
+      failureCount += 1;
+      const delayMs = Math.min(INITIAL_COOLDOWN_MS * Math.pow(2, failureCount - 1), MAX_COOLDOWN_MS);
+      globalCooldownUntil = Date.now() + delayMs;
       if (!hasLoggedCooldownNotice) {
         hasLoggedCooldownNotice = true;
-        console.warn('[AUTH] Auxiliary Firebase auth backend unavailable. 5-minute circuit breaker engaged.');
+        console.warn(`[AUTH] Auxiliary Firebase auth backend unavailable. Bounded ${Math.round(delayMs / 1000)}s backoff engaged.`);
       }
     }
     throw new Error(result.code || `aux-auth-${response.status}`);
   }
+
+  // Reset backoff immediately upon success
+  failureCount = 0;
+  globalCooldownUntil = 0;
+  hasLoggedCooldownNotice = false;
 
   return result.token;
 };

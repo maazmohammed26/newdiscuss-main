@@ -176,11 +176,14 @@ export default function UserAvatar({
   user,
   username = '?',
   className = 'w-9 h-9',
+  size,
   alt,
   fallbackBg = 'linear-gradient(135deg, #2563EB, #1d4ed8)',
   style = {},
   userId: propUserId,
   priority = false,
+  interactive = true,
+  fit = 'cover',
 }) {
   const { user: currentUser } = useAuth();
   const highlights = useHighlights();
@@ -316,6 +319,7 @@ export default function UserAvatar({
   }, [displaySrc, resolvedSrc, isBlockedResource]);
 
   const initials = useMemo(() => getDeterministicInitials(alt || username), [alt, username]);
+  const [detectedAspect, setDetectedAspect] = useState(null);
 
   // Safe checks for story presence
   const usersWithStories = highlights?.usersWithStories || new Set();
@@ -350,13 +354,81 @@ export default function UserAvatar({
     }
   };
 
+  // Priority 1: Respect saved Discuss avatar crop / position metadata if present
+  const savedCropPosition = (user && typeof user === 'object')
+    ? (user.avatar_crop || user.crop || user.crop_position || user.avatar_position || user.object_position || user.objectPosition)
+    : null;
+  const resolvedObjectPosition = savedCropPosition || 'center';
+
+  // Priority 2: Normal images use cover. Extreme aspect images automatically use contain
+  // with neutral background so the image remains naturally visible without harsh clipping,
+  // unless a component intentionally specifies fit="force-cover".
+  let resolvedFit = 'cover';
+  if (fit === 'force-cover') {
+    resolvedFit = 'cover';
+  } else if (fit === 'contain' || detectedAspect === 'extreme') {
+    resolvedFit = 'contain';
+  } else {
+    resolvedFit = fit || 'cover';
+  }
+
+  // Component sizing safety:
+  // Explicit size prop (e.g. size={40} or size={48}) takes top precedence.
+  // When no size is provided, we respect caller's className sizing (e.g. w-12 h-12)
+  // and NEVER force inline width: 100% / height: 100% unless caller explicitly requests
+  // full container fill via w-full or h-full.
+  const sizeStyle = useMemo(() => {
+    if (typeof size === 'number') {
+      return {
+        width: `${size}px`,
+        height: `${size}px`,
+        minWidth: `${size}px`,
+        minHeight: `${size}px`,
+        maxWidth: `${size}px`,
+        maxHeight: `${size}px`,
+      };
+    }
+    if (typeof size === 'string' && size.trim() !== '') {
+      return {
+        width: size,
+        height: size,
+        minWidth: size,
+        minHeight: size,
+        maxWidth: size,
+        maxHeight: size,
+      };
+    }
+    return null;
+  }, [size]);
+
+  const isExplicitFullFill = Boolean(className && (className.includes('w-full') || className.includes('h-full')));
+  const computedFillStyle = sizeStyle || (isExplicitFullFill ? { width: '100%', height: '100%' } : {});
+
   const innerAvatarMarkup = displaySrc && !failed ? (
     <img
       src={displaySrc}
       alt={altText}
-      className={`${className} rounded-full object-cover object-center flex-shrink-0 story-shining-avatar no-drag ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
-      style={{ objectFit: 'cover', objectPosition: 'center', ...style }}
+      className={`${className} rounded-full object-center flex-shrink-0 story-shining-avatar no-drag ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
+      style={{
+        objectFit: resolvedFit,
+        objectPosition: resolvedObjectPosition,
+        aspectRatio: '1 / 1',
+        ...computedFillStyle,
+        display: 'block',
+        backgroundColor: resolvedFit === 'contain' ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+        ...style,
+      }}
       referrerPolicy="no-referrer"
+      onLoad={(e) => {
+        const { naturalWidth, naturalHeight } = e.currentTarget;
+        if (naturalWidth && naturalHeight) {
+          const ratio = naturalWidth / naturalHeight;
+          // Aspect ratio threshold: wide landscape or tall portrait
+          if (ratio > 1.38 || ratio < 0.72) {
+            setDetectedAspect('extreme');
+          }
+        }
+      }}
       onError={() => setFailed(true)}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
@@ -372,7 +444,13 @@ export default function UserAvatar({
   ) : (
     <div
       className={`${className} rounded-full flex items-center justify-center flex-shrink-0 select-none font-semibold text-white story-shining-avatar ${!currentUser ? 'grayscale opacity-60 pointer-events-none' : ''}`}
-      style={{ background: fallbackBg, ...style }}
+      style={{
+        background: fallbackBg,
+        aspectRatio: '1 / 1',
+        ...computedFillStyle,
+        display: 'flex',
+        ...style,
+      }}
       aria-label={altText}
       role="img"
     >
@@ -382,14 +460,18 @@ export default function UserAvatar({
     </div>
   );
 
-  // Fallback to pure avatar markup for ourselves or if no user ID is provided
-  if (isSelf || !userId) {
+  // Fallback to pure avatar markup for ourselves, if no user ID is provided, or if non-interactive
+  if (isSelf || !userId || !interactive) {
     return innerAvatarMarkup;
   }
 
   return (
     <div 
-      className="relative inline-flex items-center justify-center flex-shrink-0 cursor-pointer"
+      className={`relative inline-flex items-center justify-center flex-shrink-0 cursor-pointer ${isExplicitFullFill ? 'w-full h-full' : ''}`}
+      style={{
+        ...sizeStyle,
+        aspectRatio: '1 / 1',
+      }}
       onClick={handleAvatarClick}
     >
       {hasStory && <div className="story-shining-portal-ring" />}

@@ -624,6 +624,14 @@ export const purgeUserSessionCaches = async (userId) => {
     }
     await grTx.done;
     await db.delete('friends', userId);
+    try {
+      const { purgeLocalLettersSession } = await import('@/features/letters/data/letterLocalStore');
+      await purgeLocalLettersSession(userId);
+    } catch (_) {}
+    try {
+      const { purgeLocalMemoriesSession } = await import('@/features/memories/data/memoryLocalStore');
+      await purgeLocalMemoriesSession(userId);
+    } catch (_) {}
   } catch (e) {
     console.warn('purgeUserSessionCaches failed:', e);
   }

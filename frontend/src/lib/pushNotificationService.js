@@ -20,6 +20,7 @@ const SENT_NOTIFICATIONS_KEY = 'discuss_sent_notifications';
 const ONESIGNAL_APP_ID = '280791b6-7711-4b32-8897-449efe155f2b';
 let oneSignalWebReady = null;
 let activeNativeOneSignalUid = null;
+let currentLoggedInOneSignalUid = null;
 
 const persistOneSignalInfo = async (uid, info = {}) => {
   if (!uid || !info || typeof info !== 'object') return;
@@ -304,8 +305,17 @@ export const markNotificationSent = (type, id) => {
 
 // Synchronize logged-in user session with OneSignal Native Android/iOS Wrapper
 export const syncOneSignalUser = (uid, username) => {
-  if (!uid) return;
-  activeNativeOneSignalUid = uid;
+  if (!uid || typeof uid !== 'string') return;
+  const cleanUid = uid.trim();
+  if (!cleanUid) return;
+
+  // Deduplicate repeated sync calls for the same user identity
+  if (currentLoggedInOneSignalUid === cleanUid && activeNativeOneSignalUid === cleanUid) {
+    return;
+  }
+
+  activeNativeOneSignalUid = cleanUid;
+  currentLoggedInOneSignalUid = cleanUid;
 
   if (isMedianApp()) {
     (async () => {
@@ -315,12 +325,12 @@ export const syncOneSignalUser = (uid, username) => {
         if (localStorage.getItem(NOTIFICATION_ENABLED_KEY) === 'true' && typeof bridge.register === 'function') {
           await Promise.resolve(bridge.register()).catch(() => {});
         }
-        if (typeof bridge.login === 'function') await Promise.resolve(bridge.login(uid));
+        if (typeof bridge.login === 'function') await Promise.resolve(bridge.login(cleanUid));
         if (typeof bridge.externalUserId?.set === 'function') {
-          await Promise.resolve(bridge.externalUserId.set({ externalId: uid })).catch(() => {});
+          await Promise.resolve(bridge.externalUserId.set({ externalId: cleanUid })).catch(() => {});
         }
         if (typeof bridge.tags?.set === 'function') {
-          await Promise.resolve(bridge.tags.set({ is_android: 'true', userId: uid, username: username || 'user' })).catch(() => {});
+          await Promise.resolve(bridge.tags.set({ is_android: 'true', userId: cleanUid, username: username || 'user' })).catch(() => {});
         }
         const infoMethod = typeof bridge.info === 'function'
           ? bridge.info.bind(bridge)
@@ -329,9 +339,9 @@ export const syncOneSignalUser = (uid, username) => {
             : null;
         if (infoMethod) {
           const info = await Promise.resolve(infoMethod()).catch(() => null);
-          if (info) await persistOneSignalInfo(uid, info);
+          if (info) await persistOneSignalInfo(cleanUid, info);
         }
-        console.log(`[OneSignal] Native identity synchronized: uid=${uid}`);
+        console.log(`[OneSignal] Native identity synchronized: uid=${cleanUid}`);
       } catch (e) {
         console.warn('[OneSignal] Failed to sync user identity through Median Bridge:', e.message);
       }
@@ -341,28 +351,33 @@ export const syncOneSignalUser = (uid, username) => {
 
   ensureOneSignalWeb().then(async (OneSignal) => {
     if (!OneSignal) return;
-    await OneSignal.login(uid);
-        await OneSignal.User.addTags({ userId: uid, username: username || 'user', platform: getPlatform() === PLATFORM.PWA ? 'pwa' : 'web' });
+    await OneSignal.login(cleanUid);
+    await OneSignal.User.addTags({ userId: cleanUid, username: username || 'user', platform: getPlatform() === PLATFORM.PWA ? 'pwa' : 'web' });
     const subId = OneSignal.User?.PushSubscription?.id;
     const onesignalId = OneSignal.User?.onesignalId;
     if (subId || onesignalId) {
-      await persistOneSignalInfo(uid, {
+      await persistOneSignalInfo(cleanUid, {
         oneSignalSubscriptionId: subId || '',
         oneSignalId: onesignalId || '',
-        externalId: uid,
+        externalId: cleanUid,
       });
     }
-    console.log(`[OneSignal] Web identity synchronized: uid=${uid}`);
+    console.log(`[OneSignal] Web identity synchronized: uid=${cleanUid}`);
   }).catch((error) => {
     if (error?.message?.includes('App not configured for web push')) return;
     console.warn('[OneSignal] Web identity sync skipped:', error.message);
   });
 };
 
-// Terminate OneSignal identity session on user logout
-export const logoutOneSignalUser = () => {
-  const hadActiveIdentity = Boolean(activeNativeOneSignalUid);
+// Terminate OneSignal identity session on confirmed explicit user logout
+export const logoutOneSignalUser = (isExplicit = false) => {
+  if (!isExplicit) {
+    // Never logout on temporary loading states, page refresh, or navigation
+    return;
+  }
+  const hadActiveIdentity = Boolean(activeNativeOneSignalUid || currentLoggedInOneSignalUid);
   activeNativeOneSignalUid = null;
+  currentLoggedInOneSignalUid = null;
   if (!hadActiveIdentity) return;
   if (isMedianApp()) {
     getNativeOneSignalBridge().then(async (bridge) => {
@@ -388,15 +403,24 @@ export const getNotificationDiagnostics = async () => {
     try { return JSON.parse(sessionStorage.getItem(key) || 'null'); } catch (_) { return null; }
   };
   const identity = readSession('discuss_onesignal_identity');
+  const lastServerPush = readSession('discuss_last_server_push') || {};
+
   return {
     platform: getPlatform(),
     native: isNativeApp(),
-    firebaseUid: activeNativeOneSignalUid,
     oneSignalInitialized: isNativeApp() ? nativeBridgeReady : Boolean(oneSignalWebReady),
-    externalId: identity?.oneSignalExternalId || activeNativeOneSignalUid,
-    subscriptionId: identity?.oneSignalSubscriptionId || null,
+    firebaseUid: activeNativeOneSignalUid,
+    externalId: identity?.oneSignalExternalId || activeNativeOneSignalUid || null,
+    externalIdMatched: Boolean(activeNativeOneSignalUid && (identity?.oneSignalExternalId === activeNativeOneSignalUid)),
     permission: getPermissionStatus(),
-    pushEnabled: isNotificationsEnabled(),
+    subscriptionOptedIn: isNotificationsEnabled(),
+    subscriptionIdPresent: Boolean(identity?.oneSignalSubscriptionId),
+    subscriptionId: identity?.oneSignalSubscriptionId || null,
+    dashboardWebPushEnabled: !webPushUnsupported,
+    notificationEventId: lastServerPush.eventId || null,
+    serverPushAttempted: Boolean(lastServerPush.attempted),
+    serverPushHttpStatus: lastServerPush.httpStatus || null,
+    serverPushAccepted: Boolean(lastServerPush.accepted),
     medianBridgeReady: nativeBridgeReady,
     serviceWorkers: registrations.map((registration) => ({
       scope: registration.scope,
