@@ -284,3 +284,99 @@ html.dark, html.dark body, html.dark #root {
   animation: lettersSkeletonPulse 1.6s ease-in-out infinite;
 }
 
+/* ── Discuss Memories: Postage Stamp & Scrapbook Design System ── */
+
+.postage-stamp-container {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.postage-stamp-paper {
+  background-color: #faf7f2;
+  padding: 6px;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+}
+
+.dark .postage-stamp-paper {
+  background-color: #1e1e1e;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* Subtle serrated perforation edging */
+.stamp-serration {
+  position: relative;
+  overflow: hidden;
+}
+
+.stamp-inner-border {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .stamp-inner-border {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Scrapbook textured paper surface */
+.scrapbook-surface {
+  background-color: #f7f4ee;
+  background-image: radial-gradient(#e8e3d8 0.75px, transparent 0.75px);
+  background-size: 16px 16px;
+}
+
+.dark .scrapbook-surface {
+  background-color: #121212;
+  background-image: radial-gradient(#222222 0.75px, transparent 0.75px);
+  background-size: 16px 16px;
+}
+
+/* Washi tape accents */
+.washi-tape-strip {
+  background: rgba(220, 215, 200, 0.55);
+  backdrop-filter: blur(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dark .washi-tape-strip {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Postmark cancellation mark */
+.postmark-cancel {
+  border: 1.5px solid rgba(139, 92, 246, 0.35);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Smooth paper page flip */
+@keyframes pageFlipNext {
+  0% {
+    transform: perspective(1000px) rotateY(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: perspective(1000px) rotateY(-45deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: perspective(1000px) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-page-flip {
+  animation: pageFlipNext 0.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-flip {
+    animation: none !important;
+  }
+}
+
+

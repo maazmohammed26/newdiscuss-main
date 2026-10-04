@@ -958,6 +958,23 @@ Return JSON array:
         return res.status(response.status).json(result);
       }
 
+      case 'gemini': {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) return res.status(401).json({ error: 'Missing Gemini API key.' });
+        const requestedModel = String(req.headers['x-gemini-model'] || 'gemini-2.5-flash');
+        const allowedModels = new Set(['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3-flash', 'gemini-3.1-flash-lite', 'gemini-3.5-flash']);
+        const model = allowedModels.has(requestedModel) ? requestedModel : 'gemini-2.5-flash';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const inputBody = body && typeof body === 'object' ? body : {};
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inputBody),
+        });
+        const result = await response.json().catch(() => ({}));
+        return res.status(response.status).json(result);
+      }
+
       default:
         return res.status(400).json({ success: false, error: `Unknown action '${action}'` });
     }

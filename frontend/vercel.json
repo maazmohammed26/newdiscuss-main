@@ -26,6 +26,14 @@
       "destination": "/api/ai?action=openrouter"
     },
     {
+      "source": "/api/gemini",
+      "destination": "/api/ai?action=gemini"
+    },
+    {
+      "source": "/api/memories/:action",
+      "destination": "/api/memories?action=:action"
+    },
+    {
       "source": "/((?!api/|__/auth/|\\.well-known/).*)",
       "destination": "/index.html"
     }

@@ -1441,6 +1441,14 @@ export default function ProfilePage() {
               <span className="text-sm font-bold text-neutral-900 dark:text-white">Profile</span>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => navigate('/memories')}
+                  className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  title="Memories"
+                  aria-label="Memories"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => navigate('/settings')}
                   className="p-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                   title="Settings & Privacy"

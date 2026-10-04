@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, FileText, Users, Bookmark, Settings, X, ChevronRight } from 'lucide-react';
+import { User, FileText, Users, Bookmark, Settings, X, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import UserAvatar from '@/components/UserAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
@@ -65,6 +65,13 @@ export default function AccountPanel({ open, onClose, anchorRef, position = 'aut
   };
 
   const menuItems = [
+    {
+      id: 'memories',
+      label: 'Memories',
+      icon: ImageIcon,
+      onClick: () => handleAction('/memories'),
+      description: 'Preserved moments as stamps',
+    },
     {
       id: 'bookmarks',
       label: 'Bookmarks',
